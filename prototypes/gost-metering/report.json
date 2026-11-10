@@ -1,0 +1,105 @@
+{
+  "version": "gost 3.3.3 (go1.27.3 windows/amd64)",
+  "scenarios": {
+    "tenant_a": {
+      "fixture": [
+        1024,
+        2048
+      ],
+      "observer": [
+        1024,
+        2058
+      ]
+    },
+    "tenant_b": {
+      "fixture": [
+        512,
+        256
+      ],
+      "observer": [
+        512,
+        266
+      ]
+    },
+    "empty": {
+      "fixture": [
+        0,
+        0
+      ],
+      "observer": [
+        0,
+        10
+      ]
+    },
+    "upstream_fail": {
+      "fixture": [
+        0,
+        0
+      ],
+      "observer": [
+        0,
+        10
+      ],
+      "reply": 3
+    },
+    "ack_loss": {
+      "fixture": [
+        111,
+        222
+      ],
+      "added_once": [
+        111,
+        232
+      ],
+      "identical_payload_retry": true
+    },
+    "temporary_outage": {
+      "fixture": [
+        444,
+        777
+      ],
+      "after_recovery": [
+        444,
+        787
+      ],
+      "rejected_attempts": 2
+    },
+    "restart_gap": {
+      "fixture": [
+        321,
+        654
+      ],
+      "observed_but_not_durable": [
+        321,
+        664
+      ],
+      "persisted_old_epoch_before_kill": [
+        1579,
+        3097
+      ],
+      "persisted_old_epoch_after_restart": [
+        1579,
+        3097
+      ],
+      "new_epoch_fixture": [
+        123,
+        234
+      ],
+      "new_epoch_observer": [
+        123,
+        244
+      ],
+      "old_pending_replayed": false
+    }
+  },
+  "before_epoch": "before-03dca2ec",
+  "after_epoch": "after-52e38303",
+  "potential_gap_marker": {
+    "instance": "gw-1",
+    "previous_epoch": "before-03dca2ec",
+    "new_epoch": "after-52e38303",
+    "last_received": "2026-11-10T10:31:29.376494+00:00",
+    "first_new_received": "2026-11-10T10:31:31.472021+00:00"
+  },
+  "upstream_connects": 8
+}

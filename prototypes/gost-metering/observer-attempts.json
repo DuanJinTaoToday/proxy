@@ -1,0 +1,225 @@
+[
+  {
+    "instance": "gw-1",
+    "epoch": "before-03dca2ec",
+    "mode": "ok",
+    "received_at": "2026-11-10T10:31:22.380417+00:00",
+    "events": [
+      {
+        "kind": "handler",
+        "service": "lab-socks5",
+        "client": "tenant-a",
+        "type": "stats",
+        "stats": {
+          "totalConns": 1,
+          "currentConns": 0,
+          "inputBytes": 1024,
+          "outputBytes": 2058,
+          "totalErrs": 0
+        }
+      },
+      {
+        "kind": "handler",
+        "service": "lab-socks5",
+        "client": "tenant-b",
+        "type": "stats",
+        "stats": {
+          "totalConns": 1,
+          "currentConns": 0,
+          "inputBytes": 512,
+          "outputBytes": 266,
+          "totalErrs": 0
+        }
+      }
+    ]
+  },
+  {
+    "instance": "gw-1",
+    "epoch": "before-03dca2ec",
+    "mode": "ok",
+    "received_at": "2026-11-10T10:31:23.381779+00:00",
+    "events": [
+      {
+        "kind": "handler",
+        "service": "lab-socks5",
+        "client": "tenant-a",
+        "type": "stats",
+        "stats": {
+          "totalConns": 2,
+          "currentConns": 0,
+          "inputBytes": 1024,
+          "outputBytes": 2068,
+          "totalErrs": 0
+        }
+      }
+    ]
+  },
+  {
+    "instance": "gw-1",
+    "epoch": "before-03dca2ec",
+    "mode": "ok",
+    "received_at": "2026-11-10T10:31:24.385359+00:00",
+    "events": [
+      {
+        "kind": "handler",
+        "service": "lab-socks5",
+        "client": "tenant-a",
+        "type": "stats",
+        "stats": {
+          "totalConns": 3,
+          "currentConns": 0,
+          "inputBytes": 1024,
+          "outputBytes": 2078,
+          "totalErrs": 0
+        }
+      }
+    ]
+  },
+  {
+    "instance": "gw-1",
+    "epoch": "before-03dca2ec",
+    "mode": "drop_ack",
+    "received_at": "2026-11-10T10:31:25.381656+00:00",
+    "events": [
+      {
+        "kind": "handler",
+        "service": "lab-socks5",
+        "client": "tenant-a",
+        "type": "stats",
+        "stats": {
+          "totalConns": 4,
+          "currentConns": 0,
+          "inputBytes": 1135,
+          "outputBytes": 2310,
+          "totalErrs": 0
+        }
+      }
+    ]
+  },
+  {
+    "instance": "gw-1",
+    "epoch": "before-03dca2ec",
+    "mode": "ok",
+    "received_at": "2026-11-10T10:31:26.382067+00:00",
+    "events": [
+      {
+        "kind": "handler",
+        "service": "lab-socks5",
+        "client": "tenant-a",
+        "type": "stats",
+        "stats": {
+          "totalConns": 4,
+          "currentConns": 0,
+          "inputBytes": 1135,
+          "outputBytes": 2310,
+          "totalErrs": 0
+        }
+      }
+    ]
+  },
+  {
+    "instance": "gw-1",
+    "epoch": "before-03dca2ec",
+    "mode": "reject",
+    "received_at": "2026-11-10T10:31:27.376622+00:00",
+    "events": [
+      {
+        "kind": "handler",
+        "service": "lab-socks5",
+        "client": "tenant-a",
+        "type": "stats",
+        "stats": {
+          "totalConns": 5,
+          "currentConns": 0,
+          "inputBytes": 1579,
+          "outputBytes": 3097,
+          "totalErrs": 0
+        }
+      }
+    ]
+  },
+  {
+    "instance": "gw-1",
+    "epoch": "before-03dca2ec",
+    "mode": "reject",
+    "received_at": "2026-11-10T10:31:28.376379+00:00",
+    "events": [
+      {
+        "kind": "handler",
+        "service": "lab-socks5",
+        "client": "tenant-a",
+        "type": "stats",
+        "stats": {
+          "totalConns": 5,
+          "currentConns": 0,
+          "inputBytes": 1579,
+          "outputBytes": 3097,
+          "totalErrs": 0
+        }
+      }
+    ]
+  },
+  {
+    "instance": "gw-1",
+    "epoch": "before-03dca2ec",
+    "mode": "ok",
+    "received_at": "2026-11-10T10:31:29.382288+00:00",
+    "events": [
+      {
+        "kind": "handler",
+        "service": "lab-socks5",
+        "client": "tenant-a",
+        "type": "stats",
+        "stats": {
+          "totalConns": 5,
+          "currentConns": 0,
+          "inputBytes": 1579,
+          "outputBytes": 3097,
+          "totalErrs": 0
+        }
+      }
+    ]
+  },
+  {
+    "instance": "gw-1",
+    "epoch": "before-03dca2ec",
+    "mode": "reject",
+    "received_at": "2026-11-10T10:31:30.376331+00:00",
+    "events": [
+      {
+        "kind": "handler",
+        "service": "lab-socks5",
+        "client": "tenant-a",
+        "type": "stats",
+        "stats": {
+          "totalConns": 6,
+          "currentConns": 0,
+          "inputBytes": 1900,
+          "outputBytes": 3761,
+          "totalErrs": 0
+        }
+      }
+    ]
+  },
+  {
+    "instance": "gw-1",
+    "epoch": "after-52e38303",
+    "mode": "ok",
+    "received_at": "2026-11-10T10:31:31.476031+00:00",
+    "events": [
+      {
+        "kind": "handler",
+        "service": "lab-socks5",
+        "client": "tenant-a",
+        "type": "stats",
+        "stats": {
+          "totalConns": 1,
+          "currentConns": 0,
+          "inputBytes": 123,
+          "outputBytes": 244,
+          "totalErrs": 0
+        }
+      }
+    ]
+  }
+]
