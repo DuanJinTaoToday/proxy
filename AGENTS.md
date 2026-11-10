@@ -8,6 +8,8 @@
 
 架构背景见[梳理多租户代理架构](chatgpt-conversation://6af07b80-636c-83e9-ba22-5752b82ad7ec)。
 
+接入或排查悟空 SOCKS5 隧道时，参阅[悟空隧道转发接入](docs/wukong-socks5-tunnel.md)。
+
 ## Agent skills
 
 ### Issue tracker
