@@ -21,9 +21,59 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type TenantRole int32
+
+const (
+	TenantRole_TENANT_ROLE_UNSPECIFIED TenantRole = 0
+	TenantRole_TENANT_ROLE_MEMBER      TenantRole = 1
+	TenantRole_TENANT_ROLE_ADMIN       TenantRole = 2
+)
+
+// Enum value maps for TenantRole.
+var (
+	TenantRole_name = map[int32]string{
+		0: "TENANT_ROLE_UNSPECIFIED",
+		1: "TENANT_ROLE_MEMBER",
+		2: "TENANT_ROLE_ADMIN",
+	}
+	TenantRole_value = map[string]int32{
+		"TENANT_ROLE_UNSPECIFIED": 0,
+		"TENANT_ROLE_MEMBER":      1,
+		"TENANT_ROLE_ADMIN":       2,
+	}
+)
+
+func (x TenantRole) Enum() *TenantRole {
+	p := new(TenantRole)
+	*p = x
+	return p
+}
+
+func (x TenantRole) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (TenantRole) Descriptor() protoreflect.EnumDescriptor {
+	return file_bootstrap_proto_enumTypes[0].Descriptor()
+}
+
+func (TenantRole) Type() protoreflect.EnumType {
+	return &file_bootstrap_proto_enumTypes[0]
+}
+
+func (x TenantRole) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use TenantRole.Descriptor instead.
+func (TenantRole) EnumDescriptor() ([]byte, []int) {
+	return file_bootstrap_proto_rawDescGZIP(), []int{0}
+}
+
 type Bootstrap struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	HttpAddr      string                 `protobuf:"bytes,1,opt,name=http_addr,json=httpAddr,proto3" json:"http_addr,omitempty"`
+	Access        *Access                `protobuf:"bytes,2,opt,name=access,proto3" json:"access,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -65,13 +115,274 @@ func (x *Bootstrap) GetHttpAddr() string {
 	return ""
 }
 
+func (x *Bootstrap) GetAccess() *Access {
+	if x != nil {
+		return x.Access
+	}
+	return nil
+}
+
+type Access struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Users         []*User                `protobuf:"bytes,1,rep,name=users,proto3" json:"users,omitempty"`
+	Tenants       []*Tenant              `protobuf:"bytes,2,rep,name=tenants,proto3" json:"tenants,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Access) Reset() {
+	*x = Access{}
+	mi := &file_bootstrap_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Access) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Access) ProtoMessage() {}
+
+func (x *Access) ProtoReflect() protoreflect.Message {
+	mi := &file_bootstrap_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Access.ProtoReflect.Descriptor instead.
+func (*Access) Descriptor() ([]byte, []int) {
+	return file_bootstrap_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *Access) GetUsers() []*User {
+	if x != nil {
+		return x.Users
+	}
+	return nil
+}
+
+func (x *Access) GetTenants() []*Tenant {
+	if x != nil {
+		return x.Tenants
+	}
+	return nil
+}
+
+type User struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	Username         string                 `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
+	PasswordHashEnv  string                 `protobuf:"bytes,2,opt,name=password_hash_env,json=passwordHashEnv,proto3" json:"password_hash_env,omitempty"`
+	Memberships      []*Membership          `protobuf:"bytes,3,rep,name=memberships,proto3" json:"memberships,omitempty"`
+	PlatformOperator bool                   `protobuf:"varint,4,opt,name=platform_operator,json=platformOperator,proto3" json:"platform_operator,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *User) Reset() {
+	*x = User{}
+	mi := &file_bootstrap_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *User) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*User) ProtoMessage() {}
+
+func (x *User) ProtoReflect() protoreflect.Message {
+	mi := &file_bootstrap_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use User.ProtoReflect.Descriptor instead.
+func (*User) Descriptor() ([]byte, []int) {
+	return file_bootstrap_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *User) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
+}
+
+func (x *User) GetPasswordHashEnv() string {
+	if x != nil {
+		return x.PasswordHashEnv
+	}
+	return ""
+}
+
+func (x *User) GetMemberships() []*Membership {
+	if x != nil {
+		return x.Memberships
+	}
+	return nil
+}
+
+func (x *User) GetPlatformOperator() bool {
+	if x != nil {
+		return x.PlatformOperator
+	}
+	return false
+}
+
+type Tenant struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Tenant) Reset() {
+	*x = Tenant{}
+	mi := &file_bootstrap_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Tenant) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Tenant) ProtoMessage() {}
+
+func (x *Tenant) ProtoReflect() protoreflect.Message {
+	mi := &file_bootstrap_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Tenant.ProtoReflect.Descriptor instead.
+func (*Tenant) Descriptor() ([]byte, []int) {
+	return file_bootstrap_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *Tenant) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *Tenant) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+type Membership struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	Role          TenantRole             `protobuf:"varint,2,opt,name=role,proto3,enum=proxycontrol.config.v1.TenantRole" json:"role,omitempty"`
+	Disabled      bool                   `protobuf:"varint,3,opt,name=disabled,proto3" json:"disabled,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Membership) Reset() {
+	*x = Membership{}
+	mi := &file_bootstrap_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Membership) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Membership) ProtoMessage() {}
+
+func (x *Membership) ProtoReflect() protoreflect.Message {
+	mi := &file_bootstrap_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Membership.ProtoReflect.Descriptor instead.
+func (*Membership) Descriptor() ([]byte, []int) {
+	return file_bootstrap_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *Membership) GetTenantId() string {
+	if x != nil {
+		return x.TenantId
+	}
+	return ""
+}
+
+func (x *Membership) GetRole() TenantRole {
+	if x != nil {
+		return x.Role
+	}
+	return TenantRole_TENANT_ROLE_UNSPECIFIED
+}
+
+func (x *Membership) GetDisabled() bool {
+	if x != nil {
+		return x.Disabled
+	}
+	return false
+}
+
 var File_bootstrap_proto protoreflect.FileDescriptor
 
 const file_bootstrap_proto_rawDesc = "" +
 	"\n" +
-	"\x0fbootstrap.proto\x12\x16proxycontrol.config.v1\"(\n" +
+	"\x0fbootstrap.proto\x12\x16proxycontrol.config.v1\"`\n" +
 	"\tBootstrap\x12\x1b\n" +
-	"\thttp_addr\x18\x01 \x01(\tR\bhttpAddrBHZFgithub.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/conf;confb\x06proto3"
+	"\thttp_addr\x18\x01 \x01(\tR\bhttpAddr\x126\n" +
+	"\x06access\x18\x02 \x01(\v2\x1e.proxycontrol.config.v1.AccessR\x06access\"v\n" +
+	"\x06Access\x122\n" +
+	"\x05users\x18\x01 \x03(\v2\x1c.proxycontrol.config.v1.UserR\x05users\x128\n" +
+	"\atenants\x18\x02 \x03(\v2\x1e.proxycontrol.config.v1.TenantR\atenants\"\xc1\x01\n" +
+	"\x04User\x12\x1a\n" +
+	"\busername\x18\x01 \x01(\tR\busername\x12*\n" +
+	"\x11password_hash_env\x18\x02 \x01(\tR\x0fpasswordHashEnv\x12D\n" +
+	"\vmemberships\x18\x03 \x03(\v2\".proxycontrol.config.v1.MembershipR\vmemberships\x12+\n" +
+	"\x11platform_operator\x18\x04 \x01(\bR\x10platformOperator\",\n" +
+	"\x06Tenant\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\"}\n" +
+	"\n" +
+	"Membership\x12\x1b\n" +
+	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x126\n" +
+	"\x04role\x18\x02 \x01(\x0e2\".proxycontrol.config.v1.TenantRoleR\x04role\x12\x1a\n" +
+	"\bdisabled\x18\x03 \x01(\bR\bdisabled*X\n" +
+	"\n" +
+	"TenantRole\x12\x1b\n" +
+	"\x17TENANT_ROLE_UNSPECIFIED\x10\x00\x12\x16\n" +
+	"\x12TENANT_ROLE_MEMBER\x10\x01\x12\x15\n" +
+	"\x11TENANT_ROLE_ADMIN\x10\x02BHZFgithub.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/conf;confb\x06proto3"
 
 var (
 	file_bootstrap_proto_rawDescOnce sync.Once
@@ -85,16 +396,27 @@ func file_bootstrap_proto_rawDescGZIP() []byte {
 	return file_bootstrap_proto_rawDescData
 }
 
-var file_bootstrap_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_bootstrap_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_bootstrap_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_bootstrap_proto_goTypes = []any{
-	(*Bootstrap)(nil), // 0: proxycontrol.config.v1.Bootstrap
+	(TenantRole)(0),    // 0: proxycontrol.config.v1.TenantRole
+	(*Bootstrap)(nil),  // 1: proxycontrol.config.v1.Bootstrap
+	(*Access)(nil),     // 2: proxycontrol.config.v1.Access
+	(*User)(nil),       // 3: proxycontrol.config.v1.User
+	(*Tenant)(nil),     // 4: proxycontrol.config.v1.Tenant
+	(*Membership)(nil), // 5: proxycontrol.config.v1.Membership
 }
 var file_bootstrap_proto_depIdxs = []int32{
-	0, // [0:0] is the sub-list for method output_type
-	0, // [0:0] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	2, // 0: proxycontrol.config.v1.Bootstrap.access:type_name -> proxycontrol.config.v1.Access
+	3, // 1: proxycontrol.config.v1.Access.users:type_name -> proxycontrol.config.v1.User
+	4, // 2: proxycontrol.config.v1.Access.tenants:type_name -> proxycontrol.config.v1.Tenant
+	5, // 3: proxycontrol.config.v1.User.memberships:type_name -> proxycontrol.config.v1.Membership
+	0, // 4: proxycontrol.config.v1.Membership.role:type_name -> proxycontrol.config.v1.TenantRole
+	5, // [5:5] is the sub-list for method output_type
+	5, // [5:5] is the sub-list for method input_type
+	5, // [5:5] is the sub-list for extension type_name
+	5, // [5:5] is the sub-list for extension extendee
+	0, // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_bootstrap_proto_init() }
@@ -107,13 +429,14 @@ func file_bootstrap_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_bootstrap_proto_rawDesc), len(file_bootstrap_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   1,
+			NumEnums:      1,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
 		GoTypes:           file_bootstrap_proto_goTypes,
 		DependencyIndexes: file_bootstrap_proto_depIdxs,
+		EnumInfos:         file_bootstrap_proto_enumTypes,
 		MessageInfos:      file_bootstrap_proto_msgTypes,
 	}.Build()
 	File_bootstrap_proto = out.File

@@ -6,4 +6,34 @@ option go_package = "github.com/DuanJinTaoToday/proxy/apps/proxy-control/interna
 
 message Bootstrap {
   string http_addr = 1;
+  Access access = 2;
+}
+
+message Access {
+  repeated User users = 1;
+  repeated Tenant tenants = 2;
+}
+
+message User {
+  string username = 1;
+  string password_hash_env = 2;
+  repeated Membership memberships = 3;
+  bool platform_operator = 4;
+}
+
+message Tenant {
+  string id = 1;
+  string name = 2;
+}
+
+message Membership {
+  string tenant_id = 1;
+  TenantRole role = 2;
+  bool disabled = 3;
+}
+
+enum TenantRole {
+  TENANT_ROLE_UNSPECIFIED = 0;
+  TENANT_ROLE_MEMBER = 1;
+  TENANT_ROLE_ADMIN = 2;
 }
