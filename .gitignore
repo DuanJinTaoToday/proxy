@@ -1,1 +1,5 @@
 .idea/
+/.tools/
+/apps/proxy-control/bin/
+/apps/proxy-gateway/bin/
+/apps/proxy-gateway/dist/

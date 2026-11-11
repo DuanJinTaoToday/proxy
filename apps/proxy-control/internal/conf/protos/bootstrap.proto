@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package proxycontrol.config.v1;
+
+option go_package = "github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/conf;conf";
+
+message Bootstrap {
+  string http_addr = 1;
+}
