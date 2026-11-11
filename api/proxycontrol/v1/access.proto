@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+package proxycontrol.v1;
+
+import "google/api/annotations.proto";
+
+option go_package = "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1";
+
+service AccessService {
+  rpc ListTenants(ListTenantsRequest) returns (ListTenantsResponse) {
+    option (google.api.http) = {get: "/v1/access/tenants"};
+  }
+  rpc GetTenantAccess(GetTenantAccessRequest) returns (TenantAccess) {
+    option (google.api.http) = {get: "/v1/access/tenants/{tenant_id}"};
+  }
+
+  rpc CheckPermission(CheckPermissionRequest) returns (CheckPermissionResponse) {
+    option (google.api.http) = {post: "/v1/access/check", body: "*"};
+  }
+
+  rpc Login(LoginRequest) returns (LoginResponse) {
+    option (google.api.http) = {post: "/v1/access/login", body: "*"};
+  }
+}
+
+message ListTenantsRequest {}
+
+message ListTenantsResponse {
+  repeated TenantAccess tenants = 1;
+}
+
+message GetTenantAccessRequest {
+  string tenant_id = 1;
+}
+
+message TenantAccess {
+  string tenant_id = 1;
+  string name = 2;
+}
+
+message LoginRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+  string access_token = 1;
+  int32 expires_in_seconds = 2;
+}
+
+
+
+
+enum Permission {
+  PERMISSION_UNSPECIFIED = 0;
+  PERMISSION_READ_TENANT_USAGE = 1;
+  PERMISSION_MANAGE_PROXY_CREDENTIALS = 2;
+  PERMISSION_READ_OPERATIONS = 3;
+}
+
+message CheckPermissionRequest {
+  string tenant_id = 1;
+  Permission permission = 2;
+}
+
+message CheckPermissionResponse {}

@@ -4,13 +4,12 @@ import (
 	"flag"
 	"log"
 
-	proxycontrolv1 "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/access"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/conf"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/server"
 	"github.com/go-kratos/kratos/v3"
 	"github.com/go-kratos/kratos/v3/config"
 	"github.com/go-kratos/kratos/v3/config/file"
-	"github.com/go-kratos/kratos/v3/transport/http"
 )
 
 func main() {
@@ -38,7 +37,10 @@ func run(path string) error {
 		return err
 	}
 
-	httpServer := http.NewServer(http.Address(settings.GetHttpAddr()))
-	proxycontrolv1.RegisterHealthServiceHTTPServer(httpServer, server.Health{})
+	accessService, err := access.New(settings.GetAccess())
+	if err != nil {
+		return err
+	}
+	httpServer := server.NewHTTPServer(settings.GetHttpAddr(), accessService)
 	return kratos.New(kratos.Name("proxy-control"), kratos.Server(httpServer)).Run()
 }
