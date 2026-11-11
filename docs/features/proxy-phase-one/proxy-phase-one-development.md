@@ -1,6 +1,6 @@
 # Proxy 一期开发任务与验收顺序
 
-一期 11 项任务、进度和阻塞关系以 [GitHub Issue #1 的子任务](https://github.com/DuanJinTaoToday/proxy/issues/1)为准。
+一期 12 项任务、进度和阻塞关系以 [GitHub Issue #1 的子任务](https://github.com/DuanJinTaoToday/proxy/issues/1)为准。
 
 先打通一个测试租户的真实隧道用量，再补足跨机器故障恢复、租户自查和运营追溯。API 提取和流量查询的 Mock 可以并行准备。 [一期 Spec](proxy-phase-one-spec.md) · [一期技术方案](proxy-phase-one-architecture.md)
 
