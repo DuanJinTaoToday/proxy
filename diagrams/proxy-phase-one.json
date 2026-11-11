@@ -1,0 +1,33 @@
+{
+  "type": "architecture",
+  "title": "B 端代理平台 · 一期目标架构",
+  "subtitle": "跑通真实隧道与用量查询，API 提取先 Mock，静态 IP 先建模",
+  "lang": "zh-CN",
+  "fonts": "system",
+  "size": "wide",
+  "motion": "trace",
+  "legend": false,
+  "caption": "隧道流量由网关计量。提取服务接通后，客户直连 SOCKS5，悟空计量，控制面按租户拉取。",
+  "nodes": [
+    {"id":"client","label":"企业客户端","sub":"平台代理凭据","kind":"input","row":0,"col":0},
+    {"id":"gateway","label":"proxy-gateway","sub":"转发 · 计量上下行","focal":true,"row":0,"col":1},
+    {"id":"tunnel","label":"悟空隧道","sub":"现有接入","kind":"external","row":0,"col":2},
+    {"id":"target","label":"目标站点","kind":"external","row":0,"col":3},
+    {"id":"console","label":"管理控制台","sub":"租户自查 · 运营追溯","kind":"input","row":1,"col":0},
+    {"id":"control","label":"proxy-control","sub":"租户汇总 · 提取与用量 Mock","focal":true,"row":1,"col":1},
+    {"id":"extract","label":"悟空提取服务","sub":"交付 IP_List · 计量直连流量","kind":"optional","row":1,"col":2},
+    {"id":"direct","label":"企业客户端","sub":"获得 IP_List 后直连","kind":"optional","row":1,"col":3},
+    {"id":"crown","label":"皇冠静态 IP","sub":"分配 · 交付 · 到期","kind":"optional","row":2,"col":1}
+  ],
+  "edges": [
+    ["client","gateway","SOCKS5","primary"],
+    ["gateway","tunnel","真实转发","primary"],
+    ["tunnel","target","访问","primary"],
+    ["client","control","提取 API"],
+    ["gateway","control","上报字节"],
+    ["console","control","查询用量"],
+    ["control","extract","提取 / 拉取流量","async"],
+    ["direct","extract","后续直连","async"],
+    ["control","crown","仅建模","async"]
+  ]
+}

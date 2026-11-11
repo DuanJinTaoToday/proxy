@@ -3,3 +3,6 @@
 /apps/proxy-control/bin/
 /apps/proxy-gateway/bin/
 /apps/proxy-gateway/dist/
+/.scratch/
+/.seecode/config.json
+/diagrams/proxy-phase-one.html

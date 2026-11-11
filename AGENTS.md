@@ -1,14 +1,14 @@
 # AGENTS.md
 
-本仓库用于开发多租户 SOCKS5 代理平台，集中管理三个部署单元的代码和文档。
+本仓库用于开发多租户代理服务。平台可接入多个第三方 SOCKS 代理供应商，对客户提供统一的产品、接入方式、权限与计费。
 
-- `management-console` 提供用户控制台和管理后台，通过 `proxy-control` 的 API 执行业务操作。
-- `proxy-control` 管理用户、租户、API Key、代理策略、用量和计费。
-- `proxy-gateway` 接入 SOCKS5 连接，执行鉴权、上游转发和流量计量。
+一期开发与验收参阅[一期 Spec](docs/features/proxy-phase-one/proxy-phase-one-spec.md)和[开发任务](docs/features/proxy-phase-one/proxy-phase-one-development.md)。设计、实现或排查用量链路时参阅[一期技术方案](docs/features/proxy-phase-one/proxy-phase-one-architecture.md)。讨论产品形态与供应商时参阅[产品对齐](docs/product/proxy-product-alignment.md)。
 
-架构背景见[梳理多租户代理架构](chatgpt-conversation://6af07b80-636c-83e9-ba22-5752b82ad7ec)。
+接入或排查悟空 SOCKS5 隧道时，参阅[悟空隧道转发接入](docs/integrations/wukong-socks5-tunnel.md)。
 
-接入或排查悟空 SOCKS5 隧道时，参阅[悟空隧道转发接入](docs/wukong-socks5-tunnel.md)。
+调整项目结构、构建、代码生成、检查或发布流程时，参阅[开发规范](docs/standards/proxy-development-conventions.md)。
+
+替换 Spec 时，把仍有效的约定并入现行文档，更新引用，并从工作树移除旧稿。需要追溯时查阅 Git 历史。
 
 ## Agent skills
 
