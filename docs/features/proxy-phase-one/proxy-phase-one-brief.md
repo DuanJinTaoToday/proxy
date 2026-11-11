@@ -2,7 +2,7 @@
 
 Proxy 一期先跑通企业客户使用悟空动态 IP 隧道、平台上报流量、客户和运营查询用量的完整链路。隧道和 API 提取都按流量计费。隧道流量由 `proxy-gateway` 计量，API 提取后的直连流量由悟空计量，再由 `proxy-control` 按租户拉取。API 提取及流量查询先用 Mock，皇冠静态 IP 先建模，定价、扣款和出账另行排期。
 
-![Proxy 一期目标架构](../../../diagrams/proxy-phase-one.png)
+![Proxy 一期目标架构](../../diagrams/proxy-phase-one.png)
 
 **用三个用户故事验收**
 

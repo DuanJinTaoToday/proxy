@@ -2,7 +2,7 @@
 
 本文记录项目讨论已达成的共识，以及需要老板推动的供应商事项。供产品范围和一期验收对齐使用。
 
-与老板对齐时可使用[一期验收与联调简版](../features/proxy-phase-one/proxy-phase-one-brief.md)及[一期目标架构图](../../diagrams/proxy-phase-one.png)。
+与老板对齐时可使用[一期验收与联调简版](../features/proxy-phase-one/proxy-phase-one-brief.md)及[一期目标架构图](../diagrams/proxy-phase-one.png)。
 
 ## 产品形态
 

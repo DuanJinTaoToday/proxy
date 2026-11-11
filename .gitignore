@@ -4,5 +4,5 @@
 /apps/proxy-gateway/bin/
 /apps/proxy-gateway/dist/
 /.scratch/
-/.seecode/config.json
-/diagrams/proxy-phase-one.html
+/.seecode/
+/docs/diagrams/
