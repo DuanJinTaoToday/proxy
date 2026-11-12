@@ -50,12 +50,15 @@ func queryUsageBuckets(db *gorm.DB, query usage.UsageQuery, after *usage.UsageKe
 	case usage.DayGranularity:
 		bucketStart = "usage_date::timestamp AT TIME ZONE 'Asia/Shanghai'"
 	}
-	source := "SELECT " + bucketStart + " AS start_time, " + dimensions + " FROM usage_minutely" + filters +
-		" AND minute_start >= @start AND minute_start < @end"
+	window := " AND minute_start >= @start AND minute_start < @end"
 	if query.Granularity == usage.DayGranularity {
-		// Archived rows can only be selected at Shanghai day boundaries.
-		source += " UNION ALL SELECT " + bucketStart + " AS start_time, " + dimensions + " FROM usage_daily" + filters +
-			" AND " + bucketStart + " >= @start AND " + bucketStart + " < @end"
+		// Select complete days by their Shanghai midnight in both stores so
+		// archival cannot change the answer to an unaligned day query.
+		window = " AND " + bucketStart + " >= @start AND " + bucketStart + " < @end"
+	}
+	source := "SELECT " + bucketStart + " AS start_time, " + dimensions + " FROM usage_minutely" + filters + window
+	if query.Granularity == usage.DayGranularity {
+		source += " UNION ALL SELECT " + bucketStart + " AS start_time, " + dimensions + " FROM usage_daily" + filters + window
 	}
 
 	args := []any{

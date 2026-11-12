@@ -101,8 +101,8 @@ func (s *Usage) QueryUsage(ctx context.Context, req *v1.QueryUsageRequest) (*v1.
 		reply.Buckets = append(reply.Buckets, &v1.UsageBucket{
 			StartTime: timestamppb.New(bucket.StartTime),
 			GatewayId: bucket.GatewayID,
-			GrantId:   billingID(bucket.GrantID),
-			RateId:    billingID(bucket.RateID),
+			GrantId:   optionalNumericID(bucket.GrantID),
+			RateId:    optionalNumericID(bucket.RateID),
 			Amount: &v1.UsageAmount{
 				InputBytes: bucket.InputBytes, OutputBytes: bucket.OutputBytes,
 				TotalBytes: bucket.InputBytes + bucket.OutputBytes, BillableBytes: bucket.BillableBytes,
@@ -112,7 +112,7 @@ func (s *Usage) QueryUsage(ctx context.Context, req *v1.QueryUsageRequest) (*v1.
 	return reply, nil
 }
 
-func billingID(id int64) string {
+func optionalNumericID(id int64) string {
 	if id == 0 {
 		return ""
 	}

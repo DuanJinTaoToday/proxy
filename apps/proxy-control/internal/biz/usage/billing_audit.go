@@ -2,6 +2,7 @@ package usage
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/access"
@@ -60,20 +61,28 @@ func (s *Service) ListBalanceLedger(ctx context.Context, token, tenant string, s
 	}, func(entry LedgerEntry) int64 { return entry.ID })
 }
 
-func (s *Service) ListBillingRates(ctx context.Context, token, scopeType, scopeID string, size int, pageToken string) (AuditPage[RateVersion], error) {
+func (s *Service) ListBillingRates(ctx context.Context, token, scopeType, scopeID, rateID string, size int, pageToken string) (AuditPage[RateVersion], error) {
 	if err := s.access.Require(token, "", access.ReadOperations); err != nil {
 		return AuditPage[RateVersion]{}, err
 	}
 	if scopeType == "global" && scopeID == "_" {
 		scopeID = ""
 	}
+	var id int64
+	if rateID != "" {
+		var err error
+		id, err = strconv.ParseInt(rateID, 10, 64)
+		if err != nil || id <= 0 || scopeType != "" || scopeID != "" {
+			return AuditPage[RateVersion]{}, errors.BadRequest("INVALID_RATE_ID", "provide a positive rate_id without a scope")
+		}
+	}
 	globalScope := scopeType == "global" && scopeID == ""
 	namedScope := (scopeType == "group" || scopeType == "tenant") && scopeID != ""
-	if !globalScope && !namedScope {
+	if id == 0 && !globalScope && !namedScope {
 		return AuditPage[RateVersion]{}, errors.BadRequest("INVALID_SCOPE", "provide a global, group or tenant rate scope")
 	}
-	return readAuditPage([3]string{"rates", scopeType, scopeID}, size, pageToken, func(after int64, limit int) ([]RateVersion, error) {
-		return s.repo.AuditRates(ctx, scopeType, scopeID, after, limit)
+	return readAuditPage([4]string{"rates", scopeType, scopeID, rateID}, size, pageToken, func(after int64, limit int) ([]RateVersion, error) {
+		return s.repo.AuditRates(ctx, scopeType, scopeID, id, after, limit)
 	}, func(rate RateVersion) int64 { return rate.ID })
 }
 
@@ -104,10 +113,6 @@ func readAuditPage[T any](scope any, size int, token string, load func(int64, in
 	if err != nil {
 		return page, err
 	}
-	page.Items = rows
-	if len(rows) > size {
-		page.Items = rows[:size]
-		page.NextToken, err = cursor.next(key(rows[size-1]))
-	}
+	page.Items, page.NextToken, err = finishPage(rows, size, cursor, key)
 	return page, err
 }

@@ -30,10 +30,11 @@ func (r *UsageRepository) AuditLedger(ctx context.Context, tenant string, after 
 	return entries, err
 }
 
-func (r *UsageRepository) AuditRates(ctx context.Context, scopeType, scopeID string, after int64, limit int) ([]usage.RateVersion, error) {
+func (r *UsageRepository) AuditRates(ctx context.Context, scopeType, scopeID string, id, after int64, limit int) ([]usage.RateVersion, error) {
 	var rates []usage.RateVersion
 	err := r.db.WithContext(ctx).Raw(`SELECT id, scope_type, scope_id, upload_ratio_milli, download_ratio_milli, effective_from
-		FROM billing_rates WHERE scope_type = ? AND scope_id = ? AND id > ? ORDER BY id LIMIT ?`,
-		scopeType, scopeID, after, limit).Scan(&rates).Error
+		FROM billing_rates WHERE id > ?
+		AND ((? = 0 AND scope_type = ? AND scope_id = ?) OR id = ?) ORDER BY id LIMIT ?`,
+		after, id, scopeType, scopeID, id, limit).Scan(&rates).Error
 	return rates, err
 }

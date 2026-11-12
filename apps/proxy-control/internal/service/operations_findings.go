@@ -20,7 +20,7 @@ func (s *Usage) ListRecordAnomalies(ctx context.Context, req *v1.ListRecordAnoma
 	reply := &v1.ListRecordAnomaliesResponse{NextPageToken: page.NextToken}
 	for _, row := range page.Items {
 		reply.Anomalies = append(reply.Anomalies, &v1.RecordAnomaly{
-			AnomalyId: billingID(row.ID), GatewayId: row.GatewayID, BootId: row.BootID, TenantId: row.TenantID,
+			AnomalyId: optionalNumericID(row.ID), GatewayId: row.GatewayID, BootId: row.BootID, TenantId: row.TenantID,
 			Kind: row.Kind, FileId: row.FileID, FileOffset: row.FileOffset,
 			DetectedAt: timestamppb.New(row.DetectedAt), ResolvedAt: timestamp(row.ResolvedAt),
 		})
@@ -41,7 +41,7 @@ func (s *Usage) ListUsageGaps(ctx context.Context, req *v1.ListUsageGapsRequest)
 	reply := &v1.ListUsageGapsResponse{NextPageToken: page.NextToken}
 	for _, row := range page.Items {
 		reply.Gaps = append(reply.Gaps, &v1.UsageGap{
-			GapId: billingID(row.ID), GatewayId: row.GatewayID, BootId: row.BootID, TenantId: row.TenantID,
+			GapId: optionalNumericID(row.ID), GatewayId: row.GatewayID, BootId: row.BootID, TenantId: row.TenantID,
 			Kind: row.Kind, Status: row.Status, SessionId: row.SessionID, FromAt: timestamppb.New(row.FromAt),
 			DetectedAt: timestamppb.New(row.DetectedAt), ResolvedAt: timestamp(row.ResolvedAt),
 			ExitedAt: timestamp(row.ExitedAt),

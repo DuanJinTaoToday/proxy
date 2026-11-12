@@ -50,3 +50,11 @@ func (c pageCursor[K]) next(key K) (string, error) {
 	}
 	return base64.RawURLEncoding.EncodeToString(encoded), nil
 }
+
+func finishPage[T, K any](rows []T, size int, cursor pageCursor[K], key func(T) K) ([]T, string, error) {
+	if len(rows) <= size {
+		return rows, "", nil
+	}
+	token, err := cursor.next(key(rows[size-1]))
+	return rows[:size], token, err
+}

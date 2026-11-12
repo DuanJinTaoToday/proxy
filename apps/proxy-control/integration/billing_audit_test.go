@@ -15,8 +15,11 @@ func TestOperationsBillingReconciliation(t *testing.T) {
 	operator := testfixture.Login(t, f.http, "operator")
 	start := time.Now().UTC().Truncate(24 * time.Hour).Add(-22 * time.Hour)
 	rateSwitch := start.Add(30 * time.Second)
+	execSQL(t, f.db, "INSERT INTO tenant_groups (id, name) VALUES ('group-a', 'A'), ('group-b', 'B')")
+	execSQL(t, f.db, `INSERT INTO tenant_group_members (tenant_id, effective_from, group_id, updated_by)
+		VALUES ('alpha', ?, 'group-a', 'test'), ('alpha', ?, 'group-b', 'test')`, start, start.Add(time.Minute))
 	execSQL(t, f.db, `INSERT INTO billing_rates (scope_type, scope_id, upload_ratio_milli, download_ratio_milli, effective_from, created_by)
-		VALUES ('tenant', 'alpha', 2000, 1000, ?, 'test')`, rateSwitch)
+		VALUES ('group', 'group-a', 2000, 1000, ?, 'test')`, rateSwitch)
 
 	addGrant := func(bytes int64, at time.Time, ref string) {
 		t.Helper()
@@ -49,7 +52,7 @@ func TestOperationsBillingReconciliation(t *testing.T) {
 	}
 	const grantsPath = "/v1/operations/tenants/alpha/grants"
 	const ledgerPath = "/v1/operations/tenants/alpha/ledger"
-	const ratesPath = "/v1/operations/billing/rates?scope_type="
+	const ratesPath = "/v1/operations/billing/rates?"
 	var grants, nextGrants v1.ListTrafficGrantsResponse
 	read(grantsPath+"?page_size=1", &grants)
 	if len(grants.GetGrants()) != 1 || grants.GetNextPageToken() == "" {
@@ -66,14 +69,14 @@ func TestOperationsBillingReconciliation(t *testing.T) {
 		t.Fatalf("unexpected grants or overdraft: %v / %v", &grants, &nextGrants)
 	}
 
-	var global, tenant v1.ListBillingRatesResponse
-	read(ratesPath+"global", &global)
-	read(ratesPath+"tenant&scope_id=alpha", &tenant)
-	if len(global.GetRates()) != 1 || len(tenant.GetRates()) != 1 ||
-		global.GetRates()[0].GetUploadRatioMilli() != 1000 || tenant.GetRates()[0].GetUploadRatioMilli() != 2000 {
-		t.Fatalf("unexpected rate versions: %v / %v", &global, &tenant)
+	var global, historical v1.ListBillingRatesResponse
+	read(ratesPath+"scope_type=global", &global)
+	read(ratesPath+"scope_type=group&scope_id=group-a", &historical)
+	if len(global.GetRates()) != 1 || len(historical.GetRates()) != 1 ||
+		global.GetRates()[0].GetUploadRatioMilli() != 1000 || historical.GetRates()[0].GetUploadRatioMilli() != 2000 {
+		t.Fatalf("unexpected rate versions: %v / %v", &global, &historical)
 	}
-	r1, r2 := global.GetRates()[0].GetRateId(), tenant.GetRates()[0].GetRateId()
+	r1, r2 := global.GetRates()[0].GetRateId(), historical.GetRates()[0].GetRateId()
 	if r1 == "" || r2 == "" || r1 == r2 {
 		t.Fatalf("invalid rate IDs: %q, %q", r1, r2)
 	}
@@ -130,6 +133,11 @@ func TestOperationsBillingReconciliation(t *testing.T) {
 		pageURL = minute + split + "&page_size=1&page_token=" + url.QueryEscape(page.GetNextPageToken())
 	}
 	check(buckets, start)
+	var byID v1.ListBillingRatesResponse
+	read(ratesPath+"rate_id="+url.QueryEscape(buckets[2].GetRateId()), &byID)
+	if !proto.Equal(&historical, &byID) {
+		t.Fatalf("historical group rate lookup by bucket ID = %v, want %v", &byID, &historical)
+	}
 	var hour v1.QueryUsageResponse
 	read(query(start, start.Add(time.Hour), "HOUR")+split, &hour)
 	check(hour.GetBuckets(), start)
@@ -184,7 +192,7 @@ func TestOperationsBillingReconciliation(t *testing.T) {
 		t.Fatalf("ledger does not explain grant totals and offsets: %v", entries)
 	}
 	for _, token := range []string{f.alice, f.bob} {
-		for _, path := range []string{grantsPath, ledgerPath, ratesPath + "global"} {
+		for _, path := range []string{grantsPath, ledgerPath, ratesPath + "scope_type=global", ratesPath + "rate_id=" + r2} {
 			testfixture.AssertStatus(t, testfixture.Request(f.http, "GET", path, "", token), 403, "ACCESS_DENIED")
 		}
 	}

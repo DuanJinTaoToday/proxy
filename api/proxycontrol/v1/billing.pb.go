@@ -473,11 +473,13 @@ func (x *ListBalanceLedgerResponse) GetNextPageToken() string {
 }
 
 type ListBillingRatesRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ScopeType     string                 `protobuf:"bytes,1,opt,name=scope_type,json=scopeType,proto3" json:"scope_type,omitempty"`
-	ScopeId       string                 `protobuf:"bytes,2,opt,name=scope_id,json=scopeId,proto3" json:"scope_id,omitempty"`
-	PageSize      int32                  `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	PageToken     string                 `protobuf:"bytes,4,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	ScopeType string                 `protobuf:"bytes,1,opt,name=scope_type,json=scopeType,proto3" json:"scope_type,omitempty"`
+	ScopeId   string                 `protobuf:"bytes,2,opt,name=scope_id,json=scopeId,proto3" json:"scope_id,omitempty"`
+	PageSize  int32                  `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageToken string                 `protobuf:"bytes,4,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	// Exact version lookup. Omit scope_type and scope_id when using rate_id.
+	RateId        string `protobuf:"bytes,5,opt,name=rate_id,json=rateId,proto3" json:"rate_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -536,6 +538,13 @@ func (x *ListBillingRatesRequest) GetPageSize() int32 {
 func (x *ListBillingRatesRequest) GetPageToken() string {
 	if x != nil {
 		return x.PageToken
+	}
+	return ""
+}
+
+func (x *ListBillingRatesRequest) GetRateId() string {
+	if x != nil {
+		return x.RateId
 	}
 	return ""
 }
@@ -722,14 +731,15 @@ const file_proxycontrol_v1_billing_proto_rawDesc = "" +
 	"\rcorrection_of\x18\v \x01(\tR\fcorrectionOf\"\x82\x01\n" +
 	"\x19ListBalanceLedgerResponse\x12=\n" +
 	"\aentries\x18\x01 \x03(\v2#.proxycontrol.v1.BalanceLedgerEntryR\aentries\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\x8f\x01\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\xa8\x01\n" +
 	"\x17ListBillingRatesRequest\x12\x1d\n" +
 	"\n" +
 	"scope_type\x18\x01 \x01(\tR\tscopeType\x12\x19\n" +
 	"\bscope_id\x18\x02 \x01(\tR\ascopeId\x12\x1b\n" +
 	"\tpage_size\x18\x03 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
-	"page_token\x18\x04 \x01(\tR\tpageToken\"\x8a\x02\n" +
+	"page_token\x18\x04 \x01(\tR\tpageToken\x12\x17\n" +
+	"\arate_id\x18\x05 \x01(\tR\x06rateId\"\x8a\x02\n" +
 	"\x12BillingRateVersion\x12\x17\n" +
 	"\arate_id\x18\x01 \x01(\tR\x06rateId\x12\x1d\n" +
 	"\n" +

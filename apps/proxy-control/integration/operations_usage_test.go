@@ -90,6 +90,12 @@ func TestOperationsUsageBuckets(t *testing.T) {
 	midnight := start.Truncate(24 * time.Hour).Add(-8 * time.Hour)
 	day := query(midnight, midnight.Add(24*time.Hour), "DAY")
 	assertBucket(read(day+"&gateway_id=gateway-b&split_by_gateway=true"), 0, midnight, "gateway-b", 4, 5)
+	partialDay := query(midnight, start, "DAY") + "&gateway_id=gateway-b"
+	assertBucket(read(partialDay), 0, midnight, "", 4, 5)
+	afterMidnight := query(midnight.Add(time.Minute), midnight.Add(24*time.Hour), "DAY") + "&gateway_id=gateway-b"
+	if got := read(afterMidnight); len(got.GetBuckets()) != 0 {
+		t.Fatalf("daily bucket started before the window: %v", got)
+	}
 
 	split := minute + "&split_by_gateway=true&page_size=1"
 	page := read(split)
@@ -136,4 +142,8 @@ func TestOperationsUsageBuckets(t *testing.T) {
 		t.Fatalf("want one archived gateway bucket, got %v", archived)
 	}
 	assertBucket(archived, 0, midnight, "gateway-b", 4, 5)
+	assertBucket(read(partialDay), 0, midnight, "", 4, 5)
+	if got := read(afterMidnight); len(got.GetBuckets()) != 0 {
+		t.Fatalf("archived daily bucket started before the window: %v", got)
+	}
 }

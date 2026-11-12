@@ -13,7 +13,7 @@ type Repository interface {
 	ListUsageGaps(ctx context.Context, filter FindingFilter, after *FindingKey, limit int) ([]UsageGap, error)
 	AuditGrants(ctx context.Context, tenant string, after int64, limit int) ([]AuditedGrant, int64, error)
 	AuditLedger(ctx context.Context, tenant string, after int64, limit int) ([]LedgerEntry, error)
-	AuditRates(ctx context.Context, scopeType, scopeID string, after int64, limit int) ([]RateVersion, error)
+	AuditRates(ctx context.Context, scopeType, scopeID string, id, after int64, limit int) ([]RateVersion, error)
 	DueTenants(ctx context.Context, now time.Time) ([]string, error)
 }
 

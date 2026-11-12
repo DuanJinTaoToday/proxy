@@ -67,20 +67,16 @@ func (s *Service) QueryUsage(ctx context.Context, token string, query UsageQuery
 	if err != nil {
 		return nil, err
 	}
-	page := &UsagePage{Buckets: buckets}
-	if len(buckets) > pageSize {
-		page.Buckets = buckets[:pageSize]
-		page.NextToken, err = cursor.next(page.Buckets[pageSize-1].UsageKey)
-		if err != nil {
-			return nil, err
-		}
+	buckets, nextToken, err := finishPage(buckets, pageSize, cursor, func(bucket UsageBucket) UsageKey { return bucket.UsageKey })
+	if err != nil {
+		return nil, err
 	}
-	for _, bucket := range page.Buckets {
+	for _, bucket := range buckets {
 		if bucket.InputBytes+bucket.OutputBytes < bucket.InputBytes {
 			return nil, errByteOverflow
 		}
 	}
-	return page, nil
+	return &UsagePage{Buckets: buckets, NextToken: nextToken}, nil
 }
 
 func validateUsageWindow(query UsageQuery, now time.Time) error {

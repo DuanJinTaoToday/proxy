@@ -589,17 +589,18 @@ func (x *ListUsageGapsResponse) GetNextPageToken() string {
 }
 
 type QueryUsageRequest struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	TenantId       string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	GatewayId      string                 `protobuf:"bytes,2,opt,name=gateway_id,json=gatewayId,proto3" json:"gateway_id,omitempty"`
-	StartTime      *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`
-	EndTime        *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=end_time,json=endTime,proto3" json:"end_time,omitempty"`
-	Granularity    UsageGranularity       `protobuf:"varint,5,opt,name=granularity,proto3,enum=proxycontrol.v1.UsageGranularity" json:"granularity,omitempty"`
-	SplitByGateway bool                   `protobuf:"varint,6,opt,name=split_by_gateway,json=splitByGateway,proto3" json:"split_by_gateway,omitempty"`
-	SplitByGrant   bool                   `protobuf:"varint,7,opt,name=split_by_grant,json=splitByGrant,proto3" json:"split_by_grant,omitempty"`
-	PageSize       int32                  `protobuf:"varint,8,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	PageToken      string                 `protobuf:"bytes,9,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
-	SplitByRate    bool                   `protobuf:"varint,10,opt,name=split_by_rate,json=splitByRate,proto3" json:"split_by_rate,omitempty"`
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	TenantId  string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	GatewayId string                 `protobuf:"bytes,2,opt,name=gateway_id,json=gatewayId,proto3" json:"gateway_id,omitempty"`
+	StartTime *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`
+	EndTime   *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=end_time,json=endTime,proto3" json:"end_time,omitempty"`
+	// DAY selects whole Shanghai days by midnight within [start_time, end_time).
+	Granularity    UsageGranularity `protobuf:"varint,5,opt,name=granularity,proto3,enum=proxycontrol.v1.UsageGranularity" json:"granularity,omitempty"`
+	SplitByGateway bool             `protobuf:"varint,6,opt,name=split_by_gateway,json=splitByGateway,proto3" json:"split_by_gateway,omitempty"`
+	SplitByGrant   bool             `protobuf:"varint,7,opt,name=split_by_grant,json=splitByGrant,proto3" json:"split_by_grant,omitempty"`
+	PageSize       int32            `protobuf:"varint,8,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageToken      string           `protobuf:"bytes,9,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	SplitByRate    bool             `protobuf:"varint,10,opt,name=split_by_rate,json=splitByRate,proto3" json:"split_by_rate,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }

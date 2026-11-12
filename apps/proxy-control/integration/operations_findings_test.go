@@ -2,6 +2,8 @@ package integration
 
 import (
 	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -78,6 +80,41 @@ func TestOperationsRecordAnomalies(t *testing.T) {
 			testfixture.AssertStatus(t, testfixture.Request(f.http, "GET", anomaliesPath+"?tenant_id=alpha&page_token="+token, "", operator), 400, "INVALID_PAGE_TOKEN")
 		}
 		path = anomaliesPath + "?page_size=1&page_token=" + token
+	}
+
+	// The operator uses the returned locator on a separately accessible
+	// gateway file. Control only receives the HTTP batch.
+	first := recorder(0, "client-a", beforeMidnight, 10, 20, 10, 20)
+	bad := recorder(first.GetEndOffset(), "client-a", beforeMidnight, 10, 20, 11, 20)
+	root := t.TempDir()
+	dir := filepath.Join(root, "gateway-a", "boot")
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "sessions"), []byte(first.GetLine()+"\n"+bad.GetLine()+"\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if ack := submit(t, f, "gateway-a", reportToken, first, bad); ack.GetBillable() != 1 || ack.GetQuarantined() != 1 {
+		t.Fatalf("unexpected dispositions: %v", ack)
+	}
+	var located v1.ListRecordAnomaliesResponse
+	read(anomaliesPath+"?gateway_id=gateway-a&boot_id=boot&tenant_id=alpha&kind=invalid_counters", &located)
+	if len(located.GetAnomalies()) != 1 {
+		t.Fatalf("expected one recorded anomaly: %v", &located)
+	}
+	row := located.GetAnomalies()[0]
+	file, err := os.Open(filepath.Join(root, row.GetGatewayId(), row.GetBootId(), row.GetFileId()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := file.Close(); err != nil {
+			t.Error(err)
+		}
+	})
+	line := make([]byte, len(bad.GetLine())+1)
+	if _, err := file.ReadAt(line, int64(row.GetFileOffset())); err != nil || string(line) != bad.GetLine()+"\n" {
+		t.Fatalf("anomaly offset did not locate the quarantined Recorder line: %v", err)
 	}
 }
 

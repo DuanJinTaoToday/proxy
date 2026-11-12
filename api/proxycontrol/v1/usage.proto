@@ -93,6 +93,7 @@ message QueryUsageRequest {
   string gateway_id = 2;
   google.protobuf.Timestamp start_time = 3;
   google.protobuf.Timestamp end_time = 4;
+  // DAY selects whole Shanghai days by midnight within [start_time, end_time).
   UsageGranularity granularity = 5;
   bool split_by_gateway = 6;
   bool split_by_grant = 7;

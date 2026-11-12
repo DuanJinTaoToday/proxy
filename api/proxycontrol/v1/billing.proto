@@ -72,6 +72,8 @@ message ListBillingRatesRequest {
   string scope_id = 2;
   int32 page_size = 3;
   string page_token = 4;
+  // Exact version lookup. Omit scope_type and scope_id when using rate_id.
+  string rate_id = 5;
 }
 
 message BillingRateVersion {

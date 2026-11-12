@@ -70,13 +70,10 @@ func readFindingPage[T any](list string, filter FindingFilter, size int, token s
 	if after != nil && (after.DetectedAt.IsZero() || after.ID < 0 || after.GatewayID == "" || after.BootID == "") {
 		return page, errInvalidPageToken
 	}
-	page.Items, err = load(after, size+1)
+	rows, err := load(after, size+1)
 	if err != nil {
 		return page, err
 	}
-	if len(page.Items) > size {
-		page.Items = page.Items[:size]
-		page.NextToken, err = cursor.next(key(page.Items[size-1]))
-	}
+	page.Items, page.NextToken, err = finishPage(rows, size, cursor, key)
 	return page, err
 }
