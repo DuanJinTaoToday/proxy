@@ -7,6 +7,7 @@ option go_package = "github.com/DuanJinTaoToday/proxy/apps/proxy-control/interna
 message Bootstrap {
   string http_addr = 1;
   Access access = 2;
+  ProxyAuth proxy_auth = 4;
 }
 
 message Access {
@@ -36,4 +37,8 @@ enum TenantRole {
   TENANT_ROLE_UNSPECIFIED = 0;
   TENANT_ROLE_MEMBER = 1;
   TENANT_ROLE_ADMIN = 2;
+}
+
+message ProxyAuth {
+  string database_dsn_env = 1;
 }

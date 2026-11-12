@@ -74,6 +74,7 @@ type Bootstrap struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	HttpAddr      string                 `protobuf:"bytes,1,opt,name=http_addr,json=httpAddr,proto3" json:"http_addr,omitempty"`
 	Access        *Access                `protobuf:"bytes,2,opt,name=access,proto3" json:"access,omitempty"`
+	ProxyAuth     *ProxyAuth             `protobuf:"bytes,4,opt,name=proxy_auth,json=proxyAuth,proto3" json:"proxy_auth,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -118,6 +119,13 @@ func (x *Bootstrap) GetHttpAddr() string {
 func (x *Bootstrap) GetAccess() *Access {
 	if x != nil {
 		return x.Access
+	}
+	return nil
+}
+
+func (x *Bootstrap) GetProxyAuth() *ProxyAuth {
+	if x != nil {
+		return x.ProxyAuth
 	}
 	return nil
 }
@@ -354,14 +362,60 @@ func (x *Membership) GetDisabled() bool {
 	return false
 }
 
+type ProxyAuth struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	DatabaseDsnEnv string                 `protobuf:"bytes,1,opt,name=database_dsn_env,json=databaseDsnEnv,proto3" json:"database_dsn_env,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *ProxyAuth) Reset() {
+	*x = ProxyAuth{}
+	mi := &file_bootstrap_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ProxyAuth) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ProxyAuth) ProtoMessage() {}
+
+func (x *ProxyAuth) ProtoReflect() protoreflect.Message {
+	mi := &file_bootstrap_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ProxyAuth.ProtoReflect.Descriptor instead.
+func (*ProxyAuth) Descriptor() ([]byte, []int) {
+	return file_bootstrap_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *ProxyAuth) GetDatabaseDsnEnv() string {
+	if x != nil {
+		return x.DatabaseDsnEnv
+	}
+	return ""
+}
+
 var File_bootstrap_proto protoreflect.FileDescriptor
 
 const file_bootstrap_proto_rawDesc = "" +
 	"\n" +
-	"\x0fbootstrap.proto\x12\x16proxycontrol.config.v1\"`\n" +
+	"\x0fbootstrap.proto\x12\x16proxycontrol.config.v1\"\xa2\x01\n" +
 	"\tBootstrap\x12\x1b\n" +
 	"\thttp_addr\x18\x01 \x01(\tR\bhttpAddr\x126\n" +
-	"\x06access\x18\x02 \x01(\v2\x1e.proxycontrol.config.v1.AccessR\x06access\"v\n" +
+	"\x06access\x18\x02 \x01(\v2\x1e.proxycontrol.config.v1.AccessR\x06access\x12@\n" +
+	"\n" +
+	"proxy_auth\x18\x04 \x01(\v2!.proxycontrol.config.v1.ProxyAuthR\tproxyAuth\"v\n" +
 	"\x06Access\x122\n" +
 	"\x05users\x18\x01 \x03(\v2\x1c.proxycontrol.config.v1.UserR\x05users\x128\n" +
 	"\atenants\x18\x02 \x03(\v2\x1e.proxycontrol.config.v1.TenantR\atenants\"\xc1\x01\n" +
@@ -377,7 +431,9 @@ const file_bootstrap_proto_rawDesc = "" +
 	"Membership\x12\x1b\n" +
 	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x126\n" +
 	"\x04role\x18\x02 \x01(\x0e2\".proxycontrol.config.v1.TenantRoleR\x04role\x12\x1a\n" +
-	"\bdisabled\x18\x03 \x01(\bR\bdisabled*X\n" +
+	"\bdisabled\x18\x03 \x01(\bR\bdisabled\"5\n" +
+	"\tProxyAuth\x12(\n" +
+	"\x10database_dsn_env\x18\x01 \x01(\tR\x0edatabaseDsnEnv*X\n" +
 	"\n" +
 	"TenantRole\x12\x1b\n" +
 	"\x17TENANT_ROLE_UNSPECIFIED\x10\x00\x12\x16\n" +
@@ -397,7 +453,7 @@ func file_bootstrap_proto_rawDescGZIP() []byte {
 }
 
 var file_bootstrap_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_bootstrap_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_bootstrap_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_bootstrap_proto_goTypes = []any{
 	(TenantRole)(0),    // 0: proxycontrol.config.v1.TenantRole
 	(*Bootstrap)(nil),  // 1: proxycontrol.config.v1.Bootstrap
@@ -405,18 +461,20 @@ var file_bootstrap_proto_goTypes = []any{
 	(*User)(nil),       // 3: proxycontrol.config.v1.User
 	(*Tenant)(nil),     // 4: proxycontrol.config.v1.Tenant
 	(*Membership)(nil), // 5: proxycontrol.config.v1.Membership
+	(*ProxyAuth)(nil),  // 6: proxycontrol.config.v1.ProxyAuth
 }
 var file_bootstrap_proto_depIdxs = []int32{
 	2, // 0: proxycontrol.config.v1.Bootstrap.access:type_name -> proxycontrol.config.v1.Access
-	3, // 1: proxycontrol.config.v1.Access.users:type_name -> proxycontrol.config.v1.User
-	4, // 2: proxycontrol.config.v1.Access.tenants:type_name -> proxycontrol.config.v1.Tenant
-	5, // 3: proxycontrol.config.v1.User.memberships:type_name -> proxycontrol.config.v1.Membership
-	0, // 4: proxycontrol.config.v1.Membership.role:type_name -> proxycontrol.config.v1.TenantRole
-	5, // [5:5] is the sub-list for method output_type
-	5, // [5:5] is the sub-list for method input_type
-	5, // [5:5] is the sub-list for extension type_name
-	5, // [5:5] is the sub-list for extension extendee
-	0, // [0:5] is the sub-list for field type_name
+	6, // 1: proxycontrol.config.v1.Bootstrap.proxy_auth:type_name -> proxycontrol.config.v1.ProxyAuth
+	3, // 2: proxycontrol.config.v1.Access.users:type_name -> proxycontrol.config.v1.User
+	4, // 3: proxycontrol.config.v1.Access.tenants:type_name -> proxycontrol.config.v1.Tenant
+	5, // 4: proxycontrol.config.v1.User.memberships:type_name -> proxycontrol.config.v1.Membership
+	0, // 5: proxycontrol.config.v1.Membership.role:type_name -> proxycontrol.config.v1.TenantRole
+	6, // [6:6] is the sub-list for method output_type
+	6, // [6:6] is the sub-list for method input_type
+	6, // [6:6] is the sub-list for extension type_name
+	6, // [6:6] is the sub-list for extension extendee
+	0, // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_bootstrap_proto_init() }
@@ -430,7 +488,7 @@ func file_bootstrap_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_bootstrap_proto_rawDesc), len(file_bootstrap_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   5,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
