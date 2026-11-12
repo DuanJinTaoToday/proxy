@@ -4,6 +4,8 @@
 
 > 部分条款由 [ADR 0004 一期计费入库与运营追溯](0004-billing-ingestion-and-audit.md#取代条款) 取代，其余决定继续适用。
 
+> 认证部署与准入时效的现行约定见 [ADR 0005 一期代理认证可用性](0005-proxy-auth-availability.md#取代条款)。
+
 ## 背景
 
 [开发规范](../standards/proxy-development-conventions.md#接口与依赖)要求平台自有接口以 Protobuf 定义，归 `api/proxycontrol/v1/`，用 `google.api.http` 声明 HTTP 路由。GOST 认证插件遵循 GOST 自有协议。表结构与计费口径见 [ADR 0001](0001-usage-data-model.md)，调用方身份见 [ADR 0002](0002-service-and-proxy-identity.md)。
@@ -91,6 +93,8 @@ message CompleteReplayResponse {}
 | `429`、`5xx`、超时、连接失败 | — | 未确认。保留文件，从未确认位置退避重发。 |
 
 ### `gateway_auth.proto`：认证与准入
+
+现行认证可用性约定见 [ADR 0005 一期代理认证可用性](0005-proxy-auth-availability.md#取代条款)。
 
 | RPC | 路由 | 说明 |
 | --- | --- | --- |
