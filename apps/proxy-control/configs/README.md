@@ -20,3 +20,35 @@ go run ./apps/proxy-control/cmd -conf apps/proxy-control/configs/access.example.
 登录后通过 `Authorization: Bearer <access_token>` 传递令牌。无有效身份返回 401，无权限返回 403。租户管理员只获得其有效成员关系内的权限。业务接口调用 `access.Service.Require`，传入本次实际操作的租户和服务端指定的权限。
 
 默认配置允许启动健康检查，但没有预置登录账号。预置成员关系由启动配置加载，变更后重启控制面生效。会话有效期为八小时，签名密钥随进程启动生成，因此重启后需要重新登录。对外访问由部署入口提供 HTTPS 和登录频率限制。
+
+## Recorder 上报与租户用量
+
+给控制面配置增加以下字段，并通过环境变量注入 PostgreSQL DSN。
+
+```yaml
+usage:
+  database_dsn_env: PROXY_CONTROL_DATABASE_DSN
+  max_batch_records: 1000
+  max_batch_body_bytes: 1048576
+```
+
+从仓库根目录执行 Goose 迁移。启动用量服务前还需应用 #3 的凭据表迁移，启动时会检查 `proxy_credentials` 映射。用量服务按上海自然日创建和删除分钟分区，运行账号需要相应的 DDL 权限以及计量表的读写权限。
+
+```sh
+./.tools/bin/goose -dir apps/proxy-control/migrations postgres "$PROXY_CONTROL_DATABASE_DSN" up
+make -C apps/proxy-control pb
+make -C apps/proxy-control dao
+```
+
+`make dao` 从 `PROXY_CONTROL_DAO_DSN` 指向的已迁移 Dev 数据库读取表结构，在只读事务中执行。连接账号需能通过 PostgreSQL 的 `information_schema` 读取主键约束，例如表所有者通过 `default_transaction_read_only=on` 建立只读连接。
+
+运营预置 `gateways` 与 `gateway_tokens`，令牌原文为至少 32 字节随机值的无填充 base64url 编码。同一网关同一范围最多保留两个有效令牌。数据库只写编码后令牌的 SHA-256 二进制摘要，采集器通过 HTTPS 将令牌放在 `Authorization: Bearer …` 中。`SubmitBatch` 通过 #3 的 `proxy_credentials.client_id → tenant_id` 映射归集，映射在凭据停用后仍可查询。
+
+两个租户接口沿用控制台会话令牌。日用量的起止日期使用上海自然日，首尾日期都包含在内，最多 93 天。日用量和余额响应按 Protobuf JSON 编码，64 位字节数字段用字符串表示。
+
+PostgreSQL 验收用例通过真实 HTTP 路由运行，并在独立临时 schema 中预置 #3 的映射。给本地测试数据库配置有 schema 创建权限的 URL，再运行全量测试。
+
+```sh
+PROXY_CONTROL_TEST_DSN="postgres://…/proxy_test" go test ./...
+make -C apps/proxy-control lint
+```

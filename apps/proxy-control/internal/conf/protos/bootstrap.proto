@@ -7,6 +7,7 @@ option go_package = "github.com/DuanJinTaoToday/proxy/apps/proxy-control/interna
 message Bootstrap {
   string http_addr = 1;
   Access access = 2;
+  Usage usage = 3;
 }
 
 message Access {
@@ -36,4 +37,10 @@ enum TenantRole {
   TENANT_ROLE_UNSPECIFIED = 0;
   TENANT_ROLE_MEMBER = 1;
   TENANT_ROLE_ADMIN = 2;
+}
+
+message Usage {
+  string database_dsn_env = 1;
+  uint32 max_batch_records = 2;
+  uint32 max_batch_body_bytes = 3;
 }

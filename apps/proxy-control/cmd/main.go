@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"log"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/go-kratos/kratos/v3"
 	"github.com/go-kratos/kratos/v3/config"
 	"github.com/go-kratos/kratos/v3/config/file"
+	kratoshttp "github.com/go-kratos/kratos/v3/transport/http"
 )
 
 func main() {
@@ -41,6 +43,28 @@ func run(path string) error {
 	if err != nil {
 		return err
 	}
-	httpServer := server.NewHTTPServer(settings.GetHttpAddr(), accessService)
+	usageSettings := settings.GetUsage()
+	httpServer := server.NewHTTPServer(settings.GetHttpAddr(), accessService,
+		kratoshttp.RequestDecoder(server.ReportingDecoder(int64(usageSettings.GetMaxBatchBodyBytes()))),
+		kratoshttp.ResponseEncoder(server.UsageResponseEncoder),
+	)
+	if usageSettings != nil {
+		usageService, closeDB, err := openUsage(usageSettings, accessService)
+		if err != nil {
+			return err
+		}
+		defer closeDB()
+		server.RegisterUsage(httpServer, usageService)
+		ctx, cancel := context.WithCancel(context.Background())
+		done := make(chan struct{})
+		go func() {
+			defer close(done)
+			maintainUsage(ctx, usageService)
+		}()
+		defer func() {
+			cancel()
+			<-done
+		}()
+	}
 	return kratos.New(kratos.Name("proxy-control"), kratos.Server(httpServer)).Run()
 }

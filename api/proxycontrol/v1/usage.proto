@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+package proxycontrol.v1;
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1";
+
+service UsageService {
+  rpc GetTenantDailyUsage(DailyUsageRequest) returns (DailyUsageResponse) {
+    option (google.api.http) = { get: "/v1/tenants/{tenant_id}/usage/daily" };
+  }
+  rpc GetTenantBalance(TenantBalanceRequest) returns (TenantBalance) {
+    option (google.api.http) = { get: "/v1/tenants/{tenant_id}/balance" };
+  }
+}
+
+message DailyUsageRequest {
+  string tenant_id = 1;
+  string start_date = 2;
+  string end_date = 3;
+}
+
+message TenantBalanceRequest {
+  string tenant_id = 1;
+}
+
+message UsageAmount {
+  uint64 input_bytes = 1;
+  uint64 output_bytes = 2;
+  uint64 total_bytes = 3;
+  uint64 billable_bytes = 4;
+}
+
+message DailyUsage {
+  string date = 1;
+  UsageAmount amount = 2;
+}
+
+message DailyUsageResponse {
+  repeated DailyUsage days = 1;
+  google.protobuf.Timestamp last_received_at = 2;
+}
+
+message TenantBalance {
+  string tenant_id = 1;
+  int64 available_bytes = 2;
+  uint64 overdraft_bytes = 3;
+  uint64 admission_threshold_bytes = 4;
+  uint64 warning_threshold_bytes = 5;
+  google.protobuf.Timestamp warning_since = 6;
+  repeated TrafficGrant grants = 7;
+}
+
+message TrafficGrant {
+  string grant_id = 1;
+  uint64 granted_bytes = 2;
+  uint64 used_bytes = 3;
+  google.protobuf.Timestamp starts_at = 4;
+  google.protobuf.Timestamp expires_at = 5;
+  string source = 6;
+}
