@@ -37,6 +37,17 @@
 **API Extraction（API 提取）**  
 租户调用平台提取接口获得供应商 `IP_List`，再直连列表中的入口。这部分流量由供应商计量，平台按租户拉取。
 
+## 静态 IP
+
+**Static IP Resource（静态 IP 资源）**\
+供应商提供、可由平台分配给租户的固定代理资源。
+
+**Static IP Allocation（静态 IP 分配）**\
+一项静态 IP 资源在特定有效期内归属某个租户的记录。
+
+**Static IP Delivery（静态 IP 交付）**\
+租户实际获得已分配静态 IP 资源的可用接入信息和权限。
+
 ## 用量与账务
 
 **Usage Event（用量事件）**  
@@ -92,3 +103,6 @@ GOST 为代理会话写入的流量快照，包括周期记录 `interim` 和结�
 
 **Billing Transaction（账务流水）**  
 账户已发生的资金变动记录，例如扣款或退款。
+
+**Supplier Cost（供应商成本）**\
+平台按采购条款承担的供应商资源或用量成本。
