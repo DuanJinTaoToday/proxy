@@ -1,17 +1,20 @@
 # proxy-console
 
-控制台前端，面向租户与运营。目前该目录只有 [AGENTS.md](AGENTS.md)，尚未开始实现。
+一期控制台采用 Vue 3、TypeScript、Vite 和 Vue Router。租户成员登录后可以切换有权访问的租户，查询上海自然日的用量和额度。
 
-## 规划功能（一期）
+## 本地运行
 
-- 租户：登录并选择租户，按日期范围查看每日上下行流量、计费流量、剩余额度与低额度提醒
-- 运营：按租户、网关实例和时间段查询用量，查看可能的用量缺口，为租户充值额度并配置倍率与准入门槛
+在本目录运行 `npm ci`，再运行 `npm run dev`。开发服务器默认将 `/v1/` 请求转发给 `http://127.0.0.1:8000`。可在启动前设置 `PROXY_CONTROL_URL` 指向本地控制面。
 
-## 对接
+## 构建与部署
 
-后端为 [proxy-control](../proxy-control/README.md)，接口定义见 [`api/proxycontrol`](../../api/proxycontrol/v1/)。
+`npm run build` 会运行 TypeScript 检查并生成 `dist/`。在同一个 HTTPS 站点托管静态产物和以下控制台 API，API 转发保留路径和查询参数。前端页面路径回落到 `index.html`，未匹配的 API 返回错误状态。
 
-## 文档
+| 方法 | 控制台 API |
+| --- | --- |
+| POST | `/v1/access/login` |
+| GET | `/v1/access/tenants` |
+| GET | `/v1/tenants/{tenant_id}/usage/daily` |
+| GET | `/v1/tenants/{tenant_id}/balance` |
 
-- [一期 Spec](../../docs/features/proxy-phase-one/proxy-phase-one-spec.md)
-- [开发规范：应用分层与测试归属](../../docs/standards/proxy-development-conventions.md#应用分层与测试归属)
+正式环境复用哪个 HTTPS 入口在部署时确认。参阅[开发规范](../../docs/standards/proxy-development-conventions.md#控制台技术栈)和[控制面 API](../../api/proxycontrol/v1/)。

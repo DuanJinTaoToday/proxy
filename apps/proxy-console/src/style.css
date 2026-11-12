@@ -1,0 +1,82 @@
+* { box-sizing: border-box; }
+
+:root {
+  font-family: Inter, "Microsoft YaHei", "PingFang SC", sans-serif;
+  color: #142321;
+  background: #f2f5f3;
+  font-synthesis: none;
+  --muted: #50615c;
+  --line: #dbe3df;
+  --accent: #145a49;
+  --surface: #fff;
+}
+
+body { margin: 0; }
+h1, h2, p { margin: 0; }
+h1 { font-size: clamp(1.8rem, 4vw, 2.5rem); letter-spacing: -.04em; }
+h2 { font-size: 1.1rem; }
+:focus-visible { outline: 3px solid #297962; outline-offset: 3px; }
+
+.shell { width: min(1120px, calc(100% - 48px)); margin-inline: auto; }
+.topbar { background: var(--surface); border-bottom: 1px solid var(--line); }
+.topbar-inner { min-height: 68px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.brand { display: flex; align-items: center; gap: 12px; font-weight: 750; }
+.brand-mark {
+  width: 22px;
+  height: 22px;
+  border: 6px solid var(--accent);
+  border-radius: 6px 6px 6px 0;
+}
+.skip-link { position: absolute; left: 16px; top: 12px; z-index: 1; padding: 10px; background: var(--surface); color: var(--accent); }
+.skip-link:not(:focus) { clip-path: inset(50%); }
+main { padding-block: 32px 48px; }
+
+.page-heading { display: flex; justify-content: space-between; align-items: end; gap: 16px; margin-bottom: 20px; }
+.tenant-picker { min-width: min(220px, 100%); max-width: 100%; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 16px; min-width: 0; }
+.login-panel { max-width: 420px; margin: 48px auto 0; padding: clamp(20px, 5vw, 36px); }
+.login-form { display: grid; gap: 16px; margin-top: 24px; }
+.filters { display: flex; flex-wrap: wrap; align-items: end; gap: 14px; padding: 16px 20px; }
+.filters .error { width: 100%; }
+label { display: grid; gap: 6px; font-size: .875rem; font-weight: 650; }
+input, select, button { font: inherit; min-height: 44px; border-radius: 7px; }
+input, select { border: 1px solid #adbbb5; color: inherit; padding: 8px 10px; background: var(--surface); min-width: 0; }
+select { width: 100%; }
+button { border: 1px solid var(--accent); padding: 8px 16px; background: var(--accent); color: white; cursor: pointer; font-weight: 650; }
+button:hover { background: #0e493a; }
+button:active { transform: translateY(1px); }
+button:disabled { cursor: wait; opacity: .65; }
+button.secondary { background: var(--surface); border-color: #adbbb5; color: var(--accent); }
+button.secondary:hover { background: #e9f2ee; }
+
+.overview { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; padding: 20px; }
+.balance { font-size: clamp(1.6rem, 4vw, 2.6rem); line-height: 1.15; margin: 8px 0; font-weight: 750; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.balance small { font-size: .45em; }
+.debt, .error { color: #942e21; }
+.notices { max-width: 54ch; padding: 12px 16px; border: 1px solid #e9d2a0; border-radius: 7px; background: #fff5db; color: #674a12; }
+.notices p + p { margin-top: 6px; }
+.section-head { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding: 16px 20px; }
+.muted, .empty { color: var(--muted); }
+.muted { font-size: .875rem; }
+h2 + .muted { margin-top: 6px; }
+.state, .empty { padding: 20px; }
+.state button { margin-top: 12px; }
+.table-wrap { overflow-x: auto; border-radius: 0 0 12px 12px; }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+th, td { padding: 12px 20px; border-top: 1px solid var(--line); white-space: nowrap; text-align: right; }
+th:first-child { text-align: left; }
+thead { background: #edf3f0; font-size: .875rem; }
+tbody th { font-weight: 500; }
+
+@media (max-width: 600px) {
+  .shell { width: calc(100% - 32px); }
+  main { padding-block: 22px 32px; }
+  .page-heading { align-items: stretch; flex-direction: column; }
+  .filters { display: grid; grid-template-columns: minmax(0, 1fr); }
+  .login-panel { margin-top: 18px; }
+  th, td { padding-inline: 14px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button:active { transform: none; }
+}
