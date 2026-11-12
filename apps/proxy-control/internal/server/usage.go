@@ -5,16 +5,16 @@ import (
 	stdhttp "net/http"
 
 	v1 "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1"
-	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/usage"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/service"
 	"github.com/go-kratos/kratos/v3/errors"
 	"github.com/go-kratos/kratos/v3/transport/http"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
 
-func RegisterUsage(srv *http.Server, service *usage.Service) {
-	v1.RegisterReportingServiceHTTPServer(srv, service)
-	v1.RegisterUsageServiceHTTPServer(srv, service)
+func RegisterUsage(srv *http.Server, usage *service.Usage) {
+	v1.RegisterReportingServiceHTTPServer(srv, usage)
+	v1.RegisterUsageServiceHTTPServer(srv, usage)
 }
 
 func ReportingDecoder(maxBytes int64) http.DecodeRequestFunc {
@@ -22,7 +22,12 @@ func ReportingDecoder(maxBytes int64) http.DecodeRequestFunc {
 		maxBytes = 1 << 20
 	}
 	return func(req *stdhttp.Request, body any) error {
-		batch, ok := body.(*v1.SubmitBatchRequest)
+		message, ok := body.(proto.Message)
+		switch body.(type) {
+		case *v1.SubmitBatchRequest, *v1.ReportLifecycleRequest:
+		default:
+			return DecodeProxyAuthRequest(req, body)
+		}
 		if !ok {
 			return DecodeProxyAuthRequest(req, body)
 		}
@@ -33,7 +38,7 @@ func ReportingDecoder(maxBytes int64) http.DecodeRequestFunc {
 		if int64(len(data)) > maxBytes {
 			return errors.New(413, "BATCH_TOO_LARGE", "Recorder batch exceeds the body limit")
 		}
-		if err != nil || protojson.Unmarshal(data, batch) != nil {
+		if err != nil || protojson.Unmarshal(data, message) != nil {
 			return errors.BadRequest("INVALID_BATCH", "invalid Recorder batch body")
 		}
 		return nil

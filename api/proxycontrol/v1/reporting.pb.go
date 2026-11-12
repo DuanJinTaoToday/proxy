@@ -10,6 +10,7 @@ import (
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -218,11 +219,108 @@ func (x *SubmitBatchResponse) GetDuplicates() uint32 {
 	return 0
 }
 
+// A missing exit timestamp reports a heartbeat for the running boot.
+type ReportLifecycleRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	GatewayId     string                 `protobuf:"bytes,1,opt,name=gateway_id,json=gatewayId,proto3" json:"gateway_id,omitempty"`
+	BootId        string                 `protobuf:"bytes,2,opt,name=boot_id,json=bootId,proto3" json:"boot_id,omitempty"`
+	ExitedAt      *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=exited_at,json=exitedAt,proto3" json:"exited_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReportLifecycleRequest) Reset() {
+	*x = ReportLifecycleRequest{}
+	mi := &file_proxycontrol_v1_reporting_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReportLifecycleRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReportLifecycleRequest) ProtoMessage() {}
+
+func (x *ReportLifecycleRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proxycontrol_v1_reporting_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReportLifecycleRequest.ProtoReflect.Descriptor instead.
+func (*ReportLifecycleRequest) Descriptor() ([]byte, []int) {
+	return file_proxycontrol_v1_reporting_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *ReportLifecycleRequest) GetGatewayId() string {
+	if x != nil {
+		return x.GatewayId
+	}
+	return ""
+}
+
+func (x *ReportLifecycleRequest) GetBootId() string {
+	if x != nil {
+		return x.BootId
+	}
+	return ""
+}
+
+func (x *ReportLifecycleRequest) GetExitedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ExitedAt
+	}
+	return nil
+}
+
+type ReportLifecycleResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReportLifecycleResponse) Reset() {
+	*x = ReportLifecycleResponse{}
+	mi := &file_proxycontrol_v1_reporting_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReportLifecycleResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReportLifecycleResponse) ProtoMessage() {}
+
+func (x *ReportLifecycleResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proxycontrol_v1_reporting_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReportLifecycleResponse.ProtoReflect.Descriptor instead.
+func (*ReportLifecycleResponse) Descriptor() ([]byte, []int) {
+	return file_proxycontrol_v1_reporting_proto_rawDescGZIP(), []int{4}
+}
+
 var File_proxycontrol_v1_reporting_proto protoreflect.FileDescriptor
 
 const file_proxycontrol_v1_reporting_proto_rawDesc = "" +
 	"\n" +
-	"\x1fproxycontrol/v1/reporting.proto\x12\x0fproxycontrol.v1\x1a\x1cgoogle/api/annotations.proto\"\x85\x01\n" +
+	"\x1fproxycontrol/v1/reporting.proto\x12\x0fproxycontrol.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x85\x01\n" +
 	"\x12SubmitBatchRequest\x12\x1d\n" +
 	"\n" +
 	"gateway_id\x18\x01 \x01(\tR\tgatewayId\x12\x17\n" +
@@ -241,8 +339,15 @@ const file_proxycontrol_v1_reporting_proto_rawDesc = "" +
 	"\vquarantined\x18\x03 \x01(\rR\vquarantined\x12\x1e\n" +
 	"\n" +
 	"duplicates\x18\x04 \x01(\rR\n" +
-	"duplicates2\x8e\x01\n" +
-	"\x10ReportingService\x12z\n" +
+	"duplicates\"\x89\x01\n" +
+	"\x16ReportLifecycleRequest\x12\x1d\n" +
+	"\n" +
+	"gateway_id\x18\x01 \x01(\tR\tgatewayId\x12\x17\n" +
+	"\aboot_id\x18\x02 \x01(\tR\x06bootId\x127\n" +
+	"\texited_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\bexitedAt\"\x19\n" +
+	"\x17ReportLifecycleResponse2\x99\x02\n" +
+	"\x10ReportingService\x12\x88\x01\n" +
+	"\x0fReportLifecycle\x12'.proxycontrol.v1.ReportLifecycleRequest\x1a(.proxycontrol.v1.ReportLifecycleResponse\"\"\x82\xd3\xe4\x93\x02\x1c:\x01*\"\x17/v1/reporting/lifecycle\x12z\n" +
 	"\vSubmitBatch\x12#.proxycontrol.v1.SubmitBatchRequest\x1a$.proxycontrol.v1.SubmitBatchResponse\" \x82\xd3\xe4\x93\x02\x1a:\x01*\"\x15/v1/reporting/batchesBEZCgithub.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1b\x06proto3"
 
 var (
@@ -257,21 +362,27 @@ func file_proxycontrol_v1_reporting_proto_rawDescGZIP() []byte {
 	return file_proxycontrol_v1_reporting_proto_rawDescData
 }
 
-var file_proxycontrol_v1_reporting_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_proxycontrol_v1_reporting_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_proxycontrol_v1_reporting_proto_goTypes = []any{
-	(*SubmitBatchRequest)(nil),  // 0: proxycontrol.v1.SubmitBatchRequest
-	(*RecorderLine)(nil),        // 1: proxycontrol.v1.RecorderLine
-	(*SubmitBatchResponse)(nil), // 2: proxycontrol.v1.SubmitBatchResponse
+	(*SubmitBatchRequest)(nil),      // 0: proxycontrol.v1.SubmitBatchRequest
+	(*RecorderLine)(nil),            // 1: proxycontrol.v1.RecorderLine
+	(*SubmitBatchResponse)(nil),     // 2: proxycontrol.v1.SubmitBatchResponse
+	(*ReportLifecycleRequest)(nil),  // 3: proxycontrol.v1.ReportLifecycleRequest
+	(*ReportLifecycleResponse)(nil), // 4: proxycontrol.v1.ReportLifecycleResponse
+	(*timestamppb.Timestamp)(nil),   // 5: google.protobuf.Timestamp
 }
 var file_proxycontrol_v1_reporting_proto_depIdxs = []int32{
 	1, // 0: proxycontrol.v1.SubmitBatchRequest.records:type_name -> proxycontrol.v1.RecorderLine
-	0, // 1: proxycontrol.v1.ReportingService.SubmitBatch:input_type -> proxycontrol.v1.SubmitBatchRequest
-	2, // 2: proxycontrol.v1.ReportingService.SubmitBatch:output_type -> proxycontrol.v1.SubmitBatchResponse
-	2, // [2:3] is the sub-list for method output_type
-	1, // [1:2] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	5, // 1: proxycontrol.v1.ReportLifecycleRequest.exited_at:type_name -> google.protobuf.Timestamp
+	3, // 2: proxycontrol.v1.ReportingService.ReportLifecycle:input_type -> proxycontrol.v1.ReportLifecycleRequest
+	0, // 3: proxycontrol.v1.ReportingService.SubmitBatch:input_type -> proxycontrol.v1.SubmitBatchRequest
+	4, // 4: proxycontrol.v1.ReportingService.ReportLifecycle:output_type -> proxycontrol.v1.ReportLifecycleResponse
+	2, // 5: proxycontrol.v1.ReportingService.SubmitBatch:output_type -> proxycontrol.v1.SubmitBatchResponse
+	4, // [4:6] is the sub-list for method output_type
+	2, // [2:4] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_proxycontrol_v1_reporting_proto_init() }
@@ -285,7 +396,7 @@ func file_proxycontrol_v1_reporting_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proxycontrol_v1_reporting_proto_rawDesc), len(file_proxycontrol_v1_reporting_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -17,15 +17,37 @@ var _ = new(context.Context)
 
 const _ = http.SupportPackageIsVersion3
 
+const OperationReportingServiceReportLifecycle = "/proxycontrol.v1.ReportingService/ReportLifecycle"
 const OperationReportingServiceSubmitBatch = "/proxycontrol.v1.ReportingService/SubmitBatch"
 
 type ReportingServiceHTTPServer interface {
+	ReportLifecycle(context.Context, *ReportLifecycleRequest) (*ReportLifecycleResponse, error)
 	SubmitBatch(context.Context, *SubmitBatchRequest) (*SubmitBatchResponse, error)
 }
 
 func RegisterReportingServiceHTTPServer(s *http.Server, srv ReportingServiceHTTPServer) {
 	r := s.Route("/")
+	r.Handle("POST", "/v1/reporting/lifecycle", _ReportingService_ReportLifecycle0_HTTP_Handler(srv))
 	r.Handle("POST", "/v1/reporting/batches", _ReportingService_SubmitBatch0_HTTP_Handler(srv))
+}
+
+func _ReportingService_ReportLifecycle0_HTTP_Handler(srv ReportingServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in ReportLifecycleRequest
+		if err := ctx.Bind(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationReportingServiceReportLifecycle)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.ReportLifecycle(ctx, req.(*ReportLifecycleRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*ReportLifecycleResponse)
+		return ctx.Result(200, reply)
+	}
 }
 
 func _ReportingService_SubmitBatch0_HTTP_Handler(srv ReportingServiceHTTPServer) func(ctx http.Context) error {
@@ -48,6 +70,7 @@ func _ReportingService_SubmitBatch0_HTTP_Handler(srv ReportingServiceHTTPServer)
 }
 
 type ReportingServiceHTTPClient interface {
+	ReportLifecycle(ctx context.Context, req *ReportLifecycleRequest, opts ...http.CallOption) (rsp *ReportLifecycleResponse, err error)
 	SubmitBatch(ctx context.Context, req *SubmitBatchRequest, opts ...http.CallOption) (rsp *SubmitBatchResponse, err error)
 }
 
@@ -57,6 +80,23 @@ type ReportingServiceHTTPClientImpl struct {
 
 func NewReportingServiceHTTPClient(client *http.Client) ReportingServiceHTTPClient {
 	return &ReportingServiceHTTPClientImpl{client}
+}
+
+func (c *ReportingServiceHTTPClientImpl) ReportLifecycle(ctx context.Context, in *ReportLifecycleRequest, opts ...http.CallOption) (*ReportLifecycleResponse, error) {
+	var out ReportLifecycleResponse
+	pattern := "/v1/reporting/lifecycle"
+	path := http.BuildPath(pattern, in)
+	opts = append([]http.CallOption{
+		http.Accept("application/protojson"),
+		http.ContentType("application/protojson"),
+		http.Operation(OperationReportingServiceReportLifecycle),
+		http.PathTemplate(pattern),
+	}, opts...)
+	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
 }
 
 func (c *ReportingServiceHTTPClientImpl) SubmitBatch(ctx context.Context, in *SubmitBatchRequest, opts ...http.CallOption) (*SubmitBatchResponse, error) {

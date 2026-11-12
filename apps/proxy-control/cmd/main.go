@@ -1,78 +1,79 @@
 package main
 
 import (
-	"context"
 	"flag"
-	"log"
+	"log/slog"
+	"os"
+	"time"
 
-	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/access"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/conf"
-	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/server"
+	plog "github.com/DuanJinTaoToday/proxy/pkg/log"
 	"github.com/go-kratos/kratos/v3"
 	"github.com/go-kratos/kratos/v3/config"
 	"github.com/go-kratos/kratos/v3/config/file"
-	kratoshttp "github.com/go-kratos/kratos/v3/transport/http"
+	"github.com/go-kratos/kratos/v3/transport"
 )
 
-func main() {
-	path := flag.String("conf", "apps/proxy-control/configs/config.yaml", "path to the control configuration")
-	flag.Parse()
+var (
+	AppName   = "proxy-control"
+	GitTag    = "dev"
+	GitCommit string
+	BuildTime string
+	flagconf  string
+	id, _     = os.Hostname()
+)
 
-	if err := run(*path); err != nil {
-		log.Fatal(err)
-	}
+func init() {
+	flag.StringVar(&flagconf, "conf", "./configs", "configuration directory or init.yaml path")
 }
 
-func run(path string) error {
-	source := config.New(config.WithSource(file.NewSource(path)))
-	defer func() {
-		if err := source.Close(); err != nil {
-			log.Printf("close configuration: %v", err)
-		}
-	}()
-	if err := source.Load(); err != nil {
-		return err
-	}
-
-	var settings conf.Bootstrap
-	if err := source.Scan(&settings); err != nil {
-		return err
-	}
-
-	accessService, err := access.New(settings.GetAccess())
-	if err != nil {
-		return err
-	}
-	usageSettings := settings.GetUsage()
-	httpServer := server.NewHTTPServer(settings.GetHttpAddr(), accessService,
-		kratoshttp.RequestDecoder(server.ReportingDecoder(int64(usageSettings.GetMaxBatchBodyBytes()))),
-		kratoshttp.ResponseEncoder(server.UsageResponseEncoder),
+func newApp(logger *slog.Logger, servers []transport.Server) *kratos.App {
+	return kratos.New(
+		kratos.ID(id),
+		kratos.Name(AppName),
+		kratos.Version(GitTag),
+		kratos.Logger(logger),
+		kratos.Server(servers...),
 	)
-	if authSettings := settings.GetProxyAuth(); authSettings != nil {
-		authService, closeDB, err := openProxyAuth(authSettings, accessService)
-		if err != nil {
-			return err
-		}
-		defer closeDB()
-		server.RegisterProxyAuth(httpServer, authService)
+}
+
+func main() {
+	flag.Parse()
+	time.Local = time.FixedZone("CST", 8*60*60)
+	c := config.New(config.WithSource(file.NewSource(flagconf)))
+	defer func() { _ = c.Close() }()
+	if err := c.Load(); err != nil {
+		panic(err)
 	}
-	if usageSettings != nil {
-		usageService, closeDB, err := openUsage(usageSettings, accessService)
-		if err != nil {
-			return err
-		}
-		defer closeDB()
-		server.RegisterUsage(httpServer, usageService)
-		ctx, cancel := context.WithCancel(context.Background())
-		done := make(chan struct{})
-		go func() {
-			defer close(done)
-			maintainUsage(ctx, usageService)
-		}()
-		defer func() {
-			cancel()
-			<-done
-		}()
+	var settings conf.Config
+	if err := c.Scan(&settings); err != nil {
+		panic(err)
 	}
-	return kratos.New(kratos.Name("proxy-control"), kratos.Server(httpServer)).Run()
+
+	appConf := conf.NewAppConfig(settings.GetSource())
+	defer func() { _ = appConf.Close() }()
+	bootstrap := appConf.GetBootstrap()
+
+	zap := settings.GetZap()
+	logger, closeLogger, err := plog.NewLogger(AppName, plog.Options{
+		File: zap.GetFile(), Console: zap == nil || zap.Console == nil || zap.GetConsole(),
+		Level: zap.GetLevel(), MaxSize: int(zap.GetMaxSize()),
+		MaxBackups: int(zap.GetMaxBackups()), MaxAge: int(zap.GetMaxAge()),
+	})
+	if err != nil {
+		panic(err)
+	}
+	defer closeLogger()
+	slog.SetDefault(logger)
+
+	app, cleanup, err := wireApp(bootstrap.GetServer(), bootstrap.GetData(), bootstrap.GetBiz(), appConf, logger)
+	if err != nil {
+		panic(err)
+	}
+	defer cleanup()
+	logger.Info("service initialized", "config", flagconf, "server_http", bootstrap.GetServer().GetHttp().GetAddr(),
+		"version", GitTag, "commit", GitCommit, "build_time", BuildTime)
+	if err := app.Run(); err != nil {
+		panic(err)
+	}
 }

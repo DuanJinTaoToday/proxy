@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package proxygateway.config.v1;
+
+option go_package = "github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/conf;conf";
+
+message Data {
+  message ACL {
+    message Control {
+      string url = 1;
+      string ca_file = 2;
+      string auth_token = 3;
+      string report_token = 4;
+    }
+    Control control = 1;
+  }
+  message GOST {
+    string binary = 1;
+    string config = 2;
+    string local_auth_token = 3;
+    Wukong wukong = 4;
+  }
+  message Wukong {
+    string address = 1;
+    string username = 2;
+    string password = 3;
+  }
+  message Repo {
+    message Recorder {
+      string spool = 1;
+    }
+    Recorder recorder = 1;
+  }
+
+  reserved 1, 3;
+  reserved "control", "recorder";
+  GOST gost = 2;
+  ACL acl = 4;
+  Repo repo = 5;
+}

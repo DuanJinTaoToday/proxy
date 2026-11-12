@@ -6,12 +6,12 @@ import (
 	stdhttp "net/http"
 
 	v1 "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1"
-	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/proxyauth"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/service"
 	"github.com/go-kratos/kratos/v3/errors"
 	"github.com/go-kratos/kratos/v3/transport/http"
 )
 
-func RegisterProxyAuth(srv *http.Server, auth *proxyauth.Service) {
+func RegisterProxyAuth(srv *http.Server, auth *service.ProxyAuth) {
 	v1.RegisterCredentialServiceHTTPServer(srv, auth)
 	v1.RegisterGatewayAuthServiceHTTPServer(srv, auth)
 }

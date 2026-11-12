@@ -1,0 +1,15 @@
+source:
+  # 相对路径以进程工作目录为准。使用本地副本时改为 ./configs/file/server.local.yaml。
+  file: ./configs/file/server.yaml
+  # 启用 Apollo 时移除 file，取消下面的注释，并填写实际参数。
+  # apollo:
+  #   app_id: ""
+  #   cluster: default
+  #   endpoint: ""
+  #   namespace: server.yaml
+  #   enable_backup: false
+  #   backup_path: "" # 启用本地备份时必填。
+  #   secret: "" # Apollo 要求访问密钥时填写。
+zap:
+  console: true
+  level: info

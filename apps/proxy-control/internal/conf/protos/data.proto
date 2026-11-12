@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package proxycontrol.config.v1;
+
+option go_package = "github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/conf;conf";
+
+message Data {
+  message Repo {
+    message PostgreSQL {
+      string database_dsn = 1;
+    }
+    PostgreSQL proxy_auth = 1;
+    PostgreSQL usage = 2;
+  }
+  Repo repo = 1;
+}

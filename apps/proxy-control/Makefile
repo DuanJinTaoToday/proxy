@@ -7,9 +7,9 @@ CONFIG_DIR := internal/conf
 API_PROTOS := $(wildcard $(API_DIR)/proxycontrol/*/*.proto)
 CONFIG_PROTOS := $(wildcard $(CONFIG_DIR)/protos/*.proto)
 
-.PHONY: build pb api config dao lint
+.PHONY: build pb api config dao lint wire
 build: | bin
-	go build -o bin/proxy-control$(EXE) ./cmd
+	go build -ldflags "$(GO_LDFLAGS)" -o bin/proxy-control$(EXE) ./cmd
 
 bin:
 	$(MKDIR) bin
@@ -23,7 +23,10 @@ config:
 	$(PROTOC) -I "$(CONFIG_DIR)/protos" -I "$(PROTOC_INCLUDE)" --go_out="$(CONFIG_DIR)" --go_opt=paths=source_relative $(CONFIG_PROTOS)
 
 dao:
-	go run ./tools/dao
+	go run ./internal/data/gen/gen.go
 
 lint:
 	$(GOLANGCI_LINT) run ./... ../../api/proxycontrol/...
+
+wire:
+	$(WIRE) ./cmd

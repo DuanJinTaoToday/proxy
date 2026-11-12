@@ -15,3 +15,6 @@ export PATH := $(TOOLS_BIN)$(PATH_SEPARATOR)$(PATH)
 PROTOC := "$(TOOLS_BIN)/protoc$(EXE)"
 PROTOC_INCLUDE := $(REPO_ROOT)/.tools/include
 GOLANGCI_LINT := "$(TOOLS_BIN)/golangci-lint$(EXE)"
+WIRE := "$(TOOLS_BIN)/wire$(EXE)"
+
+GO_LDFLAGS ?=
