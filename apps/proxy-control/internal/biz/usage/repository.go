@@ -79,6 +79,7 @@ type DailyUsage struct {
 type Day struct {
 	DailyTotals
 	TotalBytes uint64
+	StartTime  time.Time
 }
 
 type Balance struct {

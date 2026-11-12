@@ -70,13 +70,42 @@ func (s *Usage) GetTenantDailyUsage(ctx context.Context, req *v1.DailyUsageReque
 	if err != nil {
 		return nil, err
 	}
-	reply := &v1.DailyUsageResponse{LastReceivedAt: timestamp(result.LastReceivedAt)}
+	return dailyUsageResponse(result), nil
+}
+
+func (s *Usage) QueryUsage(ctx context.Context, req *v1.QueryUsageRequest) (*v1.QueryUsageResponse, error) {
+	noStore(ctx)
+	start, _ := readTimestamp(req.GetStartTime())
+	end, _ := readTimestamp(req.GetEndTime())
+	dailyTotal := req.GetGranularity() == v1.UsageGranularity_USAGE_GRANULARITY_DAY &&
+		req.GetGatewayId() == "" && !req.GetSplitByGateway() && !req.GetSplitByGrant() && !req.GetSplitByRate() &&
+		req.GetPageSize() == 0 && req.GetPageToken() == ""
+	result, err := s.biz.QueryUsage(ctx, bearerToken(ctx), req.GetTenantId(), start, end, dailyTotal)
+	if err != nil {
+		return nil, err
+	}
+	reply := &v1.QueryUsageResponse{}
 	for _, day := range result.Days {
-		reply.Days = append(reply.Days, &v1.DailyUsage{Date: day.Date, Amount: &v1.UsageAmount{
-			InputBytes: day.InputBytes, OutputBytes: day.OutputBytes, TotalBytes: day.TotalBytes, BillableBytes: day.BillableBytes,
-		}})
+		reply.Buckets = append(reply.Buckets, &v1.UsageBucket{
+			StartTime: timestamppb.New(day.StartTime),
+			Amount:    dailyAmount(day),
+		})
 	}
 	return reply, nil
+}
+
+func dailyUsageResponse(result *usage.DailyUsage) *v1.DailyUsageResponse {
+	reply := &v1.DailyUsageResponse{LastReceivedAt: timestamp(result.LastReceivedAt)}
+	for _, day := range result.Days {
+		reply.Days = append(reply.Days, &v1.DailyUsage{Date: day.Date, Amount: dailyAmount(day)})
+	}
+	return reply
+}
+
+func dailyAmount(day usage.Day) *v1.UsageAmount {
+	return &v1.UsageAmount{
+		InputBytes: day.InputBytes, OutputBytes: day.OutputBytes, TotalBytes: day.TotalBytes, BillableBytes: day.BillableBytes,
+	}
 }
 
 func (s *Usage) GetTenantBalance(ctx context.Context, req *v1.TenantBalanceRequest) (*v1.TenantBalance, error) {

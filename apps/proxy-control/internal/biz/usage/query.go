@@ -17,6 +17,36 @@ func (s *Service) GetTenantDailyUsage(ctx context.Context, token, id, startDate,
 	if startErr != nil || endErr != nil || start.Year() < 1 || end.Before(start) || !end.Before(start.AddDate(0, 0, 93)) {
 		return nil, errors.BadRequest("INVALID_TIME_RANGE", "date range must contain 1 to 93 Shanghai dates")
 	}
+	return s.dailyUsage(ctx, id, startDate, endDate)
+}
+
+func (s *Service) QueryUsage(ctx context.Context, token, id string, start, end *time.Time, dailyTotal bool) (*DailyUsage, error) {
+	if err := s.access.Require(token, "", access.ReadOperations); err != nil {
+		return nil, err
+	}
+	if id == "" {
+		return nil, errors.BadRequest("TENANT_REQUIRED", "tenant_id is required")
+	}
+	if !dailyTotal {
+		return nil, errors.BadRequest("UNSUPPORTED_USAGE_QUERY", "only unfiltered daily totals are currently supported")
+	}
+	if start == nil || end == nil {
+		return nil, errors.BadRequest("INVALID_TIME_RANGE", "start_time and end_time are required")
+	}
+	from, to := start.In(shanghai), end.In(shanghai)
+	if from.Year() < 1 || to.Year() > 9999 ||
+		!from.Equal(shanghaiDayStart(from)) || !to.Equal(shanghaiDayStart(to)) ||
+		!to.After(from) || to.After(from.AddDate(0, 0, 366)) {
+		return nil, errors.BadRequest("INVALID_TIME_RANGE", "use Shanghai midnight boundaries spanning 1 to 366 days")
+	}
+	return s.dailyUsage(ctx, id, from.Format(time.DateOnly), to.AddDate(0, 0, -1).Format(time.DateOnly))
+}
+
+func shanghaiDayStart(at time.Time) time.Time {
+	return time.Date(at.Year(), at.Month(), at.Day(), 0, 0, 0, 0, shanghai)
+}
+
+func (s *Service) dailyUsage(ctx context.Context, id, startDate, endDate string) (*DailyUsage, error) {
 	rows, lastReceivedAt, err := s.repo.DailyUsage(ctx, id, startDate, endDate)
 	if err != nil {
 		return nil, err
@@ -27,7 +57,11 @@ func (s *Service) GetTenantDailyUsage(ctx context.Context, token, id, startDate,
 		if total < row.InputBytes {
 			return nil, errByteOverflow
 		}
-		response.Days = append(response.Days, Day{DailyTotals: row, TotalBytes: total})
+		at, err := time.ParseInLocation(time.DateOnly, row.Date, shanghai)
+		if err != nil {
+			return nil, err
+		}
+		response.Days = append(response.Days, Day{DailyTotals: row, TotalBytes: total, StartTime: at})
 	}
 	return response, nil
 }

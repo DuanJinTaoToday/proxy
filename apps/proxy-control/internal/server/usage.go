@@ -47,7 +47,7 @@ func ReportingDecoder(maxBytes int64) http.DecodeRequestFunc {
 
 func UsageResponseEncoder(w stdhttp.ResponseWriter, req *stdhttp.Request, response any) error {
 	switch response.(type) {
-	case *v1.SubmitBatchResponse, *v1.DailyUsageResponse, *v1.TenantBalance:
+	case *v1.SubmitBatchResponse, *v1.DailyUsageResponse, *v1.QueryUsageResponse, *v1.TenantBalance:
 		data, err := (protojson.MarshalOptions{UseProtoNames: true}).Marshal(response.(proto.Message))
 		if err != nil {
 			return err
