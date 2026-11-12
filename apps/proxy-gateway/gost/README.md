@@ -18,4 +18,4 @@
 
 控制面整批确认后才更新同目录的 `confirmed.offset`。非法 UTF-8 和已关闭代次的无换行残尾停在原偏移并留证，其他代次继续采集。磁盘使用率 80% 时告警，90% 时升级告警。网关保留 Recorder 文件供补报和追查。
 
-真实悟空测试额外使用 `PROXY_GATEWAY_TEST_BINARY`，并读取控制面目录下的 `configs/file/wukong-test.local.yaml`，字段为 `address`、`username` 和 `password`。测试通过原版 GOST 访问 HTTPS 目标，再查询控制面真实上报的租户日用量。 [GOST 和 PostgreSQL 集成用例配置](../../../docs/standards/proxy-development-conventions.md#pr-检查与业务回归)
+真实悟空测试额外使用 `PROXY_GATEWAY_TEST_BINARY`。通过 `WUKONG_ADDRESS`、`WUKONG_USERNAME` 和 `WUKONG_PASSWORD` 注入联调凭据。三个环境变量都为空时，测试读取控制面目录下的 `configs/file/wukong-test.local.yaml`，字段为 `address`、`username` 和 `password`。用户名填写原始用户名，模板会拼接 SID。测试通过原版 GOST 访问 HTTPS 目标，再查询控制面收到的租户日用量。 [GOST 和 PostgreSQL 集成用例配置](../../../docs/standards/proxy-development-conventions.md#pr-检查与业务回归)

@@ -2,6 +2,7 @@ package recorder_test
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"os"
 	"path/filepath"
@@ -12,6 +13,62 @@ import (
 	recorderdata "github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/data/repo"
 	"google.golang.org/protobuf/proto"
 )
+
+func TestCollectorHonorsBatchLimits(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		maxRecords int
+		maxBytes   int
+	}{
+		{"record count", 1, 1024},
+		// The encoded request fits one fixture record at either offset, but not both.
+		{"encoded byte count", 10, 160},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := t.TempDir()
+			dir := filepath.Join(root, "boot-a")
+			if err := os.Mkdir(dir, 0o700); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(filepath.Join(dir, "sessions.jsonl"), []byte("{}\n{}\n"), 0o600); err != nil {
+				t.Fatal(err)
+			}
+
+			out := &reporting{}
+			collector := recorder.New(recorder.Config{
+				GatewayID: "gateway", MaxRecords: tc.maxRecords, MaxBytes: tc.maxBytes,
+			}, recorderdata.NewSpool(root), out)
+			for i := range 2 {
+				if err := collector.Scan(t.Context()); err != nil {
+					t.Fatal(err)
+				}
+				if len(out.batches) != i+1 {
+					t.Fatalf("scan %d: got %d submissions", i+1, len(out.batches))
+				}
+				batch := out.batches[i]
+				lines := batch.GetRecords()
+				if batch.GetGatewayId() != "gateway" || batch.GetBootId() != "boot-a" ||
+					len(lines) != 1 || lines[0].GetFileId() != "sessions" ||
+					lines[0].GetFileOffset() != uint64(3*i) || lines[0].GetEndOffset() != uint64(3*(i+1)) {
+					t.Fatalf("scan %d: unexpected batch %v", i+1, batch)
+				}
+				raw, err := json.Marshal(batch)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if len(raw) > tc.maxBytes {
+					t.Fatalf("batch size %d exceeds limit %d", len(raw), tc.maxBytes)
+				}
+			}
+			if err := collector.Scan(t.Context()); err != nil {
+				t.Fatal(err)
+			}
+			if len(out.batches) != 2 {
+				t.Fatal("submitted an empty batch")
+			}
+		})
+	}
+}
 
 type reporting struct {
 	batches []*v1.SubmitBatchRequest

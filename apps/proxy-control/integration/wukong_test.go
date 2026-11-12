@@ -29,20 +29,28 @@ func TestWukongGatewayReportsRealRecorderUsage(t *testing.T) {
 	if gateway == "" || gost == "" {
 		t.Skip("set the gateway and GOST test binaries")
 	}
-	rawWukong, err := os.ReadFile("../configs/file/wukong-test.local.yaml")
-	if os.IsNotExist(err) {
-		t.Skip("configure configs/file/wukong-test.local.yaml")
-	}
-	if err != nil {
-		t.Fatal(err)
-	}
 	var wukong struct {
 		Address  string `yaml:"address"`
 		Username string `yaml:"username"`
 		Password string `yaml:"password"`
 	}
-	if err := yaml.Unmarshal(rawWukong, &wukong); err != nil || wukong.Address == "" || wukong.Username == "" || wukong.Password == "" {
-		t.Fatal("invalid Wukong test configuration")
+	wukong.Address = os.Getenv("WUKONG_ADDRESS")
+	wukong.Username = os.Getenv("WUKONG_USERNAME")
+	wukong.Password = os.Getenv("WUKONG_PASSWORD")
+	if wukong.Address == "" && wukong.Username == "" && wukong.Password == "" {
+		raw, err := os.ReadFile("../configs/file/wukong-test.local.yaml")
+		if os.IsNotExist(err) {
+			t.Skip("set WUKONG_ADDRESS, WUKONG_USERNAME and WUKONG_PASSWORD or configure configs/file/wukong-test.local.yaml")
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := yaml.Unmarshal(raw, &wukong); err != nil {
+			t.Fatal("invalid Wukong test configuration")
+		}
+	}
+	if wukong.Address == "" || wukong.Username == "" || wukong.Password == "" {
+		t.Fatal("Wukong test configuration requires an address, username and password")
 	}
 	f := setupUsage(t)
 	execSQL(t, f.db, `INSERT INTO traffic_grants (tenant_id, granted_bytes, starts_at, activated_at, source, created_by)
