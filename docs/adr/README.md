@@ -38,6 +38,7 @@
 
 | 编号 | 标题 | 状态 |
 | --- | --- | --- |
-| 0001 | [一期用量计费与凭据数据模型](0001-usage-data-model.md) | 已采纳 |
+| 0001 | [一期用量计费与凭据数据模型](0001-usage-data-model.md) | 已采纳（部分条款被 0004 取代） |
 | 0002 | [网关服务身份、代理凭据与控制台会话](0002-service-and-proxy-identity.md) | 已采纳 |
-| 0003 | [网关上报、认证准入、用量查询与计费管理接口](0003-reporting-and-usage-contracts.md) | 已采纳 |
+| 0003 | [网关上报、认证准入、用量查询与计费管理接口](0003-reporting-and-usage-contracts.md) | 已采纳（部分条款被 0004 取代） |
+| 0004 | [一期计费入库与运营追溯](0004-billing-ingestion-and-audit.md) | 已采纳 |
