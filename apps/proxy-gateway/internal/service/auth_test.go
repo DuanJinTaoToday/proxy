@@ -1,4 +1,4 @@
-package authrelay_test
+package service_test
 
 import (
 	"bytes"
@@ -12,7 +12,8 @@ import (
 	"time"
 
 	v1 "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1"
-	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/authrelay"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/biz/authrelay"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/service"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -57,8 +58,9 @@ func authenticate(t *testing.T, handler http.Handler, token string) (int, bool, 
 func TestOfflineAuthenticationExpiresAtThirtySeconds(t *testing.T) {
 	now := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
 	remote := &control{load: snapshot()}
-	relay := authrelay.New(remote, localToken, func() time.Time { return now })
-	if status, ok, id := authenticate(t, relay, localToken); status != 200 || !ok || id != "client" {
+	relay := authrelay.New(remote, func() time.Time { return now })
+	handler := service.NewAuthRelay(relay, localToken)
+	if status, ok, id := authenticate(t, handler, localToken); status != 200 || !ok || id != "client" {
 		t.Fatalf("warmup: %d %v %q", status, ok, id)
 	}
 	remote.err = errors.New("offline")
@@ -66,15 +68,16 @@ func TestOfflineAuthenticationExpiresAtThirtySeconds(t *testing.T) {
 	if err := relay.Refresh(t.Context()); err == nil {
 		t.Fatal("expected refresh failure")
 	}
-	if _, ok, _ := authenticate(t, relay, localToken); !ok {
+	if _, ok, _ := authenticate(t, handler, localToken); !ok {
 		t.Fatal("warm state should allow within its original window")
 	}
 	now = now.Add(time.Second)
-	if _, ok, _ := authenticate(t, relay, localToken); ok {
+	if _, ok, _ := authenticate(t, handler, localToken); ok {
 		t.Fatal("failed refresh extended the window")
 	}
-	restarted := authrelay.New(remote, localToken, func() time.Time { return now })
-	if _, ok, _ := authenticate(t, restarted, localToken); ok {
+	restarted := authrelay.New(remote, func() time.Time { return now })
+	restartedHandler := service.NewAuthRelay(restarted, localToken)
+	if _, ok, _ := authenticate(t, restartedHandler, localToken); ok {
 		t.Fatal("restart must not restore warm state")
 	}
 }
@@ -82,22 +85,23 @@ func TestOfflineAuthenticationExpiresAtThirtySeconds(t *testing.T) {
 func TestRefreshAppliesDisableAndGatewayRevocation(t *testing.T) {
 	now := time.Now()
 	remote := &control{load: snapshot()}
-	relay := authrelay.New(remote, localToken, func() time.Time { return now })
-	if code, ok, _ := authenticate(t, relay, "report-token"); code != 401 || ok {
+	relay := authrelay.New(remote, func() time.Time { return now })
+	handler := service.NewAuthRelay(relay, localToken)
+	if code, ok, _ := authenticate(t, handler, "report-token"); code != 401 || ok {
 		t.Fatalf("wrong token: %d %v", code, ok)
 	}
-	if _, ok, _ := authenticate(t, relay, localToken); !ok {
+	if _, ok, _ := authenticate(t, handler, localToken); !ok {
 		t.Fatal("warmup failed")
 	}
 	remote.err = authrelay.ErrGatewayDenied
 	if err := relay.Refresh(t.Context()); !errors.Is(err, authrelay.ErrGatewayDenied) {
 		t.Fatalf("refresh: %v", err)
 	}
-	if _, ok, _ := authenticate(t, relay, localToken); ok {
+	if _, ok, _ := authenticate(t, handler, localToken); ok {
 		t.Fatal("revoked gateway retained warm state")
 	}
 	remote.err = nil
-	if _, ok, _ := authenticate(t, relay, localToken); !ok {
+	if _, ok, _ := authenticate(t, handler, localToken); !ok {
 		t.Fatal("warmup failed")
 	}
 	now = now.Add(time.Second)
@@ -107,7 +111,7 @@ func TestRefreshAppliesDisableAndGatewayRevocation(t *testing.T) {
 	if err := relay.Refresh(t.Context()); err != nil {
 		t.Fatal(err)
 	}
-	if _, ok, _ := authenticate(t, relay, localToken); ok {
+	if _, ok, _ := authenticate(t, handler, localToken); ok {
 		t.Fatal("disabled credential retained warm state")
 	}
 }
@@ -117,8 +121,9 @@ func TestOfflineAdmissionStillChecksSourceExpiryAndQuota(t *testing.T) {
 	state := snapshot()
 	state.AllowedSourceCidrs = []string{"192.0.2.0/24"}
 	remote := &control{load: state}
-	relay := authrelay.New(remote, localToken, func() time.Time { return now })
-	if _, ok, _ := authenticate(t, relay, localToken); ok {
+	relay := authrelay.New(remote, func() time.Time { return now })
+	handler := service.NewAuthRelay(relay, localToken)
+	if _, ok, _ := authenticate(t, handler, localToken); ok {
 		t.Fatal("disallowed source was accepted")
 	}
 	update := snapshot()
@@ -131,11 +136,11 @@ func TestOfflineAdmissionStillChecksSourceExpiryAndQuota(t *testing.T) {
 	}
 	remote.err = errors.New("offline")
 	now = now.Add(time.Second)
-	if _, ok, _ := authenticate(t, relay, localToken); !ok {
+	if _, ok, _ := authenticate(t, handler, localToken); !ok {
 		t.Fatal("allowed source should pass within both validity windows")
 	}
 	now = now.Add(time.Second)
-	if _, ok, _ := authenticate(t, relay, localToken); ok {
+	if _, ok, _ := authenticate(t, handler, localToken); ok {
 		t.Fatal("quota snapshot crossed its known grant boundary")
 	}
 	remote.err = nil
@@ -146,7 +151,7 @@ func TestOfflineAdmissionStillChecksSourceExpiryAndQuota(t *testing.T) {
 		t.Fatal(err)
 	}
 	now = now.Add(time.Second)
-	if _, ok, _ := authenticate(t, relay, localToken); ok {
+	if _, ok, _ := authenticate(t, handler, localToken); ok {
 		t.Fatal("credential expiry must be enforced independently of quota freshness")
 	}
 }

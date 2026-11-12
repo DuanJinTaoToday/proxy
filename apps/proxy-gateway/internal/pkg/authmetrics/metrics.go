@@ -1,4 +1,4 @@
-package authrelay
+package authmetrics
 
 import (
 	"expvar"
@@ -8,10 +8,10 @@ import (
 	"time"
 )
 
-var authMetrics = expvar.NewMap("proxy_gateway_auth")
+var Counters = expvar.NewMap("proxy_gateway_auth")
 var rejectionLogTimes sync.Map
 
-func recordLatency(path string, started time.Time) {
+func RecordLatency(path string, started time.Time) {
 	elapsed := time.Since(started)
 	var bucket string
 	switch {
@@ -26,11 +26,11 @@ func recordLatency(path string, started time.Time) {
 	default:
 		bucket = "gt_200ms"
 	}
-	authMetrics.Add(path+"_"+bucket, 1)
+	Counters.Add(path+"_"+bucket, 1)
 }
 
-func recordDecision(reason string) {
-	authMetrics.Add("result_"+reason, 1)
+func RecordDecision(reason string) {
+	Counters.Add("result_"+reason, 1)
 	if reason == "OK" {
 		return
 	}

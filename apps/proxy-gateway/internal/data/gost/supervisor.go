@@ -1,4 +1,4 @@
-package main
+package gost
 
 import (
 	"context"
@@ -15,50 +15,50 @@ import (
 	"strings"
 	"time"
 
-	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/recorder"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/data/recorder"
 	"gopkg.in/yaml.v3"
 )
 
-type gostProcess struct {
-	boot   string
-	exited chan struct{}
+type Process struct {
+	Boot   string
+	Exited <-chan struct{}
 }
 
-func startGOST(ctx context.Context, binary, template, spool, authEndpoint, token string) (gostProcess, error) {
+func Start(ctx context.Context, binary, template, spool, authEndpoint, token string) (Process, error) {
 	boot := rand.Text()
 	dir := filepath.Join(spool, boot)
 	if err := os.Mkdir(dir, 0o700); err != nil {
-		return gostProcess{}, err
+		return Process{}, err
 	}
 	path := filepath.Join(dir, recorder.SessionFile)
 	file, err := os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
 	if err != nil {
-		return gostProcess{}, err
+		return Process{}, err
 	}
 	if err := file.Close(); err != nil {
-		return gostProcess{}, err
+		return Process{}, err
 	}
 	rendered, err := renderGOST(template, path, token)
 	if err != nil {
-		return gostProcess{}, err
+		return Process{}, err
 	}
 	config, err := os.CreateTemp("", "proxy-gost-*.json")
 	if err != nil {
-		return gostProcess{}, err
+		return Process{}, err
 	}
 	configPath := config.Name()
 	if _, err = config.Write(rendered); err != nil {
 		_ = config.Close()
 		_ = os.Remove(configPath)
-		return gostProcess{}, err
+		return Process{}, err
 	}
 	if err := config.Close(); err != nil {
 		_ = os.Remove(configPath)
-		return gostProcess{}, err
+		return Process{}, err
 	}
 	if err := validateGOSTConfig(configPath, authEndpoint, token); err != nil {
 		_ = os.Remove(configPath)
-		return gostProcess{}, err
+		return Process{}, err
 	}
 	childCtx, stop := context.WithCancel(ctx)
 	cmd := exec.CommandContext(childCtx, binary, "-C", configPath)
@@ -75,11 +75,12 @@ func startGOST(ctx context.Context, binary, template, spool, authEndpoint, token
 	if err := cmd.Start(); err != nil {
 		stop()
 		_ = os.Remove(configPath)
-		return gostProcess{}, err
+		return Process{}, err
 	}
-	process := gostProcess{boot: boot, exited: make(chan struct{})}
+	exited := make(chan struct{})
+	process := Process{Boot: boot, Exited: exited}
 	go func() {
-		defer close(process.exited)
+		defer close(exited)
 		defer stop()
 		err := cmd.Wait()
 		exitedAt := time.Now().UTC().Format(time.RFC3339Nano)

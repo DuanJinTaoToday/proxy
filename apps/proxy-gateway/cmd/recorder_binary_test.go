@@ -15,8 +15,11 @@ import (
 	"time"
 
 	v1 "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1"
-	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/authrelay"
-	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/recorder"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/biz/authrelay"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/biz/recorder"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/data/gost"
+	recorderdata "github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/data/recorder"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/service"
 )
 
 type capturedReport struct{ lines []*v1.RecorderLine }
@@ -32,7 +35,7 @@ func TestGOSTWritesAndCollectorReportsRealRecorderLines(t *testing.T) {
 		t.Skip("set PROXY_GOST_TEST_BINARY to GOST v3.3.3")
 	}
 	const token = "recorder-smoke"
-	relay := httptest.NewServer(authrelay.New(smokeControl{}, token, nil))
+	relay := httptest.NewServer(service.NewAuthRelay(authrelay.New(smokeControl{}, nil), token))
 	defer relay.Close()
 	target := openTestListener(t)
 	defer func() { _ = target.Close() }()
@@ -88,11 +91,11 @@ func TestGOSTWritesAndCollectorReportsRealRecorderLines(t *testing.T) {
 	spool := t.TempDir()
 	ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
 	defer cancel()
-	process, err := startGOST(ctx, binary, config, spool, endpoint, token)
+	process, err := gost.Start(ctx, binary, config, spool, endpoint, token)
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { cancel(); <-process.exited })
+	t.Cleanup(func() { cancel(); <-process.Exited })
 	waitSOCKS(t, ctx, proxyAddr)
 	waitSOCKS(t, ctx, slowAddr)
 	for _, payload := range []string{"metered", ""} {
@@ -131,14 +134,14 @@ func TestGOSTWritesAndCollectorReportsRealRecorderLines(t *testing.T) {
 	}
 
 	reporter := &capturedReport{}
-	collector := recorder.New(recorder.Config{Spool: spool, GatewayID: "test"}, reporter)
+	collector := recorder.New(recorder.Config{GatewayID: "test"}, recorderdata.NewSpool(spool), reporter)
 	for len(reporter.lines) < 7 {
 		if err := collector.Scan(ctx); err != nil {
 			t.Fatal(err)
 		}
 		select {
 		case <-ctx.Done():
-			raw, _ := os.ReadFile(filepath.Join(spool, process.boot, recorder.SessionFile))
+			raw, _ := os.ReadFile(filepath.Join(spool, process.Boot, recorderdata.SessionFile))
 			t.Fatalf("got %d Recorder lines from %d bytes (%d LF)", len(reporter.lines), len(raw), strings.Count(string(raw), "\n"))
 		case <-time.After(20 * time.Millisecond):
 		}
@@ -265,7 +268,7 @@ func TestGatewayReturnsFailureWhenManagedGOSTExits(t *testing.T) {
 	spool := t.TempDir()
 	done := make(chan error, 1)
 	go func() {
-		done <- run(authAddr, config, binary, recorder.Config{Spool: spool, GatewayID: "test", MaxRecords: 1000, MaxBytes: 1 << 20, Interval: time.Second}, time.Second)
+		done <- run(authAddr, config, binary, spool, recorder.Config{GatewayID: "test", MaxRecords: 1000, MaxBytes: 1 << 20, Interval: time.Second}, time.Second)
 	}()
 	select {
 	case err := <-done:
@@ -275,7 +278,7 @@ func TestGatewayReturnsFailureWhenManagedGOSTExits(t *testing.T) {
 	case <-time.After(5 * time.Second):
 		t.Fatal("gateway stayed running after child exit")
 	}
-	files, err := filepath.Glob(filepath.Join(spool, "*", recorder.ExitFile))
+	files, err := filepath.Glob(filepath.Join(spool, "*", recorderdata.ExitFile))
 	if err != nil || len(files) != 1 {
 		t.Fatalf("durable exit marker: %v %v", files, err)
 	}

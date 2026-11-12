@@ -7,7 +7,7 @@ CONFIG_DIR := internal/conf
 API_PROTOS := $(wildcard $(API_DIR)/proxycontrol/*/*.proto)
 CONFIG_PROTOS := $(wildcard $(CONFIG_DIR)/protos/*.proto)
 
-.PHONY: build pb api config dao lint
+.PHONY: build pb api config dao lint wire
 build: | bin
 	go build -o bin/proxy-control$(EXE) ./cmd
 
@@ -27,3 +27,6 @@ dao:
 
 lint:
 	$(GOLANGCI_LINT) run ./... ../../api/proxycontrol/...
+
+wire:
+	$(WIRE) ./cmd

@@ -1,4 +1,4 @@
-package recorder
+package control
 
 import (
 	"bytes"
@@ -13,9 +13,9 @@ import (
 	"time"
 
 	v1 "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/biz/recorder"
+	"google.golang.org/protobuf/encoding/protojson"
 )
-
-var ErrBatchTooLarge = errors.New("recorder batch too large")
 
 type HTTPReporter struct {
 	endpoint string
@@ -82,10 +82,23 @@ func (r *HTTPReporter) post(ctx context.Context, path string, input any) ([]byte
 		}
 		return data, nil
 	case http.StatusRequestEntityTooLarge:
-		return nil, ErrBatchTooLarge
+		return nil, recorder.ErrBatchTooLarge
 	case http.StatusBadRequest, http.StatusForbidden:
-		return nil, permanentError{fmt.Errorf("control plane rejected report (HTTP %d)", res.StatusCode)}
+		return nil, recorder.PermanentError{Err: fmt.Errorf("control plane rejected report (HTTP %d)", res.StatusCode)}
 	default:
 		return nil, fmt.Errorf("control plane report failed (HTTP %d)", res.StatusCode)
 	}
+}
+
+func (r *HTTPReporter) ReportLifecycle(ctx context.Context, req *v1.ReportLifecycleRequest) error {
+	body, err := protojson.Marshal(req)
+	if err != nil {
+		return err
+	}
+	data, err := r.post(ctx, "/v1/reporting/lifecycle", json.RawMessage(body))
+	if err != nil {
+		return err
+	}
+	var ack v1.ReportLifecycleResponse
+	return protojson.Unmarshal(data, &ack)
 }

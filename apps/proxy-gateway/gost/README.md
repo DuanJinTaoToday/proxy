@@ -3,7 +3,7 @@
 网关 Go 进程负责本机认证中继、GOST 子进程和 Recorder 采集。将原版 GOST v3.3.3 与网关程序放在同一宿主机。用 `auth.example.yaml` 对接受控目标，用 `wukong.example.yaml` 对接一个已验证的悟空入口。
 
 ```sh
-proxy-gateway-collector -gost-binary ./gost -gost-config ./wukong.example.yaml -spool ./spool
+proxy-gateway -gost-binary ./gost -gost-config ./wukong.example.yaml -spool ./spool
 ```
 
 - `PROXY_GATEWAY_ID` 是运营预置的网关实例 ID。

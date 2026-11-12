@@ -1,4 +1,4 @@
-package main
+package control
 
 import (
 	"crypto/tls"
@@ -8,7 +8,7 @@ import (
 	"os"
 )
 
-func controlTransport(caFile string) (*http.Transport, error) {
+func NewTransport(caFile string) (*http.Transport, error) {
 	if caFile == "" {
 		return nil, nil
 	}

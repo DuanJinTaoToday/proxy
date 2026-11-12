@@ -1,4 +1,4 @@
-package main
+package gost
 
 import (
 	"os"
@@ -8,7 +8,7 @@ import (
 )
 
 func TestGOSTRequiresRegisteredRelayAuther(t *testing.T) {
-	raw, err := os.ReadFile("../gost/auth.example.yaml")
+	raw, err := os.ReadFile("../../../gost/auth.example.yaml")
 	if err != nil {
 		t.Fatal(err)
 	}

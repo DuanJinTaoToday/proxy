@@ -28,6 +28,7 @@
 | Kratos HTTP 生成插件 | `github.com/go-kratos/kratos/cmd/protoc-gen-go-http/v3` | `v3.0.0-20260526000039-30da04b769dc` |
 | golangci-lint | `github.com/golangci/golangci-lint/v2/cmd/golangci-lint` | `v2.15.0` |
 | Goose | `github.com/pressly/goose/v3/cmd/goose` | `v3.30.0` |
+| Wire | `github.com/google/wire/cmd/wire` | `v0.7.0` |
 
 `make init` 下载并校验官方 `protoc` 28.3 发布包，将编译器和 Go 工具安装到被 Git 忽略的 `.tools/bin/`，将标准 Protobuf 定义安装到 `.tools/include/`。应用共用的 `build/tools.mk` 通过仓库内路径指定 `protoc`，控制面生成 PB 时直接使用该路径。支持 Windows amd64、Linux amd64/arm64 和 macOS amd64/arm64。golangci-lint 使用 v2 配置。 [Protobuf v28.3 发布页](https://github.com/protocolbuffers/protobuf/releases/tag/v28.3)
 
@@ -36,9 +37,11 @@
 | 应用 | 命令 |
 | --- | --- |
 | `apps/proxy-control/` | `make build` 构建控制面，`make pb` 运行 `make api` 和 `make config`，`make lint` 检查控制面和 API Go 代码。 |
-| `apps/proxy-gateway/` | `make build` 构建 collector，`make lint` 检查网关 Go 代码。整包目标随打包流程实现。 |
+| `apps/proxy-gateway/` | `make build` 构建 `proxy-gateway`，`make lint` 检查网关 Go 代码。整包目标随打包流程实现。 |
 
 控制面启动后可通过 `GET /healthz` 检查 HTTP 进程是否可响应。控制面的 `make dao` 用于生成持久化模型。
+
+两个 Go 服务在 `cmd/wire.go` 声明 Wire 注入器和接口绑定。修改注入器或其依赖的构造函数后，在对应应用目录运行 `make wire`，将生成的 `cmd/wire_gen.go` 一起提交。可选模块的启用条件、后台任务和 GOST 子进程启停由入口代码编排。
 
 HTTP 注解依赖的 `annotations.proto` 和 `http.proto` 来自 [Google APIs 固定提交](https://github.com/googleapis/googleapis/tree/547f8fdb4b91dbac70d540b3757520f0608ae356/google/api)，随 [许可证](../../third_party/googleapis/LICENSE) 一起保存在 `third_party/googleapis/`。
 
@@ -73,18 +76,18 @@ HTTP 注解依赖的 `annotations.proto` 和 `http.proto` 来自 [Google APIs �
 
 ### 网关构建、打包与发布
 
-`proxy-gateway` 使用一个网关版本，每个目标平台发布一个整包。原版 GOST 和自研 collector 随同一个包交付，部署后分别作为独立进程运行。
+`proxy-gateway` 使用一个网关版本，每个目标平台发布一个整包。原版 `gost` 和自研 `proxy-gateway` 随同一个包交付。部署时启动 `proxy-gateway`，由它启动和管理 `gost` 子进程。
 
 - `gost/` 存放 GOST 配置模板和上游产物锁定清单。一期沿用原版 GOST `v3.3.3`，按平台锁定上游资产及其 SHA-256，构建时下载、校验并解包。升级时在同一个 PR 更新锁定清单和对应的 Recorder 验收样本。
-- `collector/` 存放采集器源码。从网关发布标签对应的仓库提交构建 `proxy-gateway-collector`，用网关版本和源码 commit 标识该构建。
-- `bin/<os>-<arch>/` 存放 `gost` 和 `proxy-gateway-collector`，`dist/` 存放 `proxy-gateway-<version>-<os>-<arch>.tar.gz` 及同名 `.sha256` 校验文件。`bin/` 和 `dist/` 由构建和打包生成，并由 Git 忽略。
+- `apps/proxy-gateway/cmd/` 是 Go 服务构建入口。从网关发布标签对应的仓库提交构建 `proxy-gateway`，用网关版本和源码 commit 标识该构建。
+- `bin/<os>-<arch>/` 存放 `gost` 和 `proxy-gateway`，`dist/` 存放 `proxy-gateway-<version>-<os>-<arch>.tar.gz` 及同名 `.sha256` 校验文件。`bin/` 和 `dist/` 由构建和打包生成，并由 Git 忽略。
 - 归档包含两个二进制、配置模板、适用的上游许可证和声明，以及 `manifest.json`。清单记录网关版本、源码 commit、GOST 上游版本、目标平台及两个二进制的 SHA-256。实际凭据、Recorder 文件和采集偏移由部署环境单独管理。
-- 发布标签采用 `proxy-gateway/v0.1.0` 形式。GOST、collector 或随包交付的配置模板发生变化时，发布新的网关版本。CI 为每个目标平台构建一次，验收和部署使用同一份归档，并核对校验和。
+- 发布标签采用 `proxy-gateway/v0.1.0` 形式。GOST、`proxy-gateway` 或随包交付的配置模板发生变化时，发布新的网关版本。CI 为每个目标平台构建一次，验收和部署使用同一份归档，并核对校验和。
 - 首批只发布 `linux-amd64`。发布归档及其 `.sha256` 校验文件上传到 [DuanJinTaoToday/proxy 的 GitHub Releases](https://github.com/DuanJinTaoToday/proxy/releases)，关联对应的网关发布标签。保留历史发布产物供回滚使用。
 
 ### 网关升级与回滚
 
-升级和回滚按网关整包版本操作，保留 Recorder 文件和采集偏移。发布前验证新 collector 能补报旧 GOST 写入的未确认记录，也验证上一版 collector 能读取新版 GOST 已写入的未确认记录。若上一版 collector 无法读取新版记录，发布前须明确如何补报这些记录并确认成功，再切回上一版整包。计量与回放规则见[一期技术方案](../features/proxy-phase-one/proxy-phase-one-architecture.md)。
+升级和回滚按网关整包版本操作，保留 Recorder 文件和采集偏移。发布前验证新版本的 `proxy-gateway` 能补报旧 GOST 写入的未确认记录，也验证上一版 `proxy-gateway` 能读取新版 GOST 已写入的未确认记录。若上一版 `proxy-gateway` 无法读取新版记录，发布前须明确如何补报这些记录并确认成功，再切回上一版整包。计量与回放规则见[一期技术方案](../features/proxy-phase-one/proxy-phase-one-architecture.md)。
 
 ## 待定项
 

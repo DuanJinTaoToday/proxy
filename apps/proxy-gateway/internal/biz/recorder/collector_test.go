@@ -3,13 +3,14 @@ package recorder_test
 import (
 	"context"
 	"errors"
-	"google.golang.org/protobuf/proto"
 	"os"
 	"path/filepath"
 	"testing"
 
 	v1 "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1"
-	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/recorder"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/biz/recorder"
+	recorderdata "github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/data/recorder"
+	"google.golang.org/protobuf/proto"
 )
 
 type reporting struct {
@@ -40,13 +41,13 @@ func TestCollectorResumesFromDurableAcknowledgement(t *testing.T) {
 		t.Fatal(err)
 	}
 	out := &reporting{fail: true}
-	cfg := recorder.Config{Spool: root, GatewayID: "gateway"}
-	collector := recorder.New(cfg, out)
+	cfg := recorder.Config{GatewayID: "gateway"}
+	collector := recorder.New(cfg, recorderdata.NewSpool(root), out)
 	if err := collector.Scan(t.Context()); err == nil {
 		t.Fatal("expected lost acknowledgement")
 	}
 	out.fail = false
-	if err := recorder.New(cfg, out).Scan(t.Context()); err != nil {
+	if err := recorder.New(cfg, recorderdata.NewSpool(root), out).Scan(t.Context()); err != nil {
 		t.Fatal(err)
 	}
 	if len(out.batches) != 2 {
@@ -60,7 +61,7 @@ func TestCollectorResumesFromDurableAcknowledgement(t *testing.T) {
 			t.Fatalf("invalid complete records: %v", batch)
 		}
 	}
-	if err := recorder.New(cfg, out).Scan(t.Context()); err != nil {
+	if err := recorder.New(cfg, recorderdata.NewSpool(root), out).Scan(t.Context()); err != nil {
 		t.Fatal(err)
 	}
 	if len(out.batches) != 2 {
@@ -76,7 +77,7 @@ func TestCollectorResumesFromDurableAcknowledgement(t *testing.T) {
 	if err := f.Close(); err != nil {
 		t.Fatal(err)
 	}
-	if err := recorder.New(cfg, out).Scan(t.Context()); err != nil {
+	if err := recorder.New(cfg, recorderdata.NewSpool(root), out).Scan(t.Context()); err != nil {
 		t.Fatal(err)
 	}
 	if len(out.batches) != 3 || out.batches[2].GetRecords()[0].GetFileOffset() != 8 {
@@ -96,7 +97,7 @@ func TestCollectorSavesGoodPrefixAndContinuesOtherBoots(t *testing.T) {
 		}
 	}
 	out := &reporting{max: 1}
-	collector := recorder.New(recorder.Config{Spool: root, GatewayID: "gateway"}, out)
+	collector := recorder.New(recorder.Config{GatewayID: "gateway"}, recorderdata.NewSpool(root), out)
 	if err := collector.Scan(t.Context()); err != nil {
 		t.Fatal(err)
 	}

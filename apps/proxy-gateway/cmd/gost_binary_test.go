@@ -7,14 +7,15 @@ import (
 	"net"
 	"net/http/httptest"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
 	v1 "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1"
-	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/authrelay"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/biz/authrelay"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/data/gost"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/service"
 )
 
 type smokeControl struct{}
@@ -38,7 +39,7 @@ func TestGOSTBinaryUsesRelayForSOCKS5Authentication(t *testing.T) {
 		t.Skip("set PROXY_GOST_TEST_BINARY to the GOST v3.3.3 executable")
 	}
 	const token = "gost-smoke-test-local-token"
-	relay := httptest.NewServer(authrelay.New(smokeControl{}, token, nil))
+	relay := httptest.NewServer(service.NewAuthRelay(authrelay.New(smokeControl{}, nil), token))
 	defer relay.Close()
 	listener, err := net.Listen("tcp4", "127.0.0.1:0")
 	if err != nil {
@@ -59,18 +60,15 @@ func TestGOSTBinaryUsesRelayForSOCKS5Authentication(t *testing.T) {
 	if err := os.WriteFile(file, []byte(rendered), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if err := validateGOSTConfig(file, endpoint, token); err != nil {
-		t.Fatal(err)
-	}
 	ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
 	defer cancel()
-	cmd := exec.CommandContext(ctx, binary, "-C", file)
-	if err := cmd.Start(); err != nil {
+	process, err := gost.Start(ctx, binary, file, t.TempDir(), endpoint, token)
+	if err != nil {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() {
 		cancel()
-		_ = cmd.Wait()
+		<-process.Exited
 	})
 	for {
 		conn, err := net.DialTimeout("tcp", socksAddr, 100*time.Millisecond)

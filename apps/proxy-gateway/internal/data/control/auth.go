@@ -1,4 +1,4 @@
-package authrelay
+package control
 
 import (
 	"bytes"
@@ -10,8 +10,10 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	v1 "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/biz/authrelay"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
@@ -34,7 +36,7 @@ func NewHTTPControl(endpoint, token string, transport ...*http.Transport) (*HTTP
 	}
 	return &HTTPControl{base: strings.TrimRight(endpoint, "/"), token: token, client: &http.Client{
 		Transport:     clientTransport,
-		Timeout:       syncTimeout,
+		Timeout:       200 * time.Millisecond,
 		CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse },
 	}}, nil
 }
@@ -70,18 +72,18 @@ func (c *HTTPControl) post(ctx context.Context, path string, input, output proto
 	defer func() { _ = response.Body.Close() }()
 	switch response.StatusCode {
 	case http.StatusUnauthorized, http.StatusForbidden:
-		return ErrGatewayDenied
+		return authrelay.ErrGatewayDenied
 	case http.StatusNotFound:
 		if _, ok := input.(*v1.LoadAuthStateRequest); ok {
 			var failure struct{ Reason string }
 			_ = json.NewDecoder(io.LimitReader(response.Body, 4<<10)).Decode(&failure)
 			switch failure.Reason {
 			case "CREDENTIAL_DISABLED":
-				return ErrCredentialDisabled
+				return authrelay.ErrCredentialDisabled
 			case "CREDENTIAL_EXPIRED":
-				return ErrCredentialExpired
+				return authrelay.ErrCredentialExpired
 			default:
-				return ErrCredentialDenied
+				return authrelay.ErrCredentialDenied
 			}
 		}
 		return errors.New("refresh route unavailable")

@@ -63,6 +63,7 @@ func run(path string) error {
 			return err
 		}
 		defer closeDB()
+		usageService.SetMaxRecords(int(usageSettings.GetMaxBatchRecords()))
 		server.RegisterUsage(httpServer, httpservice.NewUsage(usageService))
 		ctx, cancel := context.WithCancel(context.Background())
 		done := make(chan struct{})

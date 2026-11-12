@@ -7,7 +7,6 @@ import (
 	"flag"
 	"log"
 	"net"
-	"net/http"
 	"net/netip"
 	"os"
 	"os/signal"
@@ -15,8 +14,12 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/authrelay"
-	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/recorder"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/biz/recorder"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/data/control"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/data/gost"
+	recorderdata "github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/data/recorder"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/server"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/service"
 )
 
 func main() {
@@ -29,23 +32,22 @@ func main() {
 	interval := flag.Duration("scan-interval", time.Second, "Recorder scan interval")
 	timeout := flag.Duration("report-timeout", 3*time.Second, "Recorder HTTP timeout")
 	flag.Parse()
-	if err := run(*addr, *config, *binary, recorder.Config{Spool: *spool, GatewayID: os.Getenv("PROXY_GATEWAY_ID"),
+	if err := run(*addr, *config, *binary, *spool, recorder.Config{GatewayID: os.Getenv("PROXY_GATEWAY_ID"),
 		MaxRecords: *maxRecords, MaxBytes: *maxBytes, Interval: *interval}, *timeout); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func run(addr, config, binary string, cfg recorder.Config, reportTimeout time.Duration) error {
-	if cfg.Spool == "" || binary == "" || cfg.GatewayID == "" || len(cfg.GatewayID) > 128 ||
+func run(addr, config, binary, spoolPath string, cfg recorder.Config, reportTimeout time.Duration) error {
+	if spoolPath == "" || binary == "" || cfg.GatewayID == "" || len(cfg.GatewayID) > 128 ||
 		cfg.MaxRecords < 1 || cfg.MaxBytes < 128 || cfg.MaxBytes > 16<<20 ||
 		cfg.Interval <= 0 || reportTimeout <= 0 {
 		return errors.New("configure GOST binary, Recorder spool, gateway ID and positive report limits")
 	}
-	spool, err := filepath.Abs(cfg.Spool)
+	spool, err := filepath.Abs(spoolPath)
 	if err != nil {
 		return err
 	}
-	cfg.Spool = spool
 	if err := os.MkdirAll(spool, 0o700); err != nil {
 		return err
 	}
@@ -59,19 +61,16 @@ func run(addr, config, binary string, cfg recorder.Config, reportTimeout time.Du
 	if !validToken(local) || !validToken(remote) || !validToken(report) || local == remote || local == report || remote == report {
 		return errors.New("configure distinct base64url gateway auth tokens of at least 32 random bytes")
 	}
-	transport, err := controlTransport(os.Getenv("PROXY_GATEWAY_CONTROL_CA_FILE"))
+	transport, err := control.NewTransport(os.Getenv("PROXY_GATEWAY_CONTROL_CA_FILE"))
 	if err != nil {
 		return err
 	}
-	control, err := authrelay.NewHTTPControl(os.Getenv("PROXY_GATEWAY_CONTROL_URL"), remote, transport)
+	authControl, err := control.NewHTTPControl(os.Getenv("PROXY_GATEWAY_CONTROL_URL"), remote, transport)
 	if err != nil {
 		return err
 	}
-	relay := authrelay.New(control, local, nil)
-	srv := &http.Server{
-		Addr: listen.String(), Handler: relay, ReadHeaderTimeout: time.Second,
-		ReadTimeout: time.Second, WriteTimeout: time.Second, IdleTimeout: 30 * time.Second,
-	}
+	relay := wireAuthRelay(authControl)
+	srv := server.NewHTTP(listen.String(), service.NewAuthRelay(relay, local))
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 	listener, err := net.Listen("tcp", listen.String())
@@ -79,28 +78,29 @@ func run(addr, config, binary string, cfg recorder.Config, reportTimeout time.Du
 		return err
 	}
 	defer func() { _ = listener.Close() }()
-	reporter, err := recorder.NewHTTPReporter(os.Getenv("PROXY_GATEWAY_CONTROL_URL"), report, reportTimeout, transport)
+	reporter, err := control.NewHTTPReporter(os.Getenv("PROXY_GATEWAY_CONTROL_URL"), report, reportTimeout, transport)
 	if err != nil {
 		return err
 	}
-	process, err := startGOST(ctx, binary, config, spool, "http://"+listen.String()+"/v1/gateway/auth", local)
+	process, err := gost.Start(ctx, binary, config, spool, "http://"+listen.String()+"/v1/gateway/auth", local)
 	if err != nil {
 		return err
 	}
-	defer func() { cancel(); <-process.exited }()
+	defer func() { cancel(); <-process.Exited }()
 	go relay.RunRefresh(ctx)
-	go recorder.New(cfg, reporter).Run(ctx)
-	go reporter.RunLifecycle(ctx, spool, cfg.GatewayID, process.boot, process.exited)
-	go recorder.MonitorDisk(ctx, spool)
+	workers := wireRecorder(cfg, spool, reporter)
+	go workers.collector.Run(ctx)
+	go workers.lifecycle.RunLifecycle(ctx, cfg.GatewayID, process.Boot, process.Exited)
+	go recorderdata.MonitorDisk(ctx, spool)
 	finished := make(chan error, 1)
 	go func() { finished <- srv.Serve(listener) }()
 	select {
 	case err := <-finished:
 		return err
-	case <-process.exited:
+	case <-process.Exited:
 		if ctx.Err() == nil {
 			flush, stop := context.WithTimeout(context.Background(), reportTimeout)
-			if err := reporter.ReportBootExit(flush, spool, cfg.GatewayID, process.boot); err != nil {
+			if err := workers.lifecycle.ReportBootExit(flush, cfg.GatewayID, process.Boot); err != nil {
 				log.Printf("GOST exit report pending retry: %v", err)
 			}
 			stop()

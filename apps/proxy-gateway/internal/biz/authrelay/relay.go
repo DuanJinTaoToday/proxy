@@ -4,15 +4,13 @@ import (
 	"context"
 	"crypto/sha256"
 	"crypto/subtle"
-	"encoding/json"
 	"errors"
-	"net/http"
 	"net/netip"
-	"strings"
 	"sync"
 	"time"
 
 	v1 "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/pkg/authmetrics"
 	"golang.org/x/sync/singleflight"
 )
 
@@ -43,7 +41,6 @@ type quota struct {
 
 type Relay struct {
 	control     Control
-	tokenHash   [32]byte
 	now         func() time.Time
 	loads       singleflight.Group
 	mu          sync.RWMutex
@@ -52,52 +49,15 @@ type Relay struct {
 	epoch       uint64
 }
 
-func New(control Control, token string, now func() time.Time) *Relay {
+func New(control Control, now func() time.Time) *Relay {
 	if now == nil {
 		now = time.Now
 	}
-	return &Relay{control: control, tokenHash: sha256.Sum256([]byte(token)), now: now,
+	return &Relay{control: control, now: now,
 		credentials: make(map[string]credential), quotas: make(map[string]quota)}
 }
 
-func (r *Relay) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	isMetrics := req.Method == http.MethodGet && req.URL.Path == "/v1/gateway/auth/metrics"
-	if !isMetrics && (req.Method != http.MethodPost || req.URL.Path != "/v1/gateway/auth") {
-		http.NotFound(w, req)
-		return
-	}
-	scheme, token, _ := strings.Cut(req.Header.Get("Authorization"), " ")
-	digest := sha256.Sum256([]byte(token))
-	if token == "" || !strings.EqualFold(scheme, "Bearer") || subtle.ConstantTimeCompare(digest[:], r.tokenHash[:]) != 1 {
-		recordDecision("LOCAL_TOKEN_DENIED")
-		w.WriteHeader(http.StatusUnauthorized)
-		return
-	}
-	if isMetrics {
-		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Cache-Control", "no-store")
-		_, _ = w.Write([]byte(authMetrics.String()))
-		return
-	}
-	started := time.Now()
-	defer recordLatency("authenticate", started)
-	var input struct{ Username, Password, Client string }
-	decoder := json.NewDecoder(http.MaxBytesReader(w, req.Body, 16<<10))
-	if err := decoder.Decode(&input); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	id, reason := r.authenticate(req.Context(), input.Username, input.Password, input.Client)
-	recordDecision(reason)
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Cache-Control", "no-store")
-	_ = json.NewEncoder(w).Encode(struct {
-		OK bool   `json:"ok"`
-		ID string `json:"id,omitempty"`
-	}{id != "", id})
-}
-
-func (r *Relay) authenticate(ctx context.Context, username, password, client string) (string, string) {
+func (r *Relay) Authenticate(ctx context.Context, username, password, client string) (string, string) {
 	if username == "" || password == "" || len(username) > 255 || len(password) > 255 {
 		return "", "INVALID_CREDENTIAL"
 	}
@@ -105,9 +65,9 @@ func (r *Relay) authenticate(ctx context.Context, username, password, client str
 	digest := sha256.Sum256([]byte(password))
 	entry, balance, epoch := r.state(username)
 	if entry.snapshot == nil || !now.Before(entry.synced.Add(stateLifetime)) {
-		authMetrics.Add("credential_cache_miss", 1)
+		authmetrics.Counters.Add("credential_cache_miss", 1)
 		started := time.Now()
-		defer recordLatency("cold_load", started)
+		defer authmetrics.RecordLatency("cold_load", started)
 		if err := r.coldLoad(ctx, username, password, digest, epoch); err != nil {
 			switch {
 			case errors.Is(err, ErrCredentialDenied):
@@ -123,7 +83,7 @@ func (r *Relay) authenticate(ctx context.Context, username, password, client str
 		entry, balance, _ = r.state(username)
 		now = r.now()
 	} else {
-		authMetrics.Add("credential_cache_hit", 1)
+		authmetrics.Counters.Add("credential_cache_hit", 1)
 	}
 	c := entry.snapshot
 	switch {
@@ -138,12 +98,12 @@ func (r *Relay) authenticate(ctx context.Context, username, password, client str
 	case !allowedSource(client, c.GetAllowedSourceCidrs()):
 		return "", "SOURCE_NOT_ALLOWED"
 	case !validQuota(balance, now):
-		authMetrics.Add("quota_cache_miss", 1)
+		authmetrics.Counters.Add("quota_cache_miss", 1)
 		return "", "AUTH_STATE_UNAVAILABLE"
 	case balance.snapshot.GetAvailableBytes() < 0 || uint64(balance.snapshot.GetAvailableBytes()) < balance.snapshot.GetAdmissionThresholdBytes():
 		return "", "QUOTA_INSUFFICIENT"
 	default:
-		authMetrics.Add("quota_cache_hit", 1)
+		authmetrics.Counters.Add("quota_cache_hit", 1)
 		return c.GetClientId(), "OK"
 	}
 }
