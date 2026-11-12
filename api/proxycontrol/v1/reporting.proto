@@ -3,10 +3,15 @@ syntax = "proto3";
 package proxycontrol.v1;
 
 import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1";
 
 service ReportingService {
+  rpc ReportLifecycle(ReportLifecycleRequest) returns (ReportLifecycleResponse) {
+    option (google.api.http) = { post: "/v1/reporting/lifecycle" body: "*" };
+  }
+
   rpc SubmitBatch(SubmitBatchRequest) returns (SubmitBatchResponse) {
     option (google.api.http) = { post: "/v1/reporting/batches" body: "*" };
   }
@@ -31,3 +36,12 @@ message SubmitBatchResponse {
   uint32 quarantined = 3;
   uint32 duplicates = 4;
 }
+
+// A missing exit timestamp reports a heartbeat for the running boot.
+message ReportLifecycleRequest {
+  string gateway_id = 1;
+  string boot_id = 2;
+  google.protobuf.Timestamp exited_at = 3;
+}
+
+message ReportLifecycleResponse {}

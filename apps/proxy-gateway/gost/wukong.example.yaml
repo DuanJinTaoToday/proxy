@@ -1,0 +1,32 @@
+authers:
+  - name: proxy-auth-relay
+    plugin:
+      type: http
+      addr: http://127.0.0.1:8091/v1/gateway/auth
+      token: "${PROXY_GATEWAY_LOCAL_AUTH_TOKEN}"
+      timeout: 500ms
+
+chains:
+  - name: wukong
+    hops:
+      - name: supplier
+        nodes:
+          - name: wukong
+            addr: "${WUKONG_ADDRESS}"
+            connector:
+              type: socks5
+              auth:
+                username: "${WUKONG_USERNAME}-res-any-sid-${WUKONG_SID}-sidtime-3600"
+                password: "${WUKONG_PASSWORD}"
+            dialer:
+              type: tcp
+
+services:
+  - name: socks5
+    addr: "127.0.0.1:1080"
+    listener:
+      type: tcp
+    handler:
+      type: socks5
+      auther: proxy-auth-relay
+      chain: wukong

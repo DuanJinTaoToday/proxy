@@ -31,6 +31,7 @@
 | RPC | 路由 | 说明 |
 | --- | --- | --- |
 | `SubmitBatch` | `POST /v1/reporting/batches` | 提交同一启动代次的一批记录，整批事务提交后返回成功。 |
+| `ReportLifecycle` | `POST /v1/reporting/lifecycle` | 上报心跳或持久化的退出时间，按网关和代次记录。 |
 | `ReportUnfinishedSessions` | `POST /v1/reporting/boots/{boot_id}/unfinished-sessions` | 旧代次回放确认完成后，分批上报缺少 `final` 的会话。按会话 ID 幂等。 |
 | `CompleteReplay` | `POST /v1/reporting/boots/{boot_id}/replay-complete` | 未结束会话全部上报后，通知控制面结束该代次的缺口核对。幂等。 |
 

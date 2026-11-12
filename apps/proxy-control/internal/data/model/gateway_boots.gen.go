@@ -17,6 +17,8 @@ type GatewayBoot struct {
 	FirstSeenAt       time.Time  `gorm:"column:first_seen_at;type:timestamp with time zone;not null" json:"first_seen_at"`
 	LastRecordAt      *time.Time `gorm:"column:last_record_at;type:timestamp with time zone" json:"last_record_at"`
 	ReplayCompletedAt *time.Time `gorm:"column:replay_completed_at;type:timestamp with time zone" json:"replay_completed_at"`
+	LastHeartbeatAt   *time.Time `gorm:"column:last_heartbeat_at;type:timestamp with time zone" json:"last_heartbeat_at"`
+	ExitedAt          *time.Time `gorm:"column:exited_at;type:timestamp with time zone" json:"exited_at"`
 }
 
 // TableName GatewayBoot's table name

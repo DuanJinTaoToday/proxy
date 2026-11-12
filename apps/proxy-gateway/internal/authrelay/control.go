@@ -22,13 +22,18 @@ type HTTPControl struct {
 	client *http.Client
 }
 
-func NewHTTPControl(endpoint, token string) (*HTTPControl, error) {
+func NewHTTPControl(endpoint, token string, transport ...*http.Transport) (*HTTPControl, error) {
 	address, err := url.Parse(endpoint)
 	if err != nil || address.Scheme != "https" || address.Hostname() == "" ||
 		address.User != nil || address.RawQuery != "" || address.Fragment != "" {
 		return nil, errors.New("control endpoint must be an HTTPS URL")
 	}
+	clientTransport := http.DefaultTransport
+	if len(transport) != 0 && transport[0] != nil {
+		clientTransport = transport[0]
+	}
 	return &HTTPControl{base: strings.TrimRight(endpoint, "/"), token: token, client: &http.Client{
+		Transport:     clientTransport,
 		Timeout:       syncTimeout,
 		CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse },
 	}}, nil

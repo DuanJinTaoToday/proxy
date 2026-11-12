@@ -72,3 +72,5 @@ proxy_auth:
 运营预置 `gateways` 和 `gateway_tokens`。令牌为至少 32 字节随机值的无填充 base64url 编码，数据库保存令牌字符串的 SHA-256 二进制摘要。轮换使用同一范围的另一个 `rotation_slot`，随后吊销旧令牌。余额来自已生效且完成激活的授予减去欠费，缺少额度时按准入门槛拒绝。充值、调整和上报积压期间的额度续期联动见 #14。
 
 设置 `PROXY_CONTROL_DAO_DSN` 指向已迁移的 Dev PostgreSQL 并执行 `make dao`。只读连接须能读取表的主键约束。HTTP 集成测试使用 `PROXY_CONTROL_TEST_DSN` 指向允许创建临时 schema 的本地 PostgreSQL。
+
+网关生命周期使用同一 `report` 令牌调用 `POST /v1/reporting/lifecycle`。应用 `00003_gateway_lifecycle.sql` 后，可用 `gateway_boot_lifecycle` 核对心跳、失联和退出状态。
