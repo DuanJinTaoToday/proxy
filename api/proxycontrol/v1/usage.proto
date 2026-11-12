@@ -14,6 +14,105 @@ service UsageService {
   rpc GetTenantBalance(TenantBalanceRequest) returns (TenantBalance) {
     option (google.api.http) = { get: "/v1/tenants/{tenant_id}/balance" };
   }
+  rpc QueryUsage(QueryUsageRequest) returns (QueryUsageResponse) {
+    option (google.api.http) = { get: "/v1/operations/usage" };
+  }
+  rpc ListRecordAnomalies(ListRecordAnomaliesRequest) returns (ListRecordAnomaliesResponse) {
+    option (google.api.http) = { get: "/v1/operations/anomalies" };
+  }
+  rpc ListUsageGaps(ListUsageGapsRequest) returns (ListUsageGapsResponse) {
+    option (google.api.http) = { get: "/v1/operations/gaps" };
+  }
+}
+
+message ListRecordAnomaliesRequest {
+  string gateway_id = 1;
+  string boot_id = 2;
+  string tenant_id = 3;
+  string kind = 4;
+  int32 page_size = 5;
+  string page_token = 6;
+}
+
+message RecordAnomaly {
+  string anomaly_id = 1;
+  string gateway_id = 2;
+  string boot_id = 3;
+  string tenant_id = 4;
+  string kind = 5;
+  string file_id = 6;
+  uint64 file_offset = 7;
+  google.protobuf.Timestamp detected_at = 8;
+  google.protobuf.Timestamp resolved_at = 9;
+}
+
+message ListRecordAnomaliesResponse {
+  repeated RecordAnomaly anomalies = 1;
+  string next_page_token = 2;
+}
+
+message ListUsageGapsRequest {
+  string gateway_id = 1;
+  string boot_id = 2;
+  string tenant_id = 3;
+  string kind = 4; // boot or session
+  int32 page_size = 5;
+  string page_token = 6;
+  string status = 7; // pending_replay or possible_gap
+}
+
+message UsageGap {
+  // Empty for a pending boot that has no session reports yet.
+  string gap_id = 1;
+  string gateway_id = 2;
+  string boot_id = 3;
+  string tenant_id = 4;
+  string kind = 5;
+  string status = 6;
+  string session_id = 7;
+  google.protobuf.Timestamp from_at = 8;
+  google.protobuf.Timestamp detected_at = 9;
+  google.protobuf.Timestamp resolved_at = 10;
+  google.protobuf.Timestamp exited_at = 11;
+}
+
+message ListUsageGapsResponse {
+  repeated UsageGap gaps = 1;
+  string next_page_token = 2;
+}
+
+enum UsageGranularity {
+  USAGE_GRANULARITY_UNSPECIFIED = 0;
+  USAGE_GRANULARITY_MINUTE = 1;
+  USAGE_GRANULARITY_HOUR = 2;
+  USAGE_GRANULARITY_DAY = 3;
+}
+
+message QueryUsageRequest {
+  string tenant_id = 1;
+  string gateway_id = 2;
+  google.protobuf.Timestamp start_time = 3;
+  google.protobuf.Timestamp end_time = 4;
+  // DAY selects whole Shanghai days by midnight within [start_time, end_time).
+  UsageGranularity granularity = 5;
+  bool split_by_gateway = 6;
+  bool split_by_grant = 7;
+  int32 page_size = 8;
+  string page_token = 9;
+  bool split_by_rate = 10;
+}
+
+message UsageBucket {
+  google.protobuf.Timestamp start_time = 1;
+  string gateway_id = 2;
+  string grant_id = 3;
+  UsageAmount amount = 4;
+  string rate_id = 5;
+}
+
+message QueryUsageResponse {
+  repeated UsageBucket buckets = 1;
+  string next_page_token = 2;
 }
 
 message DailyUsageRequest {

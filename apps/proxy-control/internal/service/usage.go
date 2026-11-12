@@ -70,13 +70,67 @@ func (s *Usage) GetTenantDailyUsage(ctx context.Context, req *v1.DailyUsageReque
 	if err != nil {
 		return nil, err
 	}
-	reply := &v1.DailyUsageResponse{LastReceivedAt: timestamp(result.LastReceivedAt)}
-	for _, day := range result.Days {
-		reply.Days = append(reply.Days, &v1.DailyUsage{Date: day.Date, Amount: &v1.UsageAmount{
-			InputBytes: day.InputBytes, OutputBytes: day.OutputBytes, TotalBytes: day.TotalBytes, BillableBytes: day.BillableBytes,
-		}})
+	return dailyUsageResponse(result), nil
+}
+
+func (s *Usage) QueryUsage(ctx context.Context, req *v1.QueryUsageRequest) (*v1.QueryUsageResponse, error) {
+	noStore(ctx)
+	start, _ := readTimestamp(req.GetStartTime())
+	end, _ := readTimestamp(req.GetEndTime())
+	query := usage.UsageQuery{
+		TenantID: req.GetTenantId(), GatewayID: req.GetGatewayId(), SplitByGateway: req.GetSplitByGateway(),
+		SplitByGrant: req.GetSplitByGrant(), SplitByRate: req.GetSplitByRate(),
+	}
+	if start != nil && end != nil {
+		query.Start, query.End = *start, *end
+	}
+	switch req.GetGranularity() {
+	case v1.UsageGranularity_USAGE_GRANULARITY_MINUTE:
+		query.Granularity = usage.Minute
+	case v1.UsageGranularity_USAGE_GRANULARITY_HOUR:
+		query.Granularity = usage.Hour
+	case v1.UsageGranularity_USAGE_GRANULARITY_DAY:
+		query.Granularity = usage.DayGranularity
+	}
+	result, err := s.biz.QueryUsage(ctx, bearerToken(ctx), query, int(req.GetPageSize()), req.GetPageToken())
+	if err != nil {
+		return nil, err
+	}
+	reply := &v1.QueryUsageResponse{NextPageToken: result.NextToken}
+	for _, bucket := range result.Buckets {
+		reply.Buckets = append(reply.Buckets, &v1.UsageBucket{
+			StartTime: timestamppb.New(bucket.StartTime),
+			GatewayId: bucket.GatewayID,
+			GrantId:   optionalNumericID(bucket.GrantID),
+			RateId:    optionalNumericID(bucket.RateID),
+			Amount: &v1.UsageAmount{
+				InputBytes: bucket.InputBytes, OutputBytes: bucket.OutputBytes,
+				TotalBytes: bucket.InputBytes + bucket.OutputBytes, BillableBytes: bucket.BillableBytes,
+			},
+		})
 	}
 	return reply, nil
+}
+
+func optionalNumericID(id int64) string {
+	if id == 0 {
+		return ""
+	}
+	return strconv.FormatInt(id, 10)
+}
+
+func dailyUsageResponse(result *usage.DailyUsage) *v1.DailyUsageResponse {
+	reply := &v1.DailyUsageResponse{LastReceivedAt: timestamp(result.LastReceivedAt)}
+	for _, day := range result.Days {
+		reply.Days = append(reply.Days, &v1.DailyUsage{Date: day.Date, Amount: dailyAmount(day)})
+	}
+	return reply
+}
+
+func dailyAmount(day usage.Day) *v1.UsageAmount {
+	return &v1.UsageAmount{
+		InputBytes: day.InputBytes, OutputBytes: day.OutputBytes, TotalBytes: day.TotalBytes, BillableBytes: day.BillableBytes,
+	}
 }
 
 func (s *Usage) GetTenantBalance(ctx context.Context, req *v1.TenantBalanceRequest) (*v1.TenantBalance, error) {

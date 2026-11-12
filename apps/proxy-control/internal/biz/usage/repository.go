@@ -7,7 +7,13 @@ import (
 
 type Repository interface {
 	Transact(ctx context.Context, run func(Transaction) error) error
-	DailyUsage(ctx context.Context, tenantID, start, end string) ([]DailyTotals, *time.Time, error)
+	DailyUsage(ctx context.Context, tenantID string, start, end time.Time) ([]DailyTotals, *time.Time, error)
+	QueryUsageBuckets(ctx context.Context, query UsageQuery, after *UsageKey, limit int) ([]UsageBucket, error)
+	ListRecordAnomalies(ctx context.Context, filter FindingFilter, after *FindingKey, limit int) ([]RecordAnomaly, error)
+	ListUsageGaps(ctx context.Context, filter FindingFilter, after *FindingKey, limit int) ([]UsageGap, error)
+	AuditGrants(ctx context.Context, tenant string, after int64, limit int) ([]AuditedGrant, int64, error)
+	AuditLedger(ctx context.Context, tenant string, after int64, limit int) ([]LedgerEntry, error)
+	AuditRates(ctx context.Context, scopeType, scopeID string, id, after int64, limit int) ([]RateVersion, error)
 	DueTenants(ctx context.Context, now time.Time) ([]string, error)
 }
 

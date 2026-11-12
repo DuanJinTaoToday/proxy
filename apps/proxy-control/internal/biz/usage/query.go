@@ -17,7 +17,7 @@ func (s *Service) GetTenantDailyUsage(ctx context.Context, token, id, startDate,
 	if startErr != nil || endErr != nil || start.Year() < 1 || end.Before(start) || !end.Before(start.AddDate(0, 0, 93)) {
 		return nil, errors.BadRequest("INVALID_TIME_RANGE", "date range must contain 1 to 93 Shanghai dates")
 	}
-	rows, lastReceivedAt, err := s.repo.DailyUsage(ctx, id, startDate, endDate)
+	rows, lastReceivedAt, err := s.repo.DailyUsage(ctx, id, start, end.AddDate(0, 0, 1))
 	if err != nil {
 		return nil, err
 	}

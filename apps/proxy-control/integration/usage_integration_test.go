@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	v1 "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/integration/testfixture"
@@ -76,6 +77,7 @@ func setupUsage(t *testing.T) usageFixture {
 		Users: []*conf.User{
 			{Username: "alice", PasswordHash: testfixture.PasswordHash, Memberships: []*conf.Membership{{TenantId: "alpha", Role: conf.TenantRole_TENANT_ROLE_ADMIN}}},
 			{Username: "bob", PasswordHash: testfixture.PasswordHash, Memberships: []*conf.Membership{{TenantId: "beta", Role: member}}},
+			{Username: "operator", PasswordHash: testfixture.PasswordHash, PlatformOperator: true},
 		},
 	})
 	if err != nil {
@@ -170,6 +172,64 @@ func TestUsageShanghaiMidnight(t *testing.T) {
 
 func usageDay(date string, input, output, billed uint64) *v1.DailyUsage {
 	return &v1.DailyUsage{Date: date, Amount: &v1.UsageAmount{InputBytes: input, OutputBytes: output, TotalBytes: input + output, BillableBytes: billed}}
+}
+
+func TestOperationsDailyUsage(t *testing.T) {
+	f := setupUsage(t)
+	operator := testfixture.Login(t, f.http, "operator")
+	alpha := recorder(0, "client-a", "2020-11-10T23:59:00+08:00", 130, 214, 130, 214)
+	beta := recorder(alpha.GetEndOffset(), "client-b", "2020-11-11T00:01:00+08:00", 50, 80, 50, 80)
+	if got := submit(t, f, "gateway-a", reportToken, alpha, beta).GetBillable(); got != 2 {
+		t.Fatalf("billable records = %d, want 2", got)
+	}
+
+	for _, tc := range []struct {
+		role, tenant, token string
+		day                 *v1.DailyUsage
+	}{
+		{"tenant admin", "alpha", f.alice, usageDay("2020-11-10", 130, 214, 344)},
+		{"tenant member", "beta", f.bob, usageDay("2020-11-11", 50, 80, 130)},
+	} {
+		t.Run(tc.role, func(t *testing.T) {
+			want := daily(t, f, tc.tenant, tc.token)
+			assertDays(t, want, tc.day)
+			path := "/v1/operations/usage?tenant_id=" + tc.tenant +
+				"&start_time=2020-11-09T16:00:00Z&end_time=2020-11-11T16:00:00Z&granularity=USAGE_GRANULARITY_DAY"
+			var got v1.QueryUsageResponse
+			readProto(t, testfixture.Request(f.http, "GET", path, "", operator), &got)
+			buckets := got.GetBuckets()
+			start, err := time.Parse(time.RFC3339, tc.day.GetDate()+"T00:00:00+08:00")
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(buckets) != 1 || !buckets[0].GetStartTime().AsTime().Equal(start) ||
+				!proto.Equal(buckets[0].GetAmount(), want.GetDays()[0].GetAmount()) {
+				t.Fatalf("operations buckets = %v, tenant days = %v", buckets, want.GetDays())
+			}
+			for _, denied := range []struct {
+				token string
+				code  int
+			}{{tc.token, http.StatusForbidden}, {"", http.StatusUnauthorized}} {
+				reply := testfixture.Request(f.http, "GET", path, "", denied.token)
+				if reply.Code != denied.code {
+					t.Fatalf("HTTP status = %d, want %d: %s", reply.Code, denied.code, reply.Body)
+				}
+			}
+		})
+	}
+
+	t.Run("daily range limit", func(t *testing.T) {
+		path := "/v1/operations/usage?tenant_id=alpha&granularity=USAGE_GRANULARITY_DAY&start_time=2019-11-10T16:00:00Z&end_time="
+		var got v1.QueryUsageResponse
+		readProto(t, testfixture.Request(f.http, "GET", path+"2020-11-10T16:00:00Z", "", operator), &got)
+		if len(got.GetBuckets()) != 1 {
+			t.Fatalf("366-day query returned %d buckets, want 1", len(got.GetBuckets()))
+		}
+		reply := testfixture.Request(f.http, "GET", path+"2020-11-11T16:00:00Z", "", operator)
+		if reply.Code != http.StatusBadRequest || !strings.Contains(reply.Body.String(), "INVALID_TIME_RANGE") {
+			t.Fatalf("367-day query returned HTTP %d: %s", reply.Code, reply.Body)
+		}
+	})
 }
 
 func assertDays(t *testing.T, reply *v1.DailyUsageResponse, days ...*v1.DailyUsage) {

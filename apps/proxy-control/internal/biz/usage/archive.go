@@ -6,7 +6,7 @@ import (
 )
 
 func (s *Service) Archive(ctx context.Context, now time.Time) error {
-	cutoff := now.In(shanghai).AddDate(0, 0, -60).Format(time.DateOnly)
+	cutoff := usageArchiveCutoff(now).Format(time.DateOnly)
 	return s.repo.Transact(ctx, func(tx Transaction) error {
 		before, err := tx.LockArchive()
 		if err != nil || cutoff <= before {
@@ -23,6 +23,11 @@ func (s *Service) Archive(ctx context.Context, now time.Time) error {
 		}
 		return tx.SetArchiveCutoff(cutoff)
 	})
+}
+
+func usageArchiveCutoff(now time.Time) time.Time {
+	local := now.In(shanghai)
+	return time.Date(local.Year(), local.Month(), local.Day()-60, 0, 0, 0, 0, shanghai)
 }
 
 func (s *Service) SettleGrants(ctx context.Context, now time.Time) error {
