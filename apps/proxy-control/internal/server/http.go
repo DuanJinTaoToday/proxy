@@ -7,7 +7,7 @@ import (
 )
 
 func NewHTTPServer(addr string, accessService *access.Service) *http.Server {
-	srv := http.NewServer(http.Address(addr))
+	srv := http.NewServer(http.Address(addr), http.RequestDecoder(DecodeProxyAuthRequest))
 	v1.RegisterHealthServiceHTTPServer(srv, Health{})
 	v1.RegisterAccessServiceHTTPServer(srv, accessService)
 	return srv

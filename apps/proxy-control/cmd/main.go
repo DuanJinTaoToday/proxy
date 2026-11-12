@@ -42,5 +42,13 @@ func run(path string) error {
 		return err
 	}
 	httpServer := server.NewHTTPServer(settings.GetHttpAddr(), accessService)
+	if settings.GetProxyAuth() != nil {
+		service, closeDB, err := openProxyAuth(settings.GetProxyAuth(), accessService)
+		if err != nil {
+			return err
+		}
+		defer closeDB()
+		server.RegisterProxyAuth(httpServer, service)
+	}
 	return kratos.New(kratos.Name("proxy-control"), kratos.Server(httpServer)).Run()
 }

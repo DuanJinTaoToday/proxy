@@ -20,3 +20,23 @@ go run ./apps/proxy-control/cmd -conf apps/proxy-control/configs/access.example.
 登录后通过 `Authorization: Bearer <access_token>` 传递令牌。无有效身份返回 401，无权限返回 403。租户管理员只获得其有效成员关系内的权限。业务接口调用 `access.Service.Require`，传入本次实际操作的租户和服务端指定的权限。
 
 默认配置允许启动健康检查，但没有预置登录账号。预置成员关系由启动配置加载，变更后重启控制面生效。会话有效期为八小时，签名密钥随进程启动生成，因此重启后需要重新登录。对外访问由部署入口提供 HTTPS 和登录频率限制。
+
+## 代理凭据与网关认证同步
+
+应用 `00001_proxy_auth.sql` Goose 迁移，在启动配置中加入：
+
+```yaml
+proxy_auth:
+  database_dsn_env: PROXY_CONTROL_DATABASE_DSN
+```
+
+租户管理员使用控制台会话令牌发放和停用代理凭据。发放响应仅交付一次密码。
+
+- `POST /v1/tenants/{tenant_id}/proxy-credentials` 接收可选的 `expires_at` 和 `allowed_source_cidrs`。
+- `POST /v1/tenants/{tenant_id}/proxy-credentials/{client_id}:disable` 幂等停用并保留历史租户归属。
+- `POST /v1/gateway/auth-state/load` 由持有逐网关 `auth` 令牌的中继调用。校验密码后返回该网关专用的刷新引用。
+- `POST /v1/gateway/auth-state/refresh` 每次接受最多 100 个曾签发给该网关的引用。状态响应携带密码校验值，只能经 HTTPS 传输。
+
+运营预置 `gateways` 和 `gateway_tokens`。令牌为至少 32 字节随机值的无填充 base64url 编码，数据库保存令牌字符串的 SHA-256 二进制摘要。轮换使用同一范围的另一个 `rotation_slot`，随后吊销旧令牌。余额来自已生效且完成激活的授予减去欠费，缺少额度时按准入门槛拒绝。充值、调整和上报积压期间的额度续期联动见 #14。
+
+设置 `PROXY_CONTROL_DAO_DSN` 指向已迁移的 Dev PostgreSQL 并执行 `make dao`。只读连接须能读取表的主键约束。HTTP 集成测试使用 `PROXY_CONTROL_TEST_DSN` 指向允许创建临时 schema 的本地 PostgreSQL。

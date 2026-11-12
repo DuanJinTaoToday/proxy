@@ -196,27 +196,33 @@ func (s *Service) CheckPermission(ctx context.Context, req *v1.CheckPermissionRe
 // operation. Callers pass the operation's bound tenant ID, or an empty ID for
 // platform-wide operations, and keep the permission fixed by the operation.
 func (s *Service) Require(ctx context.Context, tenantID string, permission v1.Permission) error {
+	_, err := s.RequireActor(ctx, tenantID, permission)
+	return err
+}
+
+// RequireActor checks the permission and returns the authenticated username.
+func (s *Service) RequireActor(ctx context.Context, tenantID string, permission v1.Permission) (string, error) {
 	username, err := s.identity(ctx)
 	if err != nil {
-		return err
+		return "", err
 	}
 	user := s.users[username]
 	role := user.memberships[tenantID]
 	switch permission {
 	case v1.Permission_PERMISSION_READ_TENANT_USAGE:
 		if activeMembership(role) {
-			return nil
+			return username, nil
 		}
 	case v1.Permission_PERMISSION_MANAGE_PROXY_CREDENTIALS:
 		if role == conf.TenantRole_TENANT_ROLE_ADMIN {
-			return nil
+			return username, nil
 		}
 	case v1.Permission_PERMISSION_READ_OPERATIONS:
 		if tenantID == "" && user.operator {
-			return nil
+			return username, nil
 		}
 	}
-	return errors.Forbidden("ACCESS_DENIED", "permission denied")
+	return "", errors.Forbidden("ACCESS_DENIED", "permission denied")
 }
 
 func activeMembership(role conf.TenantRole) bool {
