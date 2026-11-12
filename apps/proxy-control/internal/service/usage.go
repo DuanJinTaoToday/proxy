@@ -79,6 +79,7 @@ func (s *Usage) QueryUsage(ctx context.Context, req *v1.QueryUsageRequest) (*v1.
 	end, _ := readTimestamp(req.GetEndTime())
 	query := usage.UsageQuery{
 		TenantID: req.GetTenantId(), GatewayID: req.GetGatewayId(), SplitByGateway: req.GetSplitByGateway(),
+		SplitByGrant: req.GetSplitByGrant(), SplitByRate: req.GetSplitByRate(),
 	}
 	if start != nil && end != nil {
 		query.Start, query.End = *start, *end
@@ -91,8 +92,7 @@ func (s *Usage) QueryUsage(ctx context.Context, req *v1.QueryUsageRequest) (*v1.
 	case v1.UsageGranularity_USAGE_GRANULARITY_DAY:
 		query.Granularity = usage.DayGranularity
 	}
-	result, err := s.biz.QueryUsage(ctx, bearerToken(ctx), query,
-		req.GetSplitByGrant() || req.GetSplitByRate(), int(req.GetPageSize()), req.GetPageToken())
+	result, err := s.biz.QueryUsage(ctx, bearerToken(ctx), query, int(req.GetPageSize()), req.GetPageToken())
 	if err != nil {
 		return nil, err
 	}
@@ -101,6 +101,8 @@ func (s *Usage) QueryUsage(ctx context.Context, req *v1.QueryUsageRequest) (*v1.
 		reply.Buckets = append(reply.Buckets, &v1.UsageBucket{
 			StartTime: timestamppb.New(bucket.StartTime),
 			GatewayId: bucket.GatewayID,
+			GrantId:   billingID(bucket.GrantID),
+			RateId:    billingID(bucket.RateID),
 			Amount: &v1.UsageAmount{
 				InputBytes: bucket.InputBytes, OutputBytes: bucket.OutputBytes,
 				TotalBytes: bucket.InputBytes + bucket.OutputBytes, BillableBytes: bucket.BillableBytes,
@@ -108,6 +110,13 @@ func (s *Usage) QueryUsage(ctx context.Context, req *v1.QueryUsageRequest) (*v1.
 		})
 	}
 	return reply, nil
+}
+
+func billingID(id int64) string {
+	if id == 0 {
+		return ""
+	}
+	return strconv.FormatInt(id, 10)
 }
 
 func dailyUsageResponse(result *usage.DailyUsage) *v1.DailyUsageResponse {

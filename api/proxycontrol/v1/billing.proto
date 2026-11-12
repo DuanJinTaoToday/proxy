@@ -1,0 +1,89 @@
+syntax = "proto3";
+
+package proxycontrol.v1;
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1";
+
+service BillingService {
+  rpc ListTrafficGrants(ListTrafficGrantsRequest) returns (ListTrafficGrantsResponse) {
+    option (google.api.http) = { get: "/v1/operations/tenants/{tenant_id}/grants" };
+  }
+  rpc ListBalanceLedger(ListBalanceLedgerRequest) returns (ListBalanceLedgerResponse) {
+    option (google.api.http) = { get: "/v1/operations/tenants/{tenant_id}/ledger" };
+  }
+  rpc ListBillingRates(ListBillingRatesRequest) returns (ListBillingRatesResponse) {
+    option (google.api.http) = { get: "/v1/operations/billing/rates" };
+  }
+}
+
+message ListTrafficGrantsRequest {
+  string tenant_id = 1;
+  int32 page_size = 2;
+  string page_token = 3;
+}
+
+message AuditedTrafficGrant {
+  string grant_id = 1;
+  uint64 granted_bytes = 2;
+  uint64 used_bytes = 3;
+  uint64 overdraft_offset_bytes = 4;
+  google.protobuf.Timestamp starts_at = 5;
+  google.protobuf.Timestamp expires_at = 6;
+  string status = 7;
+}
+
+message ListTrafficGrantsResponse {
+  repeated AuditedTrafficGrant grants = 1;
+  string next_page_token = 2;
+  // Current tenant-wide balance, read in the same snapshot as this page.
+  uint64 overdraft_bytes = 3;
+}
+
+message ListBalanceLedgerRequest {
+  string tenant_id = 1;
+  int32 page_size = 2;
+  string page_token = 3;
+}
+
+message BalanceLedgerEntry {
+  string ledger_id = 1;
+  string kind = 2;
+  string grant_id = 3;
+  int64 delta_bytes = 4;
+  int64 available_before = 5;
+  int64 available_after = 6;
+  string external_ref = 7;
+  string reason = 8;
+  string operator = 9;
+  google.protobuf.Timestamp created_at = 10;
+  string correction_of = 11;
+}
+
+message ListBalanceLedgerResponse {
+  repeated BalanceLedgerEntry entries = 1;
+  string next_page_token = 2;
+}
+
+message ListBillingRatesRequest {
+  string scope_type = 1;
+  string scope_id = 2;
+  int32 page_size = 3;
+  string page_token = 4;
+}
+
+message BillingRateVersion {
+  string rate_id = 1;
+  string scope_type = 2;
+  string scope_id = 3;
+  uint64 upload_ratio_milli = 4;
+  uint64 download_ratio_milli = 5;
+  google.protobuf.Timestamp effective_from = 6;
+}
+
+message ListBillingRatesResponse {
+  repeated BillingRateVersion rates = 1;
+  string next_page_token = 2;
+}

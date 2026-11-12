@@ -2,9 +2,6 @@ package usage
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/base64"
-	"encoding/json"
 	"time"
 
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/access"
@@ -24,11 +21,15 @@ type UsageQuery struct {
 	Start, End          time.Time
 	Granularity         Granularity
 	SplitByGateway      bool
+	SplitByGrant        bool `json:",omitempty"`
+	SplitByRate         bool `json:",omitempty"`
 }
 
 type UsageKey struct {
 	StartTime time.Time
 	GatewayID string
+	GrantID   int64
+	RateID    int64
 }
 
 type UsageBucket struct {
@@ -41,53 +42,27 @@ type UsagePage struct {
 	NextToken string
 }
 
-type usageCursor struct {
-	QueryHash [sha256.Size]byte
-	Key       UsageKey
-}
-
-func (s *Service) QueryUsage(ctx context.Context, token string, query UsageQuery, splitBilling bool, pageSize int, pageToken string) (*UsagePage, error) {
+func (s *Service) QueryUsage(ctx context.Context, token string, query UsageQuery, pageSize int, pageToken string) (*UsagePage, error) {
 	if err := s.access.Require(token, "", access.ReadOperations); err != nil {
 		return nil, err
 	}
 	if query.TenantID == "" {
 		return nil, errors.BadRequest("TENANT_REQUIRED", "tenant_id is required")
 	}
-	if splitBilling {
-		return nil, errors.BadRequest("UNSUPPORTED_USAGE_QUERY", "grant and rate splits are not yet supported")
-	}
 	if err := validateUsageWindow(query, time.Now()); err != nil {
 		return nil, err
 	}
-	if pageSize == 0 {
-		pageSize = 100
-	}
-	if pageSize < 1 || pageSize > 500 {
-		return nil, errors.BadRequest("INVALID_PAGE_SIZE", "page_size must be between 1 and 500")
-	}
-
-	// Normalize equivalent RFC 3339 timestamps before binding the cursor to the query.
 	query.Start, query.End = query.Start.UTC(), query.End.UTC()
-	encoded, err := json.Marshal(query)
+	cursor, after, pageSize, err := readPage[UsageKey](query, pageSize, pageToken)
 	if err != nil {
 		return nil, err
 	}
-	cursor := usageCursor{QueryHash: sha256.Sum256(encoded)}
-	var after *UsageKey
-	if pageToken != "" {
-		if len(pageToken) > 2048 {
-			return nil, errors.BadRequest("INVALID_PAGE_TOKEN", "page_token does not match the usage query")
-		}
-		data, err := base64.RawURLEncoding.DecodeString(pageToken)
-		var decoded usageCursor
-		if err != nil || json.Unmarshal(data, &decoded) != nil ||
-			decoded.QueryHash != cursor.QueryHash || decoded.Key.StartTime.IsZero() || !decoded.Key.StartTime.Before(query.End) ||
-			(!query.SplitByGateway && decoded.Key.GatewayID != "") {
-			return nil, errors.BadRequest("INVALID_PAGE_TOKEN", "page_token does not match the usage query")
-		}
-		after = &decoded.Key
+	if after != nil && (after.StartTime.IsZero() || !after.StartTime.Before(query.End) ||
+		(!query.SplitByGateway && after.GatewayID != "") ||
+		(!query.SplitByGrant && after.GrantID != 0) ||
+		(!query.SplitByRate && after.RateID != 0)) {
+		return nil, errInvalidPageToken
 	}
-
 	buckets, err := s.repo.QueryUsageBuckets(ctx, query, after, pageSize+1)
 	if err != nil {
 		return nil, err
@@ -95,12 +70,10 @@ func (s *Service) QueryUsage(ctx context.Context, token string, query UsageQuery
 	page := &UsagePage{Buckets: buckets}
 	if len(buckets) > pageSize {
 		page.Buckets = buckets[:pageSize]
-		cursor.Key = page.Buckets[pageSize-1].UsageKey
-		encoded, err := json.Marshal(cursor)
+		page.NextToken, err = cursor.next(page.Buckets[pageSize-1].UsageKey)
 		if err != nil {
 			return nil, err
 		}
-		page.NextToken = base64.RawURLEncoding.EncodeToString(encoded)
 	}
 	for _, bucket := range page.Buckets {
 		if bucket.InputBytes+bucket.OutputBytes < bucket.InputBytes {

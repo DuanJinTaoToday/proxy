@@ -9,6 +9,9 @@ type Repository interface {
 	Transact(ctx context.Context, run func(Transaction) error) error
 	DailyUsage(ctx context.Context, tenantID string, start, end time.Time) ([]DailyTotals, *time.Time, error)
 	QueryUsageBuckets(ctx context.Context, query UsageQuery, after *UsageKey, limit int) ([]UsageBucket, error)
+	AuditGrants(ctx context.Context, tenant string, after int64, limit int) ([]AuditedGrant, int64, error)
+	AuditLedger(ctx context.Context, tenant string, after int64, limit int) ([]LedgerEntry, error)
+	AuditRates(ctx context.Context, scopeType, scopeID string, after int64, limit int) ([]RateVersion, error)
 	DueTenants(ctx context.Context, now time.Time) ([]string, error)
 }
 
