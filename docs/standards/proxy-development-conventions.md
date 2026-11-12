@@ -21,6 +21,12 @@
 - 网关的 `internal/biz/authrelay/` 负责认证决策、缓存和状态刷新，`internal/biz/recorder/` 负责采集调度、批次确认与重放及 GOST 代次状态上报。`internal/data/gost/` 负责配置渲染、子进程和退出状态。`internal/pkg/authmetrics/` 存放认证中继各层共享的指标。涉及文件系统或持久化时兼顾 Windows 和 Unix 实现。
 - 控制台的项目清单、构建配置和独立构建入口放在应用根目录，页面、组件和应用逻辑归 `src/`，控制面 API 调用和响应映射归 `src/api/`。租户和运营操作由控制面执行权限检查，界面根据 API 响应渲染可用状态。
 
+### 控制台技术栈
+
+- 一期控制台采用 Vue 3、TypeScript、Vite 和 Vue Router。租户和运营功能共用 `proxy-console`。
+- `proxy-console` 独立构建和发布 `dist` 静态产物。HTTPS 入口在同一域名下托管静态文件、支持直接访问前端路由，并按路由转发控制台所需的 API 给 `proxy-control`。正式环境复用哪个 HTTPS 入口，在部署时确认。
+- 一期在 `src/api/` 手写集中封装的 TypeScript `fetch` 客户端，统一处理 Bearer token、错误响应和响应映射。64 位字节字段按接口的 JSON 字符串读取，保留精度后再比较或换算显示单位。
+
 ### 启动与 Wire
 
 - 两个 Go 应用的 `cmd/` 只包含 `main.go`、`wire.go`、`wire_gen.go`。
@@ -129,9 +135,3 @@ Cron Server 通过 `AppConfig.Register("server", ...)` 注册监听，收到 `No
 ### Spec 更新
 
 替换 Spec 时，把仍有效的约定并入现行文档，更新引用，并从工作树移除旧稿。需要追溯时查阅 Git 历史。
-
-## 待定项
-
-| 事项 | 当前讨论 |
-| --- | --- |
-| 控制台技术栈 | Vue 是候选。框架、构建工具、部署方式和是否生成前端客户端，等接口和后端打通后再定。 |
