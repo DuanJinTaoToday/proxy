@@ -29,6 +29,7 @@ const (
 	ReadTenantUsage Permission = iota + 1
 	ManageProxyCredentials
 	ReadOperations
+	ManageBilling
 	ExtractProxy
 )
 
@@ -45,8 +46,9 @@ var tenantIDPattern = regexp.MustCompile("^[A-Za-z0-9_-]{1,64}$")
 
 type userAccess struct {
 	passwordHash
-	memberships map[string]conf.TenantRole
-	operator    bool
+	memberships   map[string]conf.TenantRole
+	operator      bool
+	manageBilling bool
 }
 
 type Service struct {
@@ -102,7 +104,11 @@ func New(config *conf.Access) (*Service, error) {
 			}
 			memberships[id] = role
 		}
-		service.users[name] = userAccess{passwordHash: passwordHash{salt: salt, key: key}, memberships: memberships, operator: user.GetPlatformOperator()}
+		if user.GetManageBilling() && !user.GetPlatformOperator() {
+			return nil, fmt.Errorf("manage_billing requires platform_operator for access user %q", name)
+		}
+		service.users[name] = userAccess{passwordHash: passwordHash{salt: salt, key: key}, memberships: memberships,
+			operator: user.GetPlatformOperator(), manageBilling: user.GetManageBilling()}
 	}
 	return service, nil
 }
@@ -207,6 +213,12 @@ func (s *Service) RequireActor(token, tenantID string, permission Permission) (s
 	case ReadOperations:
 		if tenantID == "" && user.operator {
 			return username, nil
+		}
+	case ManageBilling:
+		if user.manageBilling {
+			if _, exists := s.tenants[tenantID]; exists {
+				return username, nil
+			}
 		}
 	}
 	return "", errors.Forbidden("ACCESS_DENIED", "permission denied")

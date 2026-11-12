@@ -96,12 +96,7 @@ func (a *Account) activate(tx Transaction, now time.Time) error {
 		if err != nil {
 			return err
 		}
-		offset := min(a.Overdraft, g.GrantedBytes-g.UsedBytes)
-		a.Overdraft -= offset
-		g.UsedBytes += offset
-		g.OverdraftOffsetBytes += offset
-		g.ActivatedAt = &now
-		g.dirty = true
+		offset := a.activateGrant(g, now)
 		if offset > 0 {
 			after, err := a.available(now)
 			if err != nil {
@@ -113,6 +108,16 @@ func (a *Account) activate(tx Transaction, now time.Time) error {
 		}
 	}
 	return nil
+}
+
+func (a *Account) activateGrant(g *Grant, now time.Time) int64 {
+	offset := min(a.Overdraft, g.GrantedBytes-g.UsedBytes)
+	a.Overdraft -= offset
+	g.UsedBytes += offset
+	g.OverdraftOffsetBytes += offset
+	g.ActivatedAt = &now
+	g.dirty = true
+	return offset
 }
 
 func (a *Account) save(tx Transaction, now time.Time) error {

@@ -17,11 +17,15 @@ var _ = new(context.Context)
 
 const _ = http.SupportPackageIsVersion3
 
+const OperationBillingServiceAdjustBalance = "/proxycontrol.v1.BillingService/AdjustBalance"
+const OperationBillingServiceCreateRecharge = "/proxycontrol.v1.BillingService/CreateRecharge"
 const OperationBillingServiceListBalanceLedger = "/proxycontrol.v1.BillingService/ListBalanceLedger"
 const OperationBillingServiceListBillingRates = "/proxycontrol.v1.BillingService/ListBillingRates"
 const OperationBillingServiceListTrafficGrants = "/proxycontrol.v1.BillingService/ListTrafficGrants"
 
 type BillingServiceHTTPServer interface {
+	AdjustBalance(context.Context, *AdjustBalanceRequest) (*BalanceLedgerEntry, error)
+	CreateRecharge(context.Context, *CreateRechargeRequest) (*BalanceLedgerEntry, error)
 	ListBalanceLedger(context.Context, *ListBalanceLedgerRequest) (*ListBalanceLedgerResponse, error)
 	ListBillingRates(context.Context, *ListBillingRatesRequest) (*ListBillingRatesResponse, error)
 	ListTrafficGrants(context.Context, *ListTrafficGrantsRequest) (*ListTrafficGrantsResponse, error)
@@ -29,9 +33,55 @@ type BillingServiceHTTPServer interface {
 
 func RegisterBillingServiceHTTPServer(s *http.Server, srv BillingServiceHTTPServer) {
 	r := s.Route("/")
+	r.Handle("POST", "/v1/operations/tenants/{tenant_id}/recharges", _BillingService_CreateRecharge0_HTTP_Handler(srv))
+	r.Handle("POST", "/v1/operations/tenants/{tenant_id}/adjustments", _BillingService_AdjustBalance0_HTTP_Handler(srv))
 	r.Handle("GET", "/v1/operations/tenants/{tenant_id}/grants", _BillingService_ListTrafficGrants0_HTTP_Handler(srv))
 	r.Handle("GET", "/v1/operations/tenants/{tenant_id}/ledger", _BillingService_ListBalanceLedger0_HTTP_Handler(srv))
 	r.Handle("GET", "/v1/operations/billing/rates", _BillingService_ListBillingRates0_HTTP_Handler(srv))
+}
+
+func _BillingService_CreateRecharge0_HTTP_Handler(srv BillingServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in CreateRechargeRequest
+		if err := ctx.Bind(&in); err != nil {
+			return err
+		}
+		if err := ctx.BindVars(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationBillingServiceCreateRecharge)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.CreateRecharge(ctx, req.(*CreateRechargeRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*BalanceLedgerEntry)
+		return ctx.Result(200, reply)
+	}
+}
+
+func _BillingService_AdjustBalance0_HTTP_Handler(srv BillingServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in AdjustBalanceRequest
+		if err := ctx.Bind(&in); err != nil {
+			return err
+		}
+		if err := ctx.BindVars(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationBillingServiceAdjustBalance)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.AdjustBalance(ctx, req.(*AdjustBalanceRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*BalanceLedgerEntry)
+		return ctx.Result(200, reply)
+	}
 }
 
 func _BillingService_ListTrafficGrants0_HTTP_Handler(srv BillingServiceHTTPServer) func(ctx http.Context) error {
@@ -98,6 +148,8 @@ func _BillingService_ListBillingRates0_HTTP_Handler(srv BillingServiceHTTPServer
 }
 
 type BillingServiceHTTPClient interface {
+	AdjustBalance(ctx context.Context, req *AdjustBalanceRequest, opts ...http.CallOption) (rsp *BalanceLedgerEntry, err error)
+	CreateRecharge(ctx context.Context, req *CreateRechargeRequest, opts ...http.CallOption) (rsp *BalanceLedgerEntry, err error)
 	ListBalanceLedger(ctx context.Context, req *ListBalanceLedgerRequest, opts ...http.CallOption) (rsp *ListBalanceLedgerResponse, err error)
 	ListBillingRates(ctx context.Context, req *ListBillingRatesRequest, opts ...http.CallOption) (rsp *ListBillingRatesResponse, err error)
 	ListTrafficGrants(ctx context.Context, req *ListTrafficGrantsRequest, opts ...http.CallOption) (rsp *ListTrafficGrantsResponse, err error)
@@ -109,6 +161,40 @@ type BillingServiceHTTPClientImpl struct {
 
 func NewBillingServiceHTTPClient(client *http.Client) BillingServiceHTTPClient {
 	return &BillingServiceHTTPClientImpl{client}
+}
+
+func (c *BillingServiceHTTPClientImpl) AdjustBalance(ctx context.Context, in *AdjustBalanceRequest, opts ...http.CallOption) (*BalanceLedgerEntry, error) {
+	var out BalanceLedgerEntry
+	pattern := "/v1/operations/tenants/{tenant_id}/adjustments"
+	path := http.BuildPath(pattern, in)
+	opts = append([]http.CallOption{
+		http.Accept("application/protojson"),
+		http.ContentType("application/protojson"),
+		http.Operation(OperationBillingServiceAdjustBalance),
+		http.PathTemplate(pattern),
+	}, opts...)
+	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (c *BillingServiceHTTPClientImpl) CreateRecharge(ctx context.Context, in *CreateRechargeRequest, opts ...http.CallOption) (*BalanceLedgerEntry, error) {
+	var out BalanceLedgerEntry
+	pattern := "/v1/operations/tenants/{tenant_id}/recharges"
+	path := http.BuildPath(pattern, in)
+	opts = append([]http.CallOption{
+		http.Accept("application/protojson"),
+		http.ContentType("application/protojson"),
+		http.Operation(OperationBillingServiceCreateRecharge),
+		http.PathTemplate(pattern),
+	}, opts...)
+	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
 }
 
 func (c *BillingServiceHTTPClientImpl) ListBalanceLedger(ctx context.Context, in *ListBalanceLedgerRequest, opts ...http.CallOption) (*ListBalanceLedgerResponse, error) {

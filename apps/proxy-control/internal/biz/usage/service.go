@@ -26,6 +26,7 @@ func init() {
 
 type TenantAccess interface {
 	Require(string, string, access.Permission) error
+	RequireActor(string, string, access.Permission) (string, error)
 }
 
 type Service struct {

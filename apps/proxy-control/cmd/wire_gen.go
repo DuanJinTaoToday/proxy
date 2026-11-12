@@ -34,10 +34,10 @@ func wireApp(confServer *conf.Server, confData *conf.Data, confBiz *conf.Biz, ap
 		return nil, nil, err
 	}
 	proxyAuthRepository := repo.ProvideProxyAuthRepository(dataData)
-	proxyauthService := proxyauth.New(proxyAuthRepository, accessService)
-	proxyAuth := service.NewProxyAuth(proxyauthService)
 	usageRepository := repo.ProvideUsageRepository(dataData)
 	usageService := usage.NewConfigured(confBiz, usageRepository, accessService)
+	proxyauthService := proxyauth.New(proxyAuthRepository, accessService, usageService)
+	proxyAuth := service.NewProxyAuth(proxyauthService)
 	serviceUsage := service.NewUsage(usageService)
 	cronService := service.NewCronService(usageService)
 	cronServerImpl, err := server.NewCronServer(appConfig, cronService)

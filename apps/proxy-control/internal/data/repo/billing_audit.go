@@ -25,7 +25,7 @@ func (r *UsageRepository) AuditLedger(ctx context.Context, tenant string, after 
 	var entries []usage.LedgerEntry
 	err := r.db.WithContext(ctx).Raw(`SELECT id, kind, COALESCE(grant_id, 0) AS grant_id, delta_bytes,
 		available_before, available_after, COALESCE(external_ref, '') AS external_ref, reason, operator, created_at,
-		COALESCE(correction_of, 0) AS correction_of
+		COALESCE(correction_of, 0) AS correction_of, overdraft_added_bytes
 		FROM balance_ledger WHERE tenant_id = ? AND id > ? ORDER BY id LIMIT ?`, tenant, after, limit).Scan(&entries).Error
 	return entries, err
 }

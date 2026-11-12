@@ -19,6 +19,7 @@ message User {
   string password_hash = 2;
   repeated Membership memberships = 3;
   bool platform_operator = 4;
+  bool manage_billing = 5;
 }
 
 message Tenant {

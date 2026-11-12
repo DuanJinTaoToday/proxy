@@ -60,6 +60,8 @@ func (s *Access) CheckPermission(ctx context.Context, req *v1.CheckPermissionReq
 		permission = access.ReadOperations
 	case v1.Permission_PERMISSION_EXTRACT_PROXY:
 		permission = access.ExtractProxy
+	case v1.Permission_PERMISSION_MANAGE_BILLING:
+		permission = access.ManageBilling
 	}
 	if err := s.biz.Require(bearerToken(ctx), req.GetTenantId(), permission); err != nil {
 		return nil, err

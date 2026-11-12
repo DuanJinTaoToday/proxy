@@ -14,7 +14,7 @@ import (
 func TestProxyCredentialRejectsUnauthorizedActorsBeforeStorage(t *testing.T) {
 	accessService := testfixture.AuthAccess(t)
 	handler := server.NewHTTPServer("127.0.0.1:0", httpservice.NewAccess(accessService))
-	server.RegisterProxyAuth(handler, httpservice.NewProxyAuth(proxyauth.New(repo.NewProxyAuthRepository(nil), accessService)))
+	server.RegisterProxyAuth(handler, httpservice.NewProxyAuth(proxyauth.New(repo.NewProxyAuthRepository(nil), accessService, nil)))
 	for _, tc := range []struct{ actor, tenant string }{{"alice", "beta"}, {"bob", "alpha"}} {
 		token := testfixture.Login(t, handler, tc.actor)
 		for _, suffix := range []string{"", "/some-id:disable"} {

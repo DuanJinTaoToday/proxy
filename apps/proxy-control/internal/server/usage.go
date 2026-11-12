@@ -25,6 +25,16 @@ func ReportingDecoder(maxBytes int64) http.DecodeRequestFunc {
 	return func(req *stdhttp.Request, body any) error {
 		message, ok := body.(proto.Message)
 		switch body.(type) {
+		case *v1.CreateRechargeRequest, *v1.AdjustBalanceRequest:
+			const maxBillingBody = 32 << 10
+			data, err := io.ReadAll(io.LimitReader(req.Body, maxBillingBody+1))
+			if len(data) > maxBillingBody {
+				return errors.New(413, "BILLING_REQUEST_TOO_LARGE", "billing request exceeds the body limit")
+			}
+			if err != nil || protojson.Unmarshal(data, message) != nil {
+				return errors.BadRequest("INVALID_BILLING_REQUEST", "invalid billing request body")
+			}
+			return nil
 		case *v1.SubmitBatchRequest, *v1.ReportLifecycleRequest, *v1.ReportUnfinishedSessionsRequest, *v1.CompleteReplayRequest:
 		default:
 			return DecodeProxyAuthRequest(req, body)
@@ -50,7 +60,7 @@ func UsageResponseEncoder(w stdhttp.ResponseWriter, req *stdhttp.Request, respon
 	switch response.(type) {
 	case *v1.SubmitBatchResponse, *v1.DailyUsageResponse, *v1.QueryUsageResponse, *v1.TenantBalance,
 		*v1.ListRecordAnomaliesResponse, *v1.ListUsageGapsResponse,
-		*v1.ListTrafficGrantsResponse, *v1.ListBalanceLedgerResponse, *v1.ListBillingRatesResponse, *v1.ExtractProxyResponse:
+		*v1.ListTrafficGrantsResponse, *v1.ListBalanceLedgerResponse, *v1.ListBillingRatesResponse, *v1.ExtractProxyResponse, *v1.BalanceLedgerEntry:
 		_, extraction := response.(*v1.ExtractProxyResponse)
 		data, err := (protojson.MarshalOptions{UseProtoNames: !extraction}).Marshal(response.(proto.Message))
 		if err != nil {

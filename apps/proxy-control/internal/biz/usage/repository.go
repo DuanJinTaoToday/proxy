@@ -37,6 +37,10 @@ type Transaction interface {
 	LoadAccount(id string, now time.Time) (Account, error)
 	Thresholds(id string, now time.Time) ([]Threshold, error)
 	SaveGrant(Grant) error
+	CreateGrant(tenant, actor string, grant Grant, now time.Time) (int64, error)
+	SaveGrantAmount(grant Grant) error
+	FindBalanceChange(tenant, externalRef string) (LedgerEntry, error)
+	WriteBalanceChange(tenant string, entry LedgerEntry) (LedgerEntry, error)
 	SaveAccount(Account, time.Time) error
 	Rates([]RateSample) ([]Rate, error)
 	WriteBuckets([]Bucket, []Bucket) error

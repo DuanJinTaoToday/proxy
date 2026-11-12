@@ -54,7 +54,7 @@ func setupUsage(t *testing.T) usageFixture {
 	query.Set("search_path", schema)
 	address.RawQuery = query.Encode()
 	db := connect(t, address.String())
-	for _, path := range []string{"00001_proxy_auth.sql", "00002_usage.sql", "00003_gateway_lifecycle.sql", "00004_usage_gaps.sql", "00005_mock_supplier_usage.sql"} {
+	for _, path := range []string{"00001_proxy_auth.sql", "00002_usage.sql", "00003_gateway_lifecycle.sql", "00004_usage_gaps.sql", "00005_mock_supplier_usage.sql", "00006_balance_change_overdraft.sql"} {
 		migration, err := os.ReadFile("../migrations/" + path)
 		if err != nil {
 			t.Fatal(err)
@@ -79,6 +79,7 @@ func setupUsage(t *testing.T) usageFixture {
 			{Username: "bob", PasswordHash: testfixture.PasswordHash, Memberships: []*conf.Membership{{TenantId: "beta", Role: member}}},
 			{Username: "operator", PasswordHash: testfixture.PasswordHash, PlatformOperator: true},
 			{Username: "beta-admin", PasswordHash: testfixture.PasswordHash, Memberships: []*conf.Membership{{TenantId: "beta", Role: conf.TenantRole_TENANT_ROLE_ADMIN}}},
+			{Username: "billing", PasswordHash: testfixture.PasswordHash, PlatformOperator: true, ManageBilling: true},
 		},
 	})
 	if err != nil {
@@ -87,7 +88,7 @@ func setupUsage(t *testing.T) usageFixture {
 	service := usage.New(repo.NewUsageRepository(db), accessService)
 	handler := server.NewHTTPServer("127.0.0.1:0", httpservice.NewAccess(accessService),
 		kratoshttp.RequestDecoder(server.ReportingDecoder(0)), kratoshttp.ResponseEncoder(server.UsageResponseEncoder))
-	server.RegisterProxyAuth(handler, httpservice.NewProxyAuth(proxyauth.New(repo.NewProxyAuthRepository(db), accessService)))
+	server.RegisterProxyAuth(handler, httpservice.NewProxyAuth(proxyauth.New(repo.NewProxyAuthRepository(db), accessService, service)))
 	server.RegisterUsage(handler, httpservice.NewUsage(service))
 	return usageFixture{db: db, service: service, http: handler, alice: testfixture.Login(t, handler, "alice"), bob: testfixture.Login(t, handler, "bob")}
 }

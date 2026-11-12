@@ -20,10 +20,15 @@ type TenantAccess interface {
 type Service struct {
 	repo   Repository
 	access TenantAccess
+	quota  QuotaReader
 }
 
-func New(repo Repository, access TenantAccess) *Service {
-	return &Service{repo: repo, access: access}
+type QuotaReader interface {
+	AdmissionQuota(context.Context, string) (*Quota, error)
+}
+
+func New(repo Repository, access TenantAccess, quota QuotaReader) *Service {
+	return &Service{repo: repo, access: access, quota: quota}
 }
 
 func (s *Service) CreateCredential(ctx context.Context, token, tenant string, expiry *time.Time, invalidExpiry bool, sources []string) (*IssuedCredential, error) {

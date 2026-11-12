@@ -23,6 +23,223 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type BalanceAdjustmentMode int32
+
+const (
+	BalanceAdjustmentMode_BALANCE_ADJUSTMENT_MODE_UNSPECIFIED BalanceAdjustmentMode = 0
+	BalanceAdjustmentMode_ADD                                 BalanceAdjustmentMode = 1
+	BalanceAdjustmentMode_SUBTRACT                            BalanceAdjustmentMode = 2
+)
+
+// Enum value maps for BalanceAdjustmentMode.
+var (
+	BalanceAdjustmentMode_name = map[int32]string{
+		0: "BALANCE_ADJUSTMENT_MODE_UNSPECIFIED",
+		1: "ADD",
+		2: "SUBTRACT",
+	}
+	BalanceAdjustmentMode_value = map[string]int32{
+		"BALANCE_ADJUSTMENT_MODE_UNSPECIFIED": 0,
+		"ADD":                                 1,
+		"SUBTRACT":                            2,
+	}
+)
+
+func (x BalanceAdjustmentMode) Enum() *BalanceAdjustmentMode {
+	p := new(BalanceAdjustmentMode)
+	*p = x
+	return p
+}
+
+func (x BalanceAdjustmentMode) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (BalanceAdjustmentMode) Descriptor() protoreflect.EnumDescriptor {
+	return file_proxycontrol_v1_billing_proto_enumTypes[0].Descriptor()
+}
+
+func (BalanceAdjustmentMode) Type() protoreflect.EnumType {
+	return &file_proxycontrol_v1_billing_proto_enumTypes[0]
+}
+
+func (x BalanceAdjustmentMode) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use BalanceAdjustmentMode.Descriptor instead.
+func (BalanceAdjustmentMode) EnumDescriptor() ([]byte, []int) {
+	return file_proxycontrol_v1_billing_proto_rawDescGZIP(), []int{0}
+}
+
+type CreateRechargeRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	ExternalRef   string                 `protobuf:"bytes,2,opt,name=external_ref,json=externalRef,proto3" json:"external_ref,omitempty"`
+	GrantedBytes  uint64                 `protobuf:"varint,3,opt,name=granted_bytes,json=grantedBytes,proto3" json:"granted_bytes,omitempty"`
+	StartsAt      *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=starts_at,json=startsAt,proto3" json:"starts_at,omitempty"`
+	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	Note          string                 `protobuf:"bytes,6,opt,name=note,proto3" json:"note,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateRechargeRequest) Reset() {
+	*x = CreateRechargeRequest{}
+	mi := &file_proxycontrol_v1_billing_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateRechargeRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateRechargeRequest) ProtoMessage() {}
+
+func (x *CreateRechargeRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proxycontrol_v1_billing_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateRechargeRequest.ProtoReflect.Descriptor instead.
+func (*CreateRechargeRequest) Descriptor() ([]byte, []int) {
+	return file_proxycontrol_v1_billing_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *CreateRechargeRequest) GetTenantId() string {
+	if x != nil {
+		return x.TenantId
+	}
+	return ""
+}
+
+func (x *CreateRechargeRequest) GetExternalRef() string {
+	if x != nil {
+		return x.ExternalRef
+	}
+	return ""
+}
+
+func (x *CreateRechargeRequest) GetGrantedBytes() uint64 {
+	if x != nil {
+		return x.GrantedBytes
+	}
+	return 0
+}
+
+func (x *CreateRechargeRequest) GetStartsAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.StartsAt
+	}
+	return nil
+}
+
+func (x *CreateRechargeRequest) GetExpiresAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ExpiresAt
+	}
+	return nil
+}
+
+func (x *CreateRechargeRequest) GetNote() string {
+	if x != nil {
+		return x.Note
+	}
+	return ""
+}
+
+type AdjustBalanceRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	ExternalRef   string                 `protobuf:"bytes,2,opt,name=external_ref,json=externalRef,proto3" json:"external_ref,omitempty"`
+	Mode          BalanceAdjustmentMode  `protobuf:"varint,3,opt,name=mode,proto3,enum=proxycontrol.v1.BalanceAdjustmentMode" json:"mode,omitempty"`
+	Bytes         uint64                 `protobuf:"varint,4,opt,name=bytes,proto3" json:"bytes,omitempty"`
+	GrantId       string                 `protobuf:"bytes,5,opt,name=grant_id,json=grantId,proto3" json:"grant_id,omitempty"`
+	Reason        string                 `protobuf:"bytes,6,opt,name=reason,proto3" json:"reason,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AdjustBalanceRequest) Reset() {
+	*x = AdjustBalanceRequest{}
+	mi := &file_proxycontrol_v1_billing_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AdjustBalanceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AdjustBalanceRequest) ProtoMessage() {}
+
+func (x *AdjustBalanceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proxycontrol_v1_billing_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AdjustBalanceRequest.ProtoReflect.Descriptor instead.
+func (*AdjustBalanceRequest) Descriptor() ([]byte, []int) {
+	return file_proxycontrol_v1_billing_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *AdjustBalanceRequest) GetTenantId() string {
+	if x != nil {
+		return x.TenantId
+	}
+	return ""
+}
+
+func (x *AdjustBalanceRequest) GetExternalRef() string {
+	if x != nil {
+		return x.ExternalRef
+	}
+	return ""
+}
+
+func (x *AdjustBalanceRequest) GetMode() BalanceAdjustmentMode {
+	if x != nil {
+		return x.Mode
+	}
+	return BalanceAdjustmentMode_BALANCE_ADJUSTMENT_MODE_UNSPECIFIED
+}
+
+func (x *AdjustBalanceRequest) GetBytes() uint64 {
+	if x != nil {
+		return x.Bytes
+	}
+	return 0
+}
+
+func (x *AdjustBalanceRequest) GetGrantId() string {
+	if x != nil {
+		return x.GrantId
+	}
+	return ""
+}
+
+func (x *AdjustBalanceRequest) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
+}
+
 type ListTrafficGrantsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
@@ -34,7 +251,7 @@ type ListTrafficGrantsRequest struct {
 
 func (x *ListTrafficGrantsRequest) Reset() {
 	*x = ListTrafficGrantsRequest{}
-	mi := &file_proxycontrol_v1_billing_proto_msgTypes[0]
+	mi := &file_proxycontrol_v1_billing_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -46,7 +263,7 @@ func (x *ListTrafficGrantsRequest) String() string {
 func (*ListTrafficGrantsRequest) ProtoMessage() {}
 
 func (x *ListTrafficGrantsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_billing_proto_msgTypes[0]
+	mi := &file_proxycontrol_v1_billing_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -59,7 +276,7 @@ func (x *ListTrafficGrantsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListTrafficGrantsRequest.ProtoReflect.Descriptor instead.
 func (*ListTrafficGrantsRequest) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_billing_proto_rawDescGZIP(), []int{0}
+	return file_proxycontrol_v1_billing_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ListTrafficGrantsRequest) GetTenantId() string {
@@ -98,7 +315,7 @@ type AuditedTrafficGrant struct {
 
 func (x *AuditedTrafficGrant) Reset() {
 	*x = AuditedTrafficGrant{}
-	mi := &file_proxycontrol_v1_billing_proto_msgTypes[1]
+	mi := &file_proxycontrol_v1_billing_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -110,7 +327,7 @@ func (x *AuditedTrafficGrant) String() string {
 func (*AuditedTrafficGrant) ProtoMessage() {}
 
 func (x *AuditedTrafficGrant) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_billing_proto_msgTypes[1]
+	mi := &file_proxycontrol_v1_billing_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -123,7 +340,7 @@ func (x *AuditedTrafficGrant) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AuditedTrafficGrant.ProtoReflect.Descriptor instead.
 func (*AuditedTrafficGrant) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_billing_proto_rawDescGZIP(), []int{1}
+	return file_proxycontrol_v1_billing_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *AuditedTrafficGrant) GetGrantId() string {
@@ -187,7 +404,7 @@ type ListTrafficGrantsResponse struct {
 
 func (x *ListTrafficGrantsResponse) Reset() {
 	*x = ListTrafficGrantsResponse{}
-	mi := &file_proxycontrol_v1_billing_proto_msgTypes[2]
+	mi := &file_proxycontrol_v1_billing_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -199,7 +416,7 @@ func (x *ListTrafficGrantsResponse) String() string {
 func (*ListTrafficGrantsResponse) ProtoMessage() {}
 
 func (x *ListTrafficGrantsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_billing_proto_msgTypes[2]
+	mi := &file_proxycontrol_v1_billing_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -212,7 +429,7 @@ func (x *ListTrafficGrantsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListTrafficGrantsResponse.ProtoReflect.Descriptor instead.
 func (*ListTrafficGrantsResponse) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_billing_proto_rawDescGZIP(), []int{2}
+	return file_proxycontrol_v1_billing_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *ListTrafficGrantsResponse) GetGrants() []*AuditedTrafficGrant {
@@ -247,7 +464,7 @@ type ListBalanceLedgerRequest struct {
 
 func (x *ListBalanceLedgerRequest) Reset() {
 	*x = ListBalanceLedgerRequest{}
-	mi := &file_proxycontrol_v1_billing_proto_msgTypes[3]
+	mi := &file_proxycontrol_v1_billing_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -259,7 +476,7 @@ func (x *ListBalanceLedgerRequest) String() string {
 func (*ListBalanceLedgerRequest) ProtoMessage() {}
 
 func (x *ListBalanceLedgerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_billing_proto_msgTypes[3]
+	mi := &file_proxycontrol_v1_billing_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -272,7 +489,7 @@ func (x *ListBalanceLedgerRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListBalanceLedgerRequest.ProtoReflect.Descriptor instead.
 func (*ListBalanceLedgerRequest) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_billing_proto_rawDescGZIP(), []int{3}
+	return file_proxycontrol_v1_billing_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *ListBalanceLedgerRequest) GetTenantId() string {
@@ -297,25 +514,26 @@ func (x *ListBalanceLedgerRequest) GetPageToken() string {
 }
 
 type BalanceLedgerEntry struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	LedgerId        string                 `protobuf:"bytes,1,opt,name=ledger_id,json=ledgerId,proto3" json:"ledger_id,omitempty"`
-	Kind            string                 `protobuf:"bytes,2,opt,name=kind,proto3" json:"kind,omitempty"`
-	GrantId         string                 `protobuf:"bytes,3,opt,name=grant_id,json=grantId,proto3" json:"grant_id,omitempty"`
-	DeltaBytes      int64                  `protobuf:"varint,4,opt,name=delta_bytes,json=deltaBytes,proto3" json:"delta_bytes,omitempty"`
-	AvailableBefore int64                  `protobuf:"varint,5,opt,name=available_before,json=availableBefore,proto3" json:"available_before,omitempty"`
-	AvailableAfter  int64                  `protobuf:"varint,6,opt,name=available_after,json=availableAfter,proto3" json:"available_after,omitempty"`
-	ExternalRef     string                 `protobuf:"bytes,7,opt,name=external_ref,json=externalRef,proto3" json:"external_ref,omitempty"`
-	Reason          string                 `protobuf:"bytes,8,opt,name=reason,proto3" json:"reason,omitempty"`
-	Operator        string                 `protobuf:"bytes,9,opt,name=operator,proto3" json:"operator,omitempty"`
-	CreatedAt       *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	CorrectionOf    string                 `protobuf:"bytes,11,opt,name=correction_of,json=correctionOf,proto3" json:"correction_of,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	state               protoimpl.MessageState `protogen:"open.v1"`
+	LedgerId            string                 `protobuf:"bytes,1,opt,name=ledger_id,json=ledgerId,proto3" json:"ledger_id,omitempty"`
+	Kind                string                 `protobuf:"bytes,2,opt,name=kind,proto3" json:"kind,omitempty"`
+	GrantId             string                 `protobuf:"bytes,3,opt,name=grant_id,json=grantId,proto3" json:"grant_id,omitempty"`
+	DeltaBytes          int64                  `protobuf:"varint,4,opt,name=delta_bytes,json=deltaBytes,proto3" json:"delta_bytes,omitempty"`
+	AvailableBefore     int64                  `protobuf:"varint,5,opt,name=available_before,json=availableBefore,proto3" json:"available_before,omitempty"`
+	AvailableAfter      int64                  `protobuf:"varint,6,opt,name=available_after,json=availableAfter,proto3" json:"available_after,omitempty"`
+	ExternalRef         string                 `protobuf:"bytes,7,opt,name=external_ref,json=externalRef,proto3" json:"external_ref,omitempty"`
+	Reason              string                 `protobuf:"bytes,8,opt,name=reason,proto3" json:"reason,omitempty"`
+	Operator            string                 `protobuf:"bytes,9,opt,name=operator,proto3" json:"operator,omitempty"`
+	CreatedAt           *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	CorrectionOf        string                 `protobuf:"bytes,11,opt,name=correction_of,json=correctionOf,proto3" json:"correction_of,omitempty"`
+	OverdraftAddedBytes *int64                 `protobuf:"varint,12,opt,name=overdraft_added_bytes,json=overdraftAddedBytes,proto3,oneof" json:"overdraft_added_bytes,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
 }
 
 func (x *BalanceLedgerEntry) Reset() {
 	*x = BalanceLedgerEntry{}
-	mi := &file_proxycontrol_v1_billing_proto_msgTypes[4]
+	mi := &file_proxycontrol_v1_billing_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -327,7 +545,7 @@ func (x *BalanceLedgerEntry) String() string {
 func (*BalanceLedgerEntry) ProtoMessage() {}
 
 func (x *BalanceLedgerEntry) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_billing_proto_msgTypes[4]
+	mi := &file_proxycontrol_v1_billing_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -340,7 +558,7 @@ func (x *BalanceLedgerEntry) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BalanceLedgerEntry.ProtoReflect.Descriptor instead.
 func (*BalanceLedgerEntry) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_billing_proto_rawDescGZIP(), []int{4}
+	return file_proxycontrol_v1_billing_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *BalanceLedgerEntry) GetLedgerId() string {
@@ -420,6 +638,13 @@ func (x *BalanceLedgerEntry) GetCorrectionOf() string {
 	return ""
 }
 
+func (x *BalanceLedgerEntry) GetOverdraftAddedBytes() int64 {
+	if x != nil && x.OverdraftAddedBytes != nil {
+		return *x.OverdraftAddedBytes
+	}
+	return 0
+}
+
 type ListBalanceLedgerResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Entries       []*BalanceLedgerEntry  `protobuf:"bytes,1,rep,name=entries,proto3" json:"entries,omitempty"`
@@ -430,7 +655,7 @@ type ListBalanceLedgerResponse struct {
 
 func (x *ListBalanceLedgerResponse) Reset() {
 	*x = ListBalanceLedgerResponse{}
-	mi := &file_proxycontrol_v1_billing_proto_msgTypes[5]
+	mi := &file_proxycontrol_v1_billing_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -442,7 +667,7 @@ func (x *ListBalanceLedgerResponse) String() string {
 func (*ListBalanceLedgerResponse) ProtoMessage() {}
 
 func (x *ListBalanceLedgerResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_billing_proto_msgTypes[5]
+	mi := &file_proxycontrol_v1_billing_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -455,7 +680,7 @@ func (x *ListBalanceLedgerResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListBalanceLedgerResponse.ProtoReflect.Descriptor instead.
 func (*ListBalanceLedgerResponse) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_billing_proto_rawDescGZIP(), []int{5}
+	return file_proxycontrol_v1_billing_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ListBalanceLedgerResponse) GetEntries() []*BalanceLedgerEntry {
@@ -486,7 +711,7 @@ type ListBillingRatesRequest struct {
 
 func (x *ListBillingRatesRequest) Reset() {
 	*x = ListBillingRatesRequest{}
-	mi := &file_proxycontrol_v1_billing_proto_msgTypes[6]
+	mi := &file_proxycontrol_v1_billing_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -498,7 +723,7 @@ func (x *ListBillingRatesRequest) String() string {
 func (*ListBillingRatesRequest) ProtoMessage() {}
 
 func (x *ListBillingRatesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_billing_proto_msgTypes[6]
+	mi := &file_proxycontrol_v1_billing_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -511,7 +736,7 @@ func (x *ListBillingRatesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListBillingRatesRequest.ProtoReflect.Descriptor instead.
 func (*ListBillingRatesRequest) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_billing_proto_rawDescGZIP(), []int{6}
+	return file_proxycontrol_v1_billing_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *ListBillingRatesRequest) GetScopeType() string {
@@ -563,7 +788,7 @@ type BillingRateVersion struct {
 
 func (x *BillingRateVersion) Reset() {
 	*x = BillingRateVersion{}
-	mi := &file_proxycontrol_v1_billing_proto_msgTypes[7]
+	mi := &file_proxycontrol_v1_billing_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -575,7 +800,7 @@ func (x *BillingRateVersion) String() string {
 func (*BillingRateVersion) ProtoMessage() {}
 
 func (x *BillingRateVersion) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_billing_proto_msgTypes[7]
+	mi := &file_proxycontrol_v1_billing_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -588,7 +813,7 @@ func (x *BillingRateVersion) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BillingRateVersion.ProtoReflect.Descriptor instead.
 func (*BillingRateVersion) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_billing_proto_rawDescGZIP(), []int{7}
+	return file_proxycontrol_v1_billing_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *BillingRateVersion) GetRateId() string {
@@ -643,7 +868,7 @@ type ListBillingRatesResponse struct {
 
 func (x *ListBillingRatesResponse) Reset() {
 	*x = ListBillingRatesResponse{}
-	mi := &file_proxycontrol_v1_billing_proto_msgTypes[8]
+	mi := &file_proxycontrol_v1_billing_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -655,7 +880,7 @@ func (x *ListBillingRatesResponse) String() string {
 func (*ListBillingRatesResponse) ProtoMessage() {}
 
 func (x *ListBillingRatesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_billing_proto_msgTypes[8]
+	mi := &file_proxycontrol_v1_billing_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -668,7 +893,7 @@ func (x *ListBillingRatesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListBillingRatesResponse.ProtoReflect.Descriptor instead.
 func (*ListBillingRatesResponse) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_billing_proto_rawDescGZIP(), []int{8}
+	return file_proxycontrol_v1_billing_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *ListBillingRatesResponse) GetRates() []*BillingRateVersion {
@@ -689,7 +914,22 @@ var File_proxycontrol_v1_billing_proto protoreflect.FileDescriptor
 
 const file_proxycontrol_v1_billing_proto_rawDesc = "" +
 	"\n" +
-	"\x1dproxycontrol/v1/billing.proto\x12\x0fproxycontrol.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"s\n" +
+	"\x1dproxycontrol/v1/billing.proto\x12\x0fproxycontrol.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x84\x02\n" +
+	"\x15CreateRechargeRequest\x12\x1b\n" +
+	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12!\n" +
+	"\fexternal_ref\x18\x02 \x01(\tR\vexternalRef\x12#\n" +
+	"\rgranted_bytes\x18\x03 \x01(\x04R\fgrantedBytes\x127\n" +
+	"\tstarts_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\bstartsAt\x129\n" +
+	"\n" +
+	"expires_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x12\x12\n" +
+	"\x04note\x18\x06 \x01(\tR\x04note\"\xdb\x01\n" +
+	"\x14AdjustBalanceRequest\x12\x1b\n" +
+	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12!\n" +
+	"\fexternal_ref\x18\x02 \x01(\tR\vexternalRef\x12:\n" +
+	"\x04mode\x18\x03 \x01(\x0e2&.proxycontrol.v1.BalanceAdjustmentModeR\x04mode\x12\x14\n" +
+	"\x05bytes\x18\x04 \x01(\x04R\x05bytes\x12\x19\n" +
+	"\bgrant_id\x18\x05 \x01(\tR\agrantId\x12\x16\n" +
+	"\x06reason\x18\x06 \x01(\tR\x06reason\"s\n" +
 	"\x18ListTrafficGrantsRequest\x12\x1b\n" +
 	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x1b\n" +
 	"\tpage_size\x18\x02 \x01(\x05R\bpageSize\x12\x1d\n" +
@@ -713,7 +953,7 @@ const file_proxycontrol_v1_billing_proto_rawDesc = "" +
 	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x1b\n" +
 	"\tpage_size\x18\x02 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
-	"page_token\x18\x03 \x01(\tR\tpageToken\"\x8c\x03\n" +
+	"page_token\x18\x03 \x01(\tR\tpageToken\"\xdf\x03\n" +
 	"\x12BalanceLedgerEntry\x12\x1b\n" +
 	"\tledger_id\x18\x01 \x01(\tR\bledgerId\x12\x12\n" +
 	"\x04kind\x18\x02 \x01(\tR\x04kind\x12\x19\n" +
@@ -728,7 +968,9 @@ const file_proxycontrol_v1_billing_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\n" +
 	" \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12#\n" +
-	"\rcorrection_of\x18\v \x01(\tR\fcorrectionOf\"\x82\x01\n" +
+	"\rcorrection_of\x18\v \x01(\tR\fcorrectionOf\x127\n" +
+	"\x15overdraft_added_bytes\x18\f \x01(\x03H\x00R\x13overdraftAddedBytes\x88\x01\x01B\x18\n" +
+	"\x16_overdraft_added_bytes\"\x82\x01\n" +
 	"\x19ListBalanceLedgerResponse\x12=\n" +
 	"\aentries\x18\x01 \x03(\v2#.proxycontrol.v1.BalanceLedgerEntryR\aentries\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\xa8\x01\n" +
@@ -750,8 +992,14 @@ const file_proxycontrol_v1_billing_proto_rawDesc = "" +
 	"\x0eeffective_from\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\reffectiveFrom\"}\n" +
 	"\x18ListBillingRatesResponse\x129\n" +
 	"\x05rates\x18\x01 \x03(\v2#.proxycontrol.v1.BillingRateVersionR\x05rates\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken2\xe0\x03\n" +
-	"\x0eBillingService\x12\x9d\x01\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken*W\n" +
+	"\x15BalanceAdjustmentMode\x12'\n" +
+	"#BALANCE_ADJUSTMENT_MODE_UNSPECIFIED\x10\x00\x12\a\n" +
+	"\x03ADD\x10\x01\x12\f\n" +
+	"\bSUBTRACT\x10\x022\x92\x06\n" +
+	"\x0eBillingService\x12\x96\x01\n" +
+	"\x0eCreateRecharge\x12&.proxycontrol.v1.CreateRechargeRequest\x1a#.proxycontrol.v1.BalanceLedgerEntry\"7\x82\xd3\xe4\x93\x021:\x01*\",/v1/operations/tenants/{tenant_id}/recharges\x12\x96\x01\n" +
+	"\rAdjustBalance\x12%.proxycontrol.v1.AdjustBalanceRequest\x1a#.proxycontrol.v1.BalanceLedgerEntry\"9\x82\xd3\xe4\x93\x023:\x01*\"./v1/operations/tenants/{tenant_id}/adjustments\x12\x9d\x01\n" +
 	"\x11ListTrafficGrants\x12).proxycontrol.v1.ListTrafficGrantsRequest\x1a*.proxycontrol.v1.ListTrafficGrantsResponse\"1\x82\xd3\xe4\x93\x02+\x12)/v1/operations/tenants/{tenant_id}/grants\x12\x9d\x01\n" +
 	"\x11ListBalanceLedger\x12).proxycontrol.v1.ListBalanceLedgerRequest\x1a*.proxycontrol.v1.ListBalanceLedgerResponse\"1\x82\xd3\xe4\x93\x02+\x12)/v1/operations/tenants/{tenant_id}/ledger\x12\x8d\x01\n" +
 	"\x10ListBillingRates\x12(.proxycontrol.v1.ListBillingRatesRequest\x1a).proxycontrol.v1.ListBillingRatesResponse\"$\x82\xd3\xe4\x93\x02\x1e\x12\x1c/v1/operations/billing/ratesBEZCgithub.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1b\x06proto3"
@@ -768,38 +1016,49 @@ func file_proxycontrol_v1_billing_proto_rawDescGZIP() []byte {
 	return file_proxycontrol_v1_billing_proto_rawDescData
 }
 
-var file_proxycontrol_v1_billing_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_proxycontrol_v1_billing_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_proxycontrol_v1_billing_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_proxycontrol_v1_billing_proto_goTypes = []any{
-	(*ListTrafficGrantsRequest)(nil),  // 0: proxycontrol.v1.ListTrafficGrantsRequest
-	(*AuditedTrafficGrant)(nil),       // 1: proxycontrol.v1.AuditedTrafficGrant
-	(*ListTrafficGrantsResponse)(nil), // 2: proxycontrol.v1.ListTrafficGrantsResponse
-	(*ListBalanceLedgerRequest)(nil),  // 3: proxycontrol.v1.ListBalanceLedgerRequest
-	(*BalanceLedgerEntry)(nil),        // 4: proxycontrol.v1.BalanceLedgerEntry
-	(*ListBalanceLedgerResponse)(nil), // 5: proxycontrol.v1.ListBalanceLedgerResponse
-	(*ListBillingRatesRequest)(nil),   // 6: proxycontrol.v1.ListBillingRatesRequest
-	(*BillingRateVersion)(nil),        // 7: proxycontrol.v1.BillingRateVersion
-	(*ListBillingRatesResponse)(nil),  // 8: proxycontrol.v1.ListBillingRatesResponse
-	(*timestamppb.Timestamp)(nil),     // 9: google.protobuf.Timestamp
+	(BalanceAdjustmentMode)(0),        // 0: proxycontrol.v1.BalanceAdjustmentMode
+	(*CreateRechargeRequest)(nil),     // 1: proxycontrol.v1.CreateRechargeRequest
+	(*AdjustBalanceRequest)(nil),      // 2: proxycontrol.v1.AdjustBalanceRequest
+	(*ListTrafficGrantsRequest)(nil),  // 3: proxycontrol.v1.ListTrafficGrantsRequest
+	(*AuditedTrafficGrant)(nil),       // 4: proxycontrol.v1.AuditedTrafficGrant
+	(*ListTrafficGrantsResponse)(nil), // 5: proxycontrol.v1.ListTrafficGrantsResponse
+	(*ListBalanceLedgerRequest)(nil),  // 6: proxycontrol.v1.ListBalanceLedgerRequest
+	(*BalanceLedgerEntry)(nil),        // 7: proxycontrol.v1.BalanceLedgerEntry
+	(*ListBalanceLedgerResponse)(nil), // 8: proxycontrol.v1.ListBalanceLedgerResponse
+	(*ListBillingRatesRequest)(nil),   // 9: proxycontrol.v1.ListBillingRatesRequest
+	(*BillingRateVersion)(nil),        // 10: proxycontrol.v1.BillingRateVersion
+	(*ListBillingRatesResponse)(nil),  // 11: proxycontrol.v1.ListBillingRatesResponse
+	(*timestamppb.Timestamp)(nil),     // 12: google.protobuf.Timestamp
 }
 var file_proxycontrol_v1_billing_proto_depIdxs = []int32{
-	9,  // 0: proxycontrol.v1.AuditedTrafficGrant.starts_at:type_name -> google.protobuf.Timestamp
-	9,  // 1: proxycontrol.v1.AuditedTrafficGrant.expires_at:type_name -> google.protobuf.Timestamp
-	1,  // 2: proxycontrol.v1.ListTrafficGrantsResponse.grants:type_name -> proxycontrol.v1.AuditedTrafficGrant
-	9,  // 3: proxycontrol.v1.BalanceLedgerEntry.created_at:type_name -> google.protobuf.Timestamp
-	4,  // 4: proxycontrol.v1.ListBalanceLedgerResponse.entries:type_name -> proxycontrol.v1.BalanceLedgerEntry
-	9,  // 5: proxycontrol.v1.BillingRateVersion.effective_from:type_name -> google.protobuf.Timestamp
-	7,  // 6: proxycontrol.v1.ListBillingRatesResponse.rates:type_name -> proxycontrol.v1.BillingRateVersion
-	0,  // 7: proxycontrol.v1.BillingService.ListTrafficGrants:input_type -> proxycontrol.v1.ListTrafficGrantsRequest
-	3,  // 8: proxycontrol.v1.BillingService.ListBalanceLedger:input_type -> proxycontrol.v1.ListBalanceLedgerRequest
-	6,  // 9: proxycontrol.v1.BillingService.ListBillingRates:input_type -> proxycontrol.v1.ListBillingRatesRequest
-	2,  // 10: proxycontrol.v1.BillingService.ListTrafficGrants:output_type -> proxycontrol.v1.ListTrafficGrantsResponse
-	5,  // 11: proxycontrol.v1.BillingService.ListBalanceLedger:output_type -> proxycontrol.v1.ListBalanceLedgerResponse
-	8,  // 12: proxycontrol.v1.BillingService.ListBillingRates:output_type -> proxycontrol.v1.ListBillingRatesResponse
-	10, // [10:13] is the sub-list for method output_type
-	7,  // [7:10] is the sub-list for method input_type
-	7,  // [7:7] is the sub-list for extension type_name
-	7,  // [7:7] is the sub-list for extension extendee
-	0,  // [0:7] is the sub-list for field type_name
+	12, // 0: proxycontrol.v1.CreateRechargeRequest.starts_at:type_name -> google.protobuf.Timestamp
+	12, // 1: proxycontrol.v1.CreateRechargeRequest.expires_at:type_name -> google.protobuf.Timestamp
+	0,  // 2: proxycontrol.v1.AdjustBalanceRequest.mode:type_name -> proxycontrol.v1.BalanceAdjustmentMode
+	12, // 3: proxycontrol.v1.AuditedTrafficGrant.starts_at:type_name -> google.protobuf.Timestamp
+	12, // 4: proxycontrol.v1.AuditedTrafficGrant.expires_at:type_name -> google.protobuf.Timestamp
+	4,  // 5: proxycontrol.v1.ListTrafficGrantsResponse.grants:type_name -> proxycontrol.v1.AuditedTrafficGrant
+	12, // 6: proxycontrol.v1.BalanceLedgerEntry.created_at:type_name -> google.protobuf.Timestamp
+	7,  // 7: proxycontrol.v1.ListBalanceLedgerResponse.entries:type_name -> proxycontrol.v1.BalanceLedgerEntry
+	12, // 8: proxycontrol.v1.BillingRateVersion.effective_from:type_name -> google.protobuf.Timestamp
+	10, // 9: proxycontrol.v1.ListBillingRatesResponse.rates:type_name -> proxycontrol.v1.BillingRateVersion
+	1,  // 10: proxycontrol.v1.BillingService.CreateRecharge:input_type -> proxycontrol.v1.CreateRechargeRequest
+	2,  // 11: proxycontrol.v1.BillingService.AdjustBalance:input_type -> proxycontrol.v1.AdjustBalanceRequest
+	3,  // 12: proxycontrol.v1.BillingService.ListTrafficGrants:input_type -> proxycontrol.v1.ListTrafficGrantsRequest
+	6,  // 13: proxycontrol.v1.BillingService.ListBalanceLedger:input_type -> proxycontrol.v1.ListBalanceLedgerRequest
+	9,  // 14: proxycontrol.v1.BillingService.ListBillingRates:input_type -> proxycontrol.v1.ListBillingRatesRequest
+	7,  // 15: proxycontrol.v1.BillingService.CreateRecharge:output_type -> proxycontrol.v1.BalanceLedgerEntry
+	7,  // 16: proxycontrol.v1.BillingService.AdjustBalance:output_type -> proxycontrol.v1.BalanceLedgerEntry
+	5,  // 17: proxycontrol.v1.BillingService.ListTrafficGrants:output_type -> proxycontrol.v1.ListTrafficGrantsResponse
+	8,  // 18: proxycontrol.v1.BillingService.ListBalanceLedger:output_type -> proxycontrol.v1.ListBalanceLedgerResponse
+	11, // 19: proxycontrol.v1.BillingService.ListBillingRates:output_type -> proxycontrol.v1.ListBillingRatesResponse
+	15, // [15:20] is the sub-list for method output_type
+	10, // [10:15] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
 func init() { file_proxycontrol_v1_billing_proto_init() }
@@ -807,18 +1066,20 @@ func file_proxycontrol_v1_billing_proto_init() {
 	if File_proxycontrol_v1_billing_proto != nil {
 		return
 	}
+	file_proxycontrol_v1_billing_proto_msgTypes[6].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proxycontrol_v1_billing_proto_rawDesc), len(file_proxycontrol_v1_billing_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   9,
+			NumEnums:      1,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_proxycontrol_v1_billing_proto_goTypes,
 		DependencyIndexes: file_proxycontrol_v1_billing_proto_depIdxs,
+		EnumInfos:         file_proxycontrol_v1_billing_proto_enumTypes,
 		MessageInfos:      file_proxycontrol_v1_billing_proto_msgTypes,
 	}.Build()
 	File_proxycontrol_v1_billing_proto = out.File

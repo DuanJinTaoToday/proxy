@@ -29,6 +29,7 @@ const (
 	Permission_PERMISSION_READ_TENANT_USAGE        Permission = 1
 	Permission_PERMISSION_MANAGE_PROXY_CREDENTIALS Permission = 2
 	Permission_PERMISSION_READ_OPERATIONS          Permission = 3
+	Permission_PERMISSION_MANAGE_BILLING           Permission = 4
 	Permission_PERMISSION_EXTRACT_PROXY            Permission = 5
 )
 
@@ -39,6 +40,7 @@ var (
 		1: "PERMISSION_READ_TENANT_USAGE",
 		2: "PERMISSION_MANAGE_PROXY_CREDENTIALS",
 		3: "PERMISSION_READ_OPERATIONS",
+		4: "PERMISSION_MANAGE_BILLING",
 		5: "PERMISSION_EXTRACT_PROXY",
 	}
 	Permission_value = map[string]int32{
@@ -46,6 +48,7 @@ var (
 		"PERMISSION_READ_TENANT_USAGE":        1,
 		"PERMISSION_MANAGE_PROXY_CREDENTIALS": 2,
 		"PERMISSION_READ_OPERATIONS":          3,
+		"PERMISSION_MANAGE_BILLING":           4,
 		"PERMISSION_EXTRACT_PROXY":            5,
 	}
 )
@@ -469,13 +472,14 @@ const file_proxycontrol_v1_access_proto_rawDesc = "" +
 	"\n" +
 	"permission\x18\x02 \x01(\x0e2\x1b.proxycontrol.v1.PermissionR\n" +
 	"permission\"\x19\n" +
-	"\x17CheckPermissionResponse*\xb1\x01\n" +
+	"\x17CheckPermissionResponse*\xd0\x01\n" +
 	"\n" +
 	"Permission\x12\x1a\n" +
 	"\x16PERMISSION_UNSPECIFIED\x10\x00\x12 \n" +
 	"\x1cPERMISSION_READ_TENANT_USAGE\x10\x01\x12'\n" +
 	"#PERMISSION_MANAGE_PROXY_CREDENTIALS\x10\x02\x12\x1e\n" +
-	"\x1aPERMISSION_READ_OPERATIONS\x10\x03\x12\x1c\n" +
+	"\x1aPERMISSION_READ_OPERATIONS\x10\x03\x12\x1d\n" +
+	"\x19PERMISSION_MANAGE_BILLING\x10\x04\x12\x1c\n" +
 	"\x18PERMISSION_EXTRACT_PROXY\x10\x052\xf2\x03\n" +
 	"\rAccessService\x12t\n" +
 	"\vListTenants\x12#.proxycontrol.v1.ListTenantsRequest\x1a$.proxycontrol.v1.ListTenantsResponse\"\x1a\x82\xd3\xe4\x93\x02\x14\x12\x12/v1/access/tenants\x12\x81\x01\n" +

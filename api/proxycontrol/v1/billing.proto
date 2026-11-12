@@ -8,6 +8,12 @@ import "google/protobuf/timestamp.proto";
 option go_package = "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1";
 
 service BillingService {
+  rpc CreateRecharge(CreateRechargeRequest) returns (BalanceLedgerEntry) {
+    option (google.api.http) = { post: "/v1/operations/tenants/{tenant_id}/recharges" body: "*" };
+  }
+  rpc AdjustBalance(AdjustBalanceRequest) returns (BalanceLedgerEntry) {
+    option (google.api.http) = { post: "/v1/operations/tenants/{tenant_id}/adjustments" body: "*" };
+  }
   rpc ListTrafficGrants(ListTrafficGrantsRequest) returns (ListTrafficGrantsResponse) {
     option (google.api.http) = { get: "/v1/operations/tenants/{tenant_id}/grants" };
   }
@@ -17,6 +23,30 @@ service BillingService {
   rpc ListBillingRates(ListBillingRatesRequest) returns (ListBillingRatesResponse) {
     option (google.api.http) = { get: "/v1/operations/billing/rates" };
   }
+}
+
+message CreateRechargeRequest {
+  string tenant_id = 1;
+  string external_ref = 2;
+  uint64 granted_bytes = 3;
+  google.protobuf.Timestamp starts_at = 4;
+  google.protobuf.Timestamp expires_at = 5;
+  string note = 6;
+}
+
+enum BalanceAdjustmentMode {
+  BALANCE_ADJUSTMENT_MODE_UNSPECIFIED = 0;
+  ADD = 1;
+  SUBTRACT = 2;
+}
+
+message AdjustBalanceRequest {
+  string tenant_id = 1;
+  string external_ref = 2;
+  BalanceAdjustmentMode mode = 3;
+  uint64 bytes = 4;
+  string grant_id = 5;
+  string reason = 6;
 }
 
 message ListTrafficGrantsRequest {
@@ -60,6 +90,7 @@ message BalanceLedgerEntry {
   string operator = 9;
   google.protobuf.Timestamp created_at = 10;
   string correction_of = 11;
+  optional int64 overdraft_added_bytes = 12;
 }
 
 message ListBalanceLedgerResponse {
