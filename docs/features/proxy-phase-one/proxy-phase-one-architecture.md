@@ -45,6 +45,8 @@ flowchart LR
 
 认证中继、离线准入与恢复追平见 [ADR 0005 一期代理认证可用性](../../adr/0005-proxy-auth-availability.md)。
 
+控制台的框架、同源部署和 API 客户端见[开发规范的控制台技术栈](../../standards/proxy-development-conventions.md#控制台技术栈)。
+
 ## 待定设计
 
 下列事项尚未决定，按阻塞的任务排序。任务编号对应[开发任务](proxy-phase-one-development.md)中 Issue #1 的子任务。决定后把结论并入本文或对应文档，需要记录取舍的写成 [ADR](../../adr/README.md)，并从本表移除。
@@ -76,4 +78,3 @@ flowchart LR
 | --- | --- | --- |
 | 提取 Mock 契约 | 租户调用统一提取接口的认证方式、请求与响应结构，以及供应商提取和用量查询适配器的接口边界。 | 08 |
 | 客户端传输保护 | SOCKS5 用户名密码认证以明文传输凭据。对外开放前确定首批客户端与网关之间的传输保护方式。 | 对外开放 |
-| 控制台技术栈 | 见[开发规范的待定项](../../standards/proxy-development-conventions.md#待定项)。 | 05 |
