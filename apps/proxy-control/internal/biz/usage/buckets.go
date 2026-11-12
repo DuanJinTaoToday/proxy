@@ -3,15 +3,10 @@ package usage
 import (
 	"cmp"
 	"errors"
-	"fmt"
 	"math"
 	"math/bits"
 	"slices"
 	"time"
-
-	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/data/model"
-	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 var errByteOverflow = errors.New("byte count exceeds storage range")
@@ -24,7 +19,7 @@ type bucketKey struct {
 	RateID      int64
 }
 
-type bucket struct {
+type Bucket struct {
 	TenantID       string
 	GatewayID      string
 	UsageDate      string
@@ -39,8 +34,8 @@ type bucket struct {
 	LastReceivedAt time.Time
 }
 
-func sortActivations(grants []*grant) {
-	slices.SortFunc(grants, func(a, b *grant) int {
+func sortActivations(grants []*Grant) {
+	slices.SortFunc(grants, func(a, b *Grant) int {
 		if order := a.StartsAt.Compare(b.StartsAt); order != 0 {
 			return order
 		}
@@ -48,20 +43,20 @@ func sortActivations(grants []*grant) {
 	})
 }
 
-func allocateRecord(tx *gorm.DB, a *account, r record, rate model.BillingRate, before string, now time.Time, buckets map[bucketKey]bucket) error {
+func allocateRecord(tx Transaction, a *Account, r record, rate Rate, before string, now time.Time, buckets map[bucketKey]Bucket) error {
 	input, output := *r.InputBytesDelta, *r.OutputBytesDelta
 	total, err := billableBytes(input, output, rate.UploadRatioMilli, rate.DownloadRatioMilli)
 	if err != nil {
 		return err
 	}
 
-	key := bucketKey{TenantID: a.id, UsageDate: r.Time.In(shanghai).Format(time.DateOnly), RateID: rate.ID}
+	key := bucketKey{TenantID: a.ID, UsageDate: r.Time.In(shanghai).Format(time.DateOnly), RateID: rate.ID}
 	if key.UsageDate >= before {
 		key.MinuteStart = r.Time.In(shanghai).Truncate(time.Minute).UTC()
 	}
 	var allocated, inputAllocated, outputAllocated int64
-	for i := range a.grants {
-		g := &a.grants[i]
+	for i := range a.Grants {
+		g := &a.Grants[i]
 		if allocated == total {
 			break
 		}
@@ -84,10 +79,10 @@ func allocateRecord(tx *gorm.DB, a *account, r record, rate model.BillingRate, b
 	}
 	if allocated < total || total == 0 {
 		remaining := total - allocated
-		if a.overdraft > math.MaxInt64-remaining {
+		if a.Overdraft > math.MaxInt64-remaining {
 			return errByteOverflow
 		}
-		a.overdraft += remaining
+		a.Overdraft += remaining
 		key.GrantID = 0
 		return addBucket(buckets, key, input-inputAllocated, output-outputAllocated, remaining, allocated == 0)
 	}
@@ -100,7 +95,7 @@ func prorate(raw, allocated, total int64) int64 {
 	return int64(value)
 }
 
-func addBucket(buckets map[bucketKey]bucket, key bucketKey, input, output, billed int64, count bool) error {
+func addBucket(buckets map[bucketKey]Bucket, key bucketKey, input, output, billed int64, count bool) error {
 	b := buckets[key]
 	if b.InputBytes > math.MaxInt64-input || b.OutputBytes > math.MaxInt64-output || b.BillableBytes > math.MaxInt64-billed {
 		return errByteOverflow
@@ -115,9 +110,8 @@ func addBucket(buckets map[bucketKey]bucket, key bucketKey, input, output, bille
 	return nil
 }
 
-func writeBuckets(tx *gorm.DB, gatewayID string, buckets map[bucketKey]bucket, now time.Time) error {
-	var minute, daily []bucket
-	dates := make(map[string]bool)
+func writeBuckets(tx Transaction, gatewayID string, buckets map[bucketKey]Bucket, now time.Time) error {
+	var minute, daily []Bucket
 	for key, b := range buckets {
 		b.TenantID, b.UsageDate, b.MinuteStart = key.TenantID, key.UsageDate, key.MinuteStart
 		b.GrantID, b.RateID = key.GrantID, key.RateID
@@ -126,37 +120,7 @@ func writeBuckets(tx *gorm.DB, gatewayID string, buckets map[bucketKey]bucket, n
 			daily = append(daily, b)
 		} else {
 			minute = append(minute, b)
-			dates[key.UsageDate] = true
 		}
 	}
-	for date := range dates {
-		if err := ensurePartition(tx, date); err != nil {
-			return err
-		}
-	}
-	if len(minute) != 0 {
-		if err := upsertBuckets(tx, "usage_minutely", minute, true); err != nil {
-			return err
-		}
-	}
-	if len(daily) != 0 {
-		return upsertBuckets(tx, "usage_daily", daily, false)
-	}
-	return nil
-}
-
-func upsertBuckets(tx *gorm.DB, table string, rows []bucket, minute bool) error {
-	keys := []clause.Column{{Name: "tenant_id"}, {Name: "gateway_id"}, {Name: "usage_date"}, {Name: "grant_id"}, {Name: "rate_id"}, {Name: "source"}}
-	query := tx.Table(table)
-	if minute {
-		keys = append(keys, clause.Column{Name: "minute_start"})
-	} else {
-		query = query.Omit("MinuteStart")
-	}
-	updates := make(map[string]any)
-	for _, col := range []string{"input_bytes", "output_bytes", "billable_bytes", "record_count"} {
-		updates[col] = gorm.Expr(fmt.Sprintf("%s.%s + EXCLUDED.%s", table, col, col))
-	}
-	updates["last_received_at"] = gorm.Expr("GREATEST(" + table + ".last_received_at, EXCLUDED.last_received_at)")
-	return query.Clauses(clause.OnConflict{Columns: keys, DoUpdates: clause.Assignments(updates)}).CreateInBatches(rows, 500).Error
+	return tx.WriteBuckets(minute, daily)
 }

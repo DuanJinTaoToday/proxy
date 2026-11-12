@@ -1,4 +1,4 @@
-package usage
+package data
 
 import (
 	"context"
@@ -10,9 +10,9 @@ import (
 
 // Ingestion and partition maintenance acquire this lock before touching any
 // usage partition. CREATE/DROP PARTITION locks the parent table.
-func lockArchiveState(tx *gorm.DB) (string, error) {
+func (t usageTx) LockArchive() (string, error) {
 	var state struct{ BeforeDate string }
-	err := tx.Raw(`SELECT to_char(before_date, 'YYYY-MM-DD') AS before_date
+	err := t.db.Raw(`SELECT to_char(before_date, 'YYYY-MM-DD') AS before_date
 		FROM usage_archive_state WHERE singleton FOR UPDATE`).Take(&state).Error
 	return state.BeforeDate, err
 }
@@ -39,29 +39,8 @@ func ensurePartition(tx *gorm.DB, date string) error {
 	return tx.Exec(statement).Error
 }
 
-func (s *Service) Archive(ctx context.Context, now time.Time) error {
-	cutoff := now.In(shanghai).AddDate(0, 0, -60).Format(time.DateOnly)
-	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		before, err := lockArchiveState(tx)
-		if err != nil || cutoff <= before {
-			return err
-		}
-		var dates []string
-		if err := tx.Raw(`SELECT DISTINCT to_char(usage_date, 'YYYY-MM-DD')
-			FROM usage_minutely WHERE usage_date < ? ORDER BY 1`, cutoff).Scan(&dates).Error; err != nil {
-			return err
-		}
-		for _, date := range dates {
-			if err := archiveDay(tx, date); err != nil {
-				return err
-			}
-		}
-		return tx.Exec("UPDATE usage_archive_state SET before_date = ? WHERE singleton", cutoff).Error
-	})
-}
-
-func archiveDay(tx *gorm.DB, date string) error {
-	if err := tx.Exec(`INSERT INTO usage_daily
+func (t usageTx) ArchiveDay(date string) error {
+	if err := t.db.Exec(`INSERT INTO usage_daily
 		(tenant_id, gateway_id, usage_date, grant_id, rate_id, source, input_bytes, output_bytes, billable_bytes, record_count, last_received_at)
 		SELECT tenant_id, gateway_id, usage_date, grant_id, rate_id, source,
 			SUM(input_bytes), SUM(output_bytes), SUM(billable_bytes), SUM(record_count), MAX(last_received_at)
@@ -79,46 +58,34 @@ func archiveDay(tx *gorm.DB, date string) error {
 	if err != nil {
 		return err
 	}
-	return tx.Exec("DROP TABLE " + name).Error
+	return t.db.Exec("DROP TABLE " + name).Error
 }
 
-func (s *Service) SettleGrants(ctx context.Context, now time.Time) error {
+func (t usageTx) DatesBefore(cutoff string) ([]string, error) {
+	var dates []string
+	err := t.db.Raw(`SELECT DISTINCT to_char(usage_date, 'YYYY-MM-DD')
+			FROM usage_minutely WHERE usage_date < ? ORDER BY 1`, cutoff).Scan(&dates).Error
+	return dates, err
+}
+
+func (t usageTx) SetArchiveCutoff(cutoff string) error {
+	return t.db.Exec("UPDATE usage_archive_state SET before_date = ? WHERE singleton", cutoff).Error
+}
+
+func (r *UsageRepository) DueTenants(ctx context.Context, now time.Time) ([]string, error) {
 	var ids []string
-	if err := s.db.WithContext(ctx).Raw(`SELECT DISTINCT tenant_id FROM traffic_grants g
+	err := r.db.WithContext(ctx).Raw(`SELECT DISTINCT tenant_id FROM traffic_grants g
 		WHERE status = 'active' AND starts_at <= @now AND
 		(activated_at IS NULL OR expires_at <= @now AND NOT EXISTS (
 			SELECT 1 FROM balance_ledger WHERE grant_id = g.id AND kind = 'grant_expire'
-		)) ORDER BY tenant_id`, map[string]any{"now": now}).Scan(&ids).Error; err != nil {
-		return err
-	}
-	for _, id := range ids {
-		err := s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-			a, err := loadAccount(tx, id, now)
-			if err != nil {
-				return err
-			}
-			available, err := a.available(now)
-			if err != nil {
-				return err
-			}
-			for _, g := range a.grants {
-				if g.ExpiresAt == nil || g.ExpiresAt.After(now) {
-					continue
-				}
-				if err := tx.Exec(`INSERT INTO balance_ledger
+		)) ORDER BY tenant_id`, map[string]any{"now": now}).Scan(&ids).Error
+	return ids, err
+}
+
+func (t usageTx) WriteExpiry(tenant string, grantID, delta, available int64, now time.Time) error {
+	return t.db.Exec(`INSERT INTO balance_ledger
 					(tenant_id, grant_id, kind, delta_bytes, available_before, available_after, operator, created_at)
 					VALUES (?, ?, 'grant_expire', ?, ?, ?, 'system', ?)
 					ON CONFLICT (grant_id) WHERE kind = 'grant_expire' DO NOTHING`,
-					id, g.ID, g.UsedBytes-g.GrantedBytes, available, available, now).Error; err != nil {
-					return err
-				}
-			}
-			return a.save(tx, now)
-		})
-		if err != nil {
-			return err
-		}
-		s.refreshBalances(ctx, []string{id})
-	}
-	return nil
+		tenant, grantID, delta, available, available, now).Error
 }

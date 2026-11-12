@@ -8,9 +8,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/access"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/access"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/conf"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/server"
+	httpservice "github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/service"
 )
 
 func request(handler http.Handler, method, path, body, token string) *httptest.ResponseRecorder {
@@ -58,7 +59,7 @@ func testServer(t *testing.T) http.Handler {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return server.NewHTTPServer("127.0.0.1:0", service)
+	return server.NewHTTPServer("127.0.0.1:0", httpservice.NewAccess(service))
 }
 
 func TestLoginRejectsInvalidCredentials(t *testing.T) {

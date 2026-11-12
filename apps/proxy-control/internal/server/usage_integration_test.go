@@ -11,11 +11,13 @@ import (
 	"testing"
 
 	v1 "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1"
-	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/access"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/access"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/proxyauth"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/usage"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/conf"
-	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/proxyauth"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/data"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/server"
-	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/usage"
+	httpservice "github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/service"
 	kratoshttp "github.com/go-kratos/kratos/v3/transport/http"
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -79,11 +81,11 @@ func setupUsage(t *testing.T) usageFixture {
 	if err != nil {
 		t.Fatal(err)
 	}
-	service := usage.New(db, accessService)
-	handler := server.NewHTTPServer("127.0.0.1:0", accessService,
+	service := usage.New(data.NewUsageRepository(db), accessService)
+	handler := server.NewHTTPServer("127.0.0.1:0", httpservice.NewAccess(accessService),
 		kratoshttp.RequestDecoder(server.ReportingDecoder(0)), kratoshttp.ResponseEncoder(server.UsageResponseEncoder))
-	server.RegisterProxyAuth(handler, proxyauth.New(db, accessService))
-	server.RegisterUsage(handler, service)
+	server.RegisterProxyAuth(handler, httpservice.NewProxyAuth(proxyauth.New(data.NewProxyAuthRepository(db), accessService)))
+	server.RegisterUsage(handler, httpservice.NewUsage(service))
 	return usageFixture{db: db, service: service, http: handler, alice: login(t, handler, "alice"), bob: login(t, handler, "bob")}
 }
 

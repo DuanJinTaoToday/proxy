@@ -5,9 +5,10 @@ import (
 	"flag"
 	"log"
 
-	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/access"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/access"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/conf"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/server"
+	httpservice "github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/service"
 	"github.com/go-kratos/kratos/v3"
 	"github.com/go-kratos/kratos/v3/config"
 	"github.com/go-kratos/kratos/v3/config/file"
@@ -44,7 +45,7 @@ func run(path string) error {
 		return err
 	}
 	usageSettings := settings.GetUsage()
-	httpServer := server.NewHTTPServer(settings.GetHttpAddr(), accessService,
+	httpServer := server.NewHTTPServer(settings.GetHttpAddr(), httpservice.NewAccess(accessService),
 		kratoshttp.RequestDecoder(server.ReportingDecoder(int64(usageSettings.GetMaxBatchBodyBytes()))),
 		kratoshttp.ResponseEncoder(server.UsageResponseEncoder),
 	)
@@ -54,7 +55,7 @@ func run(path string) error {
 			return err
 		}
 		defer closeDB()
-		server.RegisterProxyAuth(httpServer, authService)
+		server.RegisterProxyAuth(httpServer, httpservice.NewProxyAuth(authService))
 	}
 	if usageSettings != nil {
 		usageService, closeDB, err := openUsage(usageSettings, accessService)
@@ -62,7 +63,7 @@ func run(path string) error {
 			return err
 		}
 		defer closeDB()
-		server.RegisterUsage(httpServer, usageService)
+		server.RegisterUsage(httpServer, httpservice.NewUsage(usageService))
 		ctx, cancel := context.WithCancel(context.Background())
 		done := make(chan struct{})
 		go func() {

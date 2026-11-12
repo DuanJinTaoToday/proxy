@@ -12,10 +12,12 @@ import (
 	"testing"
 
 	v1 "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1"
-	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/access"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/access"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/proxyauth"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/conf"
-	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/proxyauth"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/data"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/server"
+	httpservice "github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/service"
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
@@ -92,8 +94,8 @@ func authFixture(t *testing.T) (http.Handler, *gorm.DB) {
 		authSQL(t, db, "INSERT INTO gateway_tokens (gateway_id, scope, token_hash) VALUES (?, ?, ?)", token.gateway, token.scope, hash[:])
 	}
 	accessService := authAccess(t)
-	handler := server.NewHTTPServer("127.0.0.1:0", accessService)
-	server.RegisterProxyAuth(handler, proxyauth.New(db, accessService))
+	handler := server.NewHTTPServer("127.0.0.1:0", httpservice.NewAccess(accessService))
+	server.RegisterProxyAuth(handler, httpservice.NewProxyAuth(proxyauth.New(data.NewProxyAuthRepository(db), accessService)))
 	return handler, db
 }
 
@@ -216,8 +218,8 @@ func authStateRequest(t *testing.T, handler http.Handler, path, token string, in
 
 func TestProxyCredentialRejectsUnauthorizedActorsBeforeStorage(t *testing.T) {
 	accessService := authAccess(t)
-	handler := server.NewHTTPServer("127.0.0.1:0", accessService)
-	server.RegisterProxyAuth(handler, proxyauth.New(nil, accessService))
+	handler := server.NewHTTPServer("127.0.0.1:0", httpservice.NewAccess(accessService))
+	server.RegisterProxyAuth(handler, httpservice.NewProxyAuth(proxyauth.New(data.NewProxyAuthRepository(nil), accessService)))
 	for _, tc := range []struct{ actor, tenant string }{{"alice", "beta"}, {"bob", "alpha"}} {
 		token := login(t, handler, tc.actor)
 		for _, suffix := range []string{"", "/some-id:disable"} {

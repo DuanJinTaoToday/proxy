@@ -5,16 +5,16 @@ import (
 	stdhttp "net/http"
 
 	v1 "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1"
-	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/usage"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/service"
 	"github.com/go-kratos/kratos/v3/errors"
 	"github.com/go-kratos/kratos/v3/transport/http"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
 
-func RegisterUsage(srv *http.Server, service *usage.Service) {
-	v1.RegisterReportingServiceHTTPServer(srv, service)
-	v1.RegisterUsageServiceHTTPServer(srv, service)
+func RegisterUsage(srv *http.Server, usage *service.Usage) {
+	v1.RegisterReportingServiceHTTPServer(srv, usage)
+	v1.RegisterUsageServiceHTTPServer(srv, usage)
 }
 
 func ReportingDecoder(maxBytes int64) http.DecodeRequestFunc {

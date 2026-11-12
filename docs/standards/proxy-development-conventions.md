@@ -6,51 +6,7 @@
 
 ### 仓库与目录
 
-使用一个 Git 仓库和一个根目录 Go module。控制面、网关和控制台按部署单元放在 `apps/`，各自保有构建和交付入口。以下是目标布局，目录和包随对应任务建立。
-
-```text
-proxy/
-  go.mod
-  api/
-    proxycontrol/
-      v1/
-        reporting.proto
-        usage.proto
-        # 同目录存放生成的 Go 绑定
-  apps/
-    proxy-control/
-      cmd/
-        main.go
-      bin/                 # 构建产物
-      configs/
-      internal/
-        conf/
-          protos/
-        data/
-          model/
-        server/
-        proxyauth/
-        usage/
-    proxy-gateway/
-      collector/
-        main.go
-        internal/
-      gost/
-      bin/                 # 按目标平台存放两个二进制
-      dist/                # 按目标平台存放发布归档
-    proxy-console/
-  pkg/
-  docs/
-  prototypes/
-```
-
-| 位置 | 职责 |
-| --- | --- |
-| `apps/proxy-control/` | `cmd/main.go` 负责配置加载、依赖组装和启动 Kratos。`bin/` 存放构建产物，由构建创建并由 Git 忽略。 |
-| `apps/proxy-control/internal/` | `server/` 负责服务注册和中间件。业务按能力分包，例如 `proxyauth/` 负责代理认证，`usage/` 负责用量接收、增量计算和查询。业务包随职责增长再拆分。 |
-| `apps/proxy-gateway/` | 原版 GOST 配置归 `gost/`。同机采集器归 `collector/`，负责读取 Recorder 文件、批量上报和保存已确认偏移。 |
-| `apps/proxy-console/` | 租户与运营控制台，作为前端应用保有自己的构建入口，通过控制面 API 查询。先打通接口和后端实现。 |
-| `pkg/` | 放多个应用实际复用的 Go 包，按职责命名。应用私有业务、存储实现和配置类型留在所属应用的 `internal/`。 |
+仓库级目录与跨应用边界见[根目录指南](../../AGENTS.md#仓库目录)。各应用的代码分层和目录落点见[控制面](../../apps/proxy-control/AGENTS.md)、[网关](../../apps/proxy-gateway/AGENTS.md)和[控制台](../../apps/proxy-console/AGENTS.md)指南。
 
 ### 接口与依赖
 
@@ -60,7 +16,7 @@ proxy/
 - 一期只启用 HTTP 服务。采集器通过 HTTP 批量上报，平台自有接口用 `google.api.http` 声明路由并生成 HTTP/JSON 绑定。
 - API 的 PB 源文件和生成的 Go 绑定归 `api/`。使用 `protoc` 和固定版本的生成插件，源文件与受影响的生成物同 PR 提交。
 - 已发布的 `v1` 接口在滚动部署期间兼容仍在运行的旧调用方，包括 HTTP 路由、JSON 字段和批次重发的确认语义。保留已发布字段的编号，删除字段时使用 `reserved`，不兼容变更通过新版本交付。
-- GOST 认证插件遵循 GOST 自有协议。网关本机认证中继接收该协议，控制面的 `proxyauth/` 提供凭据管理和网关状态同步。
+- GOST 认证插件遵循 GOST 自有协议。网关本机认证中继接收该协议，控制面提供凭据管理和网关状态同步。
 
 ### 开发工具初始化
 
@@ -82,7 +38,7 @@ proxy/
 | `apps/proxy-control/` | `make build` 构建控制面，`make pb` 运行 `make api` 和 `make config`，`make lint` 检查控制面和 API Go 代码。 |
 | `apps/proxy-gateway/` | `make build` 构建 collector，`make lint` 检查网关 Go 代码。整包目标随打包流程实现。 |
 
-控制面启动后可通过 `GET /healthz` 检查 HTTP 进程是否可响应。控制面的 `make dao` 和 `make wire` 随对应实现加入。
+控制面启动后可通过 `GET /healthz` 检查 HTTP 进程是否可响应。控制面的 `make dao` 用于生成持久化模型。
 
 HTTP 注解依赖的 `annotations.proto` 和 `http.proto` 来自 [Google APIs 固定提交](https://github.com/googleapis/googleapis/tree/547f8fdb4b91dbac70d540b3757520f0608ae356/google/api)，随 [许可证](../../third_party/googleapis/LICENSE) 一起保存在 `third_party/googleapis/`。
 
