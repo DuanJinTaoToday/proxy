@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package proxycontrol.v1;
+
+import "google/api/annotations.proto";
+
+option go_package = "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1";
+
+service ReportingService {
+  rpc SubmitBatch(SubmitBatchRequest) returns (SubmitBatchResponse) {
+    option (google.api.http) = { post: "/v1/reporting/batches" body: "*" };
+  }
+}
+
+message SubmitBatchRequest {
+  string gateway_id = 1;
+  string boot_id = 2;
+  repeated RecorderLine records = 3;
+}
+
+message RecorderLine {
+  string file_id = 1;
+  uint64 file_offset = 2;
+  string line = 3;
+  uint64 end_offset = 4;
+}
+
+message SubmitBatchResponse {
+  uint32 billable = 1;
+  uint32 not_billable = 2;
+  uint32 quarantined = 3;
+  uint32 duplicates = 4;
+}

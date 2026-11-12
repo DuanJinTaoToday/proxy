@@ -6,8 +6,8 @@ import (
 	"github.com/go-kratos/kratos/v3/transport/http"
 )
 
-func NewHTTPServer(addr string, accessService *access.Service) *http.Server {
-	srv := http.NewServer(http.Address(addr), http.RequestDecoder(DecodeProxyAuthRequest))
+func NewHTTPServer(addr string, accessService *access.Service, options ...http.ServerOption) *http.Server {
+	srv := http.NewServer(append([]http.ServerOption{http.Address(addr), http.RequestDecoder(DecodeProxyAuthRequest)}, options...)...)
 	v1.RegisterHealthServiceHTTPServer(srv, Health{})
 	v1.RegisterAccessServiceHTTPServer(srv, accessService)
 	return srv
