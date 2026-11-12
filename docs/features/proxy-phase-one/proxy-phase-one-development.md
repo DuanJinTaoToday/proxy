@@ -28,6 +28,16 @@
 
 `TestWukongGatewayReportsRealRecorderUsage` 使用本机网关进程、原版 GOST v3.3.3、本机控制面 HTTPS 测试服务和本机 PostgreSQL 17。通过平台发放的 SOCKS5 凭据经悟空访问 `https://api.ipify.org` 并收到 HTTP 200。控制面查询得到测试租户输入 1,792 字节、输出 4,142 字节、计费 5,934 字节，与 Recorder 一致。第二个测试租户无用量。控制面通过 HTTPS 接收记录，测试进程读取网关 Recorder 文件用于核对结果。
 
+### 本机 Docker 容器联调
+
+2026-11-12 在 Windows Docker Desktop 的 Linux amd64 环境验证，代码基线为 `d6298de`。网关、控制面和 PostgreSQL 17 分别运行在三个容器中。网关启动原版 GOST v3.3.3，通过 Docker 网络连接控制面容器内的 Caddy HTTPS 入口，并使用该入口的 CA 证书校验 TLS。Recorder 目录位于网关容器内，控制面未挂载该目录。
+
+| 检查项 | 实测结果 |
+| --- | --- |
+| 真实悟空转发 | Windows 客户端使用平台发放的 SOCKS5 凭据，经网关和悟空访问 `https://api.ipify.org`，返回 HTTP 200 和有效出口 IP。 |
+| Recorder 与上报确认 | `boot_id=LUEEVPNU3JHISLIRTY6C447345`，`file_id=sessions`。测试流量最后一条记录的结束偏移为 2,050 字节。控制面 HTTPS `POST /v1/reporting/batches` 返回 HTTP 200，网关 `confirmed.offset` 和控制面 `ingest_cursors.confirmed_offset` 均为 2,050。 |
+| 租户日用量 | 上海自然日 2026-11-12 的基线为空。请求结束后，Recorder 增量之和与控制面查询一致，输入 746 字节、输出 3,550 字节、计费 4,296 字节。 |
+
 ### 真实悟空分机联调
 
 待验证。将网关和控制面运行在不同宿主机，Recorder 目录只保留在网关机。使用平台凭据经悟空访问目标，核对网关文件、控制面的 HTTPS 上报确认和租户日用量，并在验收记录中补齐拓扑和实测结果。
