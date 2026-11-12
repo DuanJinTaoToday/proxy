@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package proxygateway.config.v1;
+
+option go_package = "github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/conf;conf";
+
+import "google/protobuf/duration.proto";
+
+message Biz {
+  message Recorder {
+    optional uint32 max_records = 1;
+    optional uint32 max_bytes = 2;
+    google.protobuf.Duration scan_interval = 3;
+    google.protobuf.Duration report_timeout = 4;
+  }
+  string gateway_id = 1;
+  Recorder recorder = 2;
+}

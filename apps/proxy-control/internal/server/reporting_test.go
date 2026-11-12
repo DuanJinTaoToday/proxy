@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/integration/testfixture"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/usage"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/server"
 	httpservice "github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/service"
@@ -16,7 +17,7 @@ func TestReportingRequiresGatewayToken(t *testing.T) {
 	server.RegisterUsage(handler, httpservice.NewUsage(usage.New(nil, nil)))
 	body := `{"gateway_id":"g1","boot_id":"boot","records":[{"file_id":"sessions","line":"{}","end_offset":"3"}]}`
 	for _, token := range []string{"", "console.session"} {
-		reply := request(handler, "POST", "/v1/reporting/batches", body, token)
+		reply := testfixture.Request(handler, "POST", "/v1/reporting/batches", body, token)
 		if reply.Code != http.StatusUnauthorized {
 			t.Fatalf("submit: %d %s", reply.Code, reply.Body)
 		}
@@ -26,6 +27,6 @@ func TestReportingRequiresGatewayToken(t *testing.T) {
 func TestReportingRejectsOversizedAndMalformedBodies(t *testing.T) {
 	handler := kratoshttp.NewServer(kratoshttp.RequestDecoder(server.ReportingDecoder(64)))
 	server.RegisterUsage(handler, httpservice.NewUsage(usage.New(nil, nil)))
-	assertStatus(t, request(handler, "POST", "/v1/reporting/batches", strings.Repeat(" ", 65), ""), 413, "BATCH_TOO_LARGE")
-	assertStatus(t, request(handler, "POST", "/v1/reporting/batches", "{", ""), 400, "INVALID_BATCH")
+	testfixture.AssertStatus(t, testfixture.Request(handler, "POST", "/v1/reporting/batches", strings.Repeat(" ", 65), ""), 413, "BATCH_TOO_LARGE")
+	testfixture.AssertStatus(t, testfixture.Request(handler, "POST", "/v1/reporting/batches", "{", ""), 400, "INVALID_BATCH")
 }

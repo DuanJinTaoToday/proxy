@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package proxygateway.config.v1;
+
+option go_package = "github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/conf;conf";
+
+import "google/protobuf/duration.proto";
+
+message Server {
+  message HTTP {
+    string addr = 1;
+  }
+  message CronTask {
+    string name = 1;
+    string spec = 2;
+    google.protobuf.Duration timeout = 3;
+  }
+
+  HTTP http = 1;
+  repeated CronTask cron_tasks = 2;
+}

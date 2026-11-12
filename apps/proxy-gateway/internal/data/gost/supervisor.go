@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/data/recorder"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/data/repo"
 	"gopkg.in/yaml.v3"
 )
 
@@ -24,13 +24,19 @@ type Process struct {
 	Exited <-chan struct{}
 }
 
-func Start(ctx context.Context, binary, template, spool, authEndpoint, token string) (Process, error) {
+type WukongConfig struct {
+	Address  string `yaml:"address"`
+	Username string `yaml:"username"`
+	Password string `yaml:"password"`
+}
+
+func Start(ctx context.Context, binary, template, spool, authEndpoint, token string, wukong WukongConfig) (Process, error) {
 	boot := rand.Text()
 	dir := filepath.Join(spool, boot)
 	if err := os.Mkdir(dir, 0o700); err != nil {
 		return Process{}, err
 	}
-	path := filepath.Join(dir, recorder.SessionFile)
+	path := filepath.Join(dir, repo.SessionFile)
 	file, err := os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
 	if err != nil {
 		return Process{}, err
@@ -38,7 +44,7 @@ func Start(ctx context.Context, binary, template, spool, authEndpoint, token str
 	if err := file.Close(); err != nil {
 		return Process{}, err
 	}
-	rendered, err := renderGOST(template, path, token)
+	rendered, err := renderGOST(template, path, token, wukong)
 	if err != nil {
 		return Process{}, err
 	}
@@ -97,7 +103,7 @@ func Start(ctx context.Context, binary, template, spool, authEndpoint, token str
 	return process, nil
 }
 
-func renderGOST(template, path, token string) ([]byte, error) {
+func renderGOST(template, path, token string, wukong WukongConfig) ([]byte, error) {
 	raw, err := os.ReadFile(template)
 	if err != nil {
 		return nil, err
@@ -114,17 +120,17 @@ func renderGOST(template, path, token string) ([]byte, error) {
 		return nil, err
 	}
 	values := map[string]string{
-		"PROXY_GATEWAY_LOCAL_AUTH_TOKEN": token,
-		"WUKONG_SID":                     fmt.Sprintf("%09d", sid.Int64()),
-		"WUKONG_ADDRESS":                 os.Getenv("WUKONG_ADDRESS"),
-		"WUKONG_USERNAME":                os.Getenv("WUKONG_USERNAME"),
-		"WUKONG_PASSWORD":                os.Getenv("WUKONG_PASSWORD"),
+		"LOCAL_AUTH_TOKEN": token,
+		"WUKONG_SID":       fmt.Sprintf("%09d", sid.Int64()),
+		"WUKONG_ADDRESS":   wukong.Address,
+		"WUKONG_USERNAME":  wukong.Username,
+		"WUKONG_PASSWORD":  wukong.Password,
 	}
 	var substitutions []string
 	for key, value := range values {
 		marker := "${" + key + "}"
 		if value == "" && strings.Contains(string(raw), marker) {
-			return nil, fmt.Errorf("set %s for the GOST template", key)
+			return nil, fmt.Errorf("missing configuration value for GOST template placeholder %s", key)
 		}
 		substitutions = append(substitutions, marker, value)
 	}
@@ -206,7 +212,7 @@ func persistExit(dir, exitedAt string) error {
 		if attempt != 0 {
 			time.Sleep(200 * time.Millisecond)
 		}
-		if err = recorder.WriteDurable(dir, recorder.ExitFile, exitedAt); err == nil {
+		if err = repo.WriteDurable(dir, repo.ExitFile, exitedAt); err == nil {
 			return nil
 		}
 	}

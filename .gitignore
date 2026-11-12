@@ -3,6 +3,8 @@
 /apps/proxy-control/bin/
 /apps/proxy-gateway/bin/
 /apps/proxy-gateway/dist/
+/apps/proxy-control/configs/**/*.local.yaml
+/apps/proxy-gateway/configs/**/*.local.yaml
 /.scratch/
 /.seecode/
 /docs/diagrams/

@@ -13,7 +13,7 @@ func TestGOSTRequiresRegisteredRelayAuther(t *testing.T) {
 		t.Fatal(err)
 	}
 	token := "configured-local-token"
-	rendered := strings.ReplaceAll(string(raw), "${PROXY_GATEWAY_LOCAL_AUTH_TOKEN}", token)
+	rendered := strings.ReplaceAll(string(raw), "${LOCAL_AUTH_TOKEN}", token)
 	const endpoint = "http://127.0.0.1:8091/v1/gateway/auth"
 	for _, tc := range []struct {
 		name, config string

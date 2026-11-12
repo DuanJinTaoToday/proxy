@@ -8,6 +8,7 @@ import (
 	_ "time/tzdata"
 
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/access"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/conf"
 	"github.com/go-kratos/kratos/v3/errors"
 )
 
@@ -39,10 +40,12 @@ func New(repo Repository, access TenantAccess) *Service {
 	return &Service{repo: repo, access: access, maxRecords: DefaultBatchRecords, cache: make(map[string]cachedBalance)}
 }
 
-func (s *Service) SetMaxRecords(limit int) {
-	if limit > 0 {
-		s.maxRecords = limit
+func NewConfigured(settings *conf.Biz, repo Repository, access TenantAccess) *Service {
+	service := New(repo, access)
+	if limit := int(settings.GetUsage().GetMaxBatchRecords()); limit > 0 {
+		service.maxRecords = limit
 	}
+	return service
 }
 
 func reportToken(value string) ([]byte, error) {

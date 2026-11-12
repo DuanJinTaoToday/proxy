@@ -8,11 +8,12 @@
 flowchart LR
     Client[企业 SOCKS5 客户端] --> GOST
     GOST --> Wukong[悟空隧道] --> Target[目标服务]
-    GOST -->|认证插件| Control[proxy-control]
     subgraph Gateway[proxy-gateway 所在机器]
+        GOST -->|认证插件| Relay[本机认证中继]
         GOST[原版 GOST v3.3.3] -->|interim / final| Files[(本机 Recorder 文件)]
         Files --> Collector[网关侧采集器]
     end
+    Relay -->|加载和刷新认证状态| Control[proxy-control]
     Collector -->|每秒批量 HTTP| Control
     Control --> Store[(计费汇总、额度与水位)]
     Console[租户与运营控制台] -->|查询| Control

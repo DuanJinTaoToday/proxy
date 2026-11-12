@@ -7,26 +7,60 @@
 package main
 
 import (
-	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/biz/authrelay"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/biz"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/biz/recorder"
-	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/data/control"
-	recorder2 "github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/data/recorder"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/conf"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/data/acl"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/data/repo"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/server"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/service"
+	"log/slog"
 )
 
 // Injectors from wire.go:
 
-func wireAuthRelay(httpControl *control.HTTPControl) *authrelay.Relay {
-	relay := newAuthRelay(httpControl)
-	return relay
-}
-
-func wireRecorder(config recorder.Config, string2 string, httpReporter *control.HTTPReporter) recorderWorkers {
-	spool := recorder2.NewSpool(string2)
+func wireApp(confServer *conf.Server, data *conf.Data, confBiz *conf.Biz, appConfig *conf.AppConfig, logger *slog.Logger) (*server.App, func(), error) {
+	gatewaySettings, err := server.NewGatewaySettings(confServer, data, confBiz)
+	if err != nil {
+		return nil, nil, err
+	}
+	authConfig := gatewaySettings.Auth
+	transport, err := acl.NewControlTransport(data)
+	if err != nil {
+		return nil, nil, err
+	}
+	httpControl, err := acl.NewAuthControl(authConfig, transport)
+	if err != nil {
+		return nil, nil, err
+	}
+	relay := biz.NewAuthRelay(httpControl)
+	addrPort := gatewaySettings.Address
+	string2 := gatewaySettings.LocalToken
+	authRelay := service.NewAuthRelay(relay, string2)
+	httpServer := server.NewAuthHTTPServer(addrPort, authRelay)
+	listener, cleanup, err := server.NewGatewayListener(addrPort)
+	if err != nil {
+		return nil, nil, err
+	}
+	config := gatewaySettings.Recorder
+	spoolPath := gatewaySettings.Spool
+	spool := repo.NewConfiguredSpool(spoolPath)
+	reportConfig := gatewaySettings.Report
+	httpReporter, err := acl.NewReporter(reportConfig, transport)
+	if err != nil {
+		cleanup()
+		return nil, nil, err
+	}
 	collector := recorder.New(config, spool, httpReporter)
 	lifecycle := recorder.NewLifecycle(spool, httpReporter)
-	mainRecorderWorkers := recorderWorkers{
-		collector: collector,
-		lifecycle: lifecycle,
+	cronService := service.NewCronService(logger)
+	cronServerImpl, err := server.NewCronServer(appConfig, cronService)
+	if err != nil {
+		cleanup()
+		return nil, nil, err
 	}
-	return mainRecorderWorkers
+	app := server.NewApp(gatewaySettings, relay, httpServer, listener, collector, lifecycle, cronServerImpl)
+	return app, func() {
+		cleanup()
+	}, nil
 }

@@ -7,33 +7,47 @@
 package main
 
 import (
-	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/access"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/proxyauth"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/usage"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/conf"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/data"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/data/repo"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/server"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/service"
+	"github.com/go-kratos/kratos/v3"
+	"log/slog"
 )
 
 // Injectors from wire.go:
 
-func openProxyAuth(proxyAuth *conf.ProxyAuth, service *access.Service) (*proxyauth.Service, func(), error) {
-	proxyAuthRepository, cleanup, err := data.OpenProxyAuth(proxyAuth)
+func wireApp(confServer *conf.Server, confData *conf.Data, confBiz *conf.Biz, appConfig *conf.AppConfig, logger *slog.Logger) (*kratos.App, func(), error) {
+	modules := conf.NewModules(confData)
+	accessService, err := biz.NewAccess(confBiz)
 	if err != nil {
 		return nil, nil, err
 	}
-	proxyauthService := proxyauth.New(proxyAuthRepository, service)
-	return proxyauthService, func() {
+	access := service.NewAccess(accessService)
+	httpServer := server.NewConfiguredHTTPServer(confServer, confBiz, access)
+	dataData, cleanup, err := data.NewData(confData)
+	if err != nil {
+		return nil, nil, err
+	}
+	proxyAuthRepository := repo.ProvideProxyAuthRepository(dataData)
+	proxyauthService := proxyauth.New(proxyAuthRepository, accessService)
+	proxyAuth := service.NewProxyAuth(proxyauthService)
+	usageRepository := repo.ProvideUsageRepository(dataData)
+	usageService := usage.NewConfigured(confBiz, usageRepository, accessService)
+	serviceUsage := service.NewUsage(usageService)
+	cronService := service.NewCronService(usageService)
+	cronServerImpl, err := server.NewCronServer(appConfig, cronService)
+	if err != nil {
 		cleanup()
-	}, nil
-}
-
-func openUsage(confUsage *conf.Usage, service *access.Service) (*usage.Service, func(), error) {
-	usageRepository, cleanup, err := data.OpenUsage(confUsage)
-	if err != nil {
 		return nil, nil, err
 	}
-	usageService := usage.New(usageRepository, service)
-	return usageService, func() {
+	v := server.NewServerList(modules, httpServer, proxyAuth, serviceUsage, cronServerImpl)
+	app := newApp(logger, v)
+	return app, func() {
 		cleanup()
 	}, nil
 }

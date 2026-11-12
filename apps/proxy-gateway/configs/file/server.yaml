@@ -1,0 +1,34 @@
+server:
+  http:
+    addr: 127.0.0.1:8091
+  cron_tasks:
+    # 每分钟打印一次。name 对应 CronService 方法名，spec 第一段为秒。
+    # 任务列表支持热更新，设为 [] 可停止后续调度。
+    - name: PrintHello
+      spec: "0 * * * * *"
+      timeout: 0s
+data:
+  gost:
+    binary: ./bin/gost
+    config: ./gost/auth.example.yaml
+    local_auth_token: ""
+    wukong:
+      address: ""
+      username: ""
+      password: ""
+  acl:
+    control:
+      url: ""
+      ca_file: ""
+      auth_token: ""
+      report_token: ""
+  repo:
+    recorder:
+      spool: ./spool
+biz:
+  gateway_id: ""
+  recorder:
+    max_records: 1000
+    max_bytes: 1048576
+    scan_interval: 1s
+    report_timeout: 3s

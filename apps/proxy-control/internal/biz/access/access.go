@@ -8,7 +8,6 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
-	"os"
 	"regexp"
 	"sort"
 	"strconv"
@@ -79,12 +78,11 @@ func New(config *conf.Access) (*Service, error) {
 		if _, exists := service.users[name]; exists {
 			return nil, fmt.Errorf("duplicate access username %q", name)
 		}
-		env := user.GetPasswordHashEnv()
-		saltText, keyText, _ := strings.Cut(os.Getenv(env), ":")
+		saltText, keyText, _ := strings.Cut(user.GetPasswordHash(), ":")
 		salt, saltErr := hex.DecodeString(saltText)
 		key, keyErr := hex.DecodeString(keyText)
 		if saltErr != nil || keyErr != nil || len(salt) != 16 || len(key) != sha256.Size {
-			return nil, fmt.Errorf("invalid password hash for access user %q in environment variable %q", name, env)
+			return nil, fmt.Errorf("invalid password hash for access user %q", name)
 		}
 		memberships := make(map[string]conf.TenantRole)
 		for _, membership := range user.GetMemberships() {

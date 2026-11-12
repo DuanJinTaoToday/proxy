@@ -3,7 +3,7 @@ authers:
     plugin:
       type: http
       addr: http://127.0.0.1:8091/v1/gateway/auth
-      token: "${PROXY_GATEWAY_LOCAL_AUTH_TOKEN}"
+      token: "${LOCAL_AUTH_TOKEN}"
       timeout: 500ms
 
 chains:
