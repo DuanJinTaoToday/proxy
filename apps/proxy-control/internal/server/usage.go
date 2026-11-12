@@ -24,7 +24,7 @@ func ReportingDecoder(maxBytes int64) http.DecodeRequestFunc {
 	return func(req *stdhttp.Request, body any) error {
 		message, ok := body.(proto.Message)
 		switch body.(type) {
-		case *v1.SubmitBatchRequest, *v1.ReportLifecycleRequest:
+		case *v1.SubmitBatchRequest, *v1.ReportLifecycleRequest, *v1.ReportUnfinishedSessionsRequest, *v1.CompleteReplayRequest:
 		default:
 			return DecodeProxyAuthRequest(req, body)
 		}

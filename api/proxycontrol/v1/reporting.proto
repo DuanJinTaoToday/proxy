@@ -15,7 +15,38 @@ service ReportingService {
   rpc SubmitBatch(SubmitBatchRequest) returns (SubmitBatchResponse) {
     option (google.api.http) = { post: "/v1/reporting/batches" body: "*" };
   }
+
+  rpc ReportUnfinishedSessions(ReportUnfinishedSessionsRequest) returns (ReportUnfinishedSessionsResponse) {
+    option (google.api.http) = { post: "/v1/reporting/boots/{boot_id}/unfinished-sessions" body: "*" };
+  }
+
+  rpc CompleteReplay(CompleteReplayRequest) returns (CompleteReplayResponse) {
+    option (google.api.http) = { post: "/v1/reporting/boots/{boot_id}/replay-complete" body: "*" };
+  }
 }
+
+message ReportUnfinishedSessionsRequest {
+  string gateway_id = 1;
+  string boot_id = 2;
+  repeated UnfinishedSession sessions = 3;
+}
+
+message UnfinishedSession {
+  string session_id = 1;
+  string client_id = 2;
+  google.protobuf.Timestamp last_recorded_at = 3;
+}
+
+message ReportUnfinishedSessionsResponse {}
+
+message CompleteReplayRequest {
+  string gateway_id = 1;
+  string boot_id = 2;
+  uint32 unfinished_session_count = 3;
+  optional bool has_session_records = 4;
+}
+
+message CompleteReplayResponse {}
 
 message SubmitBatchRequest {
   string gateway_id = 1;

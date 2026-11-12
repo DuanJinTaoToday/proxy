@@ -53,7 +53,7 @@ func setupUsage(t *testing.T) usageFixture {
 	query.Set("search_path", schema)
 	address.RawQuery = query.Encode()
 	db := connect(t, address.String())
-	for _, path := range []string{"00001_proxy_auth.sql", "00002_usage.sql", "00003_gateway_lifecycle.sql"} {
+	for _, path := range []string{"00001_proxy_auth.sql", "00002_usage.sql", "00003_gateway_lifecycle.sql", "00004_usage_gaps.sql"} {
 		migration, err := os.ReadFile("../migrations/" + path)
 		if err != nil {
 			t.Fatal(err)

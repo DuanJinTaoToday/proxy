@@ -24,7 +24,10 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type capturedReport struct{ lines []*v1.RecorderLine }
+type capturedReport struct {
+	recorder.Reporter
+	lines []*v1.RecorderLine
+}
 
 func (r *capturedReport) Submit(_ context.Context, b *v1.SubmitBatchRequest) error {
 	r.lines = append(r.lines, b.GetRecords()...)

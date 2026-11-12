@@ -71,6 +71,7 @@ func TestCollectorHonorsBatchLimits(t *testing.T) {
 }
 
 type reporting struct {
+	recorder.Reporter
 	batches []*v1.SubmitBatchRequest
 	fail    bool
 	max     int
@@ -139,6 +140,41 @@ func TestCollectorResumesFromDurableAcknowledgement(t *testing.T) {
 	}
 	if len(out.batches) != 3 || out.batches[2].GetRecords()[0].GetFileOffset() != 8 {
 		t.Fatal("restart did not resume exactly at the persisted offset")
+	}
+}
+
+type interruptedCheckpoint struct {
+	*recorderdata.Spool
+}
+
+func (s interruptedCheckpoint) SaveOffset(string, uint64) error {
+	return errors.New("collector stopped before saving the offset")
+}
+
+func TestCollectorReplaysAcknowledgedRecordsAfterInterruptedCheckpoint(t *testing.T) {
+	root := t.TempDir()
+	dir := filepath.Join(root, "boot")
+	if err := os.Mkdir(dir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "sessions.jsonl"), []byte("{}\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	out := &reporting{}
+	spool := recorderdata.NewSpool(root)
+	cfg := recorder.Config{GatewayID: "gateway"}
+	if err := recorder.New(cfg, interruptedCheckpoint{spool}, out).Scan(t.Context()); err == nil {
+		t.Fatal("expected checkpoint failure after successful submission")
+	}
+	if err := recorder.New(cfg, spool, out).Scan(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	if len(out.batches) != 2 || !proto.Equal(out.batches[0], out.batches[1]) {
+		t.Fatalf("restart did not replay the original batch: %v", out.batches)
+	}
+	offset, err := spool.Offset("boot")
+	if err != nil || offset != 3 {
+		t.Fatalf("confirmed offset = %d, err = %v", offset, err)
 	}
 }
 

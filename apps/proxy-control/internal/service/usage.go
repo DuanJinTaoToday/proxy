@@ -41,6 +41,29 @@ func (s *Usage) ReportLifecycle(ctx context.Context, req *v1.ReportLifecycleRequ
 	return &v1.ReportLifecycleResponse{}, nil
 }
 
+func (s *Usage) ReportUnfinishedSessions(ctx context.Context, req *v1.ReportUnfinishedSessionsRequest) (*v1.ReportUnfinishedSessionsResponse, error) {
+	sessions := make([]usage.UnfinishedSession, 0, len(req.GetSessions()))
+	for _, session := range req.GetSessions() {
+		recordedAt, invalid := readTimestamp(session.GetLastRecordedAt())
+		item := usage.UnfinishedSession{SessionID: session.GetSessionId(), ClientID: session.GetClientId()}
+		if !invalid && recordedAt != nil {
+			item.LastRecordedAt = *recordedAt
+		}
+		sessions = append(sessions, item)
+	}
+	if err := s.biz.ReportUnfinishedSessions(ctx, bearerToken(ctx), req.GetGatewayId(), req.GetBootId(), sessions); err != nil {
+		return nil, err
+	}
+	return &v1.ReportUnfinishedSessionsResponse{}, nil
+}
+
+func (s *Usage) CompleteReplay(ctx context.Context, req *v1.CompleteReplayRequest) (*v1.CompleteReplayResponse, error) {
+	if err := s.biz.CompleteReplay(ctx, bearerToken(ctx), req.GetGatewayId(), req.GetBootId(), req.GetUnfinishedSessionCount(), req.HasSessionRecords); err != nil {
+		return nil, err
+	}
+	return &v1.CompleteReplayResponse{}, nil
+}
+
 func (s *Usage) GetTenantDailyUsage(ctx context.Context, req *v1.DailyUsageRequest) (*v1.DailyUsageResponse, error) {
 	noStore(ctx)
 	result, err := s.biz.GetTenantDailyUsage(ctx, bearerToken(ctx), req.GetTenantId(), req.GetStartDate(), req.GetEndDate())

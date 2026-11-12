@@ -6,15 +6,17 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"time"
 
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/biz/recorder"
 )
 
 const (
-	SessionFile = "sessions.jsonl"
-	ExitFile    = "exited_at"
-	cursorFile  = "confirmed.offset"
-	exitAckFile = "exit.confirmed"
+	SessionFile   = "sessions.jsonl"
+	ExitFile      = "exited_at"
+	cursorFile    = "confirmed.offset"
+	exitAckFile   = "exit.confirmed"
+	replayAckFile = "replay.confirmed"
 )
 
 type Spool struct{ root string }
@@ -85,4 +87,40 @@ func (s *Spool) ConfirmExit(boot string) error {
 func (s *Spool) StatExit(boot string) error {
 	_, err := os.Stat(filepath.Join(s.root, boot, ExitFile))
 	return err
+}
+
+func (s *Spool) ReplayCompleted(boot string) (bool, error) {
+	_, err := os.Stat(filepath.Join(s.root, boot, replayAckFile))
+	if errors.Is(err, os.ErrNotExist) {
+		return false, nil
+	}
+	return err == nil, err
+}
+
+func (s *Spool) ConfirmReplay(boot string) error {
+	return WriteDurable(filepath.Join(s.root, boot), replayAckFile, "confirmed\n")
+}
+
+func (s *Spool) CleanupSession(boot string, cutoff time.Time) error {
+	dir := filepath.Join(s.root, boot)
+	ack, err := os.Stat(filepath.Join(dir, replayAckFile))
+	if err != nil || ack.ModTime().After(cutoff) {
+		return err
+	}
+	path := filepath.Join(dir, SessionFile)
+	info, err := os.Stat(path)
+	if errors.Is(err, os.ErrNotExist) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	offset, err := s.Offset(boot)
+	if err != nil {
+		return err
+	}
+	if !info.Mode().IsRegular() || uint64(info.Size()) != offset {
+		return errors.New("closed Recorder file changed after replay completion")
+	}
+	return os.Remove(path)
 }
