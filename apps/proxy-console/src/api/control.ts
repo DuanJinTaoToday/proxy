@@ -39,7 +39,7 @@ export class ApiError extends Error {
 async function request<T>(path: string, options: {
   token?: string
   signal?: AbortSignal
-  body?: { username: string; password: string }
+  body?: { username: string; password: string } | { count: number }
 } = {}): Promise<T> {
   const headers = new Headers({ Accept: 'application/json' })
   if (options.token) headers.set('Authorization', `Bearer ${options.token}`)
@@ -75,11 +75,26 @@ export async function listTenants(token: string, signal: AbortSignal): Promise<T
   })
 }
 
-export function getDailyUsage(tenant: string, start: string, end: string, token: string, signal: AbortSignal) {
+export function getDailyUsage(tenant: string, start: string, end: string, token: string, signal: AbortSignal, source?: 'api_extraction_mock') {
   const dates = new URLSearchParams({ start_date: start, end_date: end })
+  if (source) dates.set('source', source)
   return request<DailyUsage>(`/v1/tenants/${encodeURIComponent(tenant)}/usage/daily?${dates}`, { token, signal })
 }
 
 export function getBalance(tenant: string, token: string, signal: AbortSignal) {
   return request<Balance>(`/v1/tenants/${encodeURIComponent(tenant)}/balance`, { token, signal })
+}
+
+export interface ProxyEndpoint {
+  host: string
+  port: number
+  username: string
+  password: string
+  expiresAt: string
+}
+
+export function extractProxy(tenant: string, count: number, token: string, signal: AbortSignal) {
+  return request<{ ipList: ProxyEndpoint[] }>(`/v1/tenants/${encodeURIComponent(tenant)}/proxy-extractions`, {
+    token, signal, body: { count },
+  })
 }

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ExtractionDemo from './ExtractionDemo.vue'
 import { computed, ref, shallowRef, watch } from 'vue'
 import { ApiError, getBalance, getDailyUsage } from './api/control'
 import type { Balance, DailyUsage } from './api/control'
@@ -126,4 +127,5 @@ watch(dates, async ({ start, end }, _, onCleanup) => {
       </div>
     </section>
   </template>
+  <ExtractionDemo :tenant-id="tenantId" :token="token" :dates="dates" @expired="emit('expired')" />
 </template>

@@ -29,6 +29,7 @@ const (
 	ReadTenantUsage Permission = iota + 1
 	ManageProxyCredentials
 	ReadOperations
+	ExtractProxy
 )
 
 type Tenant struct {
@@ -199,7 +200,7 @@ func (s *Service) RequireActor(token, tenantID string, permission Permission) (s
 		if activeMembership(role) {
 			return username, nil
 		}
-	case ManageProxyCredentials:
+	case ManageProxyCredentials, ExtractProxy:
 		if role == conf.TenantRole_TENANT_ROLE_ADMIN {
 			return username, nil
 		}

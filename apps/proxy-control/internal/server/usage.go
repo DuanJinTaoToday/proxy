@@ -50,8 +50,9 @@ func UsageResponseEncoder(w stdhttp.ResponseWriter, req *stdhttp.Request, respon
 	switch response.(type) {
 	case *v1.SubmitBatchResponse, *v1.DailyUsageResponse, *v1.QueryUsageResponse, *v1.TenantBalance,
 		*v1.ListRecordAnomaliesResponse, *v1.ListUsageGapsResponse,
-		*v1.ListTrafficGrantsResponse, *v1.ListBalanceLedgerResponse, *v1.ListBillingRatesResponse:
-		data, err := (protojson.MarshalOptions{UseProtoNames: true}).Marshal(response.(proto.Message))
+		*v1.ListTrafficGrantsResponse, *v1.ListBalanceLedgerResponse, *v1.ListBillingRatesResponse, *v1.ExtractProxyResponse:
+		_, extraction := response.(*v1.ExtractProxyResponse)
+		data, err := (protojson.MarshalOptions{UseProtoNames: !extraction}).Marshal(response.(proto.Message))
 		if err != nil {
 			return err
 		}

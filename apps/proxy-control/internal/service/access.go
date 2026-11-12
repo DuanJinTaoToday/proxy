@@ -58,6 +58,8 @@ func (s *Access) CheckPermission(ctx context.Context, req *v1.CheckPermissionReq
 		permission = access.ManageProxyCredentials
 	case v1.Permission_PERMISSION_READ_OPERATIONS:
 		permission = access.ReadOperations
+	case v1.Permission_PERMISSION_EXTRACT_PROXY:
+		permission = access.ExtractProxy
 	}
 	if err := s.biz.Require(bearerToken(ctx), req.GetTenantId(), permission); err != nil {
 		return nil, err

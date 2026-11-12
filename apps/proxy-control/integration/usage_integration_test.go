@@ -54,7 +54,7 @@ func setupUsage(t *testing.T) usageFixture {
 	query.Set("search_path", schema)
 	address.RawQuery = query.Encode()
 	db := connect(t, address.String())
-	for _, path := range []string{"00001_proxy_auth.sql", "00002_usage.sql", "00003_gateway_lifecycle.sql", "00004_usage_gaps.sql"} {
+	for _, path := range []string{"00001_proxy_auth.sql", "00002_usage.sql", "00003_gateway_lifecycle.sql", "00004_usage_gaps.sql", "00005_mock_supplier_usage.sql"} {
 		migration, err := os.ReadFile("../migrations/" + path)
 		if err != nil {
 			t.Fatal(err)
@@ -78,6 +78,7 @@ func setupUsage(t *testing.T) usageFixture {
 			{Username: "alice", PasswordHash: testfixture.PasswordHash, Memberships: []*conf.Membership{{TenantId: "alpha", Role: conf.TenantRole_TENANT_ROLE_ADMIN}}},
 			{Username: "bob", PasswordHash: testfixture.PasswordHash, Memberships: []*conf.Membership{{TenantId: "beta", Role: member}}},
 			{Username: "operator", PasswordHash: testfixture.PasswordHash, PlatformOperator: true},
+			{Username: "beta-admin", PasswordHash: testfixture.PasswordHash, Memberships: []*conf.Membership{{TenantId: "beta", Role: conf.TenantRole_TENANT_ROLE_ADMIN}}},
 		},
 	})
 	if err != nil {

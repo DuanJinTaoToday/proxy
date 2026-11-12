@@ -14,6 +14,8 @@ type Repository interface {
 	AuditGrants(ctx context.Context, tenant string, after int64, limit int) ([]AuditedGrant, int64, error)
 	AuditLedger(ctx context.Context, tenant string, after int64, limit int) ([]LedgerEntry, error)
 	AuditRates(ctx context.Context, scopeType, scopeID string, id, after int64, limit int) ([]RateVersion, error)
+	MockEnabled(ctx context.Context, tenantID string) (bool, error)
+	MockDailyUsage(ctx context.Context, tenantID, start, end string) ([]Day, error)
 	DueTenants(ctx context.Context, now time.Time) ([]string, error)
 }
 
