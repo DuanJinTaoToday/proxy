@@ -15,6 +15,8 @@ import (
 	v1 "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/biz/recorder"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type HTTPReporter struct {
@@ -91,14 +93,34 @@ func (r *HTTPReporter) post(ctx context.Context, path string, input any) ([]byte
 }
 
 func (r *HTTPReporter) ReportLifecycle(ctx context.Context, req *v1.ReportLifecycleRequest) error {
+	return r.postProto(ctx, "/v1/reporting/lifecycle", req, &v1.ReportLifecycleResponse{})
+}
+
+func (r *HTTPReporter) ReportUnfinishedSessions(ctx context.Context, gateway, boot string, sessions []recorder.UnfinishedSession) error {
+	req := &v1.ReportUnfinishedSessionsRequest{GatewayId: gateway, BootId: boot, Sessions: make([]*v1.UnfinishedSession, 0, len(sessions))}
+	for _, session := range sessions {
+		req.Sessions = append(req.Sessions, &v1.UnfinishedSession{
+			SessionId: session.SessionID, ClientId: session.ClientID, LastRecordedAt: timestamppb.New(session.LastRecordedAt),
+		})
+	}
+	path := "/v1/reporting/boots/" + url.PathEscape(boot) + "/unfinished-sessions"
+	return r.postProto(ctx, path, req, &v1.ReportUnfinishedSessionsResponse{})
+}
+
+func (r *HTTPReporter) CompleteReplay(ctx context.Context, gateway, boot string, count uint32, hasSessionRecords bool) error {
+	req := &v1.CompleteReplayRequest{GatewayId: gateway, BootId: boot, UnfinishedSessionCount: count, HasSessionRecords: &hasSessionRecords}
+	path := "/v1/reporting/boots/" + url.PathEscape(boot) + "/replay-complete"
+	return r.postProto(ctx, path, req, &v1.CompleteReplayResponse{})
+}
+
+func (r *HTTPReporter) postProto(ctx context.Context, path string, req, ack proto.Message) error {
 	body, err := protojson.Marshal(req)
 	if err != nil {
 		return err
 	}
-	data, err := r.post(ctx, "/v1/reporting/lifecycle", json.RawMessage(body))
+	data, err := r.post(ctx, path, json.RawMessage(body))
 	if err != nil {
 		return err
 	}
-	var ack v1.ReportLifecycleResponse
-	return protojson.Unmarshal(data, &ack)
+	return protojson.Unmarshal(data, ack)
 }

@@ -22,6 +22,8 @@ const (
 
 type Reporter interface {
 	Submit(context.Context, *v1.SubmitBatchRequest) error
+	ReportUnfinishedSessions(ctx context.Context, gateway, boot string, sessions []UnfinishedSession) error
+	CompleteReplay(ctx context.Context, gateway, boot string, count uint32, hasSessionRecords bool) error
 }
 
 type Spool interface {
@@ -31,6 +33,10 @@ type Spool interface {
 	Offset(boot string) (uint64, error)
 	SaveOffset(boot string, offset uint64) error
 	StatExit(boot string) error
+	ExitConfirmed(boot string) (bool, error)
+	ReplayCompleted(boot string) (bool, error)
+	ConfirmReplay(boot string) error
+	CleanupSession(boot string, cutoff time.Time) error
 }
 
 type Config struct {
@@ -94,6 +100,7 @@ func (c *Collector) Scan(ctx context.Context) error {
 	var pendingBytes uint64
 	var oldest time.Time
 	now := time.Now()
+	pendingOffsets := make(map[string]uint64)
 	for _, boot := range boots {
 		if err := ctx.Err(); err != nil {
 			return err
@@ -101,6 +108,7 @@ func (c *Collector) Scan(ctx context.Context) error {
 		if size, statErr := c.spool.SessionSize(boot); statErr == nil {
 			if confirmed, offsetErr := c.spool.Offset(boot); offsetErr == nil && uint64(size) > confirmed {
 				pendingBytes += uint64(size) - confirmed
+				pendingOffsets[boot] = confirmed
 				since := c.pendingSince[boot]
 				if since.IsZero() {
 					since = now
@@ -133,13 +141,51 @@ func (c *Collector) Scan(ctx context.Context) error {
 		errs = append(errs, fmt.Errorf("boot %s: %w", boot, err))
 	}
 	if !oldest.IsZero() && now.Sub(oldest) >= 5*time.Second && now.Sub(c.lastBacklogLog) >= 5*time.Second {
-		slog.Warn("Recorder pending bytes", "bytes", pendingBytes, "oldest_observed_wait", now.Sub(oldest))
+		attrs := []any{"bytes", pendingBytes, "oldest_observed_wait", now.Sub(oldest)}
+		var oldestRecord time.Time
+		for boot, offset := range pendingOffsets {
+			if recordedAt := c.pendingRecordTime(boot, offset); !recordedAt.IsZero() &&
+				(oldestRecord.IsZero() || recordedAt.Before(oldestRecord)) {
+				oldestRecord = recordedAt
+			}
+		}
+		if !oldestRecord.IsZero() {
+			attrs = append(attrs, "oldest_recorded_at", oldestRecord)
+		}
+		slog.Warn("Recorder pending bytes", attrs...)
 		c.lastBacklogLog = now
 	}
 	return errors.Join(errs...)
 }
 
+func (c *Collector) pendingRecordTime(boot string, offset uint64) time.Time {
+	f, err := c.spool.OpenSession(boot)
+	if err != nil {
+		return time.Time{}
+	}
+	defer func() { _ = f.Close() }()
+	if _, err := f.Seek(int64(offset), io.SeekStart); err != nil {
+		return time.Time{}
+	}
+	line, err := bufio.NewReaderSize(f, c.cfg.MaxBytes+2).ReadSlice('\n')
+	if err != nil {
+		return time.Time{}
+	}
+	var record struct{ Time time.Time }
+	if json.Unmarshal(line, &record) != nil {
+		return time.Time{}
+	}
+	return record.Time
+}
+
 func (c *Collector) scanBoot(ctx context.Context, boot string) error {
+	completed, err := c.spool.ReplayCompleted(boot)
+	if err != nil {
+		return err
+	}
+	if completed {
+		return c.spool.CleanupSession(boot, time.Now().Add(-14*24*time.Hour))
+	}
 	f, err := c.spool.OpenSession(boot)
 	if errors.Is(err, os.ErrNotExist) {
 		return nil
@@ -172,6 +218,7 @@ func (c *Collector) scanBoot(ctx context.Context, boot string) error {
 	size := len(empty) + len(`,"records":[]`)
 	reader := bufio.NewReaderSize(f, c.cfg.MaxBytes+2)
 	var readErr error
+	incompleteTail := false
 	for len(batch.Records) < c.cfg.MaxRecords {
 		line, err := reader.ReadSlice('\n')
 		if err != nil {
@@ -182,6 +229,7 @@ func (c *Collector) scanBoot(ctx context.Context, boot string) error {
 				if len(line) != 0 {
 					exitErr := c.spool.StatExit(boot)
 					if exitErr == nil {
+						incompleteTail = true
 						readErr = PermanentError{fmt.Errorf("closed boot has an incomplete line at offset %d", offset)}
 					} else if !errors.Is(exitErr, os.ErrNotExist) {
 						readErr = exitErr
@@ -223,6 +271,12 @@ func (c *Collector) scanBoot(ctx context.Context, boot string) error {
 		if len(batch.Records) < count {
 			return nil
 		}
+	}
+	if readErr != nil && !incompleteTail {
+		return readErr
+	}
+	if err := c.reconcile(ctx, boot, f, offset, incompleteTail); err != nil {
+		return err
 	}
 	return readErr
 }

@@ -63,6 +63,10 @@ func NewData(settings *conf.Data) (*Data, func(), error) {
 			cleanup()
 			return nil, nil, fmt.Errorf("usage requires the proxy_credentials mapping from Issue #3: %w", err)
 		}
+		if err := client.Exec("SELECT gateway_id, boot_id, session_id FROM usage_gaps LIMIT 0").Error; err != nil {
+			cleanup()
+			return nil, nil, fmt.Errorf("usage requires the usage_gaps migration: %w", err)
+		}
 		data.repo.usageDB = client
 	}
 	return data, cleanup, nil

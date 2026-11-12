@@ -17,11 +17,15 @@ var _ = new(context.Context)
 
 const _ = http.SupportPackageIsVersion3
 
+const OperationReportingServiceCompleteReplay = "/proxycontrol.v1.ReportingService/CompleteReplay"
 const OperationReportingServiceReportLifecycle = "/proxycontrol.v1.ReportingService/ReportLifecycle"
+const OperationReportingServiceReportUnfinishedSessions = "/proxycontrol.v1.ReportingService/ReportUnfinishedSessions"
 const OperationReportingServiceSubmitBatch = "/proxycontrol.v1.ReportingService/SubmitBatch"
 
 type ReportingServiceHTTPServer interface {
+	CompleteReplay(context.Context, *CompleteReplayRequest) (*CompleteReplayResponse, error)
 	ReportLifecycle(context.Context, *ReportLifecycleRequest) (*ReportLifecycleResponse, error)
+	ReportUnfinishedSessions(context.Context, *ReportUnfinishedSessionsRequest) (*ReportUnfinishedSessionsResponse, error)
 	SubmitBatch(context.Context, *SubmitBatchRequest) (*SubmitBatchResponse, error)
 }
 
@@ -29,6 +33,8 @@ func RegisterReportingServiceHTTPServer(s *http.Server, srv ReportingServiceHTTP
 	r := s.Route("/")
 	r.Handle("POST", "/v1/reporting/lifecycle", _ReportingService_ReportLifecycle0_HTTP_Handler(srv))
 	r.Handle("POST", "/v1/reporting/batches", _ReportingService_SubmitBatch0_HTTP_Handler(srv))
+	r.Handle("POST", "/v1/reporting/boots/{boot_id}/unfinished-sessions", _ReportingService_ReportUnfinishedSessions0_HTTP_Handler(srv))
+	r.Handle("POST", "/v1/reporting/boots/{boot_id}/replay-complete", _ReportingService_CompleteReplay0_HTTP_Handler(srv))
 }
 
 func _ReportingService_ReportLifecycle0_HTTP_Handler(srv ReportingServiceHTTPServer) func(ctx http.Context) error {
@@ -69,8 +75,54 @@ func _ReportingService_SubmitBatch0_HTTP_Handler(srv ReportingServiceHTTPServer)
 	}
 }
 
+func _ReportingService_ReportUnfinishedSessions0_HTTP_Handler(srv ReportingServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in ReportUnfinishedSessionsRequest
+		if err := ctx.Bind(&in); err != nil {
+			return err
+		}
+		if err := ctx.BindVars(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationReportingServiceReportUnfinishedSessions)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.ReportUnfinishedSessions(ctx, req.(*ReportUnfinishedSessionsRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*ReportUnfinishedSessionsResponse)
+		return ctx.Result(200, reply)
+	}
+}
+
+func _ReportingService_CompleteReplay0_HTTP_Handler(srv ReportingServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in CompleteReplayRequest
+		if err := ctx.Bind(&in); err != nil {
+			return err
+		}
+		if err := ctx.BindVars(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationReportingServiceCompleteReplay)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.CompleteReplay(ctx, req.(*CompleteReplayRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*CompleteReplayResponse)
+		return ctx.Result(200, reply)
+	}
+}
+
 type ReportingServiceHTTPClient interface {
+	CompleteReplay(ctx context.Context, req *CompleteReplayRequest, opts ...http.CallOption) (rsp *CompleteReplayResponse, err error)
 	ReportLifecycle(ctx context.Context, req *ReportLifecycleRequest, opts ...http.CallOption) (rsp *ReportLifecycleResponse, err error)
+	ReportUnfinishedSessions(ctx context.Context, req *ReportUnfinishedSessionsRequest, opts ...http.CallOption) (rsp *ReportUnfinishedSessionsResponse, err error)
 	SubmitBatch(ctx context.Context, req *SubmitBatchRequest, opts ...http.CallOption) (rsp *SubmitBatchResponse, err error)
 }
 
@@ -82,6 +134,23 @@ func NewReportingServiceHTTPClient(client *http.Client) ReportingServiceHTTPClie
 	return &ReportingServiceHTTPClientImpl{client}
 }
 
+func (c *ReportingServiceHTTPClientImpl) CompleteReplay(ctx context.Context, in *CompleteReplayRequest, opts ...http.CallOption) (*CompleteReplayResponse, error) {
+	var out CompleteReplayResponse
+	pattern := "/v1/reporting/boots/{boot_id}/replay-complete"
+	path := http.BuildPath(pattern, in)
+	opts = append([]http.CallOption{
+		http.Accept("application/protojson"),
+		http.ContentType("application/protojson"),
+		http.Operation(OperationReportingServiceCompleteReplay),
+		http.PathTemplate(pattern),
+	}, opts...)
+	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 func (c *ReportingServiceHTTPClientImpl) ReportLifecycle(ctx context.Context, in *ReportLifecycleRequest, opts ...http.CallOption) (*ReportLifecycleResponse, error) {
 	var out ReportLifecycleResponse
 	pattern := "/v1/reporting/lifecycle"
@@ -90,6 +159,23 @@ func (c *ReportingServiceHTTPClientImpl) ReportLifecycle(ctx context.Context, in
 		http.Accept("application/protojson"),
 		http.ContentType("application/protojson"),
 		http.Operation(OperationReportingServiceReportLifecycle),
+		http.PathTemplate(pattern),
+	}, opts...)
+	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (c *ReportingServiceHTTPClientImpl) ReportUnfinishedSessions(ctx context.Context, in *ReportUnfinishedSessionsRequest, opts ...http.CallOption) (*ReportUnfinishedSessionsResponse, error) {
+	var out ReportUnfinishedSessionsResponse
+	pattern := "/v1/reporting/boots/{boot_id}/unfinished-sessions"
+	path := http.BuildPath(pattern, in)
+	opts = append([]http.CallOption{
+		http.Accept("application/protojson"),
+		http.ContentType("application/protojson"),
+		http.Operation(OperationReportingServiceReportUnfinishedSessions),
 		http.PathTemplate(pattern),
 	}, opts...)
 	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)

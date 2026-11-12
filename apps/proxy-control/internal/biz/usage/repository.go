@@ -17,6 +17,10 @@ type Transaction interface {
 	LockArchive() (string, error)
 	EnsureBoot(gatewayID, bootID string, now time.Time) error
 	ReportLifecycle(gatewayID, bootID string, now time.Time, heartbeat, exit *time.Time) error
+	LockReplay(gatewayID, bootID string) (exited, completed bool, err error)
+	SaveSessionGap(gatewayID, bootID string, session UnfinishedSession, now time.Time) error
+	CountSessionGaps(gatewayID, bootID string) (int64, error)
+	FinishReplay(gatewayID, bootID string, hasSessionRecords *bool, now time.Time) error
 	Cursor(gatewayID, bootID, fileID string) (int64, error)
 	SaveCursor(gatewayID, bootID, fileID string, offset int64, now time.Time) error
 	SaveLastRecord(gatewayID, bootID string, recordedAt time.Time) error

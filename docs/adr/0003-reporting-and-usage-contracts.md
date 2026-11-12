@@ -73,6 +73,7 @@ message CompleteReplayRequest {
   string gateway_id = 1;
   string boot_id = 2;
   uint32 unfinished_session_count = 3; // 控制面核对已收到的数量
+  optional bool has_session_records = 4; // 已确认前缀是否含可识别的会话记录
 }
 
 message CompleteReplayResponse {}
@@ -82,6 +83,7 @@ message CompleteReplayResponse {}
 - 单批记录数和请求体字节数的上限由控制面配置，开发默认 1,000 条和 1 MiB。未结束会话每次最多 1,000 个。
 - 单条记录无法解析或无法归集时随批隔离，不拒绝整批。
 - `CompleteReplay` 的数量与已收到的未结束会话不一致时返回 `409 UNFINISHED_SESSIONS_MISMATCH`，采集器重新上报后再通知。
+- `has_session_records` 为 false 且没有未结束会话时，登记代次级可能缺口。字段缺省时按入库水位推断。
 
 | 响应 | `reason` | 采集器处理 |
 | --- | --- | --- |
