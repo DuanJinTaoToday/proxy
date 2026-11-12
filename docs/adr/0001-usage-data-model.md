@@ -2,6 +2,8 @@
 
 状态：已采纳 · 日期：2026-11-12 · 相关任务：[#3](https://github.com/DuanJinTaoToday/proxy/issues/3)、[#4](https://github.com/DuanJinTaoToday/proxy/issues/4)、[#7](https://github.com/DuanJinTaoToday/proxy/issues/7)、[#8](https://github.com/DuanJinTaoToday/proxy/issues/8)
 
+> 部分条款由 [ADR 0004 一期计费入库与运营追溯](0004-billing-ingestion-and-audit.md#取代条款) 取代，其余决定继续适用。
+
 ## 背景
 
 一期需要回答两个问题：租户在某个时间段、在哪个网关实例上用了多少流量，以及租户的流量额度是否已经用完。两者的时效要求不同。

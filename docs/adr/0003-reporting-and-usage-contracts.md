@@ -2,6 +2,8 @@
 
 状态：已采纳 · 日期：2026-11-12 · 相关任务：[#3](https://github.com/DuanJinTaoToday/proxy/issues/3)、[#4](https://github.com/DuanJinTaoToday/proxy/issues/4)、[#5](https://github.com/DuanJinTaoToday/proxy/issues/5)、[#7](https://github.com/DuanJinTaoToday/proxy/issues/7)、[#8](https://github.com/DuanJinTaoToday/proxy/issues/8)
 
+> 部分条款由 [ADR 0004 一期计费入库与运营追溯](0004-billing-ingestion-and-audit.md#取代条款) 取代，其余决定继续适用。
+
 ## 背景
 
 [开发规范](../standards/proxy-development-conventions.md#接口与依赖)要求平台自有接口以 Protobuf 定义，归 `api/proxycontrol/v1/`，用 `google.api.http` 声明 HTTP 路由。GOST 认证插件遵循 GOST 自有协议。表结构与计费口径见 [ADR 0001](0001-usage-data-model.md)，调用方身份见 [ADR 0002](0002-service-and-proxy-identity.md)。

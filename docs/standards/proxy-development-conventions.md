@@ -112,7 +112,7 @@ HTTP 注解依赖的 `annotations.proto` 和 `http.proto` 来自 [Google APIs �
 - Go 改动通过格式检查、`golangci-lint run` 和 `go test ./...`。
 - PB 改动通过 `make pb` 验证编译。PB 或生成配置变更时，CI 使用固定版本重新生成并检查生成物是否与提交一致。PB 命名规范在代码评审中检查。
 - 首版正式发布后，涉及已发布契约的改动以 `proxy-control` 最近一次正式发布的 Git 标签为基线，例如 `proxy-control/v0.1.0`。评审核对 Protobuf 字段、HTTP 路由和 JSON 绑定的兼容性。
-- 改动计量、回放或租户权限时，同一个 PR 提供能验证对应行为的自动化用例。用固定时间和 Recorder 样本验证累计快照取差值、跨午夜归属和失败连接不计量，按改动补充重发与租户隔离用例。
+- 改动计量、回放或租户权限时，同一个 PR 提供能验证对应行为的自动化用例。用固定时间和 Recorder 样本验证直接取 Recorder 增量字段并用累计值校验、跨午夜归属和失败连接不计量，按改动补充重发与租户隔离用例。
 - 使用临时 PostgreSQL 的 HTTP 集成测试延后。真实 GOST、悟空和跨机器场景按[一期开发任务](../features/proxy-phase-one/proxy-phase-one-development.md)联调验收。
 
 ### 网关构建、打包与发布
