@@ -77,18 +77,34 @@ func (s *Usage) QueryUsage(ctx context.Context, req *v1.QueryUsageRequest) (*v1.
 	noStore(ctx)
 	start, _ := readTimestamp(req.GetStartTime())
 	end, _ := readTimestamp(req.GetEndTime())
-	dailyTotal := req.GetGranularity() == v1.UsageGranularity_USAGE_GRANULARITY_DAY &&
-		req.GetGatewayId() == "" && !req.GetSplitByGateway() && !req.GetSplitByGrant() && !req.GetSplitByRate() &&
-		req.GetPageSize() == 0 && req.GetPageToken() == ""
-	result, err := s.biz.QueryUsage(ctx, bearerToken(ctx), req.GetTenantId(), start, end, dailyTotal)
+	query := usage.UsageQuery{
+		TenantID: req.GetTenantId(), GatewayID: req.GetGatewayId(), SplitByGateway: req.GetSplitByGateway(),
+	}
+	if start != nil && end != nil {
+		query.Start, query.End = *start, *end
+	}
+	switch req.GetGranularity() {
+	case v1.UsageGranularity_USAGE_GRANULARITY_MINUTE:
+		query.Granularity = usage.Minute
+	case v1.UsageGranularity_USAGE_GRANULARITY_HOUR:
+		query.Granularity = usage.Hour
+	case v1.UsageGranularity_USAGE_GRANULARITY_DAY:
+		query.Granularity = usage.DayGranularity
+	}
+	result, err := s.biz.QueryUsage(ctx, bearerToken(ctx), query,
+		req.GetSplitByGrant() || req.GetSplitByRate(), int(req.GetPageSize()), req.GetPageToken())
 	if err != nil {
 		return nil, err
 	}
-	reply := &v1.QueryUsageResponse{}
-	for _, day := range result.Days {
+	reply := &v1.QueryUsageResponse{NextPageToken: result.NextToken}
+	for _, bucket := range result.Buckets {
 		reply.Buckets = append(reply.Buckets, &v1.UsageBucket{
-			StartTime: timestamppb.New(day.StartTime),
-			Amount:    dailyAmount(day),
+			StartTime: timestamppb.New(bucket.StartTime),
+			GatewayId: bucket.GatewayID,
+			Amount: &v1.UsageAmount{
+				InputBytes: bucket.InputBytes, OutputBytes: bucket.OutputBytes,
+				TotalBytes: bucket.InputBytes + bucket.OutputBytes, BillableBytes: bucket.BillableBytes,
+			},
 		})
 	}
 	return reply, nil

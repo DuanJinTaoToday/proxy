@@ -7,7 +7,8 @@ import (
 
 type Repository interface {
 	Transact(ctx context.Context, run func(Transaction) error) error
-	DailyUsage(ctx context.Context, tenantID, start, end string) ([]DailyTotals, *time.Time, error)
+	DailyUsage(ctx context.Context, tenantID string, start, end time.Time) ([]DailyTotals, *time.Time, error)
+	QueryUsageBuckets(ctx context.Context, query UsageQuery, after *UsageKey, limit int) ([]UsageBucket, error)
 	DueTenants(ctx context.Context, now time.Time) ([]string, error)
 }
 
@@ -79,7 +80,6 @@ type DailyUsage struct {
 type Day struct {
 	DailyTotals
 	TotalBytes uint64
-	StartTime  time.Time
 }
 
 type Balance struct {
