@@ -8,7 +8,7 @@ import (
 	"github.com/go-kratos/kratos/v3/errors"
 )
 
-func (s *Service) GetTenantDailyUsage(ctx context.Context, token, id, startDate, endDate string) (*DailyUsage, error) {
+func (s *Service) GetTenantDailyUsage(ctx context.Context, token, id, startDate, endDate, source string) (*DailyUsage, error) {
 	if err := s.access.Require(token, id, access.ReadTenantUsage); err != nil {
 		return nil, err
 	}
@@ -16,6 +16,20 @@ func (s *Service) GetTenantDailyUsage(ctx context.Context, token, id, startDate,
 	end, endErr := time.ParseInLocation(time.DateOnly, endDate, shanghai)
 	if startErr != nil || endErr != nil || start.Year() < 1 || end.Before(start) || !end.Before(start.AddDate(0, 0, 93)) {
 		return nil, errors.BadRequest("INVALID_TIME_RANGE", "date range must contain 1 to 93 Shanghai dates")
+	}
+	switch source {
+	case "", "tunnel":
+	case MockExtractionSource:
+		if err := s.requireMockTenant(ctx, id); err != nil {
+			return nil, err
+		}
+		days, err := s.repo.MockDailyUsage(ctx, id, startDate, endDate)
+		if err != nil {
+			return nil, err
+		}
+		return &DailyUsage{Days: days}, nil
+	default:
+		return nil, errors.BadRequest("INVALID_USAGE_SOURCE", "unsupported usage source")
 	}
 	rows, lastReceivedAt, err := s.repo.DailyUsage(ctx, id, start, end.AddDate(0, 0, 1))
 	if err != nil {

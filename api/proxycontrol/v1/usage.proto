@@ -8,6 +8,9 @@ import "google/protobuf/timestamp.proto";
 option go_package = "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1";
 
 service UsageService {
+  rpc ExtractProxy(ExtractProxyRequest) returns (ExtractProxyResponse) {
+    option (google.api.http) = { post: "/v1/tenants/{tenant_id}/proxy-extractions" body: "*" };
+  }
   rpc GetTenantDailyUsage(DailyUsageRequest) returns (DailyUsageResponse) {
     option (google.api.http) = { get: "/v1/tenants/{tenant_id}/usage/daily" };
   }
@@ -115,10 +118,28 @@ message QueryUsageResponse {
   string next_page_token = 2;
 }
 
+message ExtractProxyRequest {
+  string tenant_id = 1;
+  int32 count = 2;
+}
+
+message ExtractProxyResponse {
+  repeated ProxyEndpoint ip_list = 1;
+}
+
+message ProxyEndpoint {
+  string host = 1;
+  uint32 port = 2;
+  string username = 3;
+  string password = 4;
+  google.protobuf.Timestamp expires_at = 5;
+}
+
 message DailyUsageRequest {
   string tenant_id = 1;
   string start_date = 2;
   string end_date = 3;
+  string source = 4;
 }
 
 message TenantBalanceRequest {

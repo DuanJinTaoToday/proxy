@@ -64,9 +64,25 @@ func (s *Usage) CompleteReplay(ctx context.Context, req *v1.CompleteReplayReques
 	return &v1.CompleteReplayResponse{}, nil
 }
 
+func (s *Usage) ExtractProxy(ctx context.Context, req *v1.ExtractProxyRequest) (*v1.ExtractProxyResponse, error) {
+	noStore(ctx)
+	endpoints, err := s.biz.ExtractMock(ctx, bearerToken(ctx), req.GetTenantId(), req.GetCount())
+	if err != nil {
+		return nil, err
+	}
+	reply := &v1.ExtractProxyResponse{}
+	for _, endpoint := range endpoints {
+		reply.IpList = append(reply.IpList, &v1.ProxyEndpoint{
+			Host: endpoint.Host, Port: endpoint.Port, Username: endpoint.Username,
+			Password: endpoint.Password, ExpiresAt: timestamppb.New(endpoint.ExpiresAt),
+		})
+	}
+	return reply, nil
+}
+
 func (s *Usage) GetTenantDailyUsage(ctx context.Context, req *v1.DailyUsageRequest) (*v1.DailyUsageResponse, error) {
 	noStore(ctx)
-	result, err := s.biz.GetTenantDailyUsage(ctx, bearerToken(ctx), req.GetTenantId(), req.GetStartDate(), req.GetEndDate())
+	result, err := s.biz.GetTenantDailyUsage(ctx, bearerToken(ctx), req.GetTenantId(), req.GetStartDate(), req.GetEndDate(), req.GetSource())
 	if err != nil {
 		return nil, err
 	}
