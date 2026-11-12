@@ -13,6 +13,7 @@ import (
 	v1 "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/access"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/conf"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/proxyauth"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/server"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/usage"
 	kratoshttp "github.com/go-kratos/kratos/v3/transport/http"
@@ -22,8 +23,6 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
-
-const reportToken = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
 
 type usageFixture struct {
 	db      *gorm.DB
@@ -51,26 +50,29 @@ func setupUsage(t *testing.T) usageFixture {
 	query.Set("search_path", schema)
 	address.RawQuery = query.Encode()
 	db := connect(t, address.String())
-	migration, err := os.ReadFile("../../migrations/00001_usage.sql")
-	if err != nil {
-		t.Fatal(err)
+	for _, path := range []string{"00001_proxy_auth.sql", "00002_usage.sql"} {
+		migration, err := os.ReadFile("../../migrations/" + path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		up, _, _ := strings.Cut(string(migration), "-- +goose Down")
+		execSQL(t, db, up)
 	}
-	up, _, _ := strings.Cut(string(migration), "-- +goose Down")
-	execSQL(t, db, up)
-	// Issue #3 owns the production credential table. Only its immutable
-	// attribution columns are needed by these controlled Recorder samples.
-	execSQL(t, db, `CREATE TABLE proxy_credentials (client_id text PRIMARY KEY, tenant_id text NOT NULL);
-		INSERT INTO proxy_credentials VALUES ('client-a', 'alpha'), ('client-b', 'beta');
+	execSQL(t, db, `INSERT INTO proxy_credentials (client_id, tenant_id, username, secret_hash, created_by)
+		VALUES ('client-a', 'alpha', 'fixture-a', decode(repeat('00', 32), 'hex'), 'test'),
+		       ('client-b', 'beta', 'fixture-b', decode(repeat('00', 32), 'hex'), 'test');
 		INSERT INTO gateways (id, name) VALUES ('gateway-a', 'A'), ('gateway-b', 'B');`)
-	hash := sha256.Sum256([]byte(reportToken))
-	execSQL(t, db, "INSERT INTO gateway_tokens (gateway_id, scope, token_hash) VALUES ('gateway-a', 'report', ?)", hash[:])
+	for _, token := range []struct{ raw, scope string }{{reportToken, "report"}, {authToken, "auth"}} {
+		hash := sha256.Sum256([]byte(token.raw))
+		execSQL(t, db, "INSERT INTO gateway_tokens (gateway_id, scope, token_hash) VALUES ('gateway-a', ?, ?)", token.scope, hash[:])
+	}
 
 	t.Setenv("TEST_USAGE_PASSWORD_HASH", fixtureHash)
 	member := conf.TenantRole_TENANT_ROLE_MEMBER
 	accessService, err := access.New(&conf.Access{
 		Tenants: []*conf.Tenant{{Id: "alpha", Name: "A"}, {Id: "beta", Name: "B"}},
 		Users: []*conf.User{
-			{Username: "alice", PasswordHashEnv: "TEST_USAGE_PASSWORD_HASH", Memberships: []*conf.Membership{{TenantId: "alpha", Role: member}}},
+			{Username: "alice", PasswordHashEnv: "TEST_USAGE_PASSWORD_HASH", Memberships: []*conf.Membership{{TenantId: "alpha", Role: conf.TenantRole_TENANT_ROLE_ADMIN}}},
 			{Username: "bob", PasswordHashEnv: "TEST_USAGE_PASSWORD_HASH", Memberships: []*conf.Membership{{TenantId: "beta", Role: member}}},
 		},
 	})
@@ -80,6 +82,7 @@ func setupUsage(t *testing.T) usageFixture {
 	service := usage.New(db, accessService)
 	handler := server.NewHTTPServer("127.0.0.1:0", accessService,
 		kratoshttp.RequestDecoder(server.ReportingDecoder(0)), kratoshttp.ResponseEncoder(server.UsageResponseEncoder))
+	server.RegisterProxyAuth(handler, proxyauth.New(db, accessService))
 	server.RegisterUsage(handler, service)
 	return usageFixture{db: db, service: service, http: handler, alice: login(t, handler, "alice"), bob: login(t, handler, "bob")}
 }

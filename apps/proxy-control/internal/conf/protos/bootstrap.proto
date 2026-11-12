@@ -8,6 +8,7 @@ message Bootstrap {
   string http_addr = 1;
   Access access = 2;
   Usage usage = 3;
+  ProxyAuth proxy_auth = 4;
 }
 
 message Access {
@@ -43,4 +44,8 @@ message Usage {
   string database_dsn_env = 1;
   uint32 max_batch_records = 2;
   uint32 max_batch_body_bytes = 3;
+}
+
+message ProxyAuth {
+  string database_dsn_env = 1;
 }

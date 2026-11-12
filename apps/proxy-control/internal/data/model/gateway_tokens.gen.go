@@ -12,12 +12,13 @@ const TableNameGatewayToken = "gateway_tokens"
 
 // GatewayToken mapped from table <gateway_tokens>
 type GatewayToken struct {
-	ID        int64      `gorm:"column:id;type:bigint;primaryKey;autoIncrement:true" json:"id"`
-	GatewayID string     `gorm:"column:gateway_id;type:text;not null" json:"gateway_id"`
-	Scope     string     `gorm:"column:scope;type:text;not null" json:"scope"`
-	TokenHash []uint8    `gorm:"column:token_hash;type:bytea;not null" json:"token_hash"`
-	CreatedAt *time.Time `gorm:"column:created_at;type:timestamp with time zone;not null;default:now()" json:"created_at"`
-	RevokedAt *time.Time `gorm:"column:revoked_at;type:timestamp with time zone" json:"revoked_at"`
+	ID           int64      `gorm:"column:id;type:bigint;primaryKey;autoIncrement:true" json:"id"`
+	GatewayID    string     `gorm:"column:gateway_id;type:text;not null" json:"gateway_id"`
+	Scope        string     `gorm:"column:scope;type:text;not null" json:"scope"`
+	TokenHash    []uint8    `gorm:"column:token_hash;type:bytea;not null" json:"token_hash"`
+	CreatedAt    *time.Time `gorm:"column:created_at;type:timestamp with time zone;not null;default:now()" json:"created_at"`
+	RotationSlot *int16     `gorm:"column:rotation_slot;type:smallint;not null;default:1" json:"rotation_slot"`
+	RevokedAt    *time.Time `gorm:"column:revoked_at;type:timestamp with time zone" json:"revoked_at"`
 }
 
 // TableName GatewayToken's table name

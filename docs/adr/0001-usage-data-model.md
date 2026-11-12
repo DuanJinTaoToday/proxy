@@ -4,6 +4,8 @@
 
 > 部分条款由 [ADR 0004 一期计费入库与运营追溯](0004-billing-ingestion-and-audit.md#取代条款) 取代，其余决定继续适用。
 
+> 认证部署与准入时效的现行约定见 [ADR 0005 一期代理认证可用性](0005-proxy-auth-availability.md#取代条款)。
+
 ## 背景
 
 一期需要回答两个问题：租户在某个时间段、在哪个网关实例上用了多少流量，以及租户的流量额度是否已经用完。两者的时效要求不同。
@@ -107,6 +109,8 @@ GOST 只按会话写记录：会话存续期间每个采样周期写一条 `inte
 每批的写入行数取决于涉及的文件、租户、分钟和倍率版本数，与连接数无关。
 
 ### 充值、调整与准入
+
+现行认证可用性约定见 [ADR 0005 一期代理认证可用性](0005-proxy-auth-availability.md#取代条款)。
 
 - 充值和调整在一个事务内锁定 `tenant_balances`，变更授予，写入流水。新授予先抵扣欠费：抵扣量写入 `overdraft_offset_bytes` 并计入 `used_bytes`，同时减少 `overdraft_bytes`，另写一条 `overdraft_offset` 流水。提交后刷新可用额度缓存。
 - `可用额度 = Σ(granted_bytes - used_bytes)（当前有效的授予） - overdraft_bytes`。到期和吊销的授予在计算时排除。

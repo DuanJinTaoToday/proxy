@@ -24,7 +24,7 @@ func ReportingDecoder(maxBytes int64) http.DecodeRequestFunc {
 	return func(req *stdhttp.Request, body any) error {
 		batch, ok := body.(*v1.SubmitBatchRequest)
 		if !ok {
-			return http.DefaultRequestDecoder(req, body)
+			return DecodeProxyAuthRequest(req, body)
 		}
 		if req.ContentLength > maxBytes {
 			return errors.New(413, "BATCH_TOO_LARGE", "Recorder batch exceeds the body limit")

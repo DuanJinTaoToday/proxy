@@ -48,6 +48,14 @@ func run(path string) error {
 		kratoshttp.RequestDecoder(server.ReportingDecoder(int64(usageSettings.GetMaxBatchBodyBytes()))),
 		kratoshttp.ResponseEncoder(server.UsageResponseEncoder),
 	)
+	if authSettings := settings.GetProxyAuth(); authSettings != nil {
+		authService, closeDB, err := openProxyAuth(authSettings, accessService)
+		if err != nil {
+			return err
+		}
+		defer closeDB()
+		server.RegisterProxyAuth(httpServer, authService)
+	}
 	if usageSettings != nil {
 		usageService, closeDB, err := openUsage(usageSettings, accessService)
 		if err != nil {

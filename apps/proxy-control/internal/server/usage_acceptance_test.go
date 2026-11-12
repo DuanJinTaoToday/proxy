@@ -1,7 +1,6 @@
 package server_test
 
 import (
-	"crypto/sha256"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -82,9 +81,6 @@ func TestUsageGrantExhaustionAndTenantIsolation(t *testing.T) {
 func TestReportingRejectsImpersonationAndRevokedTokens(t *testing.T) {
 	f := setupUsage(t)
 	line := recorder(0, "client-a", beforeMidnight, 130, 214, 130, 214)
-	authToken := "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBA"
-	hash := sha256.Sum256([]byte(authToken))
-	execSQL(t, f.db, "INSERT INTO gateway_tokens (gateway_id, scope, token_hash) VALUES ('gateway-a', 'auth', ?)", hash[:])
 	assertStatus(t, submitResponse(t, f, "gateway-a", f.alice, line), 401, "GATEWAY_UNAUTHENTICATED")
 	assertStatus(t, submitResponse(t, f, "gateway-a", authToken, line), 401, "GATEWAY_UNAUTHENTICATED")
 	assertStatus(t, submitResponse(t, f, "gateway-b", reportToken, line), 403, "GATEWAY_FORBIDDEN")

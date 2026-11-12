@@ -32,7 +32,7 @@ usage:
   max_batch_body_bytes: 1048576
 ```
 
-从仓库根目录执行 Goose 迁移。启动用量服务前还需应用 #3 的凭据表迁移，启动时会检查 `proxy_credentials` 映射。用量服务按上海自然日创建和删除分钟分区，运行账号需要相应的 DDL 权限以及计量表的读写权限。
+从仓库根目录执行 Goose 迁移。`00002_usage.sql` 依赖 `00001_proxy_auth.sql` 的网关、凭据和额度基础表，按版本顺序迁移。用量服务按上海自然日创建和删除分钟分区，运行账号需要相应的 DDL 权限以及计量表的读写权限。
 
 ```sh
 ./.tools/bin/goose -dir apps/proxy-control/migrations postgres "$PROXY_CONTROL_DATABASE_DSN" up
@@ -46,9 +46,29 @@ make -C apps/proxy-control dao
 
 两个租户接口沿用控制台会话令牌。日用量的起止日期使用上海自然日，首尾日期都包含在内，最多 93 天。日用量和余额响应按 Protobuf JSON 编码，64 位字节数字段用字符串表示。
 
-PostgreSQL 验收用例通过真实 HTTP 路由运行，并在独立临时 schema 中预置 #3 的映射。给本地测试数据库配置有 schema 创建权限的 URL，再运行全量测试。
+PostgreSQL 验收用例通过真实 HTTP 路由运行，并在独立临时 schema 中应用两套迁移，联验通过实际发放和停用接口取得凭据。给本地测试数据库配置有 schema 创建权限的 URL，再运行全量测试。
 
 ```sh
 PROXY_CONTROL_TEST_DSN="postgres://…/proxy_test" go test ./...
 make -C apps/proxy-control lint
 ```
+
+## 代理凭据与网关认证同步
+
+应用 `00001_proxy_auth.sql` Goose 迁移，在启动配置中加入：
+
+```yaml
+proxy_auth:
+  database_dsn_env: PROXY_CONTROL_DATABASE_DSN
+```
+
+租户管理员使用控制台会话令牌发放和停用代理凭据。发放响应仅交付一次密码。
+
+- `POST /v1/tenants/{tenant_id}/proxy-credentials` 接收可选的 `expires_at` 和 `allowed_source_cidrs`。
+- `POST /v1/tenants/{tenant_id}/proxy-credentials/{client_id}:disable` 幂等停用并保留历史租户归属。
+- `POST /v1/gateway/auth-state/load` 由持有逐网关 `auth` 令牌的中继调用。校验密码后返回该网关专用的刷新引用。
+- `POST /v1/gateway/auth-state/refresh` 每次接受最多 100 个曾签发给该网关的引用。状态响应携带密码校验值，只能经 HTTPS 传输。
+
+运营预置 `gateways` 和 `gateway_tokens`。令牌为至少 32 字节随机值的无填充 base64url 编码，数据库保存令牌字符串的 SHA-256 二进制摘要。轮换使用同一范围的另一个 `rotation_slot`，随后吊销旧令牌。余额来自已生效且完成激活的授予减去欠费，缺少额度时按准入门槛拒绝。充值、调整和上报积压期间的额度续期联动见 #14。
+
+设置 `PROXY_CONTROL_DAO_DSN` 指向已迁移的 Dev PostgreSQL 并执行 `make dao`。只读连接须能读取表的主键约束。HTTP 集成测试使用 `PROXY_CONTROL_TEST_DSN` 指向允许创建临时 schema 的本地 PostgreSQL。
