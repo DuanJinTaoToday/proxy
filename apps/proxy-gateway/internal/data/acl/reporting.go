@@ -93,7 +93,7 @@ func (r *HTTPReporter) post(ctx context.Context, path string, input any) ([]byte
 }
 
 func (r *HTTPReporter) ReportLifecycle(ctx context.Context, req *v1.ReportLifecycleRequest) error {
-	return r.postProto(ctx, "/v1/reporting/lifecycle", req, &v1.ReportLifecycleResponse{})
+	return r.postProto(ctx, "/v1/reporting/lifecycle", req, &v1.BaseResp{})
 }
 
 func (r *HTTPReporter) ReportUnfinishedSessions(ctx context.Context, gateway, boot string, sessions []recorder.UnfinishedSession) error {
@@ -104,13 +104,13 @@ func (r *HTTPReporter) ReportUnfinishedSessions(ctx context.Context, gateway, bo
 		})
 	}
 	path := "/v1/reporting/boots/" + url.PathEscape(boot) + "/unfinished-sessions"
-	return r.postProto(ctx, path, req, &v1.ReportUnfinishedSessionsResponse{})
+	return r.postProto(ctx, path, req, &v1.BaseResp{})
 }
 
 func (r *HTTPReporter) CompleteReplay(ctx context.Context, gateway, boot string, count uint32, hasSessionRecords bool) error {
 	req := &v1.CompleteReplayRequest{GatewayId: gateway, BootId: boot, UnfinishedSessionCount: count, HasSessionRecords: &hasSessionRecords}
 	path := "/v1/reporting/boots/" + url.PathEscape(boot) + "/replay-complete"
-	return r.postProto(ctx, path, req, &v1.CompleteReplayResponse{})
+	return r.postProto(ctx, path, req, &v1.BaseResp{})
 }
 
 func (r *HTTPReporter) postProto(ctx context.Context, path string, req, ack proto.Message) error {

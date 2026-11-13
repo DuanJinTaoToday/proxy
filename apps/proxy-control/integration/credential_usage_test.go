@@ -40,7 +40,7 @@ func TestIssuedCredentialAttributesRecorderUsageAfterDisable(t *testing.T) {
 	assertDays(t, usageOn(t, f, "alpha", f.alice, date), usageDay(date, 130, 214, 344))
 
 	disablePath := createPath + "/" + issued.GetClientId() + ":disable"
-	readProto(t, testfixture.Request(f.http, "POST", disablePath, "{}", f.alice), &v1.DisableCredentialResponse{})
+	readProto(t, testfixture.Request(f.http, "POST", disablePath, "{}", f.alice), &v1.BaseResp{})
 	testfixture.AssertStatus(t, authStateRequest(t, f.http, loadPath, authToken, load), http.StatusNotFound, "CREDENTIAL_DISABLED")
 	refresh := &v1.RefreshAuthStateResponse{}
 	readProto(t, authStateRequest(t, f.http, refreshPath, authToken,

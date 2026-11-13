@@ -3,9 +3,11 @@ module github.com/DuanJinTaoToday/proxy
 go 1.27.4
 
 require (
+	github.com/envoyproxy/protoc-gen-validate v1.3.3
 	github.com/go-gost/gosocks5 v0.5.0
 	github.com/go-kratos/kratos/contrib/config/apollo/v3 v3.0.0-20261026152050-dd0fb7df1e32
 	github.com/go-kratos/kratos/v3 v3.0.0
+	github.com/google/gnostic v0.7.1
 	github.com/google/uuid v1.6.0
 	github.com/google/wire v0.7.0
 	github.com/pkg/errors v0.9.1
@@ -36,6 +38,7 @@ require (
 	github.com/go-playground/form/v4 v4.3.0 // indirect
 	github.com/go-sql-driver/mysql v1.8.1 // indirect
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
+	github.com/google/gnostic-models v0.7.0 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect

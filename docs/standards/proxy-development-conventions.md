@@ -40,6 +40,8 @@
 - `proxy-control` 的接口源文件位于 `api/protos/proxycontrol/v1/`，PB 包名为 `proxycontrol.v1`。网关上报和控制台查询分别在 `reporting.proto` 和 `usage.proto` 定义，可分别声明服务并绑定对应的身份与权限规则。
 - 一期只启用 HTTP 服务。采集器通过 HTTP 批量上报，平台自有接口用 `google.api.http` 声明路由并生成 HTTP/JSON 绑定。
 - 在 `apps/proxy-control/` 运行 `make api`，用固定版本的 `protoc` 和插件生成 `api/proxycontrol/v1/` 下的 Go 绑定，以及 `api/proxycontrol/openapi.yaml`。源文件与受影响的生成物同 PR 提交。
+- 每个 RPC 用 `openapi.v3.operation` 声明摘要，字段注释说明用途、单位、默认值和空值语义。无参数的 RPC 使用 `BaseRequest`，无业务数据的成功响应使用 `BaseResp`。
+- 请求字段的静态约束用 `validate.rules` 声明，并生成 Go 校验方法。控制面在业务层执行校验，以保留鉴权顺序和现有 HTTP 错误。跨字段及依赖服务端状态的约束在业务层维护。
 - 已发布的 `v1` 接口在滚动部署期间兼容仍在运行的旧调用方，包括 HTTP 路由、JSON 字段和批次重发的确认语义。保留已发布字段的编号，删除字段时使用 `reserved`，不兼容变更通过新版本交付。
 - GOST 认证插件遵循 GOST 自有协议。网关本机认证中继接收该协议，控制面提供凭据管理和网关状态同步。
 
@@ -52,6 +54,7 @@
 | Protobuf Go 生成插件 | `google.golang.org/protobuf/cmd/protoc-gen-go` | `v1.36.12` |
 | Kratos HTTP 生成插件 | `github.com/go-kratos/kratos/cmd/protoc-gen-go-http/v3` | `v3.0.0-20260526000039-30da04b769dc` |
 | OpenAPI 生成插件 | `github.com/google/gnostic/cmd/protoc-gen-openapi` | `v0.7.1` |
+| Protobuf 校验插件 | `github.com/envoyproxy/protoc-gen-validate` | `v1.3.3` |
 | golangci-lint | `github.com/golangci/golangci-lint/v2/cmd/golangci-lint` | `v2.15.0` |
 | Goose | `github.com/pressly/goose/v3/cmd/goose` | `v3.30.0` |
 | Wire | `github.com/google/wire/cmd/wire` | `v0.7.0` |
@@ -69,6 +72,8 @@
 控制面启动后可通过 `GET /healthz` 检查 HTTP 进程是否可响应。控制面的 `make dao` 用于生成持久化模型。
 
 HTTP 注解依赖的 `annotations.proto` 和 `http.proto` 来自 [Google APIs 固定提交](https://github.com/googleapis/googleapis/tree/547f8fdb4b91dbac70d540b3757520f0608ae356/google/api)，随 [许可证](../../third_party/googleapis/LICENSE) 一起保存在 `third_party/googleapis/`。
+
+OpenAPI 和校验注解的 proto 定义分别来自 Gnostic v0.7.1 和 protoc-gen-validate v1.3.3，随许可证保存在 `third_party/openapiv3/` 和 `third_party/validate/`。
 
 ### 数据库、迁移与 DAO
 

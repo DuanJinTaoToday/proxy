@@ -7,11 +7,11 @@
 package proxycontrolv1
 
 import (
+	_ "github.com/google/gnostic/openapiv3"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
-	sync "sync"
 	unsafe "unsafe"
 )
 
@@ -22,109 +22,22 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type CheckRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *CheckRequest) Reset() {
-	*x = CheckRequest{}
-	mi := &file_proxycontrol_v1_health_proto_msgTypes[0]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CheckRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CheckRequest) ProtoMessage() {}
-
-func (x *CheckRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_health_proto_msgTypes[0]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CheckRequest.ProtoReflect.Descriptor instead.
-func (*CheckRequest) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_health_proto_rawDescGZIP(), []int{0}
-}
-
-type CheckResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *CheckResponse) Reset() {
-	*x = CheckResponse{}
-	mi := &file_proxycontrol_v1_health_proto_msgTypes[1]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CheckResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CheckResponse) ProtoMessage() {}
-
-func (x *CheckResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_health_proto_msgTypes[1]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CheckResponse.ProtoReflect.Descriptor instead.
-func (*CheckResponse) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_health_proto_rawDescGZIP(), []int{1}
-}
-
 var File_proxycontrol_v1_health_proto protoreflect.FileDescriptor
 
 const file_proxycontrol_v1_health_proto_rawDesc = "" +
 	"\n" +
-	"\x1cproxycontrol/v1/health.proto\x12\x0fproxycontrol.v1\x1a\x1cgoogle/api/annotations.proto\"\x0e\n" +
-	"\fCheckRequest\"\x0f\n" +
-	"\rCheckResponse2i\n" +
-	"\rHealthService\x12X\n" +
-	"\x05Check\x12\x1d.proxycontrol.v1.CheckRequest\x1a\x1e.proxycontrol.v1.CheckResponse\"\x10\x82\xd3\xe4\x93\x02\n" +
+	"\x1cproxycontrol/v1/health.proto\x12\x0fproxycontrol.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1bopenapiv3/annotations.proto\x1a\x1cproxycontrol/v1/common.proto2\x8c\x01\n" +
+	"\rHealthService\x12{\n" +
+	"\x05Check\x12\x1c.proxycontrol.v1.BaseRequest\x1a\x19.proxycontrol.v1.BaseResp\"9\xbaG&\x12$检查控制面的 HTTP 存活状态\x82\xd3\xe4\x93\x02\n" +
 	"\x12\b/healthzBEZCgithub.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1b\x06proto3"
 
-var (
-	file_proxycontrol_v1_health_proto_rawDescOnce sync.Once
-	file_proxycontrol_v1_health_proto_rawDescData []byte
-)
-
-func file_proxycontrol_v1_health_proto_rawDescGZIP() []byte {
-	file_proxycontrol_v1_health_proto_rawDescOnce.Do(func() {
-		file_proxycontrol_v1_health_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_proxycontrol_v1_health_proto_rawDesc), len(file_proxycontrol_v1_health_proto_rawDesc)))
-	})
-	return file_proxycontrol_v1_health_proto_rawDescData
-}
-
-var file_proxycontrol_v1_health_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_proxycontrol_v1_health_proto_goTypes = []any{
-	(*CheckRequest)(nil),  // 0: proxycontrol.v1.CheckRequest
-	(*CheckResponse)(nil), // 1: proxycontrol.v1.CheckResponse
+	(*BaseRequest)(nil), // 0: proxycontrol.v1.BaseRequest
+	(*BaseResp)(nil),    // 1: proxycontrol.v1.BaseResp
 }
 var file_proxycontrol_v1_health_proto_depIdxs = []int32{
-	0, // 0: proxycontrol.v1.HealthService.Check:input_type -> proxycontrol.v1.CheckRequest
-	1, // 1: proxycontrol.v1.HealthService.Check:output_type -> proxycontrol.v1.CheckResponse
+	0, // 0: proxycontrol.v1.HealthService.Check:input_type -> proxycontrol.v1.BaseRequest
+	1, // 1: proxycontrol.v1.HealthService.Check:output_type -> proxycontrol.v1.BaseResp
 	1, // [1:2] is the sub-list for method output_type
 	0, // [0:1] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
@@ -137,19 +50,19 @@ func file_proxycontrol_v1_health_proto_init() {
 	if File_proxycontrol_v1_health_proto != nil {
 		return
 	}
+	file_proxycontrol_v1_common_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proxycontrol_v1_health_proto_rawDesc), len(file_proxycontrol_v1_health_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   0,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_proxycontrol_v1_health_proto_goTypes,
 		DependencyIndexes: file_proxycontrol_v1_health_proto_depIdxs,
-		MessageInfos:      file_proxycontrol_v1_health_proto_msgTypes,
 	}.Build()
 	File_proxycontrol_v1_health_proto = out.File
 	file_proxycontrol_v1_health_proto_goTypes = nil

@@ -20,7 +20,7 @@ const _ = http.SupportPackageIsVersion3
 const OperationHealthServiceCheck = "/proxycontrol.v1.HealthService/Check"
 
 type HealthServiceHTTPServer interface {
-	Check(context.Context, *CheckRequest) (*CheckResponse, error)
+	Check(context.Context, *BaseRequest) (*BaseResp, error)
 }
 
 func RegisterHealthServiceHTTPServer(s *http.Server, srv HealthServiceHTTPServer) {
@@ -30,25 +30,25 @@ func RegisterHealthServiceHTTPServer(s *http.Server, srv HealthServiceHTTPServer
 
 func _HealthService_Check0_HTTP_Handler(srv HealthServiceHTTPServer) func(ctx http.Context) error {
 	return func(ctx http.Context) error {
-		var in CheckRequest
+		var in BaseRequest
 		if err := ctx.BindQuery(&in); err != nil {
 			return err
 		}
 		http.SetOperation(ctx, OperationHealthServiceCheck)
 		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
-			return srv.Check(ctx, req.(*CheckRequest))
+			return srv.Check(ctx, req.(*BaseRequest))
 		})
 		out, err := h(ctx, &in)
 		if err != nil {
 			return err
 		}
-		reply := out.(*CheckResponse)
+		reply := out.(*BaseResp)
 		return ctx.Result(200, reply)
 	}
 }
 
 type HealthServiceHTTPClient interface {
-	Check(ctx context.Context, req *CheckRequest, opts ...http.CallOption) (rsp *CheckResponse, err error)
+	Check(ctx context.Context, req *BaseRequest, opts ...http.CallOption) (rsp *BaseResp, err error)
 }
 
 type HealthServiceHTTPClientImpl struct {
@@ -59,8 +59,8 @@ func NewHealthServiceHTTPClient(client *http.Client) HealthServiceHTTPClient {
 	return &HealthServiceHTTPClientImpl{client}
 }
 
-func (c *HealthServiceHTTPClientImpl) Check(ctx context.Context, in *CheckRequest, opts ...http.CallOption) (*CheckResponse, error) {
-	var out CheckResponse
+func (c *HealthServiceHTTPClientImpl) Check(ctx context.Context, in *BaseRequest, opts ...http.CallOption) (*BaseResp, error) {
+	var out BaseResp
 	pattern := "/healthz"
 	path := http.BuildPath(pattern, in, http.WithQueryParams())
 	opts = append([]http.CallOption{

@@ -3,6 +3,8 @@ syntax = "proto3";
 package proxycontrol.v1;
 
 import "google/api/annotations.proto";
+import "openapiv3/annotations.proto";
+import "validate/validate.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1";
@@ -10,77 +12,131 @@ option go_package = "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxyc
 service UsageService {
   rpc ExtractProxy(ExtractProxyRequest) returns (ExtractProxyResponse) {
     option (google.api.http) = { post: "/v1/tenants/{tenant_id}/proxy-extractions" body: "*" };
+    option (openapi.v3.operation) = {
+      summary: "提取指定租户的代理地址样例"
+    };
   }
   rpc GetTenantDailyUsage(DailyUsageRequest) returns (DailyUsageResponse) {
     option (google.api.http) = { get: "/v1/tenants/{tenant_id}/usage/daily" };
+    option (openapi.v3.operation) = {
+      summary: "查询租户按上海自然日汇总的用量"
+    };
   }
   rpc GetTenantBalance(TenantBalanceRequest) returns (TenantBalance) {
     option (google.api.http) = { get: "/v1/tenants/{tenant_id}/balance" };
+    option (openapi.v3.operation) = {
+      summary: "查询租户可用流量和准入阈值"
+    };
   }
   rpc QueryUsage(QueryUsageRequest) returns (QueryUsageResponse) {
     option (google.api.http) = { get: "/v1/operations/usage" };
+    option (openapi.v3.operation) = {
+      summary: "按时间和维度查询运营用量"
+    };
   }
   rpc ListRecordAnomalies(ListRecordAnomaliesRequest) returns (ListRecordAnomaliesResponse) {
     option (google.api.http) = { get: "/v1/operations/anomalies" };
+    option (openapi.v3.operation) = {
+      summary: "分页查询 Recorder 记录异常"
+    };
   }
   rpc ListUsageGaps(ListUsageGapsRequest) returns (ListUsageGapsResponse) {
     option (google.api.http) = { get: "/v1/operations/gaps" };
+    option (openapi.v3.operation) = {
+      summary: "分页查询待回放或可能缺失的用量"
+    };
   }
 }
 
 message ListRecordAnomaliesRequest {
+  // 网关 ID。
   string gateway_id = 1;
+  // 网关运行代次 ID，同一代次重放时保持一致。
   string boot_id = 2;
+  // 租户 ID。
   string tenant_id = 3;
+  // 异常类型筛选条件，留空时查询全部类型。
   string kind = 4;
-  int32 page_size = 5;
+  // 每页条数，取值为 1–500。省略或传 0 时使用 100。
+  int32 page_size = 5 [(validate.rules).int32 = {gte: 0, lte: 500}];
+  // 上一页返回的游标。查询条件应与上一页一致，首屏留空。
   string page_token = 6;
 }
 
 message RecordAnomaly {
+  // 异常记录 ID。
   string anomaly_id = 1;
+  // 网关 ID。
   string gateway_id = 2;
+  // 网关运行代次 ID，同一代次重放时保持一致。
   string boot_id = 3;
+  // 租户 ID。
   string tenant_id = 4;
+  // Recorder 记录的异常类型。
   string kind = 5;
+  // Recorder 文件标识，同一文件重放时保持一致。
   string file_id = 6;
+  // 记录在文件中的起始字节偏移，从 0 开始。
   uint64 file_offset = 7;
+  // 首次检测到问题的时间。
   google.protobuf.Timestamp detected_at = 8;
+  // 问题解决的时间。
   google.protobuf.Timestamp resolved_at = 9;
 }
 
 message ListRecordAnomaliesResponse {
+  // 本页的异常记录。
   repeated RecordAnomaly anomalies = 1;
+  // 下一页的游标。为空表示没有更多记录。
   string next_page_token = 2;
 }
 
 message ListUsageGapsRequest {
+  // 网关 ID。
   string gateway_id = 1;
+  // 网关运行代次 ID，同一代次重放时保持一致。
   string boot_id = 2;
+  // 租户 ID。
   string tenant_id = 3;
-  string kind = 4; // boot or session
-  int32 page_size = 5;
+  // 缺口类型筛选条件，支持 boot 或 session。
+  string kind = 4;
+  // 每页条数，取值为 1–500。省略或传 0 时使用 100。
+  int32 page_size = 5 [(validate.rules).int32 = {gte: 0, lte: 500}];
+  // 上一页返回的游标。查询条件应与上一页一致，首屏留空。
   string page_token = 6;
-  string status = 7; // pending_replay or possible_gap
+  // 缺口状态筛选条件，支持 pending_replay 或 possible_gap。
+  string status = 7;
 }
 
 message UsageGap {
   // Empty for a pending boot that has no session reports yet.
   string gap_id = 1;
+  // 网关 ID。
   string gateway_id = 2;
+  // 网关运行代次 ID，同一代次重放时保持一致。
   string boot_id = 3;
+  // 租户 ID。
   string tenant_id = 4;
+  // 缺口类型，boot 表示运行代次，session 表示会话。
   string kind = 5;
+  // 回放状态，pending_replay 表示待回放，possible_gap 表示可能缺失。
   string status = 6;
+  // 代理会话 ID。
   string session_id = 7;
+  // 可能缺失记录的起始时间。
   google.protobuf.Timestamp from_at = 8;
+  // 首次检测到问题的时间。
   google.protobuf.Timestamp detected_at = 9;
+  // 问题解决的时间。
   google.protobuf.Timestamp resolved_at = 10;
+  // 网关退出时间。
   google.protobuf.Timestamp exited_at = 11;
 }
 
 message ListUsageGapsResponse {
+  // 本页的用量缺口。
   repeated UsageGap gaps = 1;
+  // 下一页的游标。为空表示没有更多记录。
   string next_page_token = 2;
 }
 
@@ -92,92 +148,142 @@ enum UsageGranularity {
 }
 
 message QueryUsageRequest {
-  string tenant_id = 1;
+  // 租户 ID。
+  string tenant_id = 1 [(validate.rules).string.min_bytes = 1];
+  // 网关 ID。
   string gateway_id = 2;
-  google.protobuf.Timestamp start_time = 3;
-  google.protobuf.Timestamp end_time = 4;
-  // DAY selects whole Shanghai days by midnight within [start_time, end_time).
-  UsageGranularity granularity = 5;
+  // 统计区间起点（含）。
+  google.protobuf.Timestamp start_time = 3 [(validate.rules).timestamp.required = true];
+  // 统计区间终点（不含）。
+  google.protobuf.Timestamp end_time = 4 [(validate.rules).timestamp.required = true];
+  // 统计粒度。按日查询时，以落在区间内的上海零点选择完整自然日。
+  UsageGranularity granularity = 5 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+  // 是否按网关拆分统计。
   bool split_by_gateway = 6;
+  // 是否按消耗的流量额度拆分统计。
   bool split_by_grant = 7;
-  int32 page_size = 8;
+  // 每页条数，取值为 1–500。省略或传 0 时使用 100。
+  int32 page_size = 8 [(validate.rules).int32 = {gte: 0, lte: 500}];
+  // 上一页返回的游标。查询条件应与上一页一致，首屏留空。
   string page_token = 9;
+  // 是否按计费倍率版本拆分统计。
   bool split_by_rate = 10;
 }
 
 message UsageBucket {
+  // 该统计桶的起始时间。
   google.protobuf.Timestamp start_time = 1;
+  // 网关 ID。
   string gateway_id = 2;
+  // 流量额度 ID。
   string grant_id = 3;
+  // 该时间段的流量统计。
   UsageAmount amount = 4;
+  // 计费倍率版本 ID。
   string rate_id = 5;
 }
 
 message QueryUsageResponse {
+  // 本页的用量统计桶。
   repeated UsageBucket buckets = 1;
+  // 下一页的游标。为空表示没有更多记录。
   string next_page_token = 2;
 }
 
 message ExtractProxyRequest {
+  // 租户 ID。
   string tenant_id = 1;
-  int32 count = 2;
+  // 提取的代理地址数量，取值为 1–100。
+  int32 count = 2 [(validate.rules).int32 = {gte: 1, lte: 100}];
 }
 
 message ExtractProxyResponse {
+  // 返回的代理地址列表。
   repeated ProxyEndpoint ip_list = 1;
 }
 
 message ProxyEndpoint {
+  // 代理主机名或 IP 地址。
   string host = 1;
+  // 代理服务端口。
   uint32 port = 2;
+  // 用于认证的用户名。
   string username = 3;
+  // 用于认证的原始密码。
   string password = 4;
+  // 失效时间。
   google.protobuf.Timestamp expires_at = 5;
 }
 
 message DailyUsageRequest {
+  // 租户 ID。
   string tenant_id = 1;
-  string start_date = 2;
-  string end_date = 3;
-  string source = 4;
+  // 开始日期（含），使用上海时区和 YYYY-MM-DD 格式。
+  string start_date = 2 [(validate.rules).string.len = 10];
+  // 结束日期（含），使用上海时区和 YYYY-MM-DD 格式。
+  string end_date = 3 [(validate.rules).string.len = 10];
+  // 用量来源。省略时查询 tunnel，api_extraction_mock 查询演示用量。
+  string source = 4 [(validate.rules).string = {in: ["", "tunnel", "api_extraction_mock"]}];
 }
 
 message TenantBalanceRequest {
+  // 租户 ID。
   string tenant_id = 1;
 }
 
 message UsageAmount {
+  // 写入代理的原始字节数。
   uint64 input_bytes = 1;
+  // 代理发出的原始字节数。
   uint64 output_bytes = 2;
+  // 原始输入和输出字节数之和。
   uint64 total_bytes = 3;
+  // 按计费规则折算后扣减的字节数。
   uint64 billable_bytes = 4;
 }
 
 message DailyUsage {
+  // 上海时区自然日，格式为 YYYY-MM-DD。
   string date = 1;
+  // 该时间段的流量统计。
   UsageAmount amount = 2;
 }
 
 message DailyUsageResponse {
+  // 查询区间内按日期汇总的用量。
   repeated DailyUsage days = 1;
+  // 最近收到相关用量记录的时间。
   google.protobuf.Timestamp last_received_at = 2;
 }
 
 message TenantBalance {
+  // 租户 ID。
   string tenant_id = 1;
+  // 可用流量余额，单位为字节。
   int64 available_bytes = 2;
+  // 当前透支流量，单位为字节。
   uint64 overdraft_bytes = 3;
+  // 代理连接准入使用的最低可用余额阈值，单位为字节。
   uint64 admission_threshold_bytes = 4;
+  // 余额预警阈值，单位为字节。
   uint64 warning_threshold_bytes = 5;
+  // 当前余额预警开始时间。
   google.protobuf.Timestamp warning_since = 6;
+  // 返回的租户流量额度。
   repeated TrafficGrant grants = 7;
 }
 
 message TrafficGrant {
+  // 流量额度 ID。
   string grant_id = 1;
+  // 发放的流量额度，单位为字节。
   uint64 granted_bytes = 2;
+  // 已消耗的流量额度，单位为字节。
   uint64 used_bytes = 3;
+  // 流量额度开始生效的时间。
   google.protobuf.Timestamp starts_at = 4;
+  // 失效时间。
   google.protobuf.Timestamp expires_at = 5;
+  // 流量额度的发放来源。
   string source = 6;
 }

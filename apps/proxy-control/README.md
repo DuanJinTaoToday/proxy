@@ -45,7 +45,7 @@ Windows 下可执行文件带 `.exe` 后缀。
 | 命令 | 说明 |
 | --- | --- |
 | `make build` | 构建到 `bin/proxy-control` |
-| `make api` | 生成控制面 Protobuf Go 代码、Kratos HTTP 绑定和 OpenAPI 文档 |
+| `make api` | 生成控制面 Protobuf Go 代码、Kratos HTTP 绑定、校验方法和 OpenAPI 文档 |
 | `make pb` | 运行 `make api` 和 `make config`，同时生成 API 和应用配置的产物 |
 | `make dao` | 生成 DAO 模型 |
 | `make wire` | 重新生成依赖注入 |

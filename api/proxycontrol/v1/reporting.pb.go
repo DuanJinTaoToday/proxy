@@ -7,6 +7,8 @@
 package proxycontrolv1
 
 import (
+	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	_ "github.com/google/gnostic/openapiv3"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -24,10 +26,13 @@ const (
 )
 
 type ReportUnfinishedSessionsRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	GatewayId     string                 `protobuf:"bytes,1,opt,name=gateway_id,json=gatewayId,proto3" json:"gateway_id,omitempty"`
-	BootId        string                 `protobuf:"bytes,2,opt,name=boot_id,json=bootId,proto3" json:"boot_id,omitempty"`
-	Sessions      []*UnfinishedSession   `protobuf:"bytes,3,rep,name=sessions,proto3" json:"sessions,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 网关 ID。
+	GatewayId string `protobuf:"bytes,1,opt,name=gateway_id,json=gatewayId,proto3" json:"gateway_id,omitempty"`
+	// 网关运行代次 ID，同一代次重放时保持一致。
+	BootId string `protobuf:"bytes,2,opt,name=boot_id,json=bootId,proto3" json:"boot_id,omitempty"`
+	// 该运行代次待补传记录的未完成会话。
+	Sessions      []*UnfinishedSession `protobuf:"bytes,3,rep,name=sessions,proto3" json:"sessions,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -84,9 +89,12 @@ func (x *ReportUnfinishedSessionsRequest) GetSessions() []*UnfinishedSession {
 }
 
 type UnfinishedSession struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	SessionId      string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
-	ClientId       string                 `protobuf:"bytes,2,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 代理会话 ID。
+	SessionId string `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	// 代理凭据 ID。
+	ClientId string `protobuf:"bytes,2,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
+	// 该会话最后一条已记录数据的时间。
 	LastRecordedAt *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=last_recorded_at,json=lastRecordedAt,proto3" json:"last_recorded_at,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
@@ -143,55 +151,23 @@ func (x *UnfinishedSession) GetLastRecordedAt() *timestamppb.Timestamp {
 	return nil
 }
 
-type ReportUnfinishedSessionsResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ReportUnfinishedSessionsResponse) Reset() {
-	*x = ReportUnfinishedSessionsResponse{}
-	mi := &file_proxycontrol_v1_reporting_proto_msgTypes[2]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ReportUnfinishedSessionsResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ReportUnfinishedSessionsResponse) ProtoMessage() {}
-
-func (x *ReportUnfinishedSessionsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_reporting_proto_msgTypes[2]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ReportUnfinishedSessionsResponse.ProtoReflect.Descriptor instead.
-func (*ReportUnfinishedSessionsResponse) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_reporting_proto_rawDescGZIP(), []int{2}
-}
-
 type CompleteReplayRequest struct {
-	state                  protoimpl.MessageState `protogen:"open.v1"`
-	GatewayId              string                 `protobuf:"bytes,1,opt,name=gateway_id,json=gatewayId,proto3" json:"gateway_id,omitempty"`
-	BootId                 string                 `protobuf:"bytes,2,opt,name=boot_id,json=bootId,proto3" json:"boot_id,omitempty"`
-	UnfinishedSessionCount uint32                 `protobuf:"varint,3,opt,name=unfinished_session_count,json=unfinishedSessionCount,proto3" json:"unfinished_session_count,omitempty"`
-	HasSessionRecords      *bool                  `protobuf:"varint,4,opt,name=has_session_records,json=hasSessionRecords,proto3,oneof" json:"has_session_records,omitempty"`
-	unknownFields          protoimpl.UnknownFields
-	sizeCache              protoimpl.SizeCache
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 网关 ID。
+	GatewayId string `protobuf:"bytes,1,opt,name=gateway_id,json=gatewayId,proto3" json:"gateway_id,omitempty"`
+	// 网关运行代次 ID，同一代次重放时保持一致。
+	BootId string `protobuf:"bytes,2,opt,name=boot_id,json=bootId,proto3" json:"boot_id,omitempty"`
+	// 该代次上报的未完成会话数量。
+	UnfinishedSessionCount uint32 `protobuf:"varint,3,opt,name=unfinished_session_count,json=unfinishedSessionCount,proto3" json:"unfinished_session_count,omitempty"`
+	// 该代次是否存在会话记录，保留字段缺失与显式 false 的区别。
+	HasSessionRecords *bool `protobuf:"varint,4,opt,name=has_session_records,json=hasSessionRecords,proto3,oneof" json:"has_session_records,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *CompleteReplayRequest) Reset() {
 	*x = CompleteReplayRequest{}
-	mi := &file_proxycontrol_v1_reporting_proto_msgTypes[3]
+	mi := &file_proxycontrol_v1_reporting_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -203,7 +179,7 @@ func (x *CompleteReplayRequest) String() string {
 func (*CompleteReplayRequest) ProtoMessage() {}
 
 func (x *CompleteReplayRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_reporting_proto_msgTypes[3]
+	mi := &file_proxycontrol_v1_reporting_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -216,7 +192,7 @@ func (x *CompleteReplayRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CompleteReplayRequest.ProtoReflect.Descriptor instead.
 func (*CompleteReplayRequest) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_reporting_proto_rawDescGZIP(), []int{3}
+	return file_proxycontrol_v1_reporting_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *CompleteReplayRequest) GetGatewayId() string {
@@ -247,54 +223,21 @@ func (x *CompleteReplayRequest) GetHasSessionRecords() bool {
 	return false
 }
 
-type CompleteReplayResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *CompleteReplayResponse) Reset() {
-	*x = CompleteReplayResponse{}
-	mi := &file_proxycontrol_v1_reporting_proto_msgTypes[4]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CompleteReplayResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CompleteReplayResponse) ProtoMessage() {}
-
-func (x *CompleteReplayResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_reporting_proto_msgTypes[4]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CompleteReplayResponse.ProtoReflect.Descriptor instead.
-func (*CompleteReplayResponse) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_reporting_proto_rawDescGZIP(), []int{4}
-}
-
 type SubmitBatchRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	GatewayId     string                 `protobuf:"bytes,1,opt,name=gateway_id,json=gatewayId,proto3" json:"gateway_id,omitempty"`
-	BootId        string                 `protobuf:"bytes,2,opt,name=boot_id,json=bootId,proto3" json:"boot_id,omitempty"`
-	Records       []*RecorderLine        `protobuf:"bytes,3,rep,name=records,proto3" json:"records,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 网关 ID。
+	GatewayId string `protobuf:"bytes,1,opt,name=gateway_id,json=gatewayId,proto3" json:"gateway_id,omitempty"`
+	// 网关运行代次 ID，同一代次重放时保持一致。
+	BootId string `protobuf:"bytes,2,opt,name=boot_id,json=bootId,proto3" json:"boot_id,omitempty"`
+	// 本批提交的 Recorder 原始记录。
+	Records       []*RecorderLine `protobuf:"bytes,3,rep,name=records,proto3" json:"records,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *SubmitBatchRequest) Reset() {
 	*x = SubmitBatchRequest{}
-	mi := &file_proxycontrol_v1_reporting_proto_msgTypes[5]
+	mi := &file_proxycontrol_v1_reporting_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -306,7 +249,7 @@ func (x *SubmitBatchRequest) String() string {
 func (*SubmitBatchRequest) ProtoMessage() {}
 
 func (x *SubmitBatchRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_reporting_proto_msgTypes[5]
+	mi := &file_proxycontrol_v1_reporting_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -319,7 +262,7 @@ func (x *SubmitBatchRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SubmitBatchRequest.ProtoReflect.Descriptor instead.
 func (*SubmitBatchRequest) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_reporting_proto_rawDescGZIP(), []int{5}
+	return file_proxycontrol_v1_reporting_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *SubmitBatchRequest) GetGatewayId() string {
@@ -344,18 +287,22 @@ func (x *SubmitBatchRequest) GetRecords() []*RecorderLine {
 }
 
 type RecorderLine struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	FileId        string                 `protobuf:"bytes,1,opt,name=file_id,json=fileId,proto3" json:"file_id,omitempty"`
-	FileOffset    uint64                 `protobuf:"varint,2,opt,name=file_offset,json=fileOffset,proto3" json:"file_offset,omitempty"`
-	Line          string                 `protobuf:"bytes,3,opt,name=line,proto3" json:"line,omitempty"`
-	EndOffset     uint64                 `protobuf:"varint,4,opt,name=end_offset,json=endOffset,proto3" json:"end_offset,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Recorder 文件标识，同一文件重放时保持一致。
+	FileId string `protobuf:"bytes,1,opt,name=file_id,json=fileId,proto3" json:"file_id,omitempty"`
+	// 记录在文件中的起始字节偏移，从 0 开始。
+	FileOffset uint64 `protobuf:"varint,2,opt,name=file_offset,json=fileOffset,proto3" json:"file_offset,omitempty"`
+	// Recorder 写入的单行 JSON，省略行末换行符。
+	Line string `protobuf:"bytes,3,opt,name=line,proto3" json:"line,omitempty"`
+	// 记录结束后的字节偏移，可作为下一条记录的起点。
+	EndOffset     uint64 `protobuf:"varint,4,opt,name=end_offset,json=endOffset,proto3" json:"end_offset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *RecorderLine) Reset() {
 	*x = RecorderLine{}
-	mi := &file_proxycontrol_v1_reporting_proto_msgTypes[6]
+	mi := &file_proxycontrol_v1_reporting_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -367,7 +314,7 @@ func (x *RecorderLine) String() string {
 func (*RecorderLine) ProtoMessage() {}
 
 func (x *RecorderLine) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_reporting_proto_msgTypes[6]
+	mi := &file_proxycontrol_v1_reporting_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -380,7 +327,7 @@ func (x *RecorderLine) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RecorderLine.ProtoReflect.Descriptor instead.
 func (*RecorderLine) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_reporting_proto_rawDescGZIP(), []int{6}
+	return file_proxycontrol_v1_reporting_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *RecorderLine) GetFileId() string {
@@ -412,18 +359,22 @@ func (x *RecorderLine) GetEndOffset() uint64 {
 }
 
 type SubmitBatchResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Billable      uint32                 `protobuf:"varint,1,opt,name=billable,proto3" json:"billable,omitempty"`
-	NotBillable   uint32                 `protobuf:"varint,2,opt,name=not_billable,json=notBillable,proto3" json:"not_billable,omitempty"`
-	Quarantined   uint32                 `protobuf:"varint,3,opt,name=quarantined,proto3" json:"quarantined,omitempty"`
-	Duplicates    uint32                 `protobuf:"varint,4,opt,name=duplicates,proto3" json:"duplicates,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 本批中新纳入计费的记录数。
+	Billable uint32 `protobuf:"varint,1,opt,name=billable,proto3" json:"billable,omitempty"`
+	// 本批中处理成功但不计费的记录数。
+	NotBillable uint32 `protobuf:"varint,2,opt,name=not_billable,json=notBillable,proto3" json:"not_billable,omitempty"`
+	// 本批中隔离待查的记录数。
+	Quarantined uint32 `protobuf:"varint,3,opt,name=quarantined,proto3" json:"quarantined,omitempty"`
+	// 本批中此前已处理的重复记录数。
+	Duplicates    uint32 `protobuf:"varint,4,opt,name=duplicates,proto3" json:"duplicates,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *SubmitBatchResponse) Reset() {
 	*x = SubmitBatchResponse{}
-	mi := &file_proxycontrol_v1_reporting_proto_msgTypes[7]
+	mi := &file_proxycontrol_v1_reporting_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -435,7 +386,7 @@ func (x *SubmitBatchResponse) String() string {
 func (*SubmitBatchResponse) ProtoMessage() {}
 
 func (x *SubmitBatchResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_reporting_proto_msgTypes[7]
+	mi := &file_proxycontrol_v1_reporting_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -448,7 +399,7 @@ func (x *SubmitBatchResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SubmitBatchResponse.ProtoReflect.Descriptor instead.
 func (*SubmitBatchResponse) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_reporting_proto_rawDescGZIP(), []int{7}
+	return file_proxycontrol_v1_reporting_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *SubmitBatchResponse) GetBillable() uint32 {
@@ -481,9 +432,12 @@ func (x *SubmitBatchResponse) GetDuplicates() uint32 {
 
 // A missing exit timestamp reports a heartbeat for the running boot.
 type ReportLifecycleRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	GatewayId     string                 `protobuf:"bytes,1,opt,name=gateway_id,json=gatewayId,proto3" json:"gateway_id,omitempty"`
-	BootId        string                 `protobuf:"bytes,2,opt,name=boot_id,json=bootId,proto3" json:"boot_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 网关 ID。
+	GatewayId string `protobuf:"bytes,1,opt,name=gateway_id,json=gatewayId,proto3" json:"gateway_id,omitempty"`
+	// 网关运行代次 ID，同一代次重放时保持一致。
+	BootId string `protobuf:"bytes,2,opt,name=boot_id,json=bootId,proto3" json:"boot_id,omitempty"`
+	// 网关退出时间，省略时本次请求作为心跳。
 	ExitedAt      *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=exited_at,json=exitedAt,proto3" json:"exited_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -491,7 +445,7 @@ type ReportLifecycleRequest struct {
 
 func (x *ReportLifecycleRequest) Reset() {
 	*x = ReportLifecycleRequest{}
-	mi := &file_proxycontrol_v1_reporting_proto_msgTypes[8]
+	mi := &file_proxycontrol_v1_reporting_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -503,7 +457,7 @@ func (x *ReportLifecycleRequest) String() string {
 func (*ReportLifecycleRequest) ProtoMessage() {}
 
 func (x *ReportLifecycleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_reporting_proto_msgTypes[8]
+	mi := &file_proxycontrol_v1_reporting_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -516,7 +470,7 @@ func (x *ReportLifecycleRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReportLifecycleRequest.ProtoReflect.Descriptor instead.
 func (*ReportLifecycleRequest) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_reporting_proto_rawDescGZIP(), []int{8}
+	return file_proxycontrol_v1_reporting_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ReportLifecycleRequest) GetGatewayId() string {
@@ -540,96 +494,68 @@ func (x *ReportLifecycleRequest) GetExitedAt() *timestamppb.Timestamp {
 	return nil
 }
 
-type ReportLifecycleResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ReportLifecycleResponse) Reset() {
-	*x = ReportLifecycleResponse{}
-	mi := &file_proxycontrol_v1_reporting_proto_msgTypes[9]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ReportLifecycleResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ReportLifecycleResponse) ProtoMessage() {}
-
-func (x *ReportLifecycleResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_reporting_proto_msgTypes[9]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ReportLifecycleResponse.ProtoReflect.Descriptor instead.
-func (*ReportLifecycleResponse) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_reporting_proto_rawDescGZIP(), []int{9}
-}
-
 var File_proxycontrol_v1_reporting_proto protoreflect.FileDescriptor
 
 const file_proxycontrol_v1_reporting_proto_rawDesc = "" +
 	"\n" +
-	"\x1fproxycontrol/v1/reporting.proto\x12\x0fproxycontrol.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x99\x01\n" +
-	"\x1fReportUnfinishedSessionsRequest\x12\x1d\n" +
+	"\x1fproxycontrol/v1/reporting.proto\x12\x0fproxycontrol.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1bopenapiv3/annotations.proto\x1a\x1cproxycontrol/v1/common.proto\x1a\x17validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xbe\x01\n" +
+	"\x1fReportUnfinishedSessionsRequest\x12)\n" +
 	"\n" +
-	"gateway_id\x18\x01 \x01(\tR\tgatewayId\x12\x17\n" +
-	"\aboot_id\x18\x02 \x01(\tR\x06bootId\x12>\n" +
-	"\bsessions\x18\x03 \x03(\v2\".proxycontrol.v1.UnfinishedSessionR\bsessions\"\x95\x01\n" +
-	"\x11UnfinishedSession\x12\x1d\n" +
+	"gateway_id\x18\x01 \x01(\tB\n" +
+	"\xfaB\ar\x05 \x01(\x80\x01R\tgatewayId\x12#\n" +
+	"\aboot_id\x18\x02 \x01(\tB\n" +
+	"\xfaB\ar\x05 \x01(\x80\x01R\x06bootId\x12K\n" +
+	"\bsessions\x18\x03 \x03(\v2\".proxycontrol.v1.UnfinishedSessionB\v\xfaB\b\x92\x01\x05\b\x01\x10\xe8\aR\bsessions\"\xb7\x01\n" +
+	"\x11UnfinishedSession\x12)\n" +
 	"\n" +
-	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x1b\n" +
-	"\tclient_id\x18\x02 \x01(\tR\bclientId\x12D\n" +
-	"\x10last_recorded_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\x0elastRecordedAt\"\"\n" +
-	" ReportUnfinishedSessionsResponse\"\xd6\x01\n" +
-	"\x15CompleteReplayRequest\x12\x1d\n" +
+	"session_id\x18\x01 \x01(\tB\n" +
+	"\xfaB\ar\x05 \x01(\x80\x01R\tsessionId\x12'\n" +
+	"\tclient_id\x18\x02 \x01(\tB\n" +
+	"\xfaB\ar\x05 \x01(\x80\x01R\bclientId\x12N\n" +
+	"\x10last_recorded_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampB\b\xfaB\x05\xb2\x01\x02\b\x01R\x0elastRecordedAt\"\xee\x01\n" +
+	"\x15CompleteReplayRequest\x12)\n" +
 	"\n" +
-	"gateway_id\x18\x01 \x01(\tR\tgatewayId\x12\x17\n" +
-	"\aboot_id\x18\x02 \x01(\tR\x06bootId\x128\n" +
+	"gateway_id\x18\x01 \x01(\tB\n" +
+	"\xfaB\ar\x05 \x01(\x80\x01R\tgatewayId\x12#\n" +
+	"\aboot_id\x18\x02 \x01(\tB\n" +
+	"\xfaB\ar\x05 \x01(\x80\x01R\x06bootId\x128\n" +
 	"\x18unfinished_session_count\x18\x03 \x01(\rR\x16unfinishedSessionCount\x123\n" +
 	"\x13has_session_records\x18\x04 \x01(\bH\x00R\x11hasSessionRecords\x88\x01\x01B\x16\n" +
-	"\x14_has_session_records\"\x18\n" +
-	"\x16CompleteReplayResponse\"\x85\x01\n" +
-	"\x12SubmitBatchRequest\x12\x1d\n" +
+	"\x14_has_session_records\"\xa7\x01\n" +
+	"\x12SubmitBatchRequest\x12)\n" +
 	"\n" +
-	"gateway_id\x18\x01 \x01(\tR\tgatewayId\x12\x17\n" +
-	"\aboot_id\x18\x02 \x01(\tR\x06bootId\x127\n" +
-	"\arecords\x18\x03 \x03(\v2\x1d.proxycontrol.v1.RecorderLineR\arecords\"{\n" +
-	"\fRecorderLine\x12\x17\n" +
-	"\afile_id\x18\x01 \x01(\tR\x06fileId\x12\x1f\n" +
+	"gateway_id\x18\x01 \x01(\tB\n" +
+	"\xfaB\ar\x05 \x01(\x80\x01R\tgatewayId\x12#\n" +
+	"\aboot_id\x18\x02 \x01(\tB\n" +
+	"\xfaB\ar\x05 \x01(\x80\x01R\x06bootId\x12A\n" +
+	"\arecords\x18\x03 \x03(\v2\x1d.proxycontrol.v1.RecorderLineB\b\xfaB\x05\x92\x01\x02\b\x01R\arecords\"\x9a\x01\n" +
+	"\fRecorderLine\x12#\n" +
+	"\afile_id\x18\x01 \x01(\tB\n" +
+	"\xfaB\ar\x05 \x01(\x80\x01R\x06fileId\x12\x1f\n" +
 	"\vfile_offset\x18\x02 \x01(\x04R\n" +
 	"fileOffset\x12\x12\n" +
-	"\x04line\x18\x03 \x01(\tR\x04line\x12\x1d\n" +
+	"\x04line\x18\x03 \x01(\tR\x04line\x120\n" +
 	"\n" +
-	"end_offset\x18\x04 \x01(\x04R\tendOffset\"\x96\x01\n" +
+	"end_offset\x18\x04 \x01(\x04B\x11\xfaB\x0e2\f\x18\xff\xff\xff\xff\xff\xff\xff\xff\x7f(\x01R\tendOffset\"\x96\x01\n" +
 	"\x13SubmitBatchResponse\x12\x1a\n" +
 	"\bbillable\x18\x01 \x01(\rR\bbillable\x12!\n" +
 	"\fnot_billable\x18\x02 \x01(\rR\vnotBillable\x12 \n" +
 	"\vquarantined\x18\x03 \x01(\rR\vquarantined\x12\x1e\n" +
 	"\n" +
 	"duplicates\x18\x04 \x01(\rR\n" +
-	"duplicates\"\x89\x01\n" +
-	"\x16ReportLifecycleRequest\x12\x1d\n" +
+	"duplicates\"\xa1\x01\n" +
+	"\x16ReportLifecycleRequest\x12)\n" +
 	"\n" +
-	"gateway_id\x18\x01 \x01(\tR\tgatewayId\x12\x17\n" +
-	"\aboot_id\x18\x02 \x01(\tR\x06bootId\x127\n" +
-	"\texited_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\bexitedAt\"\x19\n" +
-	"\x17ReportLifecycleResponse2\xf7\x04\n" +
-	"\x10ReportingService\x12\x88\x01\n" +
-	"\x0fReportLifecycle\x12'.proxycontrol.v1.ReportLifecycleRequest\x1a(.proxycontrol.v1.ReportLifecycleResponse\"\"\x82\xd3\xe4\x93\x02\x1c:\x01*\"\x17/v1/reporting/lifecycle\x12z\n" +
-	"\vSubmitBatch\x12#.proxycontrol.v1.SubmitBatchRequest\x1a$.proxycontrol.v1.SubmitBatchResponse\" \x82\xd3\xe4\x93\x02\x1a:\x01*\"\x15/v1/reporting/batches\x12\xbd\x01\n" +
-	"\x18ReportUnfinishedSessions\x120.proxycontrol.v1.ReportUnfinishedSessionsRequest\x1a1.proxycontrol.v1.ReportUnfinishedSessionsResponse\"<\x82\xd3\xe4\x93\x026:\x01*\"1/v1/reporting/boots/{boot_id}/unfinished-sessions\x12\x9b\x01\n" +
-	"\x0eCompleteReplay\x12&.proxycontrol.v1.CompleteReplayRequest\x1a'.proxycontrol.v1.CompleteReplayResponse\"8\x82\xd3\xe4\x93\x022:\x01*\"-/v1/reporting/boots/{boot_id}/replay-completeBEZCgithub.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1b\x06proto3"
+	"gateway_id\x18\x01 \x01(\tB\n" +
+	"\xfaB\ar\x05 \x01(\x80\x01R\tgatewayId\x12#\n" +
+	"\aboot_id\x18\x02 \x01(\tB\n" +
+	"\xfaB\ar\x05 \x01(\x80\x01R\x06bootId\x127\n" +
+	"\texited_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\bexitedAt2\xf7\x05\n" +
+	"\x10ReportingService\x12\x9f\x01\n" +
+	"\x0fReportLifecycle\x12'.proxycontrol.v1.ReportLifecycleRequest\x1a\x19.proxycontrol.v1.BaseResp\"H\xbaG#\x12!上报网关心跳或退出时间\x82\xd3\xe4\x93\x02\x1c:\x01*\"\x17/v1/reporting/lifecycle\x12\xb0\x01\n" +
+	"\vSubmitBatch\x12#.proxycontrol.v1.SubmitBatchRequest\x1a$.proxycontrol.v1.SubmitBatchResponse\"V\xbaG3\x121批量提交 Recorder 记录并返回处理结果\x82\xd3\xe4\x93\x02\x1a:\x01*\"\x15/v1/reporting/batches\x12\xcb\x01\n" +
+	"\x18ReportUnfinishedSessions\x120.proxycontrol.v1.ReportUnfinishedSessionsRequest\x1a\x19.proxycontrol.v1.BaseResp\"b\xbaG#\x12!上报待回放的未完成会话\x82\xd3\xe4\x93\x026:\x01*\"1/v1/reporting/boots/{boot_id}/unfinished-sessions\x12\xbf\x01\n" +
+	"\x0eCompleteReplay\x12&.proxycontrol.v1.CompleteReplayRequest\x1a\x19.proxycontrol.v1.BaseResp\"j\xbaG/\x12-确认指定网关运行代次已完成回放\x82\xd3\xe4\x93\x022:\x01*\"-/v1/reporting/boots/{boot_id}/replay-completeBEZCgithub.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1b\x06proto3"
 
 var (
 	file_proxycontrol_v1_reporting_proto_rawDescOnce sync.Once
@@ -643,38 +569,36 @@ func file_proxycontrol_v1_reporting_proto_rawDescGZIP() []byte {
 	return file_proxycontrol_v1_reporting_proto_rawDescData
 }
 
-var file_proxycontrol_v1_reporting_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_proxycontrol_v1_reporting_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_proxycontrol_v1_reporting_proto_goTypes = []any{
-	(*ReportUnfinishedSessionsRequest)(nil),  // 0: proxycontrol.v1.ReportUnfinishedSessionsRequest
-	(*UnfinishedSession)(nil),                // 1: proxycontrol.v1.UnfinishedSession
-	(*ReportUnfinishedSessionsResponse)(nil), // 2: proxycontrol.v1.ReportUnfinishedSessionsResponse
-	(*CompleteReplayRequest)(nil),            // 3: proxycontrol.v1.CompleteReplayRequest
-	(*CompleteReplayResponse)(nil),           // 4: proxycontrol.v1.CompleteReplayResponse
-	(*SubmitBatchRequest)(nil),               // 5: proxycontrol.v1.SubmitBatchRequest
-	(*RecorderLine)(nil),                     // 6: proxycontrol.v1.RecorderLine
-	(*SubmitBatchResponse)(nil),              // 7: proxycontrol.v1.SubmitBatchResponse
-	(*ReportLifecycleRequest)(nil),           // 8: proxycontrol.v1.ReportLifecycleRequest
-	(*ReportLifecycleResponse)(nil),          // 9: proxycontrol.v1.ReportLifecycleResponse
-	(*timestamppb.Timestamp)(nil),            // 10: google.protobuf.Timestamp
+	(*ReportUnfinishedSessionsRequest)(nil), // 0: proxycontrol.v1.ReportUnfinishedSessionsRequest
+	(*UnfinishedSession)(nil),               // 1: proxycontrol.v1.UnfinishedSession
+	(*CompleteReplayRequest)(nil),           // 2: proxycontrol.v1.CompleteReplayRequest
+	(*SubmitBatchRequest)(nil),              // 3: proxycontrol.v1.SubmitBatchRequest
+	(*RecorderLine)(nil),                    // 4: proxycontrol.v1.RecorderLine
+	(*SubmitBatchResponse)(nil),             // 5: proxycontrol.v1.SubmitBatchResponse
+	(*ReportLifecycleRequest)(nil),          // 6: proxycontrol.v1.ReportLifecycleRequest
+	(*timestamppb.Timestamp)(nil),           // 7: google.protobuf.Timestamp
+	(*BaseResp)(nil),                        // 8: proxycontrol.v1.BaseResp
 }
 var file_proxycontrol_v1_reporting_proto_depIdxs = []int32{
-	1,  // 0: proxycontrol.v1.ReportUnfinishedSessionsRequest.sessions:type_name -> proxycontrol.v1.UnfinishedSession
-	10, // 1: proxycontrol.v1.UnfinishedSession.last_recorded_at:type_name -> google.protobuf.Timestamp
-	6,  // 2: proxycontrol.v1.SubmitBatchRequest.records:type_name -> proxycontrol.v1.RecorderLine
-	10, // 3: proxycontrol.v1.ReportLifecycleRequest.exited_at:type_name -> google.protobuf.Timestamp
-	8,  // 4: proxycontrol.v1.ReportingService.ReportLifecycle:input_type -> proxycontrol.v1.ReportLifecycleRequest
-	5,  // 5: proxycontrol.v1.ReportingService.SubmitBatch:input_type -> proxycontrol.v1.SubmitBatchRequest
-	0,  // 6: proxycontrol.v1.ReportingService.ReportUnfinishedSessions:input_type -> proxycontrol.v1.ReportUnfinishedSessionsRequest
-	3,  // 7: proxycontrol.v1.ReportingService.CompleteReplay:input_type -> proxycontrol.v1.CompleteReplayRequest
-	9,  // 8: proxycontrol.v1.ReportingService.ReportLifecycle:output_type -> proxycontrol.v1.ReportLifecycleResponse
-	7,  // 9: proxycontrol.v1.ReportingService.SubmitBatch:output_type -> proxycontrol.v1.SubmitBatchResponse
-	2,  // 10: proxycontrol.v1.ReportingService.ReportUnfinishedSessions:output_type -> proxycontrol.v1.ReportUnfinishedSessionsResponse
-	4,  // 11: proxycontrol.v1.ReportingService.CompleteReplay:output_type -> proxycontrol.v1.CompleteReplayResponse
-	8,  // [8:12] is the sub-list for method output_type
-	4,  // [4:8] is the sub-list for method input_type
-	4,  // [4:4] is the sub-list for extension type_name
-	4,  // [4:4] is the sub-list for extension extendee
-	0,  // [0:4] is the sub-list for field type_name
+	1, // 0: proxycontrol.v1.ReportUnfinishedSessionsRequest.sessions:type_name -> proxycontrol.v1.UnfinishedSession
+	7, // 1: proxycontrol.v1.UnfinishedSession.last_recorded_at:type_name -> google.protobuf.Timestamp
+	4, // 2: proxycontrol.v1.SubmitBatchRequest.records:type_name -> proxycontrol.v1.RecorderLine
+	7, // 3: proxycontrol.v1.ReportLifecycleRequest.exited_at:type_name -> google.protobuf.Timestamp
+	6, // 4: proxycontrol.v1.ReportingService.ReportLifecycle:input_type -> proxycontrol.v1.ReportLifecycleRequest
+	3, // 5: proxycontrol.v1.ReportingService.SubmitBatch:input_type -> proxycontrol.v1.SubmitBatchRequest
+	0, // 6: proxycontrol.v1.ReportingService.ReportUnfinishedSessions:input_type -> proxycontrol.v1.ReportUnfinishedSessionsRequest
+	2, // 7: proxycontrol.v1.ReportingService.CompleteReplay:input_type -> proxycontrol.v1.CompleteReplayRequest
+	8, // 8: proxycontrol.v1.ReportingService.ReportLifecycle:output_type -> proxycontrol.v1.BaseResp
+	5, // 9: proxycontrol.v1.ReportingService.SubmitBatch:output_type -> proxycontrol.v1.SubmitBatchResponse
+	8, // 10: proxycontrol.v1.ReportingService.ReportUnfinishedSessions:output_type -> proxycontrol.v1.BaseResp
+	8, // 11: proxycontrol.v1.ReportingService.CompleteReplay:output_type -> proxycontrol.v1.BaseResp
+	8, // [8:12] is the sub-list for method output_type
+	4, // [4:8] is the sub-list for method input_type
+	4, // [4:4] is the sub-list for extension type_name
+	4, // [4:4] is the sub-list for extension extendee
+	0, // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_proxycontrol_v1_reporting_proto_init() }
@@ -682,14 +606,15 @@ func file_proxycontrol_v1_reporting_proto_init() {
 	if File_proxycontrol_v1_reporting_proto != nil {
 		return
 	}
-	file_proxycontrol_v1_reporting_proto_msgTypes[3].OneofWrappers = []any{}
+	file_proxycontrol_v1_common_proto_init()
+	file_proxycontrol_v1_reporting_proto_msgTypes[2].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proxycontrol_v1_reporting_proto_rawDesc), len(file_proxycontrol_v1_reporting_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   10,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

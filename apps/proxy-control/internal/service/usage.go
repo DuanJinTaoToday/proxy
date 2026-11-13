@@ -33,15 +33,15 @@ func (s *Usage) SubmitBatch(ctx context.Context, req *v1.SubmitBatchRequest) (*v
 	}, nil
 }
 
-func (s *Usage) ReportLifecycle(ctx context.Context, req *v1.ReportLifecycleRequest) (*v1.ReportLifecycleResponse, error) {
+func (s *Usage) ReportLifecycle(ctx context.Context, req *v1.ReportLifecycleRequest) (*v1.BaseResp, error) {
 	exit, invalid := readTimestamp(req.GetExitedAt())
 	if err := s.biz.ReportLifecycle(ctx, bearerToken(ctx), req.GetGatewayId(), req.GetBootId(), exit, invalid); err != nil {
 		return nil, err
 	}
-	return &v1.ReportLifecycleResponse{}, nil
+	return &v1.BaseResp{}, nil
 }
 
-func (s *Usage) ReportUnfinishedSessions(ctx context.Context, req *v1.ReportUnfinishedSessionsRequest) (*v1.ReportUnfinishedSessionsResponse, error) {
+func (s *Usage) ReportUnfinishedSessions(ctx context.Context, req *v1.ReportUnfinishedSessionsRequest) (*v1.BaseResp, error) {
 	sessions := make([]usage.UnfinishedSession, 0, len(req.GetSessions()))
 	for _, session := range req.GetSessions() {
 		recordedAt, invalid := readTimestamp(session.GetLastRecordedAt())
@@ -54,14 +54,14 @@ func (s *Usage) ReportUnfinishedSessions(ctx context.Context, req *v1.ReportUnfi
 	if err := s.biz.ReportUnfinishedSessions(ctx, bearerToken(ctx), req.GetGatewayId(), req.GetBootId(), sessions); err != nil {
 		return nil, err
 	}
-	return &v1.ReportUnfinishedSessionsResponse{}, nil
+	return &v1.BaseResp{}, nil
 }
 
-func (s *Usage) CompleteReplay(ctx context.Context, req *v1.CompleteReplayRequest) (*v1.CompleteReplayResponse, error) {
+func (s *Usage) CompleteReplay(ctx context.Context, req *v1.CompleteReplayRequest) (*v1.BaseResp, error) {
 	if err := s.biz.CompleteReplay(ctx, bearerToken(ctx), req.GetGatewayId(), req.GetBootId(), req.GetUnfinishedSessionCount(), req.HasSessionRecords); err != nil {
 		return nil, err
 	}
-	return &v1.CompleteReplayResponse{}, nil
+	return &v1.BaseResp{}, nil
 }
 
 func (s *Usage) ExtractProxy(ctx context.Context, req *v1.ExtractProxyRequest) (*v1.ExtractProxyResponse, error) {

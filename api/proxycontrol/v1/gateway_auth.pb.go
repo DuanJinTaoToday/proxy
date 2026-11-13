@@ -7,6 +7,8 @@
 package proxycontrolv1
 
 import (
+	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	_ "github.com/google/gnostic/openapiv3"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -24,9 +26,11 @@ const (
 )
 
 type LoadAuthStateRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Username      string                 `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
-	Password      string                 `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 用于认证的用户名。
+	Username string `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
+	// 用于认证的原始密码。
+	Password      string `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -76,8 +80,9 @@ func (x *LoadAuthStateRequest) GetPassword() string {
 }
 
 type RefreshAuthStateRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	References    []string               `protobuf:"bytes,1,rep,name=references,proto3" json:"references,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 本控制面签发给当前网关的凭据引用，每次提交 1–100 条。
+	References    []string `protobuf:"bytes,1,rep,name=references,proto3" json:"references,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -120,8 +125,9 @@ func (x *RefreshAuthStateRequest) GetReferences() []string {
 }
 
 type RefreshAuthStateResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Snapshots     []*AuthSnapshot        `protobuf:"bytes,1,rep,name=snapshots,proto3" json:"snapshots,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 请求中各凭据引用对应的认证状态。
+	Snapshots     []*AuthSnapshot `protobuf:"bytes,1,rep,name=snapshots,proto3" json:"snapshots,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -164,18 +170,27 @@ func (x *RefreshAuthStateResponse) GetSnapshots() []*AuthSnapshot {
 }
 
 type AuthSnapshot struct {
-	state              protoimpl.MessageState `protogen:"open.v1"`
-	Reference          string                 `protobuf:"bytes,1,opt,name=reference,proto3" json:"reference,omitempty"`
-	Username           string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
-	ClientId           string                 `protobuf:"bytes,3,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
-	TenantId           string                 `protobuf:"bytes,4,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	PasswordHash       []byte                 `protobuf:"bytes,5,opt,name=password_hash,json=passwordHash,proto3" json:"password_hash,omitempty"`
-	Active             bool                   `protobuf:"varint,6,opt,name=active,proto3" json:"active,omitempty"`
-	ExpiresAt          *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
-	AllowedSourceCidrs []string               `protobuf:"bytes,8,rep,name=allowed_source_cidrs,json=allowedSourceCidrs,proto3" json:"allowed_source_cidrs,omitempty"`
-	Quota              *AuthQuota             `protobuf:"bytes,9,opt,name=quota,proto3" json:"quota,omitempty"`
-	unknownFields      protoimpl.UnknownFields
-	sizeCache          protoimpl.SizeCache
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 绑定到当前网关的凭据引用，用于后续刷新。
+	Reference string `protobuf:"bytes,1,opt,name=reference,proto3" json:"reference,omitempty"`
+	// 用于认证的用户名。
+	Username string `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
+	// 代理凭据 ID。
+	ClientId string `protobuf:"bytes,3,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
+	// 租户 ID。
+	TenantId string `protobuf:"bytes,4,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// 供网关本地认证使用的密码哈希。
+	PasswordHash []byte `protobuf:"bytes,5,opt,name=password_hash,json=passwordHash,proto3" json:"password_hash,omitempty"`
+	// 凭据当前是否启用且未过期。
+	Active bool `protobuf:"varint,6,opt,name=active,proto3" json:"active,omitempty"`
+	// 失效时间。
+	ExpiresAt *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	// 凭据允许访问的客户端来源网段，空列表表示不限制。
+	AllowedSourceCidrs []string `protobuf:"bytes,8,rep,name=allowed_source_cidrs,json=allowedSourceCidrs,proto3" json:"allowed_source_cidrs,omitempty"`
+	// 有效凭据所属租户的流量准入状态。
+	Quota         *AuthQuota `protobuf:"bytes,9,opt,name=quota,proto3" json:"quota,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *AuthSnapshot) Reset() {
@@ -272,12 +287,15 @@ func (x *AuthSnapshot) GetQuota() *AuthQuota {
 }
 
 type AuthQuota struct {
-	state                   protoimpl.MessageState `protogen:"open.v1"`
-	AvailableBytes          int64                  `protobuf:"varint,1,opt,name=available_bytes,json=availableBytes,proto3" json:"available_bytes,omitempty"`
-	AdmissionThresholdBytes uint64                 `protobuf:"varint,2,opt,name=admission_threshold_bytes,json=admissionThresholdBytes,proto3" json:"admission_threshold_bytes,omitempty"`
-	ValidUntil              *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=valid_until,json=validUntil,proto3" json:"valid_until,omitempty"`
-	unknownFields           protoimpl.UnknownFields
-	sizeCache               protoimpl.SizeCache
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 可用流量余额，单位为字节。
+	AvailableBytes int64 `protobuf:"varint,1,opt,name=available_bytes,json=availableBytes,proto3" json:"available_bytes,omitempty"`
+	// 代理连接准入使用的最低可用余额阈值，单位为字节。
+	AdmissionThresholdBytes uint64 `protobuf:"varint,2,opt,name=admission_threshold_bytes,json=admissionThresholdBytes,proto3" json:"admission_threshold_bytes,omitempty"`
+	// 网关可使用这份准入快照的截止时间。
+	ValidUntil    *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=valid_until,json=validUntil,proto3" json:"valid_until,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *AuthQuota) Reset() {
@@ -335,13 +353,15 @@ var File_proxycontrol_v1_gateway_auth_proto protoreflect.FileDescriptor
 
 const file_proxycontrol_v1_gateway_auth_proto_rawDesc = "" +
 	"\n" +
-	"\"proxycontrol/v1/gateway_auth.proto\x12\x0fproxycontrol.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"N\n" +
-	"\x14LoadAuthStateRequest\x12\x1a\n" +
-	"\busername\x18\x01 \x01(\tR\busername\x12\x1a\n" +
-	"\bpassword\x18\x02 \x01(\tR\bpassword\"9\n" +
-	"\x17RefreshAuthStateRequest\x12\x1e\n" +
+	"\"proxycontrol/v1/gateway_auth.proto\x12\x0fproxycontrol.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1bopenapiv3/annotations.proto\x1a\x17validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"f\n" +
+	"\x14LoadAuthStateRequest\x12&\n" +
+	"\busername\x18\x01 \x01(\tB\n" +
+	"\xfaB\ar\x05 \x01(\xff\x01R\busername\x12&\n" +
+	"\bpassword\x18\x02 \x01(\tB\n" +
+	"\xfaB\ar\x05 \x01(\xff\x01R\bpassword\"N\n" +
+	"\x17RefreshAuthStateRequest\x123\n" +
 	"\n" +
-	"references\x18\x01 \x03(\tR\n" +
+	"references\x18\x01 \x03(\tB\x13\xfaB\x10\x92\x01\r\b\x01\x10d\"\ar\x05 \x01(\x80\x01R\n" +
 	"references\"W\n" +
 	"\x18RefreshAuthStateResponse\x12;\n" +
 	"\tsnapshots\x18\x01 \x03(\v2\x1d.proxycontrol.v1.AuthSnapshotR\tsnapshots\"\xde\x02\n" +
@@ -360,10 +380,10 @@ const file_proxycontrol_v1_gateway_auth_proto_rawDesc = "" +
 	"\x0favailable_bytes\x18\x01 \x01(\x03R\x0eavailableBytes\x12:\n" +
 	"\x19admission_threshold_bytes\x18\x02 \x01(\x04R\x17admissionThresholdBytes\x12;\n" +
 	"\vvalid_until\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"validUntil2\xa8\x02\n" +
-	"\x12GatewayAuthService\x12}\n" +
-	"\rLoadAuthState\x12%.proxycontrol.v1.LoadAuthStateRequest\x1a\x1d.proxycontrol.v1.AuthSnapshot\"&\x82\xd3\xe4\x93\x02 :\x01*\"\x1b/v1/gateway/auth-state/load\x12\x92\x01\n" +
-	"\x10RefreshAuthState\x12(.proxycontrol.v1.RefreshAuthStateRequest\x1a).proxycontrol.v1.RefreshAuthStateResponse\")\x82\xd3\xe4\x93\x02#:\x01*\"\x1e/v1/gateway/auth-state/refreshBEZCgithub.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1b\x06proto3"
+	"validUntil2\x8a\x03\n" +
+	"\x12GatewayAuthService\x12\xa9\x01\n" +
+	"\rLoadAuthState\x12%.proxycontrol.v1.LoadAuthStateRequest\x1a\x1d.proxycontrol.v1.AuthSnapshot\"R\xbaG)\x12'校验代理凭据并加载认证状态\x82\xd3\xe4\x93\x02 :\x01*\"\x1b/v1/gateway/auth-state/load\x12\xc7\x01\n" +
+	"\x10RefreshAuthState\x12(.proxycontrol.v1.RefreshAuthStateRequest\x1a).proxycontrol.v1.RefreshAuthStateResponse\"^\xbaG2\x120批量刷新网关缓存的凭据和准入状态\x82\xd3\xe4\x93\x02#:\x01*\"\x1e/v1/gateway/auth-state/refreshBEZCgithub.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1b\x06proto3"
 
 var (
 	file_proxycontrol_v1_gateway_auth_proto_rawDescOnce sync.Once

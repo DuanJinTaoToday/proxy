@@ -3,53 +3,70 @@ syntax = "proto3";
 package proxycontrol.v1;
 
 import "google/api/annotations.proto";
+import "openapiv3/annotations.proto";
+import "proxycontrol/v1/common.proto";
 
 option go_package = "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1";
 
 service AccessService {
-  rpc ListTenants(ListTenantsRequest) returns (ListTenantsResponse) {
+  rpc ListTenants(BaseRequest) returns (ListTenantsResponse) {
     option (google.api.http) = {get: "/v1/access/tenants"};
+    option (openapi.v3.operation) = {
+      summary: "列出当前账号可访问的租户"
+    };
   }
   rpc GetTenantAccess(GetTenantAccessRequest) returns (TenantAccess) {
     option (google.api.http) = {get: "/v1/access/tenants/{tenant_id}"};
+    option (openapi.v3.operation) = {
+      summary: "查询当前账号对指定租户的访问权限"
+    };
   }
 
-  rpc CheckPermission(CheckPermissionRequest) returns (CheckPermissionResponse) {
+  rpc CheckPermission(CheckPermissionRequest) returns (BaseResp) {
     option (google.api.http) = {post: "/v1/access/check", body: "*"};
+    option (openapi.v3.operation) = {
+      summary: "检查当前账号是否具备指定权限"
+    };
   }
 
   rpc Login(LoginRequest) returns (LoginResponse) {
     option (google.api.http) = {post: "/v1/access/login", body: "*"};
+    option (openapi.v3.operation) = {
+      summary: "登录控制台并签发访问令牌"
+    };
   }
 }
 
-message ListTenantsRequest {}
-
 message ListTenantsResponse {
+  // 当前账号可访问的租户列表。
   repeated TenantAccess tenants = 1;
 }
 
 message GetTenantAccessRequest {
+  // 租户 ID。
   string tenant_id = 1;
 }
 
 message TenantAccess {
+  // 租户 ID。
   string tenant_id = 1;
+  // 租户显示名称。
   string name = 2;
 }
 
 message LoginRequest {
+  // 控制台登录用户名。
   string username = 1;
+  // 控制台登录密码。
   string password = 2;
 }
 
 message LoginResponse {
+  // 后续请求通过 Authorization Bearer 发送的访问令牌。
   string access_token = 1;
+  // 令牌从签发起的有效时长，单位为秒。
   int32 expires_in_seconds = 2;
 }
-
-
-
 
 enum Permission {
   PERMISSION_UNSPECIFIED = 0;
@@ -61,8 +78,8 @@ enum Permission {
 }
 
 message CheckPermissionRequest {
+  // 租户 ID。
   string tenant_id = 1;
+  // 要检查的权限。
   Permission permission = 2;
 }
-
-message CheckPermissionResponse {}

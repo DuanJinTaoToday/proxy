@@ -3,15 +3,16 @@ syntax = "proto3";
 package proxycontrol.v1;
 
 import "google/api/annotations.proto";
+import "openapiv3/annotations.proto";
+import "proxycontrol/v1/common.proto";
 
 option go_package = "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1";
 
 service HealthService {
-  rpc Check(CheckRequest) returns (CheckResponse) {
+  rpc Check(BaseRequest) returns (BaseResp) {
     option (google.api.http) = {get: "/healthz"};
+    option (openapi.v3.operation) = {
+      summary: "检查控制面的 HTTP 存活状态"
+    };
   }
 }
-
-message CheckRequest {}
-
-message CheckResponse {}

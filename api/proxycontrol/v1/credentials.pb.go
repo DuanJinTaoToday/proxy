@@ -7,6 +7,8 @@
 package proxycontrolv1
 
 import (
+	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	_ "github.com/google/gnostic/openapiv3"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -24,10 +26,13 @@ const (
 )
 
 type CreateCredentialRequest struct {
-	state              protoimpl.MessageState `protogen:"open.v1"`
-	TenantId           string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	ExpiresAt          *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
-	AllowedSourceCidrs []string               `protobuf:"bytes,3,rep,name=allowed_source_cidrs,json=allowedSourceCidrs,proto3" json:"allowed_source_cidrs,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 租户 ID。
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// 凭据失效时间，省略时不设置有效期。
+	ExpiresAt *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	// 凭据允许访问的客户端来源网段，空列表表示不限制。
+	AllowedSourceCidrs []string `protobuf:"bytes,3,rep,name=allowed_source_cidrs,json=allowedSourceCidrs,proto3" json:"allowed_source_cidrs,omitempty"`
 	unknownFields      protoimpl.UnknownFields
 	sizeCache          protoimpl.SizeCache
 }
@@ -84,10 +89,13 @@ func (x *CreateCredentialRequest) GetAllowedSourceCidrs() []string {
 }
 
 type CreateCredentialResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ClientId      string                 `protobuf:"bytes,1,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
-	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
-	Password      string                 `protobuf:"bytes,3,opt,name=password,proto3" json:"password,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 代理凭据 ID。
+	ClientId string `protobuf:"bytes,1,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
+	// 用于认证的用户名。
+	Username string `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
+	// 签发时返回的代理密码。
+	Password      string `protobuf:"bytes,3,opt,name=password,proto3" json:"password,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -144,9 +152,11 @@ func (x *CreateCredentialResponse) GetPassword() string {
 }
 
 type DisableCredentialRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	ClientId      string                 `protobuf:"bytes,2,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 租户 ID。
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// 代理凭据 ID。
+	ClientId      string `protobuf:"bytes,2,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -195,63 +205,26 @@ func (x *DisableCredentialRequest) GetClientId() string {
 	return ""
 }
 
-type DisableCredentialResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *DisableCredentialResponse) Reset() {
-	*x = DisableCredentialResponse{}
-	mi := &file_proxycontrol_v1_credentials_proto_msgTypes[3]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *DisableCredentialResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DisableCredentialResponse) ProtoMessage() {}
-
-func (x *DisableCredentialResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_credentials_proto_msgTypes[3]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DisableCredentialResponse.ProtoReflect.Descriptor instead.
-func (*DisableCredentialResponse) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_credentials_proto_rawDescGZIP(), []int{3}
-}
-
 var File_proxycontrol_v1_credentials_proto protoreflect.FileDescriptor
 
 const file_proxycontrol_v1_credentials_proto_rawDesc = "" +
 	"\n" +
-	"!proxycontrol/v1/credentials.proto\x12\x0fproxycontrol.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa3\x01\n" +
+	"!proxycontrol/v1/credentials.proto\x12\x0fproxycontrol.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1bopenapiv3/annotations.proto\x1a\x1cproxycontrol/v1/common.proto\x1a\x17validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xad\x01\n" +
 	"\x17CreateCredentialRequest\x12\x1b\n" +
 	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x129\n" +
 	"\n" +
-	"expires_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x120\n" +
-	"\x14allowed_source_cidrs\x18\x03 \x03(\tR\x12allowedSourceCidrs\"o\n" +
+	"expires_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x12:\n" +
+	"\x14allowed_source_cidrs\x18\x03 \x03(\tB\b\xfaB\x05\x92\x01\x02\x10dR\x12allowedSourceCidrs\"o\n" +
 	"\x18CreateCredentialResponse\x12\x1b\n" +
 	"\tclient_id\x18\x01 \x01(\tR\bclientId\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x1a\n" +
 	"\bpassword\x18\x03 \x01(\tR\bpassword\"T\n" +
 	"\x18DisableCredentialRequest\x12\x1b\n" +
 	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x1b\n" +
-	"\tclient_id\x18\x02 \x01(\tR\bclientId\"\x1b\n" +
-	"\x19DisableCredentialResponse2\xea\x02\n" +
-	"\x11CredentialService\x12\x9d\x01\n" +
-	"\x10CreateCredential\x12(.proxycontrol.v1.CreateCredentialRequest\x1a).proxycontrol.v1.CreateCredentialResponse\"4\x82\xd3\xe4\x93\x02.:\x01*\")/v1/tenants/{tenant_id}/proxy-credentials\x12\xb4\x01\n" +
-	"\x11DisableCredential\x12).proxycontrol.v1.DisableCredentialRequest\x1a*.proxycontrol.v1.DisableCredentialResponse\"H\x82\xd3\xe4\x93\x02B:\x01*\"=/v1/tenants/{tenant_id}/proxy-credentials/{client_id}:disableBEZCgithub.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1b\x06proto3"
+	"\tclient_id\x18\x02 \x01(\tR\bclientId2\x96\x03\n" +
+	"\x11CredentialService\x12\xbd\x01\n" +
+	"\x10CreateCredential\x12(.proxycontrol.v1.CreateCredentialRequest\x1a).proxycontrol.v1.CreateCredentialResponse\"T\xbaG\x1d\x12\x1b为租户签发代理凭据\x82\xd3\xe4\x93\x02.:\x01*\")/v1/tenants/{tenant_id}/proxy-credentials\x12\xc0\x01\n" +
+	"\x11DisableCredential\x12).proxycontrol.v1.DisableCredentialRequest\x1a\x19.proxycontrol.v1.BaseResp\"e\xbaG\x1a\x12\x18停用指定代理凭据\x82\xd3\xe4\x93\x02B:\x01*\"=/v1/tenants/{tenant_id}/proxy-credentials/{client_id}:disableBEZCgithub.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1b\x06proto3"
 
 var (
 	file_proxycontrol_v1_credentials_proto_rawDescOnce sync.Once
@@ -265,20 +238,20 @@ func file_proxycontrol_v1_credentials_proto_rawDescGZIP() []byte {
 	return file_proxycontrol_v1_credentials_proto_rawDescData
 }
 
-var file_proxycontrol_v1_credentials_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_proxycontrol_v1_credentials_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_proxycontrol_v1_credentials_proto_goTypes = []any{
-	(*CreateCredentialRequest)(nil),   // 0: proxycontrol.v1.CreateCredentialRequest
-	(*CreateCredentialResponse)(nil),  // 1: proxycontrol.v1.CreateCredentialResponse
-	(*DisableCredentialRequest)(nil),  // 2: proxycontrol.v1.DisableCredentialRequest
-	(*DisableCredentialResponse)(nil), // 3: proxycontrol.v1.DisableCredentialResponse
-	(*timestamppb.Timestamp)(nil),     // 4: google.protobuf.Timestamp
+	(*CreateCredentialRequest)(nil),  // 0: proxycontrol.v1.CreateCredentialRequest
+	(*CreateCredentialResponse)(nil), // 1: proxycontrol.v1.CreateCredentialResponse
+	(*DisableCredentialRequest)(nil), // 2: proxycontrol.v1.DisableCredentialRequest
+	(*timestamppb.Timestamp)(nil),    // 3: google.protobuf.Timestamp
+	(*BaseResp)(nil),                 // 4: proxycontrol.v1.BaseResp
 }
 var file_proxycontrol_v1_credentials_proto_depIdxs = []int32{
-	4, // 0: proxycontrol.v1.CreateCredentialRequest.expires_at:type_name -> google.protobuf.Timestamp
+	3, // 0: proxycontrol.v1.CreateCredentialRequest.expires_at:type_name -> google.protobuf.Timestamp
 	0, // 1: proxycontrol.v1.CredentialService.CreateCredential:input_type -> proxycontrol.v1.CreateCredentialRequest
 	2, // 2: proxycontrol.v1.CredentialService.DisableCredential:input_type -> proxycontrol.v1.DisableCredentialRequest
 	1, // 3: proxycontrol.v1.CredentialService.CreateCredential:output_type -> proxycontrol.v1.CreateCredentialResponse
-	3, // 4: proxycontrol.v1.CredentialService.DisableCredential:output_type -> proxycontrol.v1.DisableCredentialResponse
+	4, // 4: proxycontrol.v1.CredentialService.DisableCredential:output_type -> proxycontrol.v1.BaseResp
 	3, // [3:5] is the sub-list for method output_type
 	1, // [1:3] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
@@ -291,13 +264,14 @@ func file_proxycontrol_v1_credentials_proto_init() {
 	if File_proxycontrol_v1_credentials_proto != nil {
 		return
 	}
+	file_proxycontrol_v1_common_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proxycontrol_v1_credentials_proto_rawDesc), len(file_proxycontrol_v1_credentials_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -22,7 +22,7 @@ const OperationCredentialServiceDisableCredential = "/proxycontrol.v1.Credential
 
 type CredentialServiceHTTPServer interface {
 	CreateCredential(context.Context, *CreateCredentialRequest) (*CreateCredentialResponse, error)
-	DisableCredential(context.Context, *DisableCredentialRequest) (*DisableCredentialResponse, error)
+	DisableCredential(context.Context, *DisableCredentialRequest) (*BaseResp, error)
 }
 
 func RegisterCredentialServiceHTTPServer(s *http.Server, srv CredentialServiceHTTPServer) {
@@ -70,14 +70,14 @@ func _CredentialService_DisableCredential0_HTTP_Handler(srv CredentialServiceHTT
 		if err != nil {
 			return err
 		}
-		reply := out.(*DisableCredentialResponse)
+		reply := out.(*BaseResp)
 		return ctx.Result(200, reply)
 	}
 }
 
 type CredentialServiceHTTPClient interface {
 	CreateCredential(ctx context.Context, req *CreateCredentialRequest, opts ...http.CallOption) (rsp *CreateCredentialResponse, err error)
-	DisableCredential(ctx context.Context, req *DisableCredentialRequest, opts ...http.CallOption) (rsp *DisableCredentialResponse, err error)
+	DisableCredential(ctx context.Context, req *DisableCredentialRequest, opts ...http.CallOption) (rsp *BaseResp, err error)
 }
 
 type CredentialServiceHTTPClientImpl struct {
@@ -105,8 +105,8 @@ func (c *CredentialServiceHTTPClientImpl) CreateCredential(ctx context.Context, 
 	return &out, nil
 }
 
-func (c *CredentialServiceHTTPClientImpl) DisableCredential(ctx context.Context, in *DisableCredentialRequest, opts ...http.CallOption) (*DisableCredentialResponse, error) {
-	var out DisableCredentialResponse
+func (c *CredentialServiceHTTPClientImpl) DisableCredential(ctx context.Context, in *DisableCredentialRequest, opts ...http.CallOption) (*BaseResp, error) {
+	var out BaseResp
 	pattern := "/v1/tenants/{tenant_id}/proxy-credentials/{client_id}:disable"
 	path := http.BuildPath(pattern, in)
 	opts = append([]http.CallOption{

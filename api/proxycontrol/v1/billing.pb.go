@@ -7,6 +7,8 @@
 package proxycontrolv1
 
 import (
+	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	_ "github.com/google/gnostic/openapiv3"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -73,10 +75,13 @@ func (BalanceAdjustmentMode) EnumDescriptor() ([]byte, []int) {
 }
 
 type GetBillingSettingsRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ScopeType     string                 `protobuf:"bytes,1,opt,name=scope_type,json=scopeType,proto3" json:"scope_type,omitempty"`
-	ScopeId       string                 `protobuf:"bytes,2,opt,name=scope_id,json=scopeId,proto3" json:"scope_id,omitempty"`
-	TenantId      string                 `protobuf:"bytes,3,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 计费配置或倍率的作用范围类型。
+	ScopeType string `protobuf:"bytes,1,opt,name=scope_type,json=scopeType,proto3" json:"scope_type,omitempty"`
+	// 分组或租户 ID。全局范围可用下划线作为路径占位。
+	ScopeId string `protobuf:"bytes,2,opt,name=scope_id,json=scopeId,proto3" json:"scope_id,omitempty"`
+	// 需要查询有效阈值时指定的租户 ID。
+	TenantId      string `protobuf:"bytes,3,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -133,15 +138,20 @@ func (x *GetBillingSettingsRequest) GetTenantId() string {
 }
 
 type UpdateBillingSettingsRequest struct {
-	state     protoimpl.MessageState `protogen:"open.v1"`
-	ScopeType string                 `protobuf:"bytes,1,opt,name=scope_type,json=scopeType,proto3" json:"scope_type,omitempty"`
-	ScopeId   string                 `protobuf:"bytes,2,opt,name=scope_id,json=scopeId,proto3" json:"scope_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 计费配置或倍率的作用范围类型。
+	ScopeType string `protobuf:"bytes,1,opt,name=scope_type,json=scopeType,proto3" json:"scope_type,omitempty"`
+	// 分组或租户 ID。全局范围可用下划线作为路径占位。
+	ScopeId string `protobuf:"bytes,2,opt,name=scope_id,json=scopeId,proto3" json:"scope_id,omitempty"`
 	// PUT replaces both overrides. An omitted field inherits its default.
+	// 代理连接准入使用的最低可用余额阈值，单位为字节。
 	AdmissionThresholdBytes *uint64 `protobuf:"varint,3,opt,name=admission_threshold_bytes,json=admissionThresholdBytes,proto3,oneof" json:"admission_threshold_bytes,omitempty"`
-	WarningThresholdBytes   *uint64 `protobuf:"varint,4,opt,name=warning_threshold_bytes,json=warningThresholdBytes,proto3,oneof" json:"warning_threshold_bytes,omitempty"`
-	TenantId                string  `protobuf:"bytes,5,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	unknownFields           protoimpl.UnknownFields
-	sizeCache               protoimpl.SizeCache
+	// 余额预警阈值，单位为字节。
+	WarningThresholdBytes *uint64 `protobuf:"varint,4,opt,name=warning_threshold_bytes,json=warningThresholdBytes,proto3,oneof" json:"warning_threshold_bytes,omitempty"`
+	// 需要在响应中返回有效阈值时指定的租户 ID。
+	TenantId      string `protobuf:"bytes,5,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *UpdateBillingSettingsRequest) Reset() {
@@ -210,11 +220,13 @@ func (x *UpdateBillingSettingsRequest) GetTenantId() string {
 }
 
 type BillingThresholds struct {
-	state                   protoimpl.MessageState `protogen:"open.v1"`
-	AdmissionThresholdBytes *uint64                `protobuf:"varint,1,opt,name=admission_threshold_bytes,json=admissionThresholdBytes,proto3,oneof" json:"admission_threshold_bytes,omitempty"`
-	WarningThresholdBytes   *uint64                `protobuf:"varint,2,opt,name=warning_threshold_bytes,json=warningThresholdBytes,proto3,oneof" json:"warning_threshold_bytes,omitempty"`
-	unknownFields           protoimpl.UnknownFields
-	sizeCache               protoimpl.SizeCache
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 代理连接准入使用的最低可用余额阈值，单位为字节。
+	AdmissionThresholdBytes *uint64 `protobuf:"varint,1,opt,name=admission_threshold_bytes,json=admissionThresholdBytes,proto3,oneof" json:"admission_threshold_bytes,omitempty"`
+	// 余额预警阈值，单位为字节。
+	WarningThresholdBytes *uint64 `protobuf:"varint,2,opt,name=warning_threshold_bytes,json=warningThresholdBytes,proto3,oneof" json:"warning_threshold_bytes,omitempty"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
 }
 
 func (x *BillingThresholds) Reset() {
@@ -262,9 +274,11 @@ func (x *BillingThresholds) GetWarningThresholdBytes() uint64 {
 }
 
 type BillingSettingsResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Configured    *BillingThresholds     `protobuf:"bytes,1,opt,name=configured,proto3" json:"configured,omitempty"`
-	Effective     *BillingThresholds     `protobuf:"bytes,2,opt,name=effective,proto3" json:"effective,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 该作用范围保存的阈值覆盖项。
+	Configured *BillingThresholds `protobuf:"bytes,1,opt,name=configured,proto3" json:"configured,omitempty"`
+	// 应用继承规则后实际使用的阈值。
+	Effective     *BillingThresholds `protobuf:"bytes,2,opt,name=effective,proto3" json:"effective,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -314,13 +328,18 @@ func (x *BillingSettingsResponse) GetEffective() *BillingThresholds {
 }
 
 type CreateBillingRateRequest struct {
-	state     protoimpl.MessageState `protogen:"open.v1"`
-	ScopeType string                 `protobuf:"bytes,1,opt,name=scope_type,json=scopeType,proto3" json:"scope_type,omitempty"`
-	ScopeId   string                 `protobuf:"bytes,2,opt,name=scope_id,json=scopeId,proto3" json:"scope_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 计费配置或倍率的作用范围类型。
+	ScopeType string `protobuf:"bytes,1,opt,name=scope_type,json=scopeType,proto3" json:"scope_type,omitempty"`
+	// 作用范围内的对象 ID。
+	ScopeId string `protobuf:"bytes,2,opt,name=scope_id,json=scopeId,proto3" json:"scope_id,omitempty"`
 	// Each ratio is an integer in thousandths, from 0 to 4294967295.
-	UploadRatioMilli   *uint64 `protobuf:"varint,3,opt,name=upload_ratio_milli,json=uploadRatioMilli,proto3,oneof" json:"upload_ratio_milli,omitempty"`
+	// 上传流量计费倍率的千分值，1000 表示 1 倍。
+	UploadRatioMilli *uint64 `protobuf:"varint,3,opt,name=upload_ratio_milli,json=uploadRatioMilli,proto3,oneof" json:"upload_ratio_milli,omitempty"`
+	// 下载流量计费倍率的千分值，1000 表示 1 倍。
 	DownloadRatioMilli *uint64 `protobuf:"varint,4,opt,name=download_ratio_milli,json=downloadRatioMilli,proto3,oneof" json:"download_ratio_milli,omitempty"`
 	// Omit to take effect immediately.
+	// 配置或归属开始生效的时间。
 	EffectiveFrom *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=effective_from,json=effectiveFrom,proto3" json:"effective_from,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -392,9 +411,11 @@ func (x *CreateBillingRateRequest) GetEffectiveFrom() *timestamppb.Timestamp {
 }
 
 type CreateTenantGroupRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	GroupId       string                 `protobuf:"bytes,1,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
-	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 1–64 个字母、数字、下划线或连字符。
+	GroupId string `protobuf:"bytes,1,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
+	// 租户分组显示名称。
+	Name          string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -444,9 +465,11 @@ func (x *CreateTenantGroupRequest) GetName() string {
 }
 
 type TenantGroup struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	GroupId       string                 `protobuf:"bytes,1,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
-	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 租户分组 ID。
+	GroupId string `protobuf:"bytes,1,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
+	// 租户分组显示名称。
+	Name          string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -496,9 +519,11 @@ func (x *TenantGroup) GetName() string {
 }
 
 type SetTenantGroupRequest struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	TenantId string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 租户 ID。
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
 	// Empty clears the current membership.
+	// 租户分组 ID。
 	GroupId       string `protobuf:"bytes,2,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -549,9 +574,12 @@ func (x *SetTenantGroupRequest) GetGroupId() string {
 }
 
 type TenantGroupMembership struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	GroupId       string                 `protobuf:"bytes,2,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 租户 ID。
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// 租户分组 ID。
+	GroupId string `protobuf:"bytes,2,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
+	// 配置或归属开始生效的时间。
 	EffectiveFrom *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=effective_from,json=effectiveFrom,proto3" json:"effective_from,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -609,13 +637,19 @@ func (x *TenantGroupMembership) GetEffectiveFrom() *timestamppb.Timestamp {
 }
 
 type CreateRechargeRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	ExternalRef   string                 `protobuf:"bytes,2,opt,name=external_ref,json=externalRef,proto3" json:"external_ref,omitempty"`
-	GrantedBytes  uint64                 `protobuf:"varint,3,opt,name=granted_bytes,json=grantedBytes,proto3" json:"granted_bytes,omitempty"`
-	StartsAt      *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=starts_at,json=startsAt,proto3" json:"starts_at,omitempty"`
-	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
-	Note          string                 `protobuf:"bytes,6,opt,name=note,proto3" json:"note,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 租户 ID。
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// 外部操作单号，用于去重。
+	ExternalRef string `protobuf:"bytes,2,opt,name=external_ref,json=externalRef,proto3" json:"external_ref,omitempty"`
+	// 发放的流量额度，单位为字节。
+	GrantedBytes uint64 `protobuf:"varint,3,opt,name=granted_bytes,json=grantedBytes,proto3" json:"granted_bytes,omitempty"`
+	// 流量额度开始生效的时间。
+	StartsAt *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=starts_at,json=startsAt,proto3" json:"starts_at,omitempty"`
+	// 失效时间。
+	ExpiresAt *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	// 充值备注，用于审计。
+	Note          string `protobuf:"bytes,6,opt,name=note,proto3" json:"note,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -693,13 +727,19 @@ func (x *CreateRechargeRequest) GetNote() string {
 }
 
 type AdjustBalanceRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	ExternalRef   string                 `protobuf:"bytes,2,opt,name=external_ref,json=externalRef,proto3" json:"external_ref,omitempty"`
-	Mode          BalanceAdjustmentMode  `protobuf:"varint,3,opt,name=mode,proto3,enum=proxycontrol.v1.BalanceAdjustmentMode" json:"mode,omitempty"`
-	Bytes         uint64                 `protobuf:"varint,4,opt,name=bytes,proto3" json:"bytes,omitempty"`
-	GrantId       string                 `protobuf:"bytes,5,opt,name=grant_id,json=grantId,proto3" json:"grant_id,omitempty"`
-	Reason        string                 `protobuf:"bytes,6,opt,name=reason,proto3" json:"reason,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 租户 ID。
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// 外部操作单号，用于去重。
+	ExternalRef string `protobuf:"bytes,2,opt,name=external_ref,json=externalRef,proto3" json:"external_ref,omitempty"`
+	// 调整方向，增加或扣减。
+	Mode BalanceAdjustmentMode `protobuf:"varint,3,opt,name=mode,proto3,enum=proxycontrol.v1.BalanceAdjustmentMode" json:"mode,omitempty"`
+	// 调整的流量额度，单位为字节，必须大于 0。
+	Bytes uint64 `protobuf:"varint,4,opt,name=bytes,proto3" json:"bytes,omitempty"`
+	// 扣减时指定的流量额度 ID。
+	GrantId string `protobuf:"bytes,5,opt,name=grant_id,json=grantId,proto3" json:"grant_id,omitempty"`
+	// 写入余额流水的调整原因。
+	Reason        string `protobuf:"bytes,6,opt,name=reason,proto3" json:"reason,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -777,10 +817,13 @@ func (x *AdjustBalanceRequest) GetReason() string {
 }
 
 type ListTrafficGrantsRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	PageSize      int32                  `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	PageToken     string                 `protobuf:"bytes,3,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 租户 ID。
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// 每页条数，取值为 1–500。省略或传 0 时使用 100。
+	PageSize int32 `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	// 上一页返回的游标。查询条件应与上一页一致，首屏留空。
+	PageToken     string `protobuf:"bytes,3,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -837,16 +880,23 @@ func (x *ListTrafficGrantsRequest) GetPageToken() string {
 }
 
 type AuditedTrafficGrant struct {
-	state                protoimpl.MessageState `protogen:"open.v1"`
-	GrantId              string                 `protobuf:"bytes,1,opt,name=grant_id,json=grantId,proto3" json:"grant_id,omitempty"`
-	GrantedBytes         uint64                 `protobuf:"varint,2,opt,name=granted_bytes,json=grantedBytes,proto3" json:"granted_bytes,omitempty"`
-	UsedBytes            uint64                 `protobuf:"varint,3,opt,name=used_bytes,json=usedBytes,proto3" json:"used_bytes,omitempty"`
-	OverdraftOffsetBytes uint64                 `protobuf:"varint,4,opt,name=overdraft_offset_bytes,json=overdraftOffsetBytes,proto3" json:"overdraft_offset_bytes,omitempty"`
-	StartsAt             *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=starts_at,json=startsAt,proto3" json:"starts_at,omitempty"`
-	ExpiresAt            *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
-	Status               string                 `protobuf:"bytes,7,opt,name=status,proto3" json:"status,omitempty"`
-	unknownFields        protoimpl.UnknownFields
-	sizeCache            protoimpl.SizeCache
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 流量额度 ID。
+	GrantId string `protobuf:"bytes,1,opt,name=grant_id,json=grantId,proto3" json:"grant_id,omitempty"`
+	// 发放的流量额度，单位为字节。
+	GrantedBytes uint64 `protobuf:"varint,2,opt,name=granted_bytes,json=grantedBytes,proto3" json:"granted_bytes,omitempty"`
+	// 已消耗的流量额度，单位为字节。
+	UsedBytes uint64 `protobuf:"varint,3,opt,name=used_bytes,json=usedBytes,proto3" json:"used_bytes,omitempty"`
+	// 这笔流量额度用于抵扣透支的字节数。
+	OverdraftOffsetBytes uint64 `protobuf:"varint,4,opt,name=overdraft_offset_bytes,json=overdraftOffsetBytes,proto3" json:"overdraft_offset_bytes,omitempty"`
+	// 流量额度开始生效的时间。
+	StartsAt *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=starts_at,json=startsAt,proto3" json:"starts_at,omitempty"`
+	// 失效时间。
+	ExpiresAt *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	// 该笔额度的当前状态。
+	Status        string `protobuf:"bytes,7,opt,name=status,proto3" json:"status,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *AuditedTrafficGrant) Reset() {
@@ -929,10 +979,13 @@ func (x *AuditedTrafficGrant) GetStatus() string {
 }
 
 type ListTrafficGrantsResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Grants        []*AuditedTrafficGrant `protobuf:"bytes,1,rep,name=grants,proto3" json:"grants,omitempty"`
-	NextPageToken string                 `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 本页的流量额度记录。
+	Grants []*AuditedTrafficGrant `protobuf:"bytes,1,rep,name=grants,proto3" json:"grants,omitempty"`
+	// 下一页的游标。为空表示没有更多记录。
+	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	// Current tenant-wide balance, read in the same snapshot as this page.
+	// 当前透支流量，单位为字节。
 	OverdraftBytes uint64 `protobuf:"varint,3,opt,name=overdraft_bytes,json=overdraftBytes,proto3" json:"overdraft_bytes,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
@@ -990,10 +1043,13 @@ func (x *ListTrafficGrantsResponse) GetOverdraftBytes() uint64 {
 }
 
 type ListBalanceLedgerRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	PageSize      int32                  `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	PageToken     string                 `protobuf:"bytes,3,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 租户 ID。
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// 每页条数，取值为 1–500。省略或传 0 时使用 100。
+	PageSize int32 `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	// 上一页返回的游标。查询条件应与上一页一致，首屏留空。
+	PageToken     string `protobuf:"bytes,3,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1050,19 +1106,31 @@ func (x *ListBalanceLedgerRequest) GetPageToken() string {
 }
 
 type BalanceLedgerEntry struct {
-	state               protoimpl.MessageState `protogen:"open.v1"`
-	LedgerId            string                 `protobuf:"bytes,1,opt,name=ledger_id,json=ledgerId,proto3" json:"ledger_id,omitempty"`
-	Kind                string                 `protobuf:"bytes,2,opt,name=kind,proto3" json:"kind,omitempty"`
-	GrantId             string                 `protobuf:"bytes,3,opt,name=grant_id,json=grantId,proto3" json:"grant_id,omitempty"`
-	DeltaBytes          int64                  `protobuf:"varint,4,opt,name=delta_bytes,json=deltaBytes,proto3" json:"delta_bytes,omitempty"`
-	AvailableBefore     int64                  `protobuf:"varint,5,opt,name=available_before,json=availableBefore,proto3" json:"available_before,omitempty"`
-	AvailableAfter      int64                  `protobuf:"varint,6,opt,name=available_after,json=availableAfter,proto3" json:"available_after,omitempty"`
-	ExternalRef         string                 `protobuf:"bytes,7,opt,name=external_ref,json=externalRef,proto3" json:"external_ref,omitempty"`
-	Reason              string                 `protobuf:"bytes,8,opt,name=reason,proto3" json:"reason,omitempty"`
-	Operator            string                 `protobuf:"bytes,9,opt,name=operator,proto3" json:"operator,omitempty"`
-	CreatedAt           *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	CorrectionOf        string                 `protobuf:"bytes,11,opt,name=correction_of,json=correctionOf,proto3" json:"correction_of,omitempty"`
-	OverdraftAddedBytes *int64                 `protobuf:"varint,12,opt,name=overdraft_added_bytes,json=overdraftAddedBytes,proto3,oneof" json:"overdraft_added_bytes,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 余额流水 ID。
+	LedgerId string `protobuf:"bytes,1,opt,name=ledger_id,json=ledgerId,proto3" json:"ledger_id,omitempty"`
+	// 引起余额变动的操作类型。
+	Kind string `protobuf:"bytes,2,opt,name=kind,proto3" json:"kind,omitempty"`
+	// 流量额度 ID。
+	GrantId string `protobuf:"bytes,3,opt,name=grant_id,json=grantId,proto3" json:"grant_id,omitempty"`
+	// 余额变化量，正值为增加，负值为扣减。
+	DeltaBytes int64 `protobuf:"varint,4,opt,name=delta_bytes,json=deltaBytes,proto3" json:"delta_bytes,omitempty"`
+	// 变动前的可用余额，单位为字节。
+	AvailableBefore int64 `protobuf:"varint,5,opt,name=available_before,json=availableBefore,proto3" json:"available_before,omitempty"`
+	// 变动后的可用余额，单位为字节。
+	AvailableAfter int64 `protobuf:"varint,6,opt,name=available_after,json=availableAfter,proto3" json:"available_after,omitempty"`
+	// 外部操作单号，用于去重。
+	ExternalRef string `protobuf:"bytes,7,opt,name=external_ref,json=externalRef,proto3" json:"external_ref,omitempty"`
+	// 变动原因或操作备注。
+	Reason string `protobuf:"bytes,8,opt,name=reason,proto3" json:"reason,omitempty"`
+	// 执行该变动的操作人标识。
+	Operator string `protobuf:"bytes,9,opt,name=operator,proto3" json:"operator,omitempty"`
+	// 流水记录时间。
+	CreatedAt *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	// 被更正的原流水 ID。
+	CorrectionOf string `protobuf:"bytes,11,opt,name=correction_of,json=correctionOf,proto3" json:"correction_of,omitempty"`
+	// 本次操作新增的透支量，单位为字节。
+	OverdraftAddedBytes *int64 `protobuf:"varint,12,opt,name=overdraft_added_bytes,json=overdraftAddedBytes,proto3,oneof" json:"overdraft_added_bytes,omitempty"`
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache
 }
@@ -1182,9 +1250,11 @@ func (x *BalanceLedgerEntry) GetOverdraftAddedBytes() int64 {
 }
 
 type ListBalanceLedgerResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Entries       []*BalanceLedgerEntry  `protobuf:"bytes,1,rep,name=entries,proto3" json:"entries,omitempty"`
-	NextPageToken string                 `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 本页的余额流水。
+	Entries []*BalanceLedgerEntry `protobuf:"bytes,1,rep,name=entries,proto3" json:"entries,omitempty"`
+	// 下一页的游标。为空表示没有更多记录。
+	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1234,12 +1304,17 @@ func (x *ListBalanceLedgerResponse) GetNextPageToken() string {
 }
 
 type ListBillingRatesRequest struct {
-	state     protoimpl.MessageState `protogen:"open.v1"`
-	ScopeType string                 `protobuf:"bytes,1,opt,name=scope_type,json=scopeType,proto3" json:"scope_type,omitempty"`
-	ScopeId   string                 `protobuf:"bytes,2,opt,name=scope_id,json=scopeId,proto3" json:"scope_id,omitempty"`
-	PageSize  int32                  `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	PageToken string                 `protobuf:"bytes,4,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 计费配置或倍率的作用范围类型。
+	ScopeType string `protobuf:"bytes,1,opt,name=scope_type,json=scopeType,proto3" json:"scope_type,omitempty"`
+	// 作用范围内的对象 ID。
+	ScopeId string `protobuf:"bytes,2,opt,name=scope_id,json=scopeId,proto3" json:"scope_id,omitempty"`
+	// 每页条数，取值为 1–500。省略或传 0 时使用 100。
+	PageSize int32 `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	// 上一页返回的游标。查询条件应与上一页一致，首屏留空。
+	PageToken string `protobuf:"bytes,4,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	// Exact version lookup. Omit scope_type and scope_id when using rate_id.
+	// 计费倍率版本 ID。
 	RateId        string `protobuf:"bytes,5,opt,name=rate_id,json=rateId,proto3" json:"rate_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1311,15 +1386,21 @@ func (x *ListBillingRatesRequest) GetRateId() string {
 }
 
 type BillingRateVersion struct {
-	state              protoimpl.MessageState `protogen:"open.v1"`
-	RateId             string                 `protobuf:"bytes,1,opt,name=rate_id,json=rateId,proto3" json:"rate_id,omitempty"`
-	ScopeType          string                 `protobuf:"bytes,2,opt,name=scope_type,json=scopeType,proto3" json:"scope_type,omitempty"`
-	ScopeId            string                 `protobuf:"bytes,3,opt,name=scope_id,json=scopeId,proto3" json:"scope_id,omitempty"`
-	UploadRatioMilli   uint64                 `protobuf:"varint,4,opt,name=upload_ratio_milli,json=uploadRatioMilli,proto3" json:"upload_ratio_milli,omitempty"`
-	DownloadRatioMilli uint64                 `protobuf:"varint,5,opt,name=download_ratio_milli,json=downloadRatioMilli,proto3" json:"download_ratio_milli,omitempty"`
-	EffectiveFrom      *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=effective_from,json=effectiveFrom,proto3" json:"effective_from,omitempty"`
-	unknownFields      protoimpl.UnknownFields
-	sizeCache          protoimpl.SizeCache
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 计费倍率版本 ID。
+	RateId string `protobuf:"bytes,1,opt,name=rate_id,json=rateId,proto3" json:"rate_id,omitempty"`
+	// 计费配置或倍率的作用范围类型。
+	ScopeType string `protobuf:"bytes,2,opt,name=scope_type,json=scopeType,proto3" json:"scope_type,omitempty"`
+	// 作用范围内的对象 ID。
+	ScopeId string `protobuf:"bytes,3,opt,name=scope_id,json=scopeId,proto3" json:"scope_id,omitempty"`
+	// 上传流量计费倍率的千分值，1000 表示 1 倍。
+	UploadRatioMilli uint64 `protobuf:"varint,4,opt,name=upload_ratio_milli,json=uploadRatioMilli,proto3" json:"upload_ratio_milli,omitempty"`
+	// 下载流量计费倍率的千分值，1000 表示 1 倍。
+	DownloadRatioMilli uint64 `protobuf:"varint,5,opt,name=download_ratio_milli,json=downloadRatioMilli,proto3" json:"download_ratio_milli,omitempty"`
+	// 配置或归属开始生效的时间。
+	EffectiveFrom *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=effective_from,json=effectiveFrom,proto3" json:"effective_from,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *BillingRateVersion) Reset() {
@@ -1395,9 +1476,11 @@ func (x *BillingRateVersion) GetEffectiveFrom() *timestamppb.Timestamp {
 }
 
 type ListBillingRatesResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Rates         []*BillingRateVersion  `protobuf:"bytes,1,rep,name=rates,proto3" json:"rates,omitempty"`
-	NextPageToken string                 `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 本页的倍率版本。
+	Rates []*BillingRateVersion `protobuf:"bytes,1,rep,name=rates,proto3" json:"rates,omitempty"`
+	// 下一页的游标。为空表示没有更多记录。
+	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1450,15 +1533,15 @@ var File_proxycontrol_v1_billing_proto protoreflect.FileDescriptor
 
 const file_proxycontrol_v1_billing_proto_rawDesc = "" +
 	"\n" +
-	"\x1dproxycontrol/v1/billing.proto\x12\x0fproxycontrol.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"r\n" +
-	"\x19GetBillingSettingsRequest\x12\x1d\n" +
+	"\x1dproxycontrol/v1/billing.proto\x12\x0fproxycontrol.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1bopenapiv3/annotations.proto\x1a\x17validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x90\x01\n" +
+	"\x19GetBillingSettingsRequest\x12;\n" +
 	"\n" +
-	"scope_type\x18\x01 \x01(\tR\tscopeType\x12\x19\n" +
+	"scope_type\x18\x01 \x01(\tB\x1c\xfaB\x19r\x17R\x06globalR\x05groupR\x06tenantR\tscopeType\x12\x19\n" +
 	"\bscope_id\x18\x02 \x01(\tR\ascopeId\x12\x1b\n" +
-	"\ttenant_id\x18\x03 \x01(\tR\btenantId\"\xad\x02\n" +
-	"\x1cUpdateBillingSettingsRequest\x12\x1d\n" +
+	"\ttenant_id\x18\x03 \x01(\tR\btenantId\"\xcb\x02\n" +
+	"\x1cUpdateBillingSettingsRequest\x12;\n" +
 	"\n" +
-	"scope_type\x18\x01 \x01(\tR\tscopeType\x12\x19\n" +
+	"scope_type\x18\x01 \x01(\tB\x1c\xfaB\x19r\x17R\x06globalR\x05groupR\x06tenantR\tscopeType\x12\x19\n" +
 	"\bscope_id\x18\x02 \x01(\tR\ascopeId\x12?\n" +
 	"\x19admission_threshold_bytes\x18\x03 \x01(\x04H\x00R\x17admissionThresholdBytes\x88\x01\x01\x12;\n" +
 	"\x17warning_threshold_bytes\x18\x04 \x01(\x04H\x01R\x15warningThresholdBytes\x88\x01\x01\x12\x1b\n" +
@@ -1474,19 +1557,20 @@ const file_proxycontrol_v1_billing_proto_rawDesc = "" +
 	"\n" +
 	"configured\x18\x01 \x01(\v2\".proxycontrol.v1.BillingThresholdsR\n" +
 	"configured\x12@\n" +
-	"\teffective\x18\x02 \x01(\v2\".proxycontrol.v1.BillingThresholdsR\teffective\"\xb1\x02\n" +
-	"\x18CreateBillingRateRequest\x12\x1d\n" +
+	"\teffective\x18\x02 \x01(\v2\".proxycontrol.v1.BillingThresholdsR\teffective\"\xe9\x02\n" +
+	"\x18CreateBillingRateRequest\x12;\n" +
 	"\n" +
-	"scope_type\x18\x01 \x01(\tR\tscopeType\x12\x19\n" +
-	"\bscope_id\x18\x02 \x01(\tR\ascopeId\x121\n" +
-	"\x12upload_ratio_milli\x18\x03 \x01(\x04H\x00R\x10uploadRatioMilli\x88\x01\x01\x125\n" +
-	"\x14download_ratio_milli\x18\x04 \x01(\x04H\x01R\x12downloadRatioMilli\x88\x01\x01\x12A\n" +
+	"scope_type\x18\x01 \x01(\tB\x1c\xfaB\x19r\x17R\x06globalR\x05groupR\x06tenantR\tscopeType\x12\x19\n" +
+	"\bscope_id\x18\x02 \x01(\tR\ascopeId\x12>\n" +
+	"\x12upload_ratio_milli\x18\x03 \x01(\x04B\v\xfaB\b2\x06\x18\xff\xff\xff\xff\x0fH\x00R\x10uploadRatioMilli\x88\x01\x01\x12B\n" +
+	"\x14download_ratio_milli\x18\x04 \x01(\x04B\v\xfaB\b2\x06\x18\xff\xff\xff\xff\x0fH\x01R\x12downloadRatioMilli\x88\x01\x01\x12A\n" +
 	"\x0eeffective_from\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\reffectiveFromB\x15\n" +
 	"\x13_upload_ratio_milliB\x17\n" +
-	"\x15_download_ratio_milli\"I\n" +
-	"\x18CreateTenantGroupRequest\x12\x19\n" +
-	"\bgroup_id\x18\x01 \x01(\tR\agroupId\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\"<\n" +
+	"\x15_download_ratio_milli\"s\n" +
+	"\x18CreateTenantGroupRequest\x127\n" +
+	"\bgroup_id\x18\x01 \x01(\tB\x1c\xfaB\x19r\x172\x15^[A-Za-z0-9_-]{1,64}$R\agroupId\x12\x1e\n" +
+	"\x04name\x18\x02 \x01(\tB\n" +
+	"\xfaB\ar\x05 \x01(\x80\x02R\x04name\"<\n" +
 	"\vTenantGroup\x12\x19\n" +
 	"\bgroup_id\x18\x01 \x01(\tR\agroupId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\"O\n" +
@@ -1496,25 +1580,29 @@ const file_proxycontrol_v1_billing_proto_rawDesc = "" +
 	"\x15TenantGroupMembership\x12\x1b\n" +
 	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x19\n" +
 	"\bgroup_id\x18\x02 \x01(\tR\agroupId\x12A\n" +
-	"\x0eeffective_from\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\reffectiveFrom\"\x84\x02\n" +
+	"\x0eeffective_from\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\reffectiveFrom\"\xa3\x02\n" +
 	"\x15CreateRechargeRequest\x12\x1b\n" +
-	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12!\n" +
-	"\fexternal_ref\x18\x02 \x01(\tR\vexternalRef\x12#\n" +
-	"\rgranted_bytes\x18\x03 \x01(\x04R\fgrantedBytes\x127\n" +
+	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12-\n" +
+	"\fexternal_ref\x18\x02 \x01(\tB\n" +
+	"\xfaB\ar\x05 \x01(\x80\x02R\vexternalRef\x126\n" +
+	"\rgranted_bytes\x18\x03 \x01(\x04B\x11\xfaB\x0e2\f\x18\xff\xff\xff\xff\xff\xff\xff\xff\x7f(\x01R\fgrantedBytes\x127\n" +
 	"\tstarts_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\bstartsAt\x129\n" +
 	"\n" +
 	"expires_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x12\x12\n" +
-	"\x04note\x18\x06 \x01(\tR\x04note\"\xdb\x01\n" +
+	"\x04note\x18\x06 \x01(\tR\x04note\"\x86\x02\n" +
 	"\x14AdjustBalanceRequest\x12\x1b\n" +
-	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12!\n" +
-	"\fexternal_ref\x18\x02 \x01(\tR\vexternalRef\x12:\n" +
-	"\x04mode\x18\x03 \x01(\x0e2&.proxycontrol.v1.BalanceAdjustmentModeR\x04mode\x12\x14\n" +
-	"\x05bytes\x18\x04 \x01(\x04R\x05bytes\x12\x19\n" +
+	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12-\n" +
+	"\fexternal_ref\x18\x02 \x01(\tB\n" +
+	"\xfaB\ar\x05 \x01(\x80\x02R\vexternalRef\x12F\n" +
+	"\x04mode\x18\x03 \x01(\x0e2&.proxycontrol.v1.BalanceAdjustmentModeB\n" +
+	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\x04mode\x12'\n" +
+	"\x05bytes\x18\x04 \x01(\x04B\x11\xfaB\x0e2\f\x18\xff\xff\xff\xff\xff\xff\xff\xff\x7f(\x01R\x05bytes\x12\x19\n" +
 	"\bgrant_id\x18\x05 \x01(\tR\agrantId\x12\x16\n" +
-	"\x06reason\x18\x06 \x01(\tR\x06reason\"s\n" +
+	"\x06reason\x18\x06 \x01(\tR\x06reason\"\x7f\n" +
 	"\x18ListTrafficGrantsRequest\x12\x1b\n" +
-	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x1b\n" +
-	"\tpage_size\x18\x02 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12'\n" +
+	"\tpage_size\x18\x02 \x01(\x05B\n" +
+	"\xfaB\a\x1a\x05\x18\xf4\x03(\x00R\bpageSize\x12\x1d\n" +
 	"\n" +
 	"page_token\x18\x03 \x01(\tR\tpageToken\"\xb6\x02\n" +
 	"\x13AuditedTrafficGrant\x12\x19\n" +
@@ -1530,10 +1618,11 @@ const file_proxycontrol_v1_billing_proto_rawDesc = "" +
 	"\x19ListTrafficGrantsResponse\x12<\n" +
 	"\x06grants\x18\x01 \x03(\v2$.proxycontrol.v1.AuditedTrafficGrantR\x06grants\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12'\n" +
-	"\x0foverdraft_bytes\x18\x03 \x01(\x04R\x0eoverdraftBytes\"s\n" +
+	"\x0foverdraft_bytes\x18\x03 \x01(\x04R\x0eoverdraftBytes\"\x7f\n" +
 	"\x18ListBalanceLedgerRequest\x12\x1b\n" +
-	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x1b\n" +
-	"\tpage_size\x18\x02 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12'\n" +
+	"\tpage_size\x18\x02 \x01(\x05B\n" +
+	"\xfaB\a\x1a\x05\x18\xf4\x03(\x00R\bpageSize\x12\x1d\n" +
 	"\n" +
 	"page_token\x18\x03 \x01(\tR\tpageToken\"\xdf\x03\n" +
 	"\x12BalanceLedgerEntry\x12\x1b\n" +
@@ -1555,12 +1644,13 @@ const file_proxycontrol_v1_billing_proto_rawDesc = "" +
 	"\x16_overdraft_added_bytes\"\x82\x01\n" +
 	"\x19ListBalanceLedgerResponse\x12=\n" +
 	"\aentries\x18\x01 \x03(\v2#.proxycontrol.v1.BalanceLedgerEntryR\aentries\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\xa8\x01\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\xb4\x01\n" +
 	"\x17ListBillingRatesRequest\x12\x1d\n" +
 	"\n" +
 	"scope_type\x18\x01 \x01(\tR\tscopeType\x12\x19\n" +
-	"\bscope_id\x18\x02 \x01(\tR\ascopeId\x12\x1b\n" +
-	"\tpage_size\x18\x03 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\bscope_id\x18\x02 \x01(\tR\ascopeId\x12'\n" +
+	"\tpage_size\x18\x03 \x01(\x05B\n" +
+	"\xfaB\a\x1a\x05\x18\xf4\x03(\x00R\bpageSize\x12\x1d\n" +
 	"\n" +
 	"page_token\x18\x04 \x01(\tR\tpageToken\x12\x17\n" +
 	"\arate_id\x18\x05 \x01(\tR\x06rateId\"\x8a\x02\n" +
@@ -1578,18 +1668,18 @@ const file_proxycontrol_v1_billing_proto_rawDesc = "" +
 	"\x15BalanceAdjustmentMode\x12'\n" +
 	"#BALANCE_ADJUSTMENT_MODE_UNSPECIFIED\x10\x00\x12\a\n" +
 	"\x03ADD\x10\x01\x12\f\n" +
-	"\bSUBTRACT\x10\x022\xa7\f\n" +
-	"\x0eBillingService\x12\xab\x01\n" +
-	"\x12GetBillingSettings\x12*.proxycontrol.v1.GetBillingSettingsRequest\x1a(.proxycontrol.v1.BillingSettingsResponse\"?\x82\xd3\xe4\x93\x029\x127/v1/operations/billing/settings/{scope_type}/{scope_id}\x12\xb4\x01\n" +
-	"\x15UpdateBillingSettings\x12-.proxycontrol.v1.UpdateBillingSettingsRequest\x1a(.proxycontrol.v1.BillingSettingsResponse\"B\x82\xd3\xe4\x93\x02<:\x01*\x1a7/v1/operations/billing/settings/{scope_type}/{scope_id}\x12\x8c\x01\n" +
-	"\x11CreateBillingRate\x12).proxycontrol.v1.CreateBillingRateRequest\x1a#.proxycontrol.v1.BillingRateVersion\"'\x82\xd3\xe4\x93\x02!:\x01*\"\x1c/v1/operations/billing/rates\x12\x86\x01\n" +
-	"\x11CreateTenantGroup\x12).proxycontrol.v1.CreateTenantGroupRequest\x1a\x1c.proxycontrol.v1.TenantGroup\"(\x82\xd3\xe4\x93\x02\":\x01*\"\x1d/v1/operations/billing/groups\x12\x95\x01\n" +
-	"\x0eSetTenantGroup\x12&.proxycontrol.v1.SetTenantGroupRequest\x1a&.proxycontrol.v1.TenantGroupMembership\"3\x82\xd3\xe4\x93\x02-:\x01*\x1a(/v1/operations/tenants/{tenant_id}/group\x12\x96\x01\n" +
-	"\x0eCreateRecharge\x12&.proxycontrol.v1.CreateRechargeRequest\x1a#.proxycontrol.v1.BalanceLedgerEntry\"7\x82\xd3\xe4\x93\x021:\x01*\",/v1/operations/tenants/{tenant_id}/recharges\x12\x96\x01\n" +
-	"\rAdjustBalance\x12%.proxycontrol.v1.AdjustBalanceRequest\x1a#.proxycontrol.v1.BalanceLedgerEntry\"9\x82\xd3\xe4\x93\x023:\x01*\"./v1/operations/tenants/{tenant_id}/adjustments\x12\x9d\x01\n" +
-	"\x11ListTrafficGrants\x12).proxycontrol.v1.ListTrafficGrantsRequest\x1a*.proxycontrol.v1.ListTrafficGrantsResponse\"1\x82\xd3\xe4\x93\x02+\x12)/v1/operations/tenants/{tenant_id}/grants\x12\x9d\x01\n" +
-	"\x11ListBalanceLedger\x12).proxycontrol.v1.ListBalanceLedgerRequest\x1a*.proxycontrol.v1.ListBalanceLedgerResponse\"1\x82\xd3\xe4\x93\x02+\x12)/v1/operations/tenants/{tenant_id}/ledger\x12\x8d\x01\n" +
-	"\x10ListBillingRates\x12(.proxycontrol.v1.ListBillingRatesRequest\x1a).proxycontrol.v1.ListBillingRatesResponse\"$\x82\xd3\xe4\x93\x02\x1e\x12\x1c/v1/operations/billing/ratesBEZCgithub.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1b\x06proto3"
+	"\bSUBTRACT\x10\x022\x8e\x0f\n" +
+	"\x0eBillingService\x12\xda\x01\n" +
+	"\x12GetBillingSettings\x12*.proxycontrol.v1.GetBillingSettingsRequest\x1a(.proxycontrol.v1.BillingSettingsResponse\"n\xbaG,\x12*查询计费阈值的配置值和生效值\x82\xd3\xe4\x93\x029\x127/v1/operations/billing/settings/{scope_type}/{scope_id}\x12\xe0\x01\n" +
+	"\x15UpdateBillingSettings\x12-.proxycontrol.v1.UpdateBillingSettingsRequest\x1a(.proxycontrol.v1.BillingSettingsResponse\"n\xbaG)\x12'替换指定范围的计费阈值配置\x82\xd3\xe4\x93\x02<:\x01*\x1a7/v1/operations/billing/settings/{scope_type}/{scope_id}\x12\xb8\x01\n" +
+	"\x11CreateBillingRate\x12).proxycontrol.v1.CreateBillingRateRequest\x1a#.proxycontrol.v1.BillingRateVersion\"S\xbaG)\x12'创建指定范围的计费倍率版本\x82\xd3\xe4\x93\x02!:\x01*\"\x1c/v1/operations/billing/rates\x12\x9d\x01\n" +
+	"\x11CreateTenantGroup\x12).proxycontrol.v1.CreateTenantGroupRequest\x1a\x1c.proxycontrol.v1.TenantGroup\"?\xbaG\x14\x12\x12创建租户分组\x82\xd3\xe4\x93\x02\":\x01*\"\x1d/v1/operations/billing/groups\x12\xb5\x01\n" +
+	"\x0eSetTenantGroup\x12&.proxycontrol.v1.SetTenantGroupRequest\x1a&.proxycontrol.v1.TenantGroupMembership\"S\xbaG\x1d\x12\x1b设置或清除租户分组\x82\xd3\xe4\x93\x02-:\x01*\x1a(/v1/operations/tenants/{tenant_id}/group\x12\xb6\x01\n" +
+	"\x0eCreateRecharge\x12&.proxycontrol.v1.CreateRechargeRequest\x1a#.proxycontrol.v1.BalanceLedgerEntry\"W\xbaG\x1d\x12\x1b为租户充值流量额度\x82\xd3\xe4\x93\x021:\x01*\",/v1/operations/tenants/{tenant_id}/recharges\x12\xbc\x01\n" +
+	"\rAdjustBalance\x12%.proxycontrol.v1.AdjustBalanceRequest\x1a#.proxycontrol.v1.BalanceLedgerEntry\"_\xbaG#\x12!增加或扣减租户流量额度\x82\xd3\xe4\x93\x023:\x01*\"./v1/operations/tenants/{tenant_id}/adjustments\x12\xc0\x01\n" +
+	"\x11ListTrafficGrants\x12).proxycontrol.v1.ListTrafficGrantsRequest\x1a*.proxycontrol.v1.ListTrafficGrantsResponse\"T\xbaG \x12\x1e分页查询租户流量额度\x82\xd3\xe4\x93\x02+\x12)/v1/operations/tenants/{tenant_id}/grants\x12\xc0\x01\n" +
+	"\x11ListBalanceLedger\x12).proxycontrol.v1.ListBalanceLedgerRequest\x1a*.proxycontrol.v1.ListBalanceLedgerResponse\"T\xbaG \x12\x1e分页查询租户余额流水\x82\xd3\xe4\x93\x02+\x12)/v1/operations/tenants/{tenant_id}/ledger\x12\xaa\x01\n" +
+	"\x10ListBillingRates\x12(.proxycontrol.v1.ListBillingRatesRequest\x1a).proxycontrol.v1.ListBillingRatesResponse\"A\xbaG\x1a\x12\x18查询计费倍率版本\x82\xd3\xe4\x93\x02\x1e\x12\x1c/v1/operations/billing/ratesBEZCgithub.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1b\x06proto3"
 
 var (
 	file_proxycontrol_v1_billing_proto_rawDescOnce sync.Once

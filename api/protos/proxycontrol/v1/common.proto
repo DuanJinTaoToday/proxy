@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package proxycontrol.v1;
+
+option go_package = "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1";
+
+// 无请求参数的接口使用 BaseRequest。
+message BaseRequest {}
+
+// 成功时无需返回业务数据的接口使用 BaseResp，响应体为 {}。
+message BaseResp {}

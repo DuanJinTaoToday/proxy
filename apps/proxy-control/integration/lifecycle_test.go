@@ -25,7 +25,7 @@ func TestGatewayLifecycleRequiresReportIdentityAndPreservesExit(t *testing.T) {
 	}
 	report := func(req *v1.ReportLifecycleRequest) {
 		t.Helper()
-		readProto(t, authStateRequest(t, f.http, path, reportToken, req), &v1.ReportLifecycleResponse{})
+		readProto(t, authStateRequest(t, f.http, path, reportToken, req), &v1.BaseResp{})
 	}
 	execSQL(t, f.db, "INSERT INTO gateway_boots (gateway_id, boot_id, first_seen_at) VALUES ('gateway-a', 'lifecycle', now()-interval '15 seconds')")
 	checkState("disconnected")

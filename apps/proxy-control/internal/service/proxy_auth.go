@@ -27,12 +27,12 @@ func (s *ProxyAuth) CreateCredential(ctx context.Context, req *v1.CreateCredenti
 	return &v1.CreateCredentialResponse{ClientId: credential.ClientID, Username: credential.Username, Password: credential.Password}, nil
 }
 
-func (s *ProxyAuth) DisableCredential(ctx context.Context, req *v1.DisableCredentialRequest) (*v1.DisableCredentialResponse, error) {
+func (s *ProxyAuth) DisableCredential(ctx context.Context, req *v1.DisableCredentialRequest) (*v1.BaseResp, error) {
 	noStore(ctx)
 	if err := s.biz.DisableCredential(ctx, bearerToken(ctx), req.GetTenantId(), req.GetClientId()); err != nil {
 		return nil, err
 	}
-	return &v1.DisableCredentialResponse{}, nil
+	return &v1.BaseResp{}, nil
 }
 
 func (s *ProxyAuth) LoadAuthState(ctx context.Context, req *v1.LoadAuthStateRequest) (*v1.AuthSnapshot, error) {

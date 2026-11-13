@@ -7,6 +7,8 @@
 package proxycontrolv1
 
 import (
+	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	_ "github.com/google/gnostic/openapiv3"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -76,13 +78,19 @@ func (UsageGranularity) EnumDescriptor() ([]byte, []int) {
 }
 
 type ListRecordAnomaliesRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	GatewayId     string                 `protobuf:"bytes,1,opt,name=gateway_id,json=gatewayId,proto3" json:"gateway_id,omitempty"`
-	BootId        string                 `protobuf:"bytes,2,opt,name=boot_id,json=bootId,proto3" json:"boot_id,omitempty"`
-	TenantId      string                 `protobuf:"bytes,3,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Kind          string                 `protobuf:"bytes,4,opt,name=kind,proto3" json:"kind,omitempty"`
-	PageSize      int32                  `protobuf:"varint,5,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	PageToken     string                 `protobuf:"bytes,6,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 网关 ID。
+	GatewayId string `protobuf:"bytes,1,opt,name=gateway_id,json=gatewayId,proto3" json:"gateway_id,omitempty"`
+	// 网关运行代次 ID，同一代次重放时保持一致。
+	BootId string `protobuf:"bytes,2,opt,name=boot_id,json=bootId,proto3" json:"boot_id,omitempty"`
+	// 租户 ID。
+	TenantId string `protobuf:"bytes,3,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// 异常类型筛选条件，留空时查询全部类型。
+	Kind string `protobuf:"bytes,4,opt,name=kind,proto3" json:"kind,omitempty"`
+	// 每页条数，取值为 1–500。省略或传 0 时使用 100。
+	PageSize int32 `protobuf:"varint,5,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	// 上一页返回的游标。查询条件应与上一页一致，首屏留空。
+	PageToken     string `protobuf:"bytes,6,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -160,15 +168,24 @@ func (x *ListRecordAnomaliesRequest) GetPageToken() string {
 }
 
 type RecordAnomaly struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	AnomalyId     string                 `protobuf:"bytes,1,opt,name=anomaly_id,json=anomalyId,proto3" json:"anomaly_id,omitempty"`
-	GatewayId     string                 `protobuf:"bytes,2,opt,name=gateway_id,json=gatewayId,proto3" json:"gateway_id,omitempty"`
-	BootId        string                 `protobuf:"bytes,3,opt,name=boot_id,json=bootId,proto3" json:"boot_id,omitempty"`
-	TenantId      string                 `protobuf:"bytes,4,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Kind          string                 `protobuf:"bytes,5,opt,name=kind,proto3" json:"kind,omitempty"`
-	FileId        string                 `protobuf:"bytes,6,opt,name=file_id,json=fileId,proto3" json:"file_id,omitempty"`
-	FileOffset    uint64                 `protobuf:"varint,7,opt,name=file_offset,json=fileOffset,proto3" json:"file_offset,omitempty"`
-	DetectedAt    *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=detected_at,json=detectedAt,proto3" json:"detected_at,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 异常记录 ID。
+	AnomalyId string `protobuf:"bytes,1,opt,name=anomaly_id,json=anomalyId,proto3" json:"anomaly_id,omitempty"`
+	// 网关 ID。
+	GatewayId string `protobuf:"bytes,2,opt,name=gateway_id,json=gatewayId,proto3" json:"gateway_id,omitempty"`
+	// 网关运行代次 ID，同一代次重放时保持一致。
+	BootId string `protobuf:"bytes,3,opt,name=boot_id,json=bootId,proto3" json:"boot_id,omitempty"`
+	// 租户 ID。
+	TenantId string `protobuf:"bytes,4,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// Recorder 记录的异常类型。
+	Kind string `protobuf:"bytes,5,opt,name=kind,proto3" json:"kind,omitempty"`
+	// Recorder 文件标识，同一文件重放时保持一致。
+	FileId string `protobuf:"bytes,6,opt,name=file_id,json=fileId,proto3" json:"file_id,omitempty"`
+	// 记录在文件中的起始字节偏移，从 0 开始。
+	FileOffset uint64 `protobuf:"varint,7,opt,name=file_offset,json=fileOffset,proto3" json:"file_offset,omitempty"`
+	// 首次检测到问题的时间。
+	DetectedAt *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=detected_at,json=detectedAt,proto3" json:"detected_at,omitempty"`
+	// 问题解决的时间。
 	ResolvedAt    *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=resolved_at,json=resolvedAt,proto3" json:"resolved_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -268,9 +285,11 @@ func (x *RecordAnomaly) GetResolvedAt() *timestamppb.Timestamp {
 }
 
 type ListRecordAnomaliesResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Anomalies     []*RecordAnomaly       `protobuf:"bytes,1,rep,name=anomalies,proto3" json:"anomalies,omitempty"`
-	NextPageToken string                 `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 本页的异常记录。
+	Anomalies []*RecordAnomaly `protobuf:"bytes,1,rep,name=anomalies,proto3" json:"anomalies,omitempty"`
+	// 下一页的游标。为空表示没有更多记录。
+	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -320,14 +339,21 @@ func (x *ListRecordAnomaliesResponse) GetNextPageToken() string {
 }
 
 type ListUsageGapsRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	GatewayId     string                 `protobuf:"bytes,1,opt,name=gateway_id,json=gatewayId,proto3" json:"gateway_id,omitempty"`
-	BootId        string                 `protobuf:"bytes,2,opt,name=boot_id,json=bootId,proto3" json:"boot_id,omitempty"`
-	TenantId      string                 `protobuf:"bytes,3,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Kind          string                 `protobuf:"bytes,4,opt,name=kind,proto3" json:"kind,omitempty"` // boot or session
-	PageSize      int32                  `protobuf:"varint,5,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	PageToken     string                 `protobuf:"bytes,6,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
-	Status        string                 `protobuf:"bytes,7,opt,name=status,proto3" json:"status,omitempty"` // pending_replay or possible_gap
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 网关 ID。
+	GatewayId string `protobuf:"bytes,1,opt,name=gateway_id,json=gatewayId,proto3" json:"gateway_id,omitempty"`
+	// 网关运行代次 ID，同一代次重放时保持一致。
+	BootId string `protobuf:"bytes,2,opt,name=boot_id,json=bootId,proto3" json:"boot_id,omitempty"`
+	// 租户 ID。
+	TenantId string `protobuf:"bytes,3,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// 缺口类型筛选条件，支持 boot 或 session。
+	Kind string `protobuf:"bytes,4,opt,name=kind,proto3" json:"kind,omitempty"`
+	// 每页条数，取值为 1–500。省略或传 0 时使用 100。
+	PageSize int32 `protobuf:"varint,5,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	// 上一页返回的游标。查询条件应与上一页一致，首屏留空。
+	PageToken string `protobuf:"bytes,6,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	// 缺口状态筛选条件，支持 pending_replay 或 possible_gap。
+	Status        string `protobuf:"bytes,7,opt,name=status,proto3" json:"status,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -414,16 +440,26 @@ func (x *ListUsageGapsRequest) GetStatus() string {
 type UsageGap struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Empty for a pending boot that has no session reports yet.
-	GapId         string                 `protobuf:"bytes,1,opt,name=gap_id,json=gapId,proto3" json:"gap_id,omitempty"`
-	GatewayId     string                 `protobuf:"bytes,2,opt,name=gateway_id,json=gatewayId,proto3" json:"gateway_id,omitempty"`
-	BootId        string                 `protobuf:"bytes,3,opt,name=boot_id,json=bootId,proto3" json:"boot_id,omitempty"`
-	TenantId      string                 `protobuf:"bytes,4,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Kind          string                 `protobuf:"bytes,5,opt,name=kind,proto3" json:"kind,omitempty"`
-	Status        string                 `protobuf:"bytes,6,opt,name=status,proto3" json:"status,omitempty"`
-	SessionId     string                 `protobuf:"bytes,7,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
-	FromAt        *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=from_at,json=fromAt,proto3" json:"from_at,omitempty"`
-	DetectedAt    *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=detected_at,json=detectedAt,proto3" json:"detected_at,omitempty"`
-	ResolvedAt    *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=resolved_at,json=resolvedAt,proto3" json:"resolved_at,omitempty"`
+	GapId string `protobuf:"bytes,1,opt,name=gap_id,json=gapId,proto3" json:"gap_id,omitempty"`
+	// 网关 ID。
+	GatewayId string `protobuf:"bytes,2,opt,name=gateway_id,json=gatewayId,proto3" json:"gateway_id,omitempty"`
+	// 网关运行代次 ID，同一代次重放时保持一致。
+	BootId string `protobuf:"bytes,3,opt,name=boot_id,json=bootId,proto3" json:"boot_id,omitempty"`
+	// 租户 ID。
+	TenantId string `protobuf:"bytes,4,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// 缺口类型，boot 表示运行代次，session 表示会话。
+	Kind string `protobuf:"bytes,5,opt,name=kind,proto3" json:"kind,omitempty"`
+	// 回放状态，pending_replay 表示待回放，possible_gap 表示可能缺失。
+	Status string `protobuf:"bytes,6,opt,name=status,proto3" json:"status,omitempty"`
+	// 代理会话 ID。
+	SessionId string `protobuf:"bytes,7,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	// 可能缺失记录的起始时间。
+	FromAt *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=from_at,json=fromAt,proto3" json:"from_at,omitempty"`
+	// 首次检测到问题的时间。
+	DetectedAt *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=detected_at,json=detectedAt,proto3" json:"detected_at,omitempty"`
+	// 问题解决的时间。
+	ResolvedAt *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=resolved_at,json=resolvedAt,proto3" json:"resolved_at,omitempty"`
+	// 网关退出时间。
 	ExitedAt      *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=exited_at,json=exitedAt,proto3" json:"exited_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -537,9 +573,11 @@ func (x *UsageGap) GetExitedAt() *timestamppb.Timestamp {
 }
 
 type ListUsageGapsResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Gaps          []*UsageGap            `protobuf:"bytes,1,rep,name=gaps,proto3" json:"gaps,omitempty"`
-	NextPageToken string                 `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 本页的用量缺口。
+	Gaps []*UsageGap `protobuf:"bytes,1,rep,name=gaps,proto3" json:"gaps,omitempty"`
+	// 下一页的游标。为空表示没有更多记录。
+	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -589,20 +627,29 @@ func (x *ListUsageGapsResponse) GetNextPageToken() string {
 }
 
 type QueryUsageRequest struct {
-	state     protoimpl.MessageState `protogen:"open.v1"`
-	TenantId  string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	GatewayId string                 `protobuf:"bytes,2,opt,name=gateway_id,json=gatewayId,proto3" json:"gateway_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 租户 ID。
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// 网关 ID。
+	GatewayId string `protobuf:"bytes,2,opt,name=gateway_id,json=gatewayId,proto3" json:"gateway_id,omitempty"`
+	// 统计区间起点（含）。
 	StartTime *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`
-	EndTime   *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=end_time,json=endTime,proto3" json:"end_time,omitempty"`
-	// DAY selects whole Shanghai days by midnight within [start_time, end_time).
-	Granularity    UsageGranularity `protobuf:"varint,5,opt,name=granularity,proto3,enum=proxycontrol.v1.UsageGranularity" json:"granularity,omitempty"`
-	SplitByGateway bool             `protobuf:"varint,6,opt,name=split_by_gateway,json=splitByGateway,proto3" json:"split_by_gateway,omitempty"`
-	SplitByGrant   bool             `protobuf:"varint,7,opt,name=split_by_grant,json=splitByGrant,proto3" json:"split_by_grant,omitempty"`
-	PageSize       int32            `protobuf:"varint,8,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	PageToken      string           `protobuf:"bytes,9,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
-	SplitByRate    bool             `protobuf:"varint,10,opt,name=split_by_rate,json=splitByRate,proto3" json:"split_by_rate,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// 统计区间终点（不含）。
+	EndTime *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=end_time,json=endTime,proto3" json:"end_time,omitempty"`
+	// 统计粒度。按日查询时，以落在区间内的上海零点选择完整自然日。
+	Granularity UsageGranularity `protobuf:"varint,5,opt,name=granularity,proto3,enum=proxycontrol.v1.UsageGranularity" json:"granularity,omitempty"`
+	// 是否按网关拆分统计。
+	SplitByGateway bool `protobuf:"varint,6,opt,name=split_by_gateway,json=splitByGateway,proto3" json:"split_by_gateway,omitempty"`
+	// 是否按消耗的流量额度拆分统计。
+	SplitByGrant bool `protobuf:"varint,7,opt,name=split_by_grant,json=splitByGrant,proto3" json:"split_by_grant,omitempty"`
+	// 每页条数，取值为 1–500。省略或传 0 时使用 100。
+	PageSize int32 `protobuf:"varint,8,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	// 上一页返回的游标。查询条件应与上一页一致，首屏留空。
+	PageToken string `protobuf:"bytes,9,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	// 是否按计费倍率版本拆分统计。
+	SplitByRate   bool `protobuf:"varint,10,opt,name=split_by_rate,json=splitByRate,proto3" json:"split_by_rate,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *QueryUsageRequest) Reset() {
@@ -706,12 +753,17 @@ func (x *QueryUsageRequest) GetSplitByRate() bool {
 }
 
 type UsageBucket struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	StartTime     *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`
-	GatewayId     string                 `protobuf:"bytes,2,opt,name=gateway_id,json=gatewayId,proto3" json:"gateway_id,omitempty"`
-	GrantId       string                 `protobuf:"bytes,3,opt,name=grant_id,json=grantId,proto3" json:"grant_id,omitempty"`
-	Amount        *UsageAmount           `protobuf:"bytes,4,opt,name=amount,proto3" json:"amount,omitempty"`
-	RateId        string                 `protobuf:"bytes,5,opt,name=rate_id,json=rateId,proto3" json:"rate_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 该统计桶的起始时间。
+	StartTime *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`
+	// 网关 ID。
+	GatewayId string `protobuf:"bytes,2,opt,name=gateway_id,json=gatewayId,proto3" json:"gateway_id,omitempty"`
+	// 流量额度 ID。
+	GrantId string `protobuf:"bytes,3,opt,name=grant_id,json=grantId,proto3" json:"grant_id,omitempty"`
+	// 该时间段的流量统计。
+	Amount *UsageAmount `protobuf:"bytes,4,opt,name=amount,proto3" json:"amount,omitempty"`
+	// 计费倍率版本 ID。
+	RateId        string `protobuf:"bytes,5,opt,name=rate_id,json=rateId,proto3" json:"rate_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -782,9 +834,11 @@ func (x *UsageBucket) GetRateId() string {
 }
 
 type QueryUsageResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Buckets       []*UsageBucket         `protobuf:"bytes,1,rep,name=buckets,proto3" json:"buckets,omitempty"`
-	NextPageToken string                 `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 本页的用量统计桶。
+	Buckets []*UsageBucket `protobuf:"bytes,1,rep,name=buckets,proto3" json:"buckets,omitempty"`
+	// 下一页的游标。为空表示没有更多记录。
+	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -834,9 +888,11 @@ func (x *QueryUsageResponse) GetNextPageToken() string {
 }
 
 type ExtractProxyRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Count         int32                  `protobuf:"varint,2,opt,name=count,proto3" json:"count,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 租户 ID。
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// 提取的代理地址数量，取值为 1–100。
+	Count         int32 `protobuf:"varint,2,opt,name=count,proto3" json:"count,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -886,8 +942,9 @@ func (x *ExtractProxyRequest) GetCount() int32 {
 }
 
 type ExtractProxyResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	IpList        []*ProxyEndpoint       `protobuf:"bytes,1,rep,name=ip_list,json=ipList,proto3" json:"ip_list,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 返回的代理地址列表。
+	IpList        []*ProxyEndpoint `protobuf:"bytes,1,rep,name=ip_list,json=ipList,proto3" json:"ip_list,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -930,11 +987,16 @@ func (x *ExtractProxyResponse) GetIpList() []*ProxyEndpoint {
 }
 
 type ProxyEndpoint struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Host          string                 `protobuf:"bytes,1,opt,name=host,proto3" json:"host,omitempty"`
-	Port          uint32                 `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
-	Username      string                 `protobuf:"bytes,3,opt,name=username,proto3" json:"username,omitempty"`
-	Password      string                 `protobuf:"bytes,4,opt,name=password,proto3" json:"password,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 代理主机名或 IP 地址。
+	Host string `protobuf:"bytes,1,opt,name=host,proto3" json:"host,omitempty"`
+	// 代理服务端口。
+	Port uint32 `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
+	// 用于认证的用户名。
+	Username string `protobuf:"bytes,3,opt,name=username,proto3" json:"username,omitempty"`
+	// 用于认证的原始密码。
+	Password string `protobuf:"bytes,4,opt,name=password,proto3" json:"password,omitempty"`
+	// 失效时间。
 	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1006,11 +1068,15 @@ func (x *ProxyEndpoint) GetExpiresAt() *timestamppb.Timestamp {
 }
 
 type DailyUsageRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	StartDate     string                 `protobuf:"bytes,2,opt,name=start_date,json=startDate,proto3" json:"start_date,omitempty"`
-	EndDate       string                 `protobuf:"bytes,3,opt,name=end_date,json=endDate,proto3" json:"end_date,omitempty"`
-	Source        string                 `protobuf:"bytes,4,opt,name=source,proto3" json:"source,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 租户 ID。
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// 开始日期（含），使用上海时区和 YYYY-MM-DD 格式。
+	StartDate string `protobuf:"bytes,2,opt,name=start_date,json=startDate,proto3" json:"start_date,omitempty"`
+	// 结束日期（含），使用上海时区和 YYYY-MM-DD 格式。
+	EndDate string `protobuf:"bytes,3,opt,name=end_date,json=endDate,proto3" json:"end_date,omitempty"`
+	// 用量来源。省略时查询 tunnel，api_extraction_mock 查询演示用量。
+	Source        string `protobuf:"bytes,4,opt,name=source,proto3" json:"source,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1074,8 +1140,9 @@ func (x *DailyUsageRequest) GetSource() string {
 }
 
 type TenantBalanceRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 租户 ID。
+	TenantId      string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1118,11 +1185,15 @@ func (x *TenantBalanceRequest) GetTenantId() string {
 }
 
 type UsageAmount struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	InputBytes    uint64                 `protobuf:"varint,1,opt,name=input_bytes,json=inputBytes,proto3" json:"input_bytes,omitempty"`
-	OutputBytes   uint64                 `protobuf:"varint,2,opt,name=output_bytes,json=outputBytes,proto3" json:"output_bytes,omitempty"`
-	TotalBytes    uint64                 `protobuf:"varint,3,opt,name=total_bytes,json=totalBytes,proto3" json:"total_bytes,omitempty"`
-	BillableBytes uint64                 `protobuf:"varint,4,opt,name=billable_bytes,json=billableBytes,proto3" json:"billable_bytes,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 写入代理的原始字节数。
+	InputBytes uint64 `protobuf:"varint,1,opt,name=input_bytes,json=inputBytes,proto3" json:"input_bytes,omitempty"`
+	// 代理发出的原始字节数。
+	OutputBytes uint64 `protobuf:"varint,2,opt,name=output_bytes,json=outputBytes,proto3" json:"output_bytes,omitempty"`
+	// 原始输入和输出字节数之和。
+	TotalBytes uint64 `protobuf:"varint,3,opt,name=total_bytes,json=totalBytes,proto3" json:"total_bytes,omitempty"`
+	// 按计费规则折算后扣减的字节数。
+	BillableBytes uint64 `protobuf:"varint,4,opt,name=billable_bytes,json=billableBytes,proto3" json:"billable_bytes,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1186,9 +1257,11 @@ func (x *UsageAmount) GetBillableBytes() uint64 {
 }
 
 type DailyUsage struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Date          string                 `protobuf:"bytes,1,opt,name=date,proto3" json:"date,omitempty"`
-	Amount        *UsageAmount           `protobuf:"bytes,2,opt,name=amount,proto3" json:"amount,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 上海时区自然日，格式为 YYYY-MM-DD。
+	Date string `protobuf:"bytes,1,opt,name=date,proto3" json:"date,omitempty"`
+	// 该时间段的流量统计。
+	Amount        *UsageAmount `protobuf:"bytes,2,opt,name=amount,proto3" json:"amount,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1238,8 +1311,10 @@ func (x *DailyUsage) GetAmount() *UsageAmount {
 }
 
 type DailyUsageResponse struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	Days           []*DailyUsage          `protobuf:"bytes,1,rep,name=days,proto3" json:"days,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 查询区间内按日期汇总的用量。
+	Days []*DailyUsage `protobuf:"bytes,1,rep,name=days,proto3" json:"days,omitempty"`
+	// 最近收到相关用量记录的时间。
 	LastReceivedAt *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=last_received_at,json=lastReceivedAt,proto3" json:"last_received_at,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
@@ -1290,16 +1365,23 @@ func (x *DailyUsageResponse) GetLastReceivedAt() *timestamppb.Timestamp {
 }
 
 type TenantBalance struct {
-	state                   protoimpl.MessageState `protogen:"open.v1"`
-	TenantId                string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	AvailableBytes          int64                  `protobuf:"varint,2,opt,name=available_bytes,json=availableBytes,proto3" json:"available_bytes,omitempty"`
-	OverdraftBytes          uint64                 `protobuf:"varint,3,opt,name=overdraft_bytes,json=overdraftBytes,proto3" json:"overdraft_bytes,omitempty"`
-	AdmissionThresholdBytes uint64                 `protobuf:"varint,4,opt,name=admission_threshold_bytes,json=admissionThresholdBytes,proto3" json:"admission_threshold_bytes,omitempty"`
-	WarningThresholdBytes   uint64                 `protobuf:"varint,5,opt,name=warning_threshold_bytes,json=warningThresholdBytes,proto3" json:"warning_threshold_bytes,omitempty"`
-	WarningSince            *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=warning_since,json=warningSince,proto3" json:"warning_since,omitempty"`
-	Grants                  []*TrafficGrant        `protobuf:"bytes,7,rep,name=grants,proto3" json:"grants,omitempty"`
-	unknownFields           protoimpl.UnknownFields
-	sizeCache               protoimpl.SizeCache
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 租户 ID。
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// 可用流量余额，单位为字节。
+	AvailableBytes int64 `protobuf:"varint,2,opt,name=available_bytes,json=availableBytes,proto3" json:"available_bytes,omitempty"`
+	// 当前透支流量，单位为字节。
+	OverdraftBytes uint64 `protobuf:"varint,3,opt,name=overdraft_bytes,json=overdraftBytes,proto3" json:"overdraft_bytes,omitempty"`
+	// 代理连接准入使用的最低可用余额阈值，单位为字节。
+	AdmissionThresholdBytes uint64 `protobuf:"varint,4,opt,name=admission_threshold_bytes,json=admissionThresholdBytes,proto3" json:"admission_threshold_bytes,omitempty"`
+	// 余额预警阈值，单位为字节。
+	WarningThresholdBytes uint64 `protobuf:"varint,5,opt,name=warning_threshold_bytes,json=warningThresholdBytes,proto3" json:"warning_threshold_bytes,omitempty"`
+	// 当前余额预警开始时间。
+	WarningSince *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=warning_since,json=warningSince,proto3" json:"warning_since,omitempty"`
+	// 返回的租户流量额度。
+	Grants        []*TrafficGrant `protobuf:"bytes,7,rep,name=grants,proto3" json:"grants,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *TenantBalance) Reset() {
@@ -1382,13 +1464,19 @@ func (x *TenantBalance) GetGrants() []*TrafficGrant {
 }
 
 type TrafficGrant struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	GrantId       string                 `protobuf:"bytes,1,opt,name=grant_id,json=grantId,proto3" json:"grant_id,omitempty"`
-	GrantedBytes  uint64                 `protobuf:"varint,2,opt,name=granted_bytes,json=grantedBytes,proto3" json:"granted_bytes,omitempty"`
-	UsedBytes     uint64                 `protobuf:"varint,3,opt,name=used_bytes,json=usedBytes,proto3" json:"used_bytes,omitempty"`
-	StartsAt      *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=starts_at,json=startsAt,proto3" json:"starts_at,omitempty"`
-	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
-	Source        string                 `protobuf:"bytes,6,opt,name=source,proto3" json:"source,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 流量额度 ID。
+	GrantId string `protobuf:"bytes,1,opt,name=grant_id,json=grantId,proto3" json:"grant_id,omitempty"`
+	// 发放的流量额度，单位为字节。
+	GrantedBytes uint64 `protobuf:"varint,2,opt,name=granted_bytes,json=grantedBytes,proto3" json:"granted_bytes,omitempty"`
+	// 已消耗的流量额度，单位为字节。
+	UsedBytes uint64 `protobuf:"varint,3,opt,name=used_bytes,json=usedBytes,proto3" json:"used_bytes,omitempty"`
+	// 流量额度开始生效的时间。
+	StartsAt *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=starts_at,json=startsAt,proto3" json:"starts_at,omitempty"`
+	// 失效时间。
+	ExpiresAt *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	// 流量额度的发放来源。
+	Source        string `protobuf:"bytes,6,opt,name=source,proto3" json:"source,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1469,14 +1557,15 @@ var File_proxycontrol_v1_usage_proto protoreflect.FileDescriptor
 
 const file_proxycontrol_v1_usage_proto_rawDesc = "" +
 	"\n" +
-	"\x1bproxycontrol/v1/usage.proto\x12\x0fproxycontrol.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xc1\x01\n" +
+	"\x1bproxycontrol/v1/usage.proto\x12\x0fproxycontrol.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1bopenapiv3/annotations.proto\x1a\x17validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xcd\x01\n" +
 	"\x1aListRecordAnomaliesRequest\x12\x1d\n" +
 	"\n" +
 	"gateway_id\x18\x01 \x01(\tR\tgatewayId\x12\x17\n" +
 	"\aboot_id\x18\x02 \x01(\tR\x06bootId\x12\x1b\n" +
 	"\ttenant_id\x18\x03 \x01(\tR\btenantId\x12\x12\n" +
-	"\x04kind\x18\x04 \x01(\tR\x04kind\x12\x1b\n" +
-	"\tpage_size\x18\x05 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\x04kind\x18\x04 \x01(\tR\x04kind\x12'\n" +
+	"\tpage_size\x18\x05 \x01(\x05B\n" +
+	"\xfaB\a\x1a\x05\x18\xf4\x03(\x00R\bpageSize\x12\x1d\n" +
 	"\n" +
 	"page_token\x18\x06 \x01(\tR\tpageToken\"\xcb\x02\n" +
 	"\rRecordAnomaly\x12\x1d\n" +
@@ -1496,14 +1585,15 @@ const file_proxycontrol_v1_usage_proto_rawDesc = "" +
 	"resolvedAt\"\x83\x01\n" +
 	"\x1bListRecordAnomaliesResponse\x12<\n" +
 	"\tanomalies\x18\x01 \x03(\v2\x1e.proxycontrol.v1.RecordAnomalyR\tanomalies\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\xd3\x01\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\xdf\x01\n" +
 	"\x14ListUsageGapsRequest\x12\x1d\n" +
 	"\n" +
 	"gateway_id\x18\x01 \x01(\tR\tgatewayId\x12\x17\n" +
 	"\aboot_id\x18\x02 \x01(\tR\x06bootId\x12\x1b\n" +
 	"\ttenant_id\x18\x03 \x01(\tR\btenantId\x12\x12\n" +
-	"\x04kind\x18\x04 \x01(\tR\x04kind\x12\x1b\n" +
-	"\tpage_size\x18\x05 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\x04kind\x18\x04 \x01(\tR\x04kind\x12'\n" +
+	"\tpage_size\x18\x05 \x01(\x05B\n" +
+	"\xfaB\a\x1a\x05\x18\xf4\x03(\x00R\bpageSize\x12\x1d\n" +
 	"\n" +
 	"page_token\x18\x06 \x01(\tR\tpageToken\x12\x16\n" +
 	"\x06status\x18\a \x01(\tR\x06status\"\xa9\x03\n" +
@@ -1526,18 +1616,20 @@ const file_proxycontrol_v1_usage_proto_rawDesc = "" +
 	"\texited_at\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\bexitedAt\"n\n" +
 	"\x15ListUsageGapsResponse\x12-\n" +
 	"\x04gaps\x18\x01 \x03(\v2\x19.proxycontrol.v1.UsageGapR\x04gaps\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\xb6\x03\n" +
-	"\x11QueryUsageRequest\x12\x1b\n" +
-	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x1d\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\xeb\x03\n" +
+	"\x11QueryUsageRequest\x12$\n" +
+	"\ttenant_id\x18\x01 \x01(\tB\a\xfaB\x04r\x02 \x01R\btenantId\x12\x1d\n" +
 	"\n" +
-	"gateway_id\x18\x02 \x01(\tR\tgatewayId\x129\n" +
+	"gateway_id\x18\x02 \x01(\tR\tgatewayId\x12C\n" +
 	"\n" +
-	"start_time\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\tstartTime\x125\n" +
-	"\bend_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\aendTime\x12C\n" +
-	"\vgranularity\x18\x05 \x01(\x0e2!.proxycontrol.v1.UsageGranularityR\vgranularity\x12(\n" +
+	"start_time\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampB\b\xfaB\x05\xb2\x01\x02\b\x01R\tstartTime\x12?\n" +
+	"\bend_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampB\b\xfaB\x05\xb2\x01\x02\b\x01R\aendTime\x12O\n" +
+	"\vgranularity\x18\x05 \x01(\x0e2!.proxycontrol.v1.UsageGranularityB\n" +
+	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\vgranularity\x12(\n" +
 	"\x10split_by_gateway\x18\x06 \x01(\bR\x0esplitByGateway\x12$\n" +
-	"\x0esplit_by_grant\x18\a \x01(\bR\fsplitByGrant\x12\x1b\n" +
-	"\tpage_size\x18\b \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\x0esplit_by_grant\x18\a \x01(\bR\fsplitByGrant\x12'\n" +
+	"\tpage_size\x18\b \x01(\x05B\n" +
+	"\xfaB\a\x1a\x05\x18\xf4\x03(\x00R\bpageSize\x12\x1d\n" +
 	"\n" +
 	"page_token\x18\t \x01(\tR\tpageToken\x12\"\n" +
 	"\rsplit_by_rate\x18\n" +
@@ -1552,10 +1644,10 @@ const file_proxycontrol_v1_usage_proto_rawDesc = "" +
 	"\arate_id\x18\x05 \x01(\tR\x06rateId\"t\n" +
 	"\x12QueryUsageResponse\x126\n" +
 	"\abuckets\x18\x01 \x03(\v2\x1c.proxycontrol.v1.UsageBucketR\abuckets\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"H\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"S\n" +
 	"\x13ExtractProxyRequest\x12\x1b\n" +
-	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x14\n" +
-	"\x05count\x18\x02 \x01(\x05R\x05count\"O\n" +
+	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x1f\n" +
+	"\x05count\x18\x02 \x01(\x05B\t\xfaB\x06\x1a\x04\x18d(\x01R\x05count\"O\n" +
 	"\x14ExtractProxyResponse\x127\n" +
 	"\aip_list\x18\x01 \x03(\v2\x1e.proxycontrol.v1.ProxyEndpointR\x06ipList\"\xaa\x01\n" +
 	"\rProxyEndpoint\x12\x12\n" +
@@ -1564,13 +1656,15 @@ const file_proxycontrol_v1_usage_proto_rawDesc = "" +
 	"\busername\x18\x03 \x01(\tR\busername\x12\x1a\n" +
 	"\bpassword\x18\x04 \x01(\tR\bpassword\x129\n" +
 	"\n" +
-	"expires_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\"\x82\x01\n" +
+	"expires_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\"\xbc\x01\n" +
 	"\x11DailyUsageRequest\x12\x1b\n" +
-	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x1d\n" +
+	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12'\n" +
 	"\n" +
-	"start_date\x18\x02 \x01(\tR\tstartDate\x12\x19\n" +
-	"\bend_date\x18\x03 \x01(\tR\aendDate\x12\x16\n" +
-	"\x06source\x18\x04 \x01(\tR\x06source\"3\n" +
+	"start_date\x18\x02 \x01(\tB\b\xfaB\x05r\x03\x98\x01\n" +
+	"R\tstartDate\x12#\n" +
+	"\bend_date\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x98\x01\n" +
+	"R\aendDate\x12<\n" +
+	"\x06source\x18\x04 \x01(\tB$\xfaB!r\x1fR\x00R\x06tunnelR\x13api_extraction_mockR\x06source\"3\n" +
 	"\x14TenantBalanceRequest\x12\x1b\n" +
 	"\ttenant_id\x18\x01 \x01(\tR\btenantId\"\x99\x01\n" +
 	"\vUsageAmount\x12\x1f\n" +
@@ -1608,15 +1702,15 @@ const file_proxycontrol_v1_usage_proto_rawDesc = "" +
 	"\x1dUSAGE_GRANULARITY_UNSPECIFIED\x10\x00\x12\x1c\n" +
 	"\x18USAGE_GRANULARITY_MINUTE\x10\x01\x12\x1a\n" +
 	"\x16USAGE_GRANULARITY_HOUR\x10\x02\x12\x19\n" +
-	"\x15USAGE_GRANULARITY_DAY\x10\x032\xbc\x06\n" +
-	"\fUsageService\x12\x91\x01\n" +
-	"\fExtractProxy\x12$.proxycontrol.v1.ExtractProxyRequest\x1a%.proxycontrol.v1.ExtractProxyResponse\"4\x82\xd3\xe4\x93\x02.:\x01*\")/v1/tenants/{tenant_id}/proxy-extractions\x12\x8b\x01\n" +
-	"\x13GetTenantDailyUsage\x12\".proxycontrol.v1.DailyUsageRequest\x1a#.proxycontrol.v1.DailyUsageResponse\"+\x82\xd3\xe4\x93\x02%\x12#/v1/tenants/{tenant_id}/usage/daily\x12\x82\x01\n" +
-	"\x10GetTenantBalance\x12%.proxycontrol.v1.TenantBalanceRequest\x1a\x1e.proxycontrol.v1.TenantBalance\"'\x82\xd3\xe4\x93\x02!\x12\x1f/v1/tenants/{tenant_id}/balance\x12s\n" +
+	"\x15USAGE_GRANULARITY_DAY\x10\x032\xca\b\n" +
+	"\fUsageService\x12\xbd\x01\n" +
+	"\fExtractProxy\x12$.proxycontrol.v1.ExtractProxyRequest\x1a%.proxycontrol.v1.ExtractProxyResponse\"`\xbaG)\x12'提取指定租户的代理地址样例\x82\xd3\xe4\x93\x02.:\x01*\")/v1/tenants/{tenant_id}/proxy-extractions\x12\xbd\x01\n" +
+	"\x13GetTenantDailyUsage\x12\".proxycontrol.v1.DailyUsageRequest\x1a#.proxycontrol.v1.DailyUsageResponse\"]\xbaG/\x12-查询租户按上海自然日汇总的用量\x82\xd3\xe4\x93\x02%\x12#/v1/tenants/{tenant_id}/usage/daily\x12\xae\x01\n" +
+	"\x10GetTenantBalance\x12%.proxycontrol.v1.TenantBalanceRequest\x1a\x1e.proxycontrol.v1.TenantBalance\"S\xbaG)\x12'查询租户可用流量和准入阈值\x82\xd3\xe4\x93\x02!\x12\x1f/v1/tenants/{tenant_id}/balance\x12\x9c\x01\n" +
 	"\n" +
-	"QueryUsage\x12\".proxycontrol.v1.QueryUsageRequest\x1a#.proxycontrol.v1.QueryUsageResponse\"\x1c\x82\xd3\xe4\x93\x02\x16\x12\x14/v1/operations/usage\x12\x92\x01\n" +
-	"\x13ListRecordAnomalies\x12+.proxycontrol.v1.ListRecordAnomaliesRequest\x1a,.proxycontrol.v1.ListRecordAnomaliesResponse\" \x82\xd3\xe4\x93\x02\x1a\x12\x18/v1/operations/anomalies\x12{\n" +
-	"\rListUsageGaps\x12%.proxycontrol.v1.ListUsageGapsRequest\x1a&.proxycontrol.v1.ListUsageGapsResponse\"\x1b\x82\xd3\xe4\x93\x02\x15\x12\x13/v1/operations/gapsBEZCgithub.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1b\x06proto3"
+	"QueryUsage\x12\".proxycontrol.v1.QueryUsageRequest\x1a#.proxycontrol.v1.QueryUsageResponse\"E\xbaG&\x12$按时间和维度查询运营用量\x82\xd3\xe4\x93\x02\x16\x12\x14/v1/operations/usage\x12\xb9\x01\n" +
+	"\x13ListRecordAnomalies\x12+.proxycontrol.v1.ListRecordAnomaliesRequest\x1a,.proxycontrol.v1.ListRecordAnomaliesResponse\"G\xbaG$\x12\"分页查询 Recorder 记录异常\x82\xd3\xe4\x93\x02\x1a\x12\x18/v1/operations/anomalies\x12\xad\x01\n" +
+	"\rListUsageGaps\x12%.proxycontrol.v1.ListUsageGapsRequest\x1a&.proxycontrol.v1.ListUsageGapsResponse\"M\xbaG/\x12-分页查询待回放或可能缺失的用量\x82\xd3\xe4\x93\x02\x15\x12\x13/v1/operations/gapsBEZCgithub.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1b\x06proto3"
 
 var (
 	file_proxycontrol_v1_usage_proto_rawDescOnce sync.Once

@@ -3,76 +3,109 @@ syntax = "proto3";
 package proxycontrol.v1;
 
 import "google/api/annotations.proto";
+import "openapiv3/annotations.proto";
+import "proxycontrol/v1/common.proto";
+import "validate/validate.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1";
 
 service ReportingService {
-  rpc ReportLifecycle(ReportLifecycleRequest) returns (ReportLifecycleResponse) {
+  rpc ReportLifecycle(ReportLifecycleRequest) returns (BaseResp) {
     option (google.api.http) = { post: "/v1/reporting/lifecycle" body: "*" };
+    option (openapi.v3.operation) = {
+      summary: "上报网关心跳或退出时间"
+    };
   }
 
   rpc SubmitBatch(SubmitBatchRequest) returns (SubmitBatchResponse) {
     option (google.api.http) = { post: "/v1/reporting/batches" body: "*" };
+    option (openapi.v3.operation) = {
+      summary: "批量提交 Recorder 记录并返回处理结果"
+    };
   }
 
-  rpc ReportUnfinishedSessions(ReportUnfinishedSessionsRequest) returns (ReportUnfinishedSessionsResponse) {
+  rpc ReportUnfinishedSessions(ReportUnfinishedSessionsRequest) returns (BaseResp) {
     option (google.api.http) = { post: "/v1/reporting/boots/{boot_id}/unfinished-sessions" body: "*" };
+    option (openapi.v3.operation) = {
+      summary: "上报待回放的未完成会话"
+    };
   }
 
-  rpc CompleteReplay(CompleteReplayRequest) returns (CompleteReplayResponse) {
+  rpc CompleteReplay(CompleteReplayRequest) returns (BaseResp) {
     option (google.api.http) = { post: "/v1/reporting/boots/{boot_id}/replay-complete" body: "*" };
+    option (openapi.v3.operation) = {
+      summary: "确认指定网关运行代次已完成回放"
+    };
   }
 }
 
 message ReportUnfinishedSessionsRequest {
-  string gateway_id = 1;
-  string boot_id = 2;
-  repeated UnfinishedSession sessions = 3;
+  // 网关 ID。
+  string gateway_id = 1 [(validate.rules).string = {min_bytes: 1, max_bytes: 128}];
+  // 网关运行代次 ID，同一代次重放时保持一致。
+  string boot_id = 2 [(validate.rules).string = {min_bytes: 1, max_bytes: 128}];
+  // 该运行代次待补传记录的未完成会话。
+  repeated UnfinishedSession sessions = 3 [(validate.rules).repeated = {min_items: 1, max_items: 1000}];
 }
 
 message UnfinishedSession {
-  string session_id = 1;
-  string client_id = 2;
-  google.protobuf.Timestamp last_recorded_at = 3;
+  // 代理会话 ID。
+  string session_id = 1 [(validate.rules).string = {min_bytes: 1, max_bytes: 128}];
+  // 代理凭据 ID。
+  string client_id = 2 [(validate.rules).string = {min_bytes: 1, max_bytes: 128}];
+  // 该会话最后一条已记录数据的时间。
+  google.protobuf.Timestamp last_recorded_at = 3 [(validate.rules).timestamp.required = true];
 }
 
-message ReportUnfinishedSessionsResponse {}
-
 message CompleteReplayRequest {
-  string gateway_id = 1;
-  string boot_id = 2;
+  // 网关 ID。
+  string gateway_id = 1 [(validate.rules).string = {min_bytes: 1, max_bytes: 128}];
+  // 网关运行代次 ID，同一代次重放时保持一致。
+  string boot_id = 2 [(validate.rules).string = {min_bytes: 1, max_bytes: 128}];
+  // 该代次上报的未完成会话数量。
   uint32 unfinished_session_count = 3;
+  // 该代次是否存在会话记录，保留字段缺失与显式 false 的区别。
   optional bool has_session_records = 4;
 }
 
-message CompleteReplayResponse {}
-
 message SubmitBatchRequest {
-  string gateway_id = 1;
-  string boot_id = 2;
-  repeated RecorderLine records = 3;
+  // 网关 ID。
+  string gateway_id = 1 [(validate.rules).string = {min_bytes: 1, max_bytes: 128}];
+  // 网关运行代次 ID，同一代次重放时保持一致。
+  string boot_id = 2 [(validate.rules).string = {min_bytes: 1, max_bytes: 128}];
+  // 本批提交的 Recorder 原始记录。
+  repeated RecorderLine records = 3 [(validate.rules).repeated.min_items = 1];
 }
 
 message RecorderLine {
-  string file_id = 1;
+  // Recorder 文件标识，同一文件重放时保持一致。
+  string file_id = 1 [(validate.rules).string = {min_bytes: 1, max_bytes: 128}];
+  // 记录在文件中的起始字节偏移，从 0 开始。
   uint64 file_offset = 2;
+  // Recorder 写入的单行 JSON，省略行末换行符。
   string line = 3;
-  uint64 end_offset = 4;
+  // 记录结束后的字节偏移，可作为下一条记录的起点。
+  uint64 end_offset = 4 [(validate.rules).uint64 = {gte: 1, lte: 9223372036854775807}];
 }
 
 message SubmitBatchResponse {
+  // 本批中新纳入计费的记录数。
   uint32 billable = 1;
+  // 本批中处理成功但不计费的记录数。
   uint32 not_billable = 2;
+  // 本批中隔离待查的记录数。
   uint32 quarantined = 3;
+  // 本批中此前已处理的重复记录数。
   uint32 duplicates = 4;
 }
 
 // A missing exit timestamp reports a heartbeat for the running boot.
 message ReportLifecycleRequest {
-  string gateway_id = 1;
-  string boot_id = 2;
+  // 网关 ID。
+  string gateway_id = 1 [(validate.rules).string = {min_bytes: 1, max_bytes: 128}];
+  // 网关运行代次 ID，同一代次重放时保持一致。
+  string boot_id = 2 [(validate.rules).string = {min_bytes: 1, max_bytes: 128}];
+  // 网关退出时间，省略时本次请求作为心跳。
   google.protobuf.Timestamp exited_at = 3;
 }
-
-message ReportLifecycleResponse {}

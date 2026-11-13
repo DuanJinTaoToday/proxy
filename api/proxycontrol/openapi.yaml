@@ -10,6 +10,7 @@ paths:
         get:
             tags:
                 - HealthService
+            summary: 检查控制面的 HTTP 存活状态
             operationId: HealthService_Check
             responses:
                 "200":
@@ -17,11 +18,12 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/proxycontrol.v1.CheckResponse'
+                                $ref: '#/components/schemas/proxycontrol.v1.BaseResp'
     /v1/access/check:
         post:
             tags:
                 - AccessService
+            summary: 检查当前账号是否具备指定权限
             operationId: AccessService_CheckPermission
             requestBody:
                 content:
@@ -35,11 +37,12 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/proxycontrol.v1.CheckPermissionResponse'
+                                $ref: '#/components/schemas/proxycontrol.v1.BaseResp'
     /v1/access/login:
         post:
             tags:
                 - AccessService
+            summary: 登录控制台并签发访问令牌
             operationId: AccessService_Login
             requestBody:
                 content:
@@ -58,6 +61,7 @@ paths:
         get:
             tags:
                 - AccessService
+            summary: 列出当前账号可访问的租户
             operationId: AccessService_ListTenants
             responses:
                 "200":
@@ -70,10 +74,12 @@ paths:
         get:
             tags:
                 - AccessService
+            summary: 查询当前账号对指定租户的访问权限
             operationId: AccessService_GetTenantAccess
             parameters:
                 - name: tenantId
                   in: path
+                  description: 租户 ID。
                   required: true
                   schema:
                     type: string
@@ -88,6 +94,7 @@ paths:
         post:
             tags:
                 - GatewayAuthService
+            summary: 校验代理凭据并加载认证状态
             operationId: GatewayAuthService_LoadAuthState
             requestBody:
                 content:
@@ -106,6 +113,7 @@ paths:
         post:
             tags:
                 - GatewayAuthService
+            summary: 批量刷新网关缓存的凭据和准入状态
             operationId: GatewayAuthService_RefreshAuthState
             requestBody:
                 content:
@@ -124,31 +132,38 @@ paths:
         get:
             tags:
                 - UsageService
+            summary: 分页查询 Recorder 记录异常
             operationId: UsageService_ListRecordAnomalies
             parameters:
                 - name: gatewayId
                   in: query
+                  description: 网关 ID。
                   schema:
                     type: string
                 - name: bootId
                   in: query
+                  description: 网关运行代次 ID，同一代次重放时保持一致。
                   schema:
                     type: string
                 - name: tenantId
                   in: query
+                  description: 租户 ID。
                   schema:
                     type: string
                 - name: kind
                   in: query
+                  description: 异常类型筛选条件，留空时查询全部类型。
                   schema:
                     type: string
                 - name: pageSize
                   in: query
+                  description: 每页条数，取值为 1–500。省略或传 0 时使用 100。
                   schema:
                     type: integer
                     format: int32
                 - name: pageToken
                   in: query
+                  description: 上一页返回的游标。查询条件应与上一页一致，首屏留空。
                   schema:
                     type: string
             responses:
@@ -162,6 +177,7 @@ paths:
         post:
             tags:
                 - BillingService
+            summary: 创建租户分组
             operationId: BillingService_CreateTenantGroup
             requestBody:
                 content:
@@ -180,28 +196,35 @@ paths:
         get:
             tags:
                 - BillingService
+            summary: 查询计费倍率版本
             operationId: BillingService_ListBillingRates
             parameters:
                 - name: scopeType
                   in: query
+                  description: 计费配置或倍率的作用范围类型。
                   schema:
                     type: string
                 - name: scopeId
                   in: query
+                  description: 作用范围内的对象 ID。
                   schema:
                     type: string
                 - name: pageSize
                   in: query
+                  description: 每页条数，取值为 1–500。省略或传 0 时使用 100。
                   schema:
                     type: integer
                     format: int32
                 - name: pageToken
                   in: query
+                  description: 上一页返回的游标。查询条件应与上一页一致，首屏留空。
                   schema:
                     type: string
                 - name: rateId
                   in: query
-                  description: Exact version lookup. Omit scope_type and scope_id when using rate_id.
+                  description: |-
+                    Exact version lookup. Omit scope_type and scope_id when using rate_id.
+                     计费倍率版本 ID。
                   schema:
                     type: string
             responses:
@@ -214,6 +237,7 @@ paths:
         post:
             tags:
                 - BillingService
+            summary: 创建指定范围的计费倍率版本
             operationId: BillingService_CreateBillingRate
             requestBody:
                 content:
@@ -232,20 +256,24 @@ paths:
         get:
             tags:
                 - BillingService
+            summary: 查询计费阈值的配置值和生效值
             operationId: BillingService_GetBillingSettings
             parameters:
                 - name: scopeType
                   in: path
+                  description: 计费配置或倍率的作用范围类型。
                   required: true
                   schema:
                     type: string
                 - name: scopeId
                   in: path
+                  description: 分组或租户 ID。全局范围可用下划线作为路径占位。
                   required: true
                   schema:
                     type: string
                 - name: tenantId
                   in: query
+                  description: 需要查询有效阈值时指定的租户 ID。
                   schema:
                     type: string
             responses:
@@ -258,15 +286,18 @@ paths:
         put:
             tags:
                 - BillingService
+            summary: 替换指定范围的计费阈值配置
             operationId: BillingService_UpdateBillingSettings
             parameters:
                 - name: scopeType
                   in: path
+                  description: 计费配置或倍率的作用范围类型。
                   required: true
                   schema:
                     type: string
                 - name: scopeId
                   in: path
+                  description: 分组或租户 ID。全局范围可用下划线作为路径占位。
                   required: true
                   schema:
                     type: string
@@ -287,35 +318,43 @@ paths:
         get:
             tags:
                 - UsageService
+            summary: 分页查询待回放或可能缺失的用量
             operationId: UsageService_ListUsageGaps
             parameters:
                 - name: gatewayId
                   in: query
+                  description: 网关 ID。
                   schema:
                     type: string
                 - name: bootId
                   in: query
+                  description: 网关运行代次 ID，同一代次重放时保持一致。
                   schema:
                     type: string
                 - name: tenantId
                   in: query
+                  description: 租户 ID。
                   schema:
                     type: string
                 - name: kind
                   in: query
+                  description: 缺口类型筛选条件，支持 boot 或 session。
                   schema:
                     type: string
                 - name: pageSize
                   in: query
+                  description: 每页条数，取值为 1–500。省略或传 0 时使用 100。
                   schema:
                     type: integer
                     format: int32
                 - name: pageToken
                   in: query
+                  description: 上一页返回的游标。查询条件应与上一页一致，首屏留空。
                   schema:
                     type: string
                 - name: status
                   in: query
+                  description: 缺口状态筛选条件，支持 pending_replay 或 possible_gap。
                   schema:
                     type: string
             responses:
@@ -329,10 +368,12 @@ paths:
         post:
             tags:
                 - BillingService
+            summary: 增加或扣减租户流量额度
             operationId: BillingService_AdjustBalance
             parameters:
                 - name: tenantId
                   in: path
+                  description: 租户 ID。
                   required: true
                   schema:
                     type: string
@@ -353,20 +394,24 @@ paths:
         get:
             tags:
                 - BillingService
+            summary: 分页查询租户流量额度
             operationId: BillingService_ListTrafficGrants
             parameters:
                 - name: tenantId
                   in: path
+                  description: 租户 ID。
                   required: true
                   schema:
                     type: string
                 - name: pageSize
                   in: query
+                  description: 每页条数，取值为 1–500。省略或传 0 时使用 100。
                   schema:
                     type: integer
                     format: int32
                 - name: pageToken
                   in: query
+                  description: 上一页返回的游标。查询条件应与上一页一致，首屏留空。
                   schema:
                     type: string
             responses:
@@ -380,10 +425,12 @@ paths:
         put:
             tags:
                 - BillingService
+            summary: 设置或清除租户分组
             operationId: BillingService_SetTenantGroup
             parameters:
                 - name: tenantId
                   in: path
+                  description: 租户 ID。
                   required: true
                   schema:
                     type: string
@@ -404,20 +451,24 @@ paths:
         get:
             tags:
                 - BillingService
+            summary: 分页查询租户余额流水
             operationId: BillingService_ListBalanceLedger
             parameters:
                 - name: tenantId
                   in: path
+                  description: 租户 ID。
                   required: true
                   schema:
                     type: string
                 - name: pageSize
                   in: query
+                  description: 每页条数，取值为 1–500。省略或传 0 时使用 100。
                   schema:
                     type: integer
                     format: int32
                 - name: pageToken
                   in: query
+                  description: 上一页返回的游标。查询条件应与上一页一致，首屏留空。
                   schema:
                     type: string
             responses:
@@ -431,10 +482,12 @@ paths:
         post:
             tags:
                 - BillingService
+            summary: 为租户充值流量额度
             operationId: BillingService_CreateRecharge
             parameters:
                 - name: tenantId
                   in: path
+                  description: 租户 ID。
                   required: true
                   schema:
                     type: string
@@ -455,51 +508,61 @@ paths:
         get:
             tags:
                 - UsageService
+            summary: 按时间和维度查询运营用量
             operationId: UsageService_QueryUsage
             parameters:
                 - name: tenantId
                   in: query
+                  description: 租户 ID。
                   schema:
                     type: string
                 - name: gatewayId
                   in: query
+                  description: 网关 ID。
                   schema:
                     type: string
                 - name: startTime
                   in: query
+                  description: 统计区间起点（含）。
                   schema:
                     type: string
                     format: date-time
                 - name: endTime
                   in: query
+                  description: 统计区间终点（不含）。
                   schema:
                     type: string
                     format: date-time
                 - name: granularity
                   in: query
-                  description: DAY selects whole Shanghai days by midnight within [start_time, end_time).
+                  description: 统计粒度。按日查询时，以落在区间内的上海零点选择完整自然日。
                   schema:
                     type: integer
                     format: enum
                 - name: splitByGateway
                   in: query
+                  description: 是否按网关拆分统计。
                   schema:
                     type: boolean
                 - name: splitByGrant
                   in: query
+                  description: 是否按消耗的流量额度拆分统计。
                   schema:
                     type: boolean
                 - name: pageSize
                   in: query
+                  description: 每页条数，取值为 1–500。省略或传 0 时使用 100。
                   schema:
                     type: integer
                     format: int32
                 - name: pageToken
                   in: query
+                  description: 上一页返回的游标。查询条件应与上一页一致，首屏留空。
                   schema:
                     type: string
                 - name: splitByRate
                   in: query
+                  description: 是否按计费倍率版本拆分统计。
                   schema:
                     type: boolean
             responses:
@@ -513,6 +576,7 @@ paths:
         post:
             tags:
                 - ReportingService
+            summary: 批量提交 Recorder 记录并返回处理结果
             operationId: ReportingService_SubmitBatch
             requestBody:
                 content:
@@ -531,10 +595,12 @@ paths:
         post:
             tags:
                 - ReportingService
+            summary: 确认指定网关运行代次已完成回放
             operationId: ReportingService_CompleteReplay
             parameters:
                 - name: bootId
                   in: path
+                  description: 网关运行代次 ID，同一代次重放时保持一致。
                   required: true
                   schema:
                     type: string
@@ -550,15 +616,17 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/proxycontrol.v1.CompleteReplayResponse'
+                                $ref: '#/components/schemas/proxycontrol.v1.BaseResp'
     /v1/reporting/boots/{bootId}/unfinished-sessions:
         post:
             tags:
                 - ReportingService
+            summary: 上报待回放的未完成会话
             operationId: ReportingService_ReportUnfinishedSessions
             parameters:
                 - name: bootId
                   in: path
+                  description: 网关运行代次 ID，同一代次重放时保持一致。
                   required: true
                   schema:
                     type: string
@@ -574,11 +642,12 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/proxycontrol.v1.ReportUnfinishedSessionsResponse'
+                                $ref: '#/components/schemas/proxycontrol.v1.BaseResp'
     /v1/reporting/lifecycle:
         post:
             tags:
                 - ReportingService
+            summary: 上报网关心跳或退出时间
             operationId: ReportingService_ReportLifecycle
             requestBody:
                 content:
@@ -592,15 +661,17 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/proxycontrol.v1.ReportLifecycleResponse'
+                                $ref: '#/components/schemas/proxycontrol.v1.BaseResp'
     /v1/tenants/{tenantId}/balance:
         get:
             tags:
                 - UsageService
+            summary: 查询租户可用流量和准入阈值
             operationId: UsageService_GetTenantBalance
             parameters:
                 - name: tenantId
                   in: path
+                  description: 租户 ID。
                   required: true
                   schema:
                     type: string
@@ -615,10 +686,12 @@ paths:
         post:
             tags:
                 - CredentialService
+            summary: 为租户签发代理凭据
             operationId: CredentialService_CreateCredential
             parameters:
                 - name: tenantId
                   in: path
+                  description: 租户 ID。
                   required: true
                   schema:
                     type: string
@@ -639,15 +712,18 @@ paths:
         post:
             tags:
                 - CredentialService
+            summary: 停用指定代理凭据
             operationId: CredentialService_DisableCredential
             parameters:
                 - name: tenantId
                   in: path
+                  description: 租户 ID。
                   required: true
                   schema:
                     type: string
                 - name: clientId
                   in: path
+                  description: 代理凭据 ID。
                   required: true
                   schema:
                     type: string
@@ -663,15 +739,17 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/proxycontrol.v1.DisableCredentialResponse'
+                                $ref: '#/components/schemas/proxycontrol.v1.BaseResp'
     /v1/tenants/{tenantId}/proxy-extractions:
         post:
             tags:
                 - UsageService
+            summary: 提取指定租户的代理地址样例
             operationId: UsageService_ExtractProxy
             parameters:
                 - name: tenantId
                   in: path
+                  description: 租户 ID。
                   required: true
                   schema:
                     type: string
@@ -692,23 +770,28 @@ paths:
         get:
             tags:
                 - UsageService
+            summary: 查询租户按上海自然日汇总的用量
             operationId: UsageService_GetTenantDailyUsage
             parameters:
                 - name: tenantId
                   in: path
+                  description: 租户 ID。
                   required: true
                   schema:
                     type: string
                 - name: startDate
                   in: query
+                  description: 开始日期（含），使用上海时区和 YYYY-MM-DD 格式。
                   schema:
                     type: string
                 - name: endDate
                   in: query
+                  description: 结束日期（含），使用上海时区和 YYYY-MM-DD 格式。
                   schema:
                     type: string
                 - name: source
                   in: query
+                  description: 用量来源。省略时查询 tunnel，api_extraction_mock 查询演示用量。
                   schema:
                     type: string
             responses:
@@ -725,226 +808,301 @@ components:
             properties:
                 tenantId:
                     type: string
+                    description: 租户 ID。
                 externalRef:
                     type: string
+                    description: 外部操作单号，用于去重。
                 mode:
                     type: integer
+                    description: 调整方向，增加或扣减。
                     format: enum
                 bytes:
                     type: string
+                    description: 调整的流量额度，单位为字节，必须大于 0。
                 grantId:
                     type: string
+                    description: 扣减时指定的流量额度 ID。
                 reason:
                     type: string
+                    description: 写入余额流水的调整原因。
         proxycontrol.v1.AuditedTrafficGrant:
             type: object
             properties:
                 grantId:
                     type: string
+                    description: 流量额度 ID。
                 grantedBytes:
                     type: string
+                    description: 发放的流量额度，单位为字节。
                 usedBytes:
                     type: string
+                    description: 已消耗的流量额度，单位为字节。
                 overdraftOffsetBytes:
                     type: string
+                    description: 这笔流量额度用于抵扣透支的字节数。
                 startsAt:
                     type: string
+                    description: 流量额度开始生效的时间。
                     format: date-time
                 expiresAt:
                     type: string
+                    description: 失效时间。
                     format: date-time
                 status:
                     type: string
+                    description: 该笔额度的当前状态。
         proxycontrol.v1.AuthQuota:
             type: object
             properties:
                 availableBytes:
                     type: string
+                    description: 可用流量余额，单位为字节。
                 admissionThresholdBytes:
                     type: string
+                    description: 代理连接准入使用的最低可用余额阈值，单位为字节。
                 validUntil:
                     type: string
+                    description: 网关可使用这份准入快照的截止时间。
                     format: date-time
         proxycontrol.v1.AuthSnapshot:
             type: object
             properties:
                 reference:
                     type: string
+                    description: 绑定到当前网关的凭据引用，用于后续刷新。
                 username:
                     type: string
+                    description: 用于认证的用户名。
                 clientId:
                     type: string
+                    description: 代理凭据 ID。
                 tenantId:
                     type: string
+                    description: 租户 ID。
                 passwordHash:
                     type: string
+                    description: 供网关本地认证使用的密码哈希。
                     format: bytes
                 active:
                     type: boolean
+                    description: 凭据当前是否启用且未过期。
                 expiresAt:
                     type: string
+                    description: 失效时间。
                     format: date-time
                 allowedSourceCidrs:
                     type: array
                     items:
                         type: string
+                    description: 凭据允许访问的客户端来源网段，空列表表示不限制。
                 quota:
-                    $ref: '#/components/schemas/proxycontrol.v1.AuthQuota'
+                    allOf:
+                        - $ref: '#/components/schemas/proxycontrol.v1.AuthQuota'
+                    description: 有效凭据所属租户的流量准入状态。
         proxycontrol.v1.BalanceLedgerEntry:
             type: object
             properties:
                 ledgerId:
                     type: string
+                    description: 余额流水 ID。
                 kind:
                     type: string
+                    description: 引起余额变动的操作类型。
                 grantId:
                     type: string
+                    description: 流量额度 ID。
                 deltaBytes:
                     type: string
+                    description: 余额变化量，正值为增加，负值为扣减。
                 availableBefore:
                     type: string
+                    description: 变动前的可用余额，单位为字节。
                 availableAfter:
                     type: string
+                    description: 变动后的可用余额，单位为字节。
                 externalRef:
                     type: string
+                    description: 外部操作单号，用于去重。
                 reason:
                     type: string
+                    description: 变动原因或操作备注。
                 operator:
                     type: string
+                    description: 执行该变动的操作人标识。
                 createdAt:
                     type: string
+                    description: 流水记录时间。
                     format: date-time
                 correctionOf:
                     type: string
+                    description: 被更正的原流水 ID。
                 overdraftAddedBytes:
                     type: string
+                    description: 本次操作新增的透支量，单位为字节。
+        proxycontrol.v1.BaseResp:
+            type: object
+            properties: {}
+            description: 成功时无需返回业务数据的接口使用 BaseResp，响应体为 {}。
         proxycontrol.v1.BillingRateVersion:
             type: object
             properties:
                 rateId:
                     type: string
+                    description: 计费倍率版本 ID。
                 scopeType:
                     type: string
+                    description: 计费配置或倍率的作用范围类型。
                 scopeId:
                     type: string
+                    description: 作用范围内的对象 ID。
                 uploadRatioMilli:
                     type: string
+                    description: 上传流量计费倍率的千分值，1000 表示 1 倍。
                 downloadRatioMilli:
                     type: string
+                    description: 下载流量计费倍率的千分值，1000 表示 1 倍。
                 effectiveFrom:
                     type: string
+                    description: 配置或归属开始生效的时间。
                     format: date-time
         proxycontrol.v1.BillingSettingsResponse:
             type: object
             properties:
                 configured:
-                    $ref: '#/components/schemas/proxycontrol.v1.BillingThresholds'
+                    allOf:
+                        - $ref: '#/components/schemas/proxycontrol.v1.BillingThresholds'
+                    description: 该作用范围保存的阈值覆盖项。
                 effective:
-                    $ref: '#/components/schemas/proxycontrol.v1.BillingThresholds'
+                    allOf:
+                        - $ref: '#/components/schemas/proxycontrol.v1.BillingThresholds'
+                    description: 应用继承规则后实际使用的阈值。
         proxycontrol.v1.BillingThresholds:
             type: object
             properties:
                 admissionThresholdBytes:
                     type: string
+                    description: 代理连接准入使用的最低可用余额阈值，单位为字节。
                 warningThresholdBytes:
                     type: string
+                    description: 余额预警阈值，单位为字节。
         proxycontrol.v1.CheckPermissionRequest:
             type: object
             properties:
                 tenantId:
                     type: string
+                    description: 租户 ID。
                 permission:
                     type: integer
+                    description: 要检查的权限。
                     format: enum
-        proxycontrol.v1.CheckPermissionResponse:
-            type: object
-            properties: {}
-        proxycontrol.v1.CheckResponse:
-            type: object
-            properties: {}
         proxycontrol.v1.CompleteReplayRequest:
             type: object
             properties:
                 gatewayId:
                     type: string
+                    description: 网关 ID。
                 bootId:
                     type: string
+                    description: 网关运行代次 ID，同一代次重放时保持一致。
                 unfinishedSessionCount:
                     type: integer
+                    description: 该代次上报的未完成会话数量。
                     format: uint32
                 hasSessionRecords:
                     type: boolean
-        proxycontrol.v1.CompleteReplayResponse:
-            type: object
-            properties: {}
+                    description: 该代次是否存在会话记录，保留字段缺失与显式 false 的区别。
         proxycontrol.v1.CreateBillingRateRequest:
             type: object
             properties:
                 scopeType:
                     type: string
+                    description: 计费配置或倍率的作用范围类型。
                 scopeId:
                     type: string
+                    description: 作用范围内的对象 ID。
                 uploadRatioMilli:
                     type: string
-                    description: Each ratio is an integer in thousandths, from 0 to 4294967295.
+                    description: |-
+                        Each ratio is an integer in thousandths, from 0 to 4294967295.
+                         上传流量计费倍率的千分值，1000 表示 1 倍。
                 downloadRatioMilli:
                     type: string
+                    description: 下载流量计费倍率的千分值，1000 表示 1 倍。
                 effectiveFrom:
                     type: string
-                    description: Omit to take effect immediately.
+                    description: |-
+                        Omit to take effect immediately.
+                         配置或归属开始生效的时间。
                     format: date-time
         proxycontrol.v1.CreateCredentialRequest:
             type: object
             properties:
                 tenantId:
                     type: string
+                    description: 租户 ID。
                 expiresAt:
                     type: string
+                    description: 凭据失效时间，省略时不设置有效期。
                     format: date-time
                 allowedSourceCidrs:
                     type: array
                     items:
                         type: string
+                    description: 凭据允许访问的客户端来源网段，空列表表示不限制。
         proxycontrol.v1.CreateCredentialResponse:
             type: object
             properties:
                 clientId:
                     type: string
+                    description: 代理凭据 ID。
                 username:
                     type: string
+                    description: 用于认证的用户名。
                 password:
                     type: string
+                    description: 签发时返回的代理密码。
         proxycontrol.v1.CreateRechargeRequest:
             type: object
             properties:
                 tenantId:
                     type: string
+                    description: 租户 ID。
                 externalRef:
                     type: string
+                    description: 外部操作单号，用于去重。
                 grantedBytes:
                     type: string
+                    description: 发放的流量额度，单位为字节。
                 startsAt:
                     type: string
+                    description: 流量额度开始生效的时间。
                     format: date-time
                 expiresAt:
                     type: string
+                    description: 失效时间。
                     format: date-time
                 note:
                     type: string
+                    description: 充值备注，用于审计。
         proxycontrol.v1.CreateTenantGroupRequest:
             type: object
             properties:
                 groupId:
                     type: string
+                    description: 1–64 个字母、数字、下划线或连字符。
                 name:
                     type: string
+                    description: 租户分组显示名称。
         proxycontrol.v1.DailyUsage:
             type: object
             properties:
                 date:
                     type: string
+                    description: 上海时区自然日，格式为 YYYY-MM-DD。
                 amount:
-                    $ref: '#/components/schemas/proxycontrol.v1.UsageAmount'
+                    allOf:
+                        - $ref: '#/components/schemas/proxycontrol.v1.UsageAmount'
+                    description: 该时间段的流量统计。
         proxycontrol.v1.DailyUsageResponse:
             type: object
             properties:
@@ -952,26 +1110,29 @@ components:
                     type: array
                     items:
                         $ref: '#/components/schemas/proxycontrol.v1.DailyUsage'
+                    description: 查询区间内按日期汇总的用量。
                 lastReceivedAt:
                     type: string
+                    description: 最近收到相关用量记录的时间。
                     format: date-time
         proxycontrol.v1.DisableCredentialRequest:
             type: object
             properties:
                 tenantId:
                     type: string
+                    description: 租户 ID。
                 clientId:
                     type: string
-        proxycontrol.v1.DisableCredentialResponse:
-            type: object
-            properties: {}
+                    description: 代理凭据 ID。
         proxycontrol.v1.ExtractProxyRequest:
             type: object
             properties:
                 tenantId:
                     type: string
+                    description: 租户 ID。
                 count:
                     type: integer
+                    description: 提取的代理地址数量，取值为 1–100。
                     format: int32
         proxycontrol.v1.ExtractProxyResponse:
             type: object
@@ -980,6 +1141,7 @@ components:
                     type: array
                     items:
                         $ref: '#/components/schemas/proxycontrol.v1.ProxyEndpoint'
+                    description: 返回的代理地址列表。
         proxycontrol.v1.ListBalanceLedgerResponse:
             type: object
             properties:
@@ -987,8 +1149,10 @@ components:
                     type: array
                     items:
                         $ref: '#/components/schemas/proxycontrol.v1.BalanceLedgerEntry'
+                    description: 本页的余额流水。
                 nextPageToken:
                     type: string
+                    description: 下一页的游标。为空表示没有更多记录。
         proxycontrol.v1.ListBillingRatesResponse:
             type: object
             properties:
@@ -996,8 +1160,10 @@ components:
                     type: array
                     items:
                         $ref: '#/components/schemas/proxycontrol.v1.BillingRateVersion'
+                    description: 本页的倍率版本。
                 nextPageToken:
                     type: string
+                    description: 下一页的游标。为空表示没有更多记录。
         proxycontrol.v1.ListRecordAnomaliesResponse:
             type: object
             properties:
@@ -1005,8 +1171,10 @@ components:
                     type: array
                     items:
                         $ref: '#/components/schemas/proxycontrol.v1.RecordAnomaly'
+                    description: 本页的异常记录。
                 nextPageToken:
                     type: string
+                    description: 下一页的游标。为空表示没有更多记录。
         proxycontrol.v1.ListTenantsResponse:
             type: object
             properties:
@@ -1014,6 +1182,7 @@ components:
                     type: array
                     items:
                         $ref: '#/components/schemas/proxycontrol.v1.TenantAccess'
+                    description: 当前账号可访问的租户列表。
         proxycontrol.v1.ListTrafficGrantsResponse:
             type: object
             properties:
@@ -1021,11 +1190,15 @@ components:
                     type: array
                     items:
                         $ref: '#/components/schemas/proxycontrol.v1.AuditedTrafficGrant'
+                    description: 本页的流量额度记录。
                 nextPageToken:
                     type: string
+                    description: 下一页的游标。为空表示没有更多记录。
                 overdraftBytes:
                     type: string
-                    description: Current tenant-wide balance, read in the same snapshot as this page.
+                    description: |-
+                        Current tenant-wide balance, read in the same snapshot as this page.
+                         当前透支流量，单位为字节。
         proxycontrol.v1.ListUsageGapsResponse:
             type: object
             properties:
@@ -1033,44 +1206,57 @@ components:
                     type: array
                     items:
                         $ref: '#/components/schemas/proxycontrol.v1.UsageGap'
+                    description: 本页的用量缺口。
                 nextPageToken:
                     type: string
+                    description: 下一页的游标。为空表示没有更多记录。
         proxycontrol.v1.LoadAuthStateRequest:
             type: object
             properties:
                 username:
                     type: string
+                    description: 用于认证的用户名。
                 password:
                     type: string
+                    description: 用于认证的原始密码。
         proxycontrol.v1.LoginRequest:
             type: object
             properties:
                 username:
                     type: string
+                    description: 控制台登录用户名。
                 password:
                     type: string
+                    description: 控制台登录密码。
         proxycontrol.v1.LoginResponse:
             type: object
             properties:
                 accessToken:
                     type: string
+                    description: 后续请求通过 Authorization Bearer 发送的访问令牌。
                 expiresInSeconds:
                     type: integer
+                    description: 令牌从签发起的有效时长，单位为秒。
                     format: int32
         proxycontrol.v1.ProxyEndpoint:
             type: object
             properties:
                 host:
                     type: string
+                    description: 代理主机名或 IP 地址。
                 port:
                     type: integer
+                    description: 代理服务端口。
                     format: uint32
                 username:
                     type: string
+                    description: 用于认证的用户名。
                 password:
                     type: string
+                    description: 用于认证的原始密码。
                 expiresAt:
                     type: string
+                    description: 失效时间。
                     format: date-time
         proxycontrol.v1.QueryUsageResponse:
             type: object
@@ -1079,42 +1265,57 @@ components:
                     type: array
                     items:
                         $ref: '#/components/schemas/proxycontrol.v1.UsageBucket'
+                    description: 本页的用量统计桶。
                 nextPageToken:
                     type: string
+                    description: 下一页的游标。为空表示没有更多记录。
         proxycontrol.v1.RecordAnomaly:
             type: object
             properties:
                 anomalyId:
                     type: string
+                    description: 异常记录 ID。
                 gatewayId:
                     type: string
+                    description: 网关 ID。
                 bootId:
                     type: string
+                    description: 网关运行代次 ID，同一代次重放时保持一致。
                 tenantId:
                     type: string
+                    description: 租户 ID。
                 kind:
                     type: string
+                    description: Recorder 记录的异常类型。
                 fileId:
                     type: string
+                    description: Recorder 文件标识，同一文件重放时保持一致。
                 fileOffset:
                     type: string
+                    description: 记录在文件中的起始字节偏移，从 0 开始。
                 detectedAt:
                     type: string
+                    description: 首次检测到问题的时间。
                     format: date-time
                 resolvedAt:
                     type: string
+                    description: 问题解决的时间。
                     format: date-time
         proxycontrol.v1.RecorderLine:
             type: object
             properties:
                 fileId:
                     type: string
+                    description: Recorder 文件标识，同一文件重放时保持一致。
                 fileOffset:
                     type: string
+                    description: 记录在文件中的起始字节偏移，从 0 开始。
                 line:
                     type: string
+                    description: Recorder 写入的单行 JSON，省略行末换行符。
                 endOffset:
                     type: string
+                    description: 记录结束后的字节偏移，可作为下一条记录的起点。
         proxycontrol.v1.RefreshAuthStateRequest:
             type: object
             properties:
@@ -1122,6 +1323,7 @@ components:
                     type: array
                     items:
                         type: string
+                    description: 本控制面签发给当前网关的凭据引用，每次提交 1–100 条。
         proxycontrol.v1.RefreshAuthStateResponse:
             type: object
             properties:
@@ -1129,178 +1331,228 @@ components:
                     type: array
                     items:
                         $ref: '#/components/schemas/proxycontrol.v1.AuthSnapshot'
+                    description: 请求中各凭据引用对应的认证状态。
         proxycontrol.v1.ReportLifecycleRequest:
             type: object
             properties:
                 gatewayId:
                     type: string
+                    description: 网关 ID。
                 bootId:
                     type: string
+                    description: 网关运行代次 ID，同一代次重放时保持一致。
                 exitedAt:
                     type: string
+                    description: 网关退出时间，省略时本次请求作为心跳。
                     format: date-time
             description: A missing exit timestamp reports a heartbeat for the running boot.
-        proxycontrol.v1.ReportLifecycleResponse:
-            type: object
-            properties: {}
         proxycontrol.v1.ReportUnfinishedSessionsRequest:
             type: object
             properties:
                 gatewayId:
                     type: string
+                    description: 网关 ID。
                 bootId:
                     type: string
+                    description: 网关运行代次 ID，同一代次重放时保持一致。
                 sessions:
                     type: array
                     items:
                         $ref: '#/components/schemas/proxycontrol.v1.UnfinishedSession'
-        proxycontrol.v1.ReportUnfinishedSessionsResponse:
-            type: object
-            properties: {}
+                    description: 该运行代次待补传记录的未完成会话。
         proxycontrol.v1.SetTenantGroupRequest:
             type: object
             properties:
                 tenantId:
                     type: string
+                    description: 租户 ID。
                 groupId:
                     type: string
-                    description: Empty clears the current membership.
+                    description: |-
+                        Empty clears the current membership.
+                         租户分组 ID。
         proxycontrol.v1.SubmitBatchRequest:
             type: object
             properties:
                 gatewayId:
                     type: string
+                    description: 网关 ID。
                 bootId:
                     type: string
+                    description: 网关运行代次 ID，同一代次重放时保持一致。
                 records:
                     type: array
                     items:
                         $ref: '#/components/schemas/proxycontrol.v1.RecorderLine'
+                    description: 本批提交的 Recorder 原始记录。
         proxycontrol.v1.SubmitBatchResponse:
             type: object
             properties:
                 billable:
                     type: integer
+                    description: 本批中新纳入计费的记录数。
                     format: uint32
                 notBillable:
                     type: integer
+                    description: 本批中处理成功但不计费的记录数。
                     format: uint32
                 quarantined:
                     type: integer
+                    description: 本批中隔离待查的记录数。
                     format: uint32
                 duplicates:
                     type: integer
+                    description: 本批中此前已处理的重复记录数。
                     format: uint32
         proxycontrol.v1.TenantAccess:
             type: object
             properties:
                 tenantId:
                     type: string
+                    description: 租户 ID。
                 name:
                     type: string
+                    description: 租户显示名称。
         proxycontrol.v1.TenantBalance:
             type: object
             properties:
                 tenantId:
                     type: string
+                    description: 租户 ID。
                 availableBytes:
                     type: string
+                    description: 可用流量余额，单位为字节。
                 overdraftBytes:
                     type: string
+                    description: 当前透支流量，单位为字节。
                 admissionThresholdBytes:
                     type: string
+                    description: 代理连接准入使用的最低可用余额阈值，单位为字节。
                 warningThresholdBytes:
                     type: string
+                    description: 余额预警阈值，单位为字节。
                 warningSince:
                     type: string
+                    description: 当前余额预警开始时间。
                     format: date-time
                 grants:
                     type: array
                     items:
                         $ref: '#/components/schemas/proxycontrol.v1.TrafficGrant'
+                    description: 返回的租户流量额度。
         proxycontrol.v1.TenantGroup:
             type: object
             properties:
                 groupId:
                     type: string
+                    description: 租户分组 ID。
                 name:
                     type: string
+                    description: 租户分组显示名称。
         proxycontrol.v1.TenantGroupMembership:
             type: object
             properties:
                 tenantId:
                     type: string
+                    description: 租户 ID。
                 groupId:
                     type: string
+                    description: 租户分组 ID。
                 effectiveFrom:
                     type: string
+                    description: 配置或归属开始生效的时间。
                     format: date-time
         proxycontrol.v1.TrafficGrant:
             type: object
             properties:
                 grantId:
                     type: string
+                    description: 流量额度 ID。
                 grantedBytes:
                     type: string
+                    description: 发放的流量额度，单位为字节。
                 usedBytes:
                     type: string
+                    description: 已消耗的流量额度，单位为字节。
                 startsAt:
                     type: string
+                    description: 流量额度开始生效的时间。
                     format: date-time
                 expiresAt:
                     type: string
+                    description: 失效时间。
                     format: date-time
                 source:
                     type: string
+                    description: 流量额度的发放来源。
         proxycontrol.v1.UnfinishedSession:
             type: object
             properties:
                 sessionId:
                     type: string
+                    description: 代理会话 ID。
                 clientId:
                     type: string
+                    description: 代理凭据 ID。
                 lastRecordedAt:
                     type: string
+                    description: 该会话最后一条已记录数据的时间。
                     format: date-time
         proxycontrol.v1.UpdateBillingSettingsRequest:
             type: object
             properties:
                 scopeType:
                     type: string
+                    description: 计费配置或倍率的作用范围类型。
                 scopeId:
                     type: string
+                    description: 分组或租户 ID。全局范围可用下划线作为路径占位。
                 admissionThresholdBytes:
                     type: string
-                    description: PUT replaces both overrides. An omitted field inherits its default.
+                    description: |-
+                        PUT replaces both overrides. An omitted field inherits its default.
+                         代理连接准入使用的最低可用余额阈值，单位为字节。
                 warningThresholdBytes:
                     type: string
+                    description: 余额预警阈值，单位为字节。
                 tenantId:
                     type: string
+                    description: 需要在响应中返回有效阈值时指定的租户 ID。
         proxycontrol.v1.UsageAmount:
             type: object
             properties:
                 inputBytes:
                     type: string
+                    description: 写入代理的原始字节数。
                 outputBytes:
                     type: string
+                    description: 代理发出的原始字节数。
                 totalBytes:
                     type: string
+                    description: 原始输入和输出字节数之和。
                 billableBytes:
                     type: string
+                    description: 按计费规则折算后扣减的字节数。
         proxycontrol.v1.UsageBucket:
             type: object
             properties:
                 startTime:
                     type: string
+                    description: 该统计桶的起始时间。
                     format: date-time
                 gatewayId:
                     type: string
+                    description: 网关 ID。
                 grantId:
                     type: string
+                    description: 流量额度 ID。
                 amount:
-                    $ref: '#/components/schemas/proxycontrol.v1.UsageAmount'
+                    allOf:
+                        - $ref: '#/components/schemas/proxycontrol.v1.UsageAmount'
+                    description: 该时间段的流量统计。
                 rateId:
                     type: string
+                    description: 计费倍率版本 ID。
         proxycontrol.v1.UsageGap:
             type: object
             properties:
@@ -1309,27 +1561,37 @@ components:
                     description: Empty for a pending boot that has no session reports yet.
                 gatewayId:
                     type: string
+                    description: 网关 ID。
                 bootId:
                     type: string
+                    description: 网关运行代次 ID，同一代次重放时保持一致。
                 tenantId:
                     type: string
+                    description: 租户 ID。
                 kind:
                     type: string
+                    description: 缺口类型，boot 表示运行代次，session 表示会话。
                 status:
                     type: string
+                    description: 回放状态，pending_replay 表示待回放，possible_gap 表示可能缺失。
                 sessionId:
                     type: string
+                    description: 代理会话 ID。
                 fromAt:
                     type: string
+                    description: 可能缺失记录的起始时间。
                     format: date-time
                 detectedAt:
                     type: string
+                    description: 首次检测到问题的时间。
                     format: date-time
                 resolvedAt:
                     type: string
+                    description: 问题解决的时间。
                     format: date-time
                 exitedAt:
                     type: string
+                    description: 网关退出时间。
                     format: date-time
 tags:
     - name: AccessService

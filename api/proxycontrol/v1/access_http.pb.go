@@ -23,9 +23,9 @@ const OperationAccessServiceListTenants = "/proxycontrol.v1.AccessService/ListTe
 const OperationAccessServiceLogin = "/proxycontrol.v1.AccessService/Login"
 
 type AccessServiceHTTPServer interface {
-	CheckPermission(context.Context, *CheckPermissionRequest) (*CheckPermissionResponse, error)
+	CheckPermission(context.Context, *CheckPermissionRequest) (*BaseResp, error)
 	GetTenantAccess(context.Context, *GetTenantAccessRequest) (*TenantAccess, error)
-	ListTenants(context.Context, *ListTenantsRequest) (*ListTenantsResponse, error)
+	ListTenants(context.Context, *BaseRequest) (*ListTenantsResponse, error)
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
 }
 
@@ -39,13 +39,13 @@ func RegisterAccessServiceHTTPServer(s *http.Server, srv AccessServiceHTTPServer
 
 func _AccessService_ListTenants0_HTTP_Handler(srv AccessServiceHTTPServer) func(ctx http.Context) error {
 	return func(ctx http.Context) error {
-		var in ListTenantsRequest
+		var in BaseRequest
 		if err := ctx.BindQuery(&in); err != nil {
 			return err
 		}
 		http.SetOperation(ctx, OperationAccessServiceListTenants)
 		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
-			return srv.ListTenants(ctx, req.(*ListTenantsRequest))
+			return srv.ListTenants(ctx, req.(*BaseRequest))
 		})
 		out, err := h(ctx, &in)
 		if err != nil {
@@ -92,7 +92,7 @@ func _AccessService_CheckPermission0_HTTP_Handler(srv AccessServiceHTTPServer) f
 		if err != nil {
 			return err
 		}
-		reply := out.(*CheckPermissionResponse)
+		reply := out.(*BaseResp)
 		return ctx.Result(200, reply)
 	}
 }
@@ -117,9 +117,9 @@ func _AccessService_Login0_HTTP_Handler(srv AccessServiceHTTPServer) func(ctx ht
 }
 
 type AccessServiceHTTPClient interface {
-	CheckPermission(ctx context.Context, req *CheckPermissionRequest, opts ...http.CallOption) (rsp *CheckPermissionResponse, err error)
+	CheckPermission(ctx context.Context, req *CheckPermissionRequest, opts ...http.CallOption) (rsp *BaseResp, err error)
 	GetTenantAccess(ctx context.Context, req *GetTenantAccessRequest, opts ...http.CallOption) (rsp *TenantAccess, err error)
-	ListTenants(ctx context.Context, req *ListTenantsRequest, opts ...http.CallOption) (rsp *ListTenantsResponse, err error)
+	ListTenants(ctx context.Context, req *BaseRequest, opts ...http.CallOption) (rsp *ListTenantsResponse, err error)
 	Login(ctx context.Context, req *LoginRequest, opts ...http.CallOption) (rsp *LoginResponse, err error)
 }
 
@@ -131,8 +131,8 @@ func NewAccessServiceHTTPClient(client *http.Client) AccessServiceHTTPClient {
 	return &AccessServiceHTTPClientImpl{client}
 }
 
-func (c *AccessServiceHTTPClientImpl) CheckPermission(ctx context.Context, in *CheckPermissionRequest, opts ...http.CallOption) (*CheckPermissionResponse, error) {
-	var out CheckPermissionResponse
+func (c *AccessServiceHTTPClientImpl) CheckPermission(ctx context.Context, in *CheckPermissionRequest, opts ...http.CallOption) (*BaseResp, error) {
+	var out BaseResp
 	pattern := "/v1/access/check"
 	path := http.BuildPath(pattern, in)
 	opts = append([]http.CallOption{
@@ -164,7 +164,7 @@ func (c *AccessServiceHTTPClientImpl) GetTenantAccess(ctx context.Context, in *G
 	return &out, nil
 }
 
-func (c *AccessServiceHTTPClientImpl) ListTenants(ctx context.Context, in *ListTenantsRequest, opts ...http.CallOption) (*ListTenantsResponse, error) {
+func (c *AccessServiceHTTPClientImpl) ListTenants(ctx context.Context, in *BaseRequest, opts ...http.CallOption) (*ListTenantsResponse, error) {
 	var out ListTenantsResponse
 	pattern := "/v1/access/tenants"
 	path := http.BuildPath(pattern, in, http.WithQueryParams())

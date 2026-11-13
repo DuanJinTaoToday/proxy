@@ -23,9 +23,9 @@ const OperationReportingServiceReportUnfinishedSessions = "/proxycontrol.v1.Repo
 const OperationReportingServiceSubmitBatch = "/proxycontrol.v1.ReportingService/SubmitBatch"
 
 type ReportingServiceHTTPServer interface {
-	CompleteReplay(context.Context, *CompleteReplayRequest) (*CompleteReplayResponse, error)
-	ReportLifecycle(context.Context, *ReportLifecycleRequest) (*ReportLifecycleResponse, error)
-	ReportUnfinishedSessions(context.Context, *ReportUnfinishedSessionsRequest) (*ReportUnfinishedSessionsResponse, error)
+	CompleteReplay(context.Context, *CompleteReplayRequest) (*BaseResp, error)
+	ReportLifecycle(context.Context, *ReportLifecycleRequest) (*BaseResp, error)
+	ReportUnfinishedSessions(context.Context, *ReportUnfinishedSessionsRequest) (*BaseResp, error)
 	SubmitBatch(context.Context, *SubmitBatchRequest) (*SubmitBatchResponse, error)
 }
 
@@ -51,7 +51,7 @@ func _ReportingService_ReportLifecycle0_HTTP_Handler(srv ReportingServiceHTTPSer
 		if err != nil {
 			return err
 		}
-		reply := out.(*ReportLifecycleResponse)
+		reply := out.(*BaseResp)
 		return ctx.Result(200, reply)
 	}
 }
@@ -92,7 +92,7 @@ func _ReportingService_ReportUnfinishedSessions0_HTTP_Handler(srv ReportingServi
 		if err != nil {
 			return err
 		}
-		reply := out.(*ReportUnfinishedSessionsResponse)
+		reply := out.(*BaseResp)
 		return ctx.Result(200, reply)
 	}
 }
@@ -114,15 +114,15 @@ func _ReportingService_CompleteReplay0_HTTP_Handler(srv ReportingServiceHTTPServ
 		if err != nil {
 			return err
 		}
-		reply := out.(*CompleteReplayResponse)
+		reply := out.(*BaseResp)
 		return ctx.Result(200, reply)
 	}
 }
 
 type ReportingServiceHTTPClient interface {
-	CompleteReplay(ctx context.Context, req *CompleteReplayRequest, opts ...http.CallOption) (rsp *CompleteReplayResponse, err error)
-	ReportLifecycle(ctx context.Context, req *ReportLifecycleRequest, opts ...http.CallOption) (rsp *ReportLifecycleResponse, err error)
-	ReportUnfinishedSessions(ctx context.Context, req *ReportUnfinishedSessionsRequest, opts ...http.CallOption) (rsp *ReportUnfinishedSessionsResponse, err error)
+	CompleteReplay(ctx context.Context, req *CompleteReplayRequest, opts ...http.CallOption) (rsp *BaseResp, err error)
+	ReportLifecycle(ctx context.Context, req *ReportLifecycleRequest, opts ...http.CallOption) (rsp *BaseResp, err error)
+	ReportUnfinishedSessions(ctx context.Context, req *ReportUnfinishedSessionsRequest, opts ...http.CallOption) (rsp *BaseResp, err error)
 	SubmitBatch(ctx context.Context, req *SubmitBatchRequest, opts ...http.CallOption) (rsp *SubmitBatchResponse, err error)
 }
 
@@ -134,8 +134,8 @@ func NewReportingServiceHTTPClient(client *http.Client) ReportingServiceHTTPClie
 	return &ReportingServiceHTTPClientImpl{client}
 }
 
-func (c *ReportingServiceHTTPClientImpl) CompleteReplay(ctx context.Context, in *CompleteReplayRequest, opts ...http.CallOption) (*CompleteReplayResponse, error) {
-	var out CompleteReplayResponse
+func (c *ReportingServiceHTTPClientImpl) CompleteReplay(ctx context.Context, in *CompleteReplayRequest, opts ...http.CallOption) (*BaseResp, error) {
+	var out BaseResp
 	pattern := "/v1/reporting/boots/{boot_id}/replay-complete"
 	path := http.BuildPath(pattern, in)
 	opts = append([]http.CallOption{
@@ -151,8 +151,8 @@ func (c *ReportingServiceHTTPClientImpl) CompleteReplay(ctx context.Context, in 
 	return &out, nil
 }
 
-func (c *ReportingServiceHTTPClientImpl) ReportLifecycle(ctx context.Context, in *ReportLifecycleRequest, opts ...http.CallOption) (*ReportLifecycleResponse, error) {
-	var out ReportLifecycleResponse
+func (c *ReportingServiceHTTPClientImpl) ReportLifecycle(ctx context.Context, in *ReportLifecycleRequest, opts ...http.CallOption) (*BaseResp, error) {
+	var out BaseResp
 	pattern := "/v1/reporting/lifecycle"
 	path := http.BuildPath(pattern, in)
 	opts = append([]http.CallOption{
@@ -168,8 +168,8 @@ func (c *ReportingServiceHTTPClientImpl) ReportLifecycle(ctx context.Context, in
 	return &out, nil
 }
 
-func (c *ReportingServiceHTTPClientImpl) ReportUnfinishedSessions(ctx context.Context, in *ReportUnfinishedSessionsRequest, opts ...http.CallOption) (*ReportUnfinishedSessionsResponse, error) {
-	var out ReportUnfinishedSessionsResponse
+func (c *ReportingServiceHTTPClientImpl) ReportUnfinishedSessions(ctx context.Context, in *ReportUnfinishedSessionsRequest, opts ...http.CallOption) (*BaseResp, error) {
+	var out BaseResp
 	pattern := "/v1/reporting/boots/{boot_id}/unfinished-sessions"
 	path := http.BuildPath(pattern, in)
 	opts = append([]http.CallOption{

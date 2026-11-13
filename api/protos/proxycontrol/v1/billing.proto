@@ -3,6 +3,8 @@ syntax = "proto3";
 package proxycontrol.v1;
 
 import "google/api/annotations.proto";
+import "openapiv3/annotations.proto";
+import "validate/validate.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1";
@@ -10,99 +12,161 @@ option go_package = "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxyc
 service BillingService {
   rpc GetBillingSettings(GetBillingSettingsRequest) returns (BillingSettingsResponse) {
     option (google.api.http) = { get: "/v1/operations/billing/settings/{scope_type}/{scope_id}" };
+    option (openapi.v3.operation) = {
+      summary: "查询计费阈值的配置值和生效值"
+    };
   }
   rpc UpdateBillingSettings(UpdateBillingSettingsRequest) returns (BillingSettingsResponse) {
     option (google.api.http) = { put: "/v1/operations/billing/settings/{scope_type}/{scope_id}" body: "*" };
+    option (openapi.v3.operation) = {
+      summary: "替换指定范围的计费阈值配置"
+    };
   }
   rpc CreateBillingRate(CreateBillingRateRequest) returns (BillingRateVersion) {
     option (google.api.http) = { post: "/v1/operations/billing/rates" body: "*" };
+    option (openapi.v3.operation) = {
+      summary: "创建指定范围的计费倍率版本"
+    };
   }
   rpc CreateTenantGroup(CreateTenantGroupRequest) returns (TenantGroup) {
     option (google.api.http) = { post: "/v1/operations/billing/groups" body: "*" };
+    option (openapi.v3.operation) = {
+      summary: "创建租户分组"
+    };
   }
   rpc SetTenantGroup(SetTenantGroupRequest) returns (TenantGroupMembership) {
     option (google.api.http) = { put: "/v1/operations/tenants/{tenant_id}/group" body: "*" };
+    option (openapi.v3.operation) = {
+      summary: "设置或清除租户分组"
+    };
   }
   rpc CreateRecharge(CreateRechargeRequest) returns (BalanceLedgerEntry) {
     option (google.api.http) = { post: "/v1/operations/tenants/{tenant_id}/recharges" body: "*" };
+    option (openapi.v3.operation) = {
+      summary: "为租户充值流量额度"
+    };
   }
   rpc AdjustBalance(AdjustBalanceRequest) returns (BalanceLedgerEntry) {
     option (google.api.http) = { post: "/v1/operations/tenants/{tenant_id}/adjustments" body: "*" };
+    option (openapi.v3.operation) = {
+      summary: "增加或扣减租户流量额度"
+    };
   }
   rpc ListTrafficGrants(ListTrafficGrantsRequest) returns (ListTrafficGrantsResponse) {
     option (google.api.http) = { get: "/v1/operations/tenants/{tenant_id}/grants" };
+    option (openapi.v3.operation) = {
+      summary: "分页查询租户流量额度"
+    };
   }
   rpc ListBalanceLedger(ListBalanceLedgerRequest) returns (ListBalanceLedgerResponse) {
     option (google.api.http) = { get: "/v1/operations/tenants/{tenant_id}/ledger" };
+    option (openapi.v3.operation) = {
+      summary: "分页查询租户余额流水"
+    };
   }
   rpc ListBillingRates(ListBillingRatesRequest) returns (ListBillingRatesResponse) {
     option (google.api.http) = { get: "/v1/operations/billing/rates" };
+    option (openapi.v3.operation) = {
+      summary: "查询计费倍率版本"
+    };
   }
 }
 
 message GetBillingSettingsRequest {
-  string scope_type = 1;
+  // 计费配置或倍率的作用范围类型。
+  string scope_type = 1 [(validate.rules).string = {in: ["global", "group", "tenant"]}];
+  // 分组或租户 ID。全局范围可用下划线作为路径占位。
   string scope_id = 2;
+  // 需要查询有效阈值时指定的租户 ID。
   string tenant_id = 3;
 }
 
 message UpdateBillingSettingsRequest {
-  string scope_type = 1;
+  // 计费配置或倍率的作用范围类型。
+  string scope_type = 1 [(validate.rules).string = {in: ["global", "group", "tenant"]}];
+  // 分组或租户 ID。全局范围可用下划线作为路径占位。
   string scope_id = 2;
   // PUT replaces both overrides. An omitted field inherits its default.
+  // 代理连接准入使用的最低可用余额阈值，单位为字节。
   optional uint64 admission_threshold_bytes = 3;
+  // 余额预警阈值，单位为字节。
   optional uint64 warning_threshold_bytes = 4;
+  // 需要在响应中返回有效阈值时指定的租户 ID。
   string tenant_id = 5;
 }
 
 message BillingThresholds {
+  // 代理连接准入使用的最低可用余额阈值，单位为字节。
   optional uint64 admission_threshold_bytes = 1;
+  // 余额预警阈值，单位为字节。
   optional uint64 warning_threshold_bytes = 2;
 }
 
 message BillingSettingsResponse {
+  // 该作用范围保存的阈值覆盖项。
   BillingThresholds configured = 1;
+  // 应用继承规则后实际使用的阈值。
   BillingThresholds effective = 2;
 }
 
 message CreateBillingRateRequest {
-  string scope_type = 1;
+  // 计费配置或倍率的作用范围类型。
+  string scope_type = 1 [(validate.rules).string = {in: ["global", "group", "tenant"]}];
+  // 作用范围内的对象 ID。
   string scope_id = 2;
   // Each ratio is an integer in thousandths, from 0 to 4294967295.
-  optional uint64 upload_ratio_milli = 3;
-  optional uint64 download_ratio_milli = 4;
+  // 上传流量计费倍率的千分值，1000 表示 1 倍。
+  optional uint64 upload_ratio_milli = 3 [(validate.rules).uint64.lte = 4294967295];
+  // 下载流量计费倍率的千分值，1000 表示 1 倍。
+  optional uint64 download_ratio_milli = 4 [(validate.rules).uint64.lte = 4294967295];
   // Omit to take effect immediately.
+  // 配置或归属开始生效的时间。
   google.protobuf.Timestamp effective_from = 5;
 }
 
 message CreateTenantGroupRequest {
-  string group_id = 1;
-  string name = 2;
+  // 1–64 个字母、数字、下划线或连字符。
+  string group_id = 1 [(validate.rules).string.pattern = "^[A-Za-z0-9_-]{1,64}$"];
+  // 租户分组显示名称。
+  string name = 2 [(validate.rules).string = {min_bytes: 1, max_bytes: 256}];
 }
 
 message TenantGroup {
+  // 租户分组 ID。
   string group_id = 1;
+  // 租户分组显示名称。
   string name = 2;
 }
 
 message SetTenantGroupRequest {
+  // 租户 ID。
   string tenant_id = 1;
   // Empty clears the current membership.
+  // 租户分组 ID。
   string group_id = 2;
 }
 
 message TenantGroupMembership {
+  // 租户 ID。
   string tenant_id = 1;
+  // 租户分组 ID。
   string group_id = 2;
+  // 配置或归属开始生效的时间。
   google.protobuf.Timestamp effective_from = 3;
 }
 
 message CreateRechargeRequest {
+  // 租户 ID。
   string tenant_id = 1;
-  string external_ref = 2;
-  uint64 granted_bytes = 3;
+  // 外部操作单号，用于去重。
+  string external_ref = 2 [(validate.rules).string = {min_bytes: 1, max_bytes: 256}];
+  // 发放的流量额度，单位为字节。
+  uint64 granted_bytes = 3 [(validate.rules).uint64 = {gte: 1, lte: 9223372036854775807}];
+  // 流量额度开始生效的时间。
   google.protobuf.Timestamp starts_at = 4;
+  // 失效时间。
   google.protobuf.Timestamp expires_at = 5;
+  // 充值备注，用于审计。
   string note = 6;
 }
 
@@ -113,82 +177,131 @@ enum BalanceAdjustmentMode {
 }
 
 message AdjustBalanceRequest {
+  // 租户 ID。
   string tenant_id = 1;
-  string external_ref = 2;
-  BalanceAdjustmentMode mode = 3;
-  uint64 bytes = 4;
+  // 外部操作单号，用于去重。
+  string external_ref = 2 [(validate.rules).string = {min_bytes: 1, max_bytes: 256}];
+  // 调整方向，增加或扣减。
+  BalanceAdjustmentMode mode = 3 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+  // 调整的流量额度，单位为字节，必须大于 0。
+  uint64 bytes = 4 [(validate.rules).uint64 = {gte: 1, lte: 9223372036854775807}];
+  // 扣减时指定的流量额度 ID。
   string grant_id = 5;
+  // 写入余额流水的调整原因。
   string reason = 6;
 }
 
 message ListTrafficGrantsRequest {
+  // 租户 ID。
   string tenant_id = 1;
-  int32 page_size = 2;
+  // 每页条数，取值为 1–500。省略或传 0 时使用 100。
+  int32 page_size = 2 [(validate.rules).int32 = {gte: 0, lte: 500}];
+  // 上一页返回的游标。查询条件应与上一页一致，首屏留空。
   string page_token = 3;
 }
 
 message AuditedTrafficGrant {
+  // 流量额度 ID。
   string grant_id = 1;
+  // 发放的流量额度，单位为字节。
   uint64 granted_bytes = 2;
+  // 已消耗的流量额度，单位为字节。
   uint64 used_bytes = 3;
+  // 这笔流量额度用于抵扣透支的字节数。
   uint64 overdraft_offset_bytes = 4;
+  // 流量额度开始生效的时间。
   google.protobuf.Timestamp starts_at = 5;
+  // 失效时间。
   google.protobuf.Timestamp expires_at = 6;
+  // 该笔额度的当前状态。
   string status = 7;
 }
 
 message ListTrafficGrantsResponse {
+  // 本页的流量额度记录。
   repeated AuditedTrafficGrant grants = 1;
+  // 下一页的游标。为空表示没有更多记录。
   string next_page_token = 2;
   // Current tenant-wide balance, read in the same snapshot as this page.
+  // 当前透支流量，单位为字节。
   uint64 overdraft_bytes = 3;
 }
 
 message ListBalanceLedgerRequest {
+  // 租户 ID。
   string tenant_id = 1;
-  int32 page_size = 2;
+  // 每页条数，取值为 1–500。省略或传 0 时使用 100。
+  int32 page_size = 2 [(validate.rules).int32 = {gte: 0, lte: 500}];
+  // 上一页返回的游标。查询条件应与上一页一致，首屏留空。
   string page_token = 3;
 }
 
 message BalanceLedgerEntry {
+  // 余额流水 ID。
   string ledger_id = 1;
+  // 引起余额变动的操作类型。
   string kind = 2;
+  // 流量额度 ID。
   string grant_id = 3;
+  // 余额变化量，正值为增加，负值为扣减。
   int64 delta_bytes = 4;
+  // 变动前的可用余额，单位为字节。
   int64 available_before = 5;
+  // 变动后的可用余额，单位为字节。
   int64 available_after = 6;
+  // 外部操作单号，用于去重。
   string external_ref = 7;
+  // 变动原因或操作备注。
   string reason = 8;
+  // 执行该变动的操作人标识。
   string operator = 9;
+  // 流水记录时间。
   google.protobuf.Timestamp created_at = 10;
+  // 被更正的原流水 ID。
   string correction_of = 11;
+  // 本次操作新增的透支量，单位为字节。
   optional int64 overdraft_added_bytes = 12;
 }
 
 message ListBalanceLedgerResponse {
+  // 本页的余额流水。
   repeated BalanceLedgerEntry entries = 1;
+  // 下一页的游标。为空表示没有更多记录。
   string next_page_token = 2;
 }
 
 message ListBillingRatesRequest {
+  // 计费配置或倍率的作用范围类型。
   string scope_type = 1;
+  // 作用范围内的对象 ID。
   string scope_id = 2;
-  int32 page_size = 3;
+  // 每页条数，取值为 1–500。省略或传 0 时使用 100。
+  int32 page_size = 3 [(validate.rules).int32 = {gte: 0, lte: 500}];
+  // 上一页返回的游标。查询条件应与上一页一致，首屏留空。
   string page_token = 4;
   // Exact version lookup. Omit scope_type and scope_id when using rate_id.
+  // 计费倍率版本 ID。
   string rate_id = 5;
 }
 
 message BillingRateVersion {
+  // 计费倍率版本 ID。
   string rate_id = 1;
+  // 计费配置或倍率的作用范围类型。
   string scope_type = 2;
+  // 作用范围内的对象 ID。
   string scope_id = 3;
+  // 上传流量计费倍率的千分值，1000 表示 1 倍。
   uint64 upload_ratio_milli = 4;
+  // 下载流量计费倍率的千分值，1000 表示 1 倍。
   uint64 download_ratio_milli = 5;
+  // 配置或归属开始生效的时间。
   google.protobuf.Timestamp effective_from = 6;
 }
 
 message ListBillingRatesResponse {
+  // 本页的倍率版本。
   repeated BillingRateVersion rates = 1;
+  // 下一页的游标。为空表示没有更多记录。
   string next_page_token = 2;
 }

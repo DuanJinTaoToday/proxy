@@ -26,7 +26,7 @@ func (s *Access) Login(ctx context.Context, req *v1.LoginRequest) (*v1.LoginResp
 	return &v1.LoginResponse{AccessToken: token, ExpiresInSeconds: expires}, nil
 }
 
-func (s *Access) ListTenants(ctx context.Context, _ *v1.ListTenantsRequest) (*v1.ListTenantsResponse, error) {
+func (s *Access) ListTenants(ctx context.Context, _ *v1.BaseRequest) (*v1.ListTenantsResponse, error) {
 	noStore(ctx)
 	tenants, err := s.biz.ListTenants(bearerToken(ctx))
 	if err != nil {
@@ -48,7 +48,7 @@ func (s *Access) GetTenantAccess(ctx context.Context, req *v1.GetTenantAccessReq
 	return tenantAccess(tenant), nil
 }
 
-func (s *Access) CheckPermission(ctx context.Context, req *v1.CheckPermissionRequest) (*v1.CheckPermissionResponse, error) {
+func (s *Access) CheckPermission(ctx context.Context, req *v1.CheckPermissionRequest) (*v1.BaseResp, error) {
 	noStore(ctx)
 	var permission access.Permission
 	switch req.GetPermission() {
@@ -66,7 +66,7 @@ func (s *Access) CheckPermission(ctx context.Context, req *v1.CheckPermissionReq
 	if err := s.biz.Require(bearerToken(ctx), req.GetTenantId(), permission); err != nil {
 		return nil, err
 	}
-	return &v1.CheckPermissionResponse{}, nil
+	return &v1.BaseResp{}, nil
 }
 
 func tenantAccess(tenant access.Tenant) *v1.TenantAccess {

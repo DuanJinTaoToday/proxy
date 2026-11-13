@@ -18,10 +18,11 @@ bin:
 pb: api config
 
 api:
-	$(PROTOC) -I "$(API_PROTO_DIR)" -I "$(GOOGLEAPIS_DIR)" -I "$(PROTOC_INCLUDE)" \
+	$(PROTOC) -I "$(API_PROTO_DIR)" -I "$(GOOGLEAPIS_DIR)" -I "../../third_party" -I "$(PROTOC_INCLUDE)" \
 		--go_out=paths=source_relative:"$(API_DIR)" \
 		--go-http_out=paths=source_relative:"$(API_DIR)" \
 		--openapi_out=fq_schema_naming=true,default_response=false:"$(API_DIR)/proxycontrol" \
+		--validate_out=lang=go,paths=source_relative:"$(API_DIR)" \
 		$(API_PROTOS)
 
 config:
