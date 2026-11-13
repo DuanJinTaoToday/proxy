@@ -1,0 +1,5 @@
+source:
+  file: /config/server.yaml
+zap:
+  console: true
+  level: info
