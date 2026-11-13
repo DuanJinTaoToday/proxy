@@ -11,61 +11,61 @@ option go_package = "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxyc
 
 service BillingService {
   rpc GetBillingSettings(GetBillingSettingsRequest) returns (BillingSettingsResponse) {
-    option (google.api.http) = { get: "/v1/operations/billing/settings/{scope_type}/{scope_id}" };
+    option (google.api.http) = {get: "/v1/operations/billing/settings/{scope_type}/{scope_id}"};
     option (openapi.v3.operation) = {
       summary: "查询计费阈值的配置值和生效值"
     };
   }
   rpc UpdateBillingSettings(UpdateBillingSettingsRequest) returns (BillingSettingsResponse) {
-    option (google.api.http) = { put: "/v1/operations/billing/settings/{scope_type}/{scope_id}" body: "*" };
+    option (google.api.http) = {put: "/v1/operations/billing/settings/{scope_type}/{scope_id}" body: "*"};
     option (openapi.v3.operation) = {
       summary: "替换指定范围的计费阈值配置"
     };
   }
   rpc CreateBillingRate(CreateBillingRateRequest) returns (BillingRateVersion) {
-    option (google.api.http) = { post: "/v1/operations/billing/rates" body: "*" };
+    option (google.api.http) = {post: "/v1/operations/billing/rates" body: "*"};
     option (openapi.v3.operation) = {
       summary: "创建指定范围的计费倍率版本"
     };
   }
   rpc CreateTenantGroup(CreateTenantGroupRequest) returns (TenantGroup) {
-    option (google.api.http) = { post: "/v1/operations/billing/groups" body: "*" };
+    option (google.api.http) = {post: "/v1/operations/billing/groups" body: "*"};
     option (openapi.v3.operation) = {
       summary: "创建租户分组"
     };
   }
   rpc SetTenantGroup(SetTenantGroupRequest) returns (TenantGroupMembership) {
-    option (google.api.http) = { put: "/v1/operations/tenants/{tenant_id}/group" body: "*" };
+    option (google.api.http) = {put: "/v1/operations/tenants/{tenant_id}/group" body: "*"};
     option (openapi.v3.operation) = {
       summary: "设置或清除租户分组"
     };
   }
   rpc CreateRecharge(CreateRechargeRequest) returns (BalanceLedgerEntry) {
-    option (google.api.http) = { post: "/v1/operations/tenants/{tenant_id}/recharges" body: "*" };
+    option (google.api.http) = {post: "/v1/operations/tenants/{tenant_id}/recharges" body: "*"};
     option (openapi.v3.operation) = {
       summary: "为租户充值流量额度"
     };
   }
   rpc AdjustBalance(AdjustBalanceRequest) returns (BalanceLedgerEntry) {
-    option (google.api.http) = { post: "/v1/operations/tenants/{tenant_id}/adjustments" body: "*" };
+    option (google.api.http) = {post: "/v1/operations/tenants/{tenant_id}/adjustments" body: "*"};
     option (openapi.v3.operation) = {
       summary: "增加或扣减租户流量额度"
     };
   }
   rpc ListTrafficGrants(ListTrafficGrantsRequest) returns (ListTrafficGrantsResponse) {
-    option (google.api.http) = { get: "/v1/operations/tenants/{tenant_id}/grants" };
+    option (google.api.http) = {get: "/v1/operations/tenants/{tenant_id}/grants"};
     option (openapi.v3.operation) = {
       summary: "分页查询租户流量额度"
     };
   }
   rpc ListBalanceLedger(ListBalanceLedgerRequest) returns (ListBalanceLedgerResponse) {
-    option (google.api.http) = { get: "/v1/operations/tenants/{tenant_id}/ledger" };
+    option (google.api.http) = {get: "/v1/operations/tenants/{tenant_id}/ledger"};
     option (openapi.v3.operation) = {
       summary: "分页查询租户余额流水"
     };
   }
   rpc ListBillingRates(ListBillingRatesRequest) returns (ListBillingRatesResponse) {
-    option (google.api.http) = { get: "/v1/operations/billing/rates" };
+    option (google.api.http) = {get: "/v1/operations/billing/rates"};
     option (openapi.v3.operation) = {
       summary: "查询计费倍率版本"
     };
