@@ -101,35 +101,3 @@ func (t authTx) FindReferences(gateway string, refs []string) ([]proxyauth.Crede
 	}
 	return credentials, nil
 }
-
-func (t authTx) Quota(tenant string, now time.Time) (*proxyauth.Quota, error) {
-	var row struct {
-		AvailableBytes          int64
-		AdmissionThresholdBytes uint64
-		ValidUntil              *time.Time
-	}
-	err := t.db.Raw(`WITH current_group AS (
-		SELECT group_id FROM tenant_group_members WHERE tenant_id = @tenant AND effective_from <= @now
-		ORDER BY effective_from DESC LIMIT 1
-	), grants AS (
-		SELECT COALESCE(SUM(granted_bytes - used_bytes) FILTER (
-			WHERE starts_at <= @now AND (expires_at IS NULL OR expires_at > @now) AND activated_at IS NOT NULL
-		), 0) AS available_bytes,
-		LEAST(MIN(starts_at) FILTER (WHERE starts_at > @now),
-			MIN(expires_at) FILTER (WHERE starts_at <= @now AND expires_at > @now)) AS valid_until
-		FROM traffic_grants WHERE tenant_id = @tenant AND status = 'active'
-	)
-	SELECT grants.available_bytes - COALESCE((SELECT overdraft_bytes FROM tenant_balances WHERE tenant_id = @tenant), 0)
-		AS available_bytes, grants.valid_until,
-		COALESCE((SELECT admission_threshold_bytes FROM billing_settings WHERE admission_threshold_bytes IS NOT NULL
-			AND ((scope_type = 'tenant' AND scope_id = @tenant)
-			OR (scope_type = 'group' AND scope_id = (SELECT group_id FROM current_group))
-			OR (scope_type = 'global' AND scope_id = ''))
-			ORDER BY CASE scope_type WHEN 'tenant' THEN 0 WHEN 'group' THEN 1 ELSE 2 END LIMIT 1), 10485760)
-		AS admission_threshold_bytes
-	FROM grants`, map[string]any{"tenant": tenant, "now": now}).Scan(&row).Error
-	if err != nil {
-		return nil, err
-	}
-	return &proxyauth.Quota{AvailableBytes: row.AvailableBytes, AdmissionThresholdBytes: row.AdmissionThresholdBytes, ValidUntil: row.ValidUntil}, nil
-}

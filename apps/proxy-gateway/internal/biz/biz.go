@@ -8,6 +8,6 @@ import (
 
 var ProviderSet = wire.NewSet(NewAuthRelay, recorder.New, recorder.NewLifecycle)
 
-func NewAuthRelay(control authrelay.Control) *authrelay.Relay {
-	return authrelay.New(control, nil)
+func NewAuthRelay(control authrelay.Control, collector *recorder.Collector) *authrelay.Relay {
+	return authrelay.NewWithReporting(control, collector.QuotaRenewal, collector.AuthInterrupted)
 }

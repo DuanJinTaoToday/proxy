@@ -17,5 +17,6 @@ var ProviderSet = wire.NewSet(
 	proxyauth.New,
 	usage.NewConfigured,
 	wire.Bind(new(proxyauth.TenantAccess), new(*access.Service)),
+	wire.Bind(new(proxyauth.QuotaReader), new(*usage.Service)),
 	wire.Bind(new(usage.TenantAccess), new(*access.Service)),
 )

@@ -17,21 +17,190 @@ var _ = new(context.Context)
 
 const _ = http.SupportPackageIsVersion3
 
+const OperationBillingServiceAdjustBalance = "/proxycontrol.v1.BillingService/AdjustBalance"
+const OperationBillingServiceCreateBillingRate = "/proxycontrol.v1.BillingService/CreateBillingRate"
+const OperationBillingServiceCreateRecharge = "/proxycontrol.v1.BillingService/CreateRecharge"
+const OperationBillingServiceCreateTenantGroup = "/proxycontrol.v1.BillingService/CreateTenantGroup"
+const OperationBillingServiceGetBillingSettings = "/proxycontrol.v1.BillingService/GetBillingSettings"
 const OperationBillingServiceListBalanceLedger = "/proxycontrol.v1.BillingService/ListBalanceLedger"
 const OperationBillingServiceListBillingRates = "/proxycontrol.v1.BillingService/ListBillingRates"
 const OperationBillingServiceListTrafficGrants = "/proxycontrol.v1.BillingService/ListTrafficGrants"
+const OperationBillingServiceSetTenantGroup = "/proxycontrol.v1.BillingService/SetTenantGroup"
+const OperationBillingServiceUpdateBillingSettings = "/proxycontrol.v1.BillingService/UpdateBillingSettings"
 
 type BillingServiceHTTPServer interface {
+	AdjustBalance(context.Context, *AdjustBalanceRequest) (*BalanceLedgerEntry, error)
+	CreateBillingRate(context.Context, *CreateBillingRateRequest) (*BillingRateVersion, error)
+	CreateRecharge(context.Context, *CreateRechargeRequest) (*BalanceLedgerEntry, error)
+	CreateTenantGroup(context.Context, *CreateTenantGroupRequest) (*TenantGroup, error)
+	GetBillingSettings(context.Context, *GetBillingSettingsRequest) (*BillingSettingsResponse, error)
 	ListBalanceLedger(context.Context, *ListBalanceLedgerRequest) (*ListBalanceLedgerResponse, error)
 	ListBillingRates(context.Context, *ListBillingRatesRequest) (*ListBillingRatesResponse, error)
 	ListTrafficGrants(context.Context, *ListTrafficGrantsRequest) (*ListTrafficGrantsResponse, error)
+	SetTenantGroup(context.Context, *SetTenantGroupRequest) (*TenantGroupMembership, error)
+	UpdateBillingSettings(context.Context, *UpdateBillingSettingsRequest) (*BillingSettingsResponse, error)
 }
 
 func RegisterBillingServiceHTTPServer(s *http.Server, srv BillingServiceHTTPServer) {
 	r := s.Route("/")
+	r.Handle("GET", "/v1/operations/billing/settings/{scope_type}/{scope_id}", _BillingService_GetBillingSettings0_HTTP_Handler(srv))
+	r.Handle("PUT", "/v1/operations/billing/settings/{scope_type}/{scope_id}", _BillingService_UpdateBillingSettings0_HTTP_Handler(srv))
+	r.Handle("POST", "/v1/operations/billing/rates", _BillingService_CreateBillingRate0_HTTP_Handler(srv))
+	r.Handle("POST", "/v1/operations/billing/groups", _BillingService_CreateTenantGroup0_HTTP_Handler(srv))
+	r.Handle("PUT", "/v1/operations/tenants/{tenant_id}/group", _BillingService_SetTenantGroup0_HTTP_Handler(srv))
+	r.Handle("POST", "/v1/operations/tenants/{tenant_id}/recharges", _BillingService_CreateRecharge0_HTTP_Handler(srv))
+	r.Handle("POST", "/v1/operations/tenants/{tenant_id}/adjustments", _BillingService_AdjustBalance0_HTTP_Handler(srv))
 	r.Handle("GET", "/v1/operations/tenants/{tenant_id}/grants", _BillingService_ListTrafficGrants0_HTTP_Handler(srv))
 	r.Handle("GET", "/v1/operations/tenants/{tenant_id}/ledger", _BillingService_ListBalanceLedger0_HTTP_Handler(srv))
 	r.Handle("GET", "/v1/operations/billing/rates", _BillingService_ListBillingRates0_HTTP_Handler(srv))
+}
+
+func _BillingService_GetBillingSettings0_HTTP_Handler(srv BillingServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in GetBillingSettingsRequest
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		if err := ctx.BindVars(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationBillingServiceGetBillingSettings)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.GetBillingSettings(ctx, req.(*GetBillingSettingsRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*BillingSettingsResponse)
+		return ctx.Result(200, reply)
+	}
+}
+
+func _BillingService_UpdateBillingSettings0_HTTP_Handler(srv BillingServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in UpdateBillingSettingsRequest
+		if err := ctx.Bind(&in); err != nil {
+			return err
+		}
+		if err := ctx.BindVars(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationBillingServiceUpdateBillingSettings)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.UpdateBillingSettings(ctx, req.(*UpdateBillingSettingsRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*BillingSettingsResponse)
+		return ctx.Result(200, reply)
+	}
+}
+
+func _BillingService_CreateBillingRate0_HTTP_Handler(srv BillingServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in CreateBillingRateRequest
+		if err := ctx.Bind(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationBillingServiceCreateBillingRate)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.CreateBillingRate(ctx, req.(*CreateBillingRateRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*BillingRateVersion)
+		return ctx.Result(200, reply)
+	}
+}
+
+func _BillingService_CreateTenantGroup0_HTTP_Handler(srv BillingServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in CreateTenantGroupRequest
+		if err := ctx.Bind(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationBillingServiceCreateTenantGroup)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.CreateTenantGroup(ctx, req.(*CreateTenantGroupRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*TenantGroup)
+		return ctx.Result(200, reply)
+	}
+}
+
+func _BillingService_SetTenantGroup0_HTTP_Handler(srv BillingServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in SetTenantGroupRequest
+		if err := ctx.Bind(&in); err != nil {
+			return err
+		}
+		if err := ctx.BindVars(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationBillingServiceSetTenantGroup)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.SetTenantGroup(ctx, req.(*SetTenantGroupRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*TenantGroupMembership)
+		return ctx.Result(200, reply)
+	}
+}
+
+func _BillingService_CreateRecharge0_HTTP_Handler(srv BillingServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in CreateRechargeRequest
+		if err := ctx.Bind(&in); err != nil {
+			return err
+		}
+		if err := ctx.BindVars(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationBillingServiceCreateRecharge)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.CreateRecharge(ctx, req.(*CreateRechargeRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*BalanceLedgerEntry)
+		return ctx.Result(200, reply)
+	}
+}
+
+func _BillingService_AdjustBalance0_HTTP_Handler(srv BillingServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in AdjustBalanceRequest
+		if err := ctx.Bind(&in); err != nil {
+			return err
+		}
+		if err := ctx.BindVars(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationBillingServiceAdjustBalance)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.AdjustBalance(ctx, req.(*AdjustBalanceRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*BalanceLedgerEntry)
+		return ctx.Result(200, reply)
+	}
 }
 
 func _BillingService_ListTrafficGrants0_HTTP_Handler(srv BillingServiceHTTPServer) func(ctx http.Context) error {
@@ -98,9 +267,16 @@ func _BillingService_ListBillingRates0_HTTP_Handler(srv BillingServiceHTTPServer
 }
 
 type BillingServiceHTTPClient interface {
+	AdjustBalance(ctx context.Context, req *AdjustBalanceRequest, opts ...http.CallOption) (rsp *BalanceLedgerEntry, err error)
+	CreateBillingRate(ctx context.Context, req *CreateBillingRateRequest, opts ...http.CallOption) (rsp *BillingRateVersion, err error)
+	CreateRecharge(ctx context.Context, req *CreateRechargeRequest, opts ...http.CallOption) (rsp *BalanceLedgerEntry, err error)
+	CreateTenantGroup(ctx context.Context, req *CreateTenantGroupRequest, opts ...http.CallOption) (rsp *TenantGroup, err error)
+	GetBillingSettings(ctx context.Context, req *GetBillingSettingsRequest, opts ...http.CallOption) (rsp *BillingSettingsResponse, err error)
 	ListBalanceLedger(ctx context.Context, req *ListBalanceLedgerRequest, opts ...http.CallOption) (rsp *ListBalanceLedgerResponse, err error)
 	ListBillingRates(ctx context.Context, req *ListBillingRatesRequest, opts ...http.CallOption) (rsp *ListBillingRatesResponse, err error)
 	ListTrafficGrants(ctx context.Context, req *ListTrafficGrantsRequest, opts ...http.CallOption) (rsp *ListTrafficGrantsResponse, err error)
+	SetTenantGroup(ctx context.Context, req *SetTenantGroupRequest, opts ...http.CallOption) (rsp *TenantGroupMembership, err error)
+	UpdateBillingSettings(ctx context.Context, req *UpdateBillingSettingsRequest, opts ...http.CallOption) (rsp *BillingSettingsResponse, err error)
 }
 
 type BillingServiceHTTPClientImpl struct {
@@ -109,6 +285,90 @@ type BillingServiceHTTPClientImpl struct {
 
 func NewBillingServiceHTTPClient(client *http.Client) BillingServiceHTTPClient {
 	return &BillingServiceHTTPClientImpl{client}
+}
+
+func (c *BillingServiceHTTPClientImpl) AdjustBalance(ctx context.Context, in *AdjustBalanceRequest, opts ...http.CallOption) (*BalanceLedgerEntry, error) {
+	var out BalanceLedgerEntry
+	pattern := "/v1/operations/tenants/{tenant_id}/adjustments"
+	path := http.BuildPath(pattern, in)
+	opts = append([]http.CallOption{
+		http.Accept("application/protojson"),
+		http.ContentType("application/protojson"),
+		http.Operation(OperationBillingServiceAdjustBalance),
+		http.PathTemplate(pattern),
+	}, opts...)
+	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (c *BillingServiceHTTPClientImpl) CreateBillingRate(ctx context.Context, in *CreateBillingRateRequest, opts ...http.CallOption) (*BillingRateVersion, error) {
+	var out BillingRateVersion
+	pattern := "/v1/operations/billing/rates"
+	path := http.BuildPath(pattern, in)
+	opts = append([]http.CallOption{
+		http.Accept("application/protojson"),
+		http.ContentType("application/protojson"),
+		http.Operation(OperationBillingServiceCreateBillingRate),
+		http.PathTemplate(pattern),
+	}, opts...)
+	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (c *BillingServiceHTTPClientImpl) CreateRecharge(ctx context.Context, in *CreateRechargeRequest, opts ...http.CallOption) (*BalanceLedgerEntry, error) {
+	var out BalanceLedgerEntry
+	pattern := "/v1/operations/tenants/{tenant_id}/recharges"
+	path := http.BuildPath(pattern, in)
+	opts = append([]http.CallOption{
+		http.Accept("application/protojson"),
+		http.ContentType("application/protojson"),
+		http.Operation(OperationBillingServiceCreateRecharge),
+		http.PathTemplate(pattern),
+	}, opts...)
+	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (c *BillingServiceHTTPClientImpl) CreateTenantGroup(ctx context.Context, in *CreateTenantGroupRequest, opts ...http.CallOption) (*TenantGroup, error) {
+	var out TenantGroup
+	pattern := "/v1/operations/billing/groups"
+	path := http.BuildPath(pattern, in)
+	opts = append([]http.CallOption{
+		http.Accept("application/protojson"),
+		http.ContentType("application/protojson"),
+		http.Operation(OperationBillingServiceCreateTenantGroup),
+		http.PathTemplate(pattern),
+	}, opts...)
+	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (c *BillingServiceHTTPClientImpl) GetBillingSettings(ctx context.Context, in *GetBillingSettingsRequest, opts ...http.CallOption) (*BillingSettingsResponse, error) {
+	var out BillingSettingsResponse
+	pattern := "/v1/operations/billing/settings/{scope_type}/{scope_id}"
+	path := http.BuildPath(pattern, in, http.WithQueryParams())
+	opts = append([]http.CallOption{
+		http.Accept("application/protojson"),
+		http.Operation(OperationBillingServiceGetBillingSettings),
+		http.PathTemplate(pattern),
+	}, opts...)
+	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
 }
 
 func (c *BillingServiceHTTPClientImpl) ListBalanceLedger(ctx context.Context, in *ListBalanceLedgerRequest, opts ...http.CallOption) (*ListBalanceLedgerResponse, error) {
@@ -153,6 +413,40 @@ func (c *BillingServiceHTTPClientImpl) ListTrafficGrants(ctx context.Context, in
 		http.PathTemplate(pattern),
 	}, opts...)
 	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (c *BillingServiceHTTPClientImpl) SetTenantGroup(ctx context.Context, in *SetTenantGroupRequest, opts ...http.CallOption) (*TenantGroupMembership, error) {
+	var out TenantGroupMembership
+	pattern := "/v1/operations/tenants/{tenant_id}/group"
+	path := http.BuildPath(pattern, in)
+	opts = append([]http.CallOption{
+		http.Accept("application/protojson"),
+		http.ContentType("application/protojson"),
+		http.Operation(OperationBillingServiceSetTenantGroup),
+		http.PathTemplate(pattern),
+	}, opts...)
+	err := c.cc.Invoke(ctx, "PUT", path, in, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (c *BillingServiceHTTPClientImpl) UpdateBillingSettings(ctx context.Context, in *UpdateBillingSettingsRequest, opts ...http.CallOption) (*BillingSettingsResponse, error) {
+	var out BillingSettingsResponse
+	pattern := "/v1/operations/billing/settings/{scope_type}/{scope_id}"
+	path := http.BuildPath(pattern, in)
+	opts = append([]http.CallOption{
+		http.Accept("application/protojson"),
+		http.ContentType("application/protojson"),
+		http.Operation(OperationBillingServiceUpdateBillingSettings),
+		http.PathTemplate(pattern),
+	}, opts...)
+	err := c.cc.Invoke(ctx, "PUT", path, in, &out, opts...)
 	if err != nil {
 		return nil, err
 	}

@@ -36,7 +36,18 @@ type Transaction interface {
 	Quarantine(gatewayID, bootID, fileID string, offset uint64, kind, detail string, now time.Time) error
 	LoadAccount(id string, now time.Time) (Account, error)
 	Thresholds(id string, now time.Time) ([]Threshold, error)
+	LockBillingConfig(exclusive bool) error
+	BillingSettings(scope Scope) (Threshold, error)
+	SaveBillingSettings(scope Scope, threshold Threshold, actor string, now time.Time) error
+	GroupExists(id string) (bool, error)
+	InsertGroup(id, name string, now time.Time) (bool, error)
+	AppendGroupMembership(tenant, group, actor string, now time.Time) (time.Time, error)
+	InsertBillingRate(rate RateVersion, actor string, now time.Time) (int64, error)
 	SaveGrant(Grant) error
+	CreateGrant(tenant, actor string, grant Grant, now time.Time) (int64, error)
+	SaveGrantAmount(grant Grant) error
+	FindBalanceChange(tenant, externalRef string) (LedgerEntry, error)
+	WriteBalanceChange(tenant string, entry LedgerEntry) (LedgerEntry, error)
 	SaveAccount(Account, time.Time) error
 	Rates([]RateSample) ([]Rate, error)
 	WriteBuckets([]Bucket, []Bucket) error

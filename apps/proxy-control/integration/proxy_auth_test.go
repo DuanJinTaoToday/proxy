@@ -14,6 +14,7 @@ import (
 	v1 "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/integration/testfixture"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/proxyauth"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/usage"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/data/repo"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/server"
 	httpservice "github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/service"
@@ -79,12 +80,14 @@ func authFixture(t *testing.T) (http.Handler, *gorm.DB) {
 	query.Set("search_path", schema)
 	address.RawQuery = query.Encode()
 	db := openAuthTestDB(t, address.String())
-	raw, err := os.ReadFile("../migrations/00001_proxy_auth.sql")
-	if err != nil {
-		t.Fatal(err)
+	for _, migration := range []string{"00001_proxy_auth.sql", "00002_usage.sql"} {
+		raw, err := os.ReadFile("../migrations/" + migration)
+		if err != nil {
+			t.Fatal(err)
+		}
+		up, _, _ := strings.Cut(string(raw), "-- +goose Down")
+		authSQL(t, db, up)
 	}
-	up, _, _ := strings.Cut(string(raw), "-- +goose Down")
-	authSQL(t, db, up)
 	authSQL(t, db, `INSERT INTO gateways (id, name) VALUES ('a', 'A'), ('b', 'B');
 		INSERT INTO traffic_grants (tenant_id, granted_bytes, starts_at, activated_at, source, created_by)
 		VALUES ('alpha', 104857600, now()-interval '1 day', now()-interval '1 day', 'recharge', 'test');`)
@@ -94,7 +97,8 @@ func authFixture(t *testing.T) (http.Handler, *gorm.DB) {
 	}
 	accessService := testfixture.AuthAccess(t)
 	handler := server.NewHTTPServer("127.0.0.1:0", httpservice.NewAccess(accessService))
-	server.RegisterProxyAuth(handler, httpservice.NewProxyAuth(proxyauth.New(repo.NewProxyAuthRepository(db), accessService)))
+	quota := usage.New(repo.NewUsageRepository(db), accessService)
+	server.RegisterProxyAuth(handler, httpservice.NewProxyAuth(proxyauth.New(repo.NewProxyAuthRepository(db), accessService, quota)))
 	return handler, db
 }
 

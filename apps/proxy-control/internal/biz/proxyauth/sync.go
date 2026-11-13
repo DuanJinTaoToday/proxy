@@ -39,10 +39,13 @@ func (s *Service) LoadAuthState(ctx context.Context, token, username, password s
 		if err != nil {
 			return err
 		}
-		snapshot, err = row.snapshot(tx, now, make(map[string]*Quota))
-		return err
+		snapshot = row.snapshot(now)
+		return nil
 	})
 	if err != nil {
+		return nil, databaseError(err)
+	}
+	if err := s.attachQuotas(ctx, []*Snapshot{snapshot}); err != nil {
 		return nil, databaseError(err)
 	}
 	return snapshot, nil
@@ -70,18 +73,16 @@ func (s *Service) RefreshAuthState(ctx context.Context, token string, refs []str
 		if len(rows) != len(refs) {
 			return errors.BadRequest("INVALID_AUTH_REFERENCES", "one or more references were not issued to this gateway")
 		}
-		quotas := make(map[string]*Quota)
 		now := time.Now().UTC()
 		for _, row := range rows {
-			snapshot, err := row.snapshot(tx, now, quotas)
-			if err != nil {
-				return err
-			}
-			snapshots = append(snapshots, snapshot)
+			snapshots = append(snapshots, row.snapshot(now))
 		}
 		return nil
 	})
 	if err != nil {
+		return nil, databaseError(err)
+	}
+	if err := s.attachQuotas(ctx, snapshots); err != nil {
 		return nil, databaseError(err)
 	}
 	return snapshots, nil
@@ -107,26 +108,36 @@ func unauthenticated() error {
 	return errors.Unauthorized("GATEWAY_UNAUTHENTICATED", "valid gateway auth token required")
 }
 
-func (c Credential) snapshot(tx GatewayTx, now time.Time, quotas map[string]*Quota) (*Snapshot, error) {
+func (c Credential) snapshot(now time.Time) *Snapshot {
 	result := &Snapshot{Reference: c.Reference, Username: c.Username, ClientID: c.ClientID,
 		TenantID: c.TenantID, Active: c.Status == "active" && (c.ExpiresAt == nil || now.Before(*c.ExpiresAt))}
 	if c.ExpiresAt != nil {
 		result.ExpiresAt = c.ExpiresAt
 	}
 	if !result.Active {
-		return result, nil
+		return result
 	}
 	result.AllowedSourceCIDRs = c.AllowedSourceCIDRs
 	result.PasswordHash = c.SecretHash
-	q := quotas[c.TenantID]
-	if q == nil {
-		var err error
-		q, err = tx.Quota(c.TenantID, now)
-		if err != nil {
-			return nil, err
+	return result
+}
+
+func (s *Service) attachQuotas(ctx context.Context, snapshots []*Snapshot) error {
+	quotas := make(map[string]*Quota)
+	for _, snapshot := range snapshots {
+		if !snapshot.Active {
+			continue
 		}
-		quotas[c.TenantID] = q
+		quota := quotas[snapshot.TenantID]
+		if quota == nil {
+			var err error
+			quota, err = s.quota.AdmissionQuota(ctx, snapshot.TenantID)
+			if err != nil {
+				return err
+			}
+			quotas[snapshot.TenantID] = quota
+		}
+		snapshot.Quota = quota
 	}
-	result.Quota = q
-	return result, nil
+	return nil
 }

@@ -35,6 +35,9 @@ func (r *Relay) Refresh(ctx context.Context) error {
 	slices.Sort(references)
 	for batch := range slices.Chunk(references, v1.GatewayAuthRefreshLimit) {
 		if err := r.refreshBatch(ctx, batch, epoch); err != nil {
+			if r.authInterrupted != nil {
+				r.authInterrupted()
+			}
 			authmetrics.Counters.Add("refresh_failed", 1)
 			return err
 		}
@@ -46,6 +49,7 @@ func (r *Relay) refreshBatch(ctx context.Context, references []string, epoch uin
 	ctx, cancel := context.WithTimeout(ctx, syncTimeout)
 	defer cancel()
 	started := r.now()
+	generation, renewQuota := r.quotaRenewal()
 	snapshots, err := r.control.Refresh(ctx, references)
 	if err != nil {
 		r.invalidateOnDenial(err, epoch)
@@ -67,7 +71,7 @@ func (r *Relay) refreshBatch(ctx context.Context, references []string, epoch uin
 		}
 		delete(requested, snapshot.GetReference())
 	}
-	r.apply(snapshots, started, epoch)
+	r.apply(snapshots, started, epoch, generation, renewQuota)
 	return nil
 }
 

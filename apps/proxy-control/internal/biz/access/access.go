@@ -29,6 +29,7 @@ const (
 	ReadTenantUsage Permission = iota + 1
 	ManageProxyCredentials
 	ReadOperations
+	ManageBilling
 	ExtractProxy
 )
 
@@ -45,8 +46,9 @@ var tenantIDPattern = regexp.MustCompile("^[A-Za-z0-9_-]{1,64}$")
 
 type userAccess struct {
 	passwordHash
-	memberships map[string]conf.TenantRole
-	operator    bool
+	memberships   map[string]conf.TenantRole
+	operator      bool
+	manageBilling bool
 }
 
 type Service struct {
@@ -102,7 +104,11 @@ func New(config *conf.Access) (*Service, error) {
 			}
 			memberships[id] = role
 		}
-		service.users[name] = userAccess{passwordHash: passwordHash{salt: salt, key: key}, memberships: memberships, operator: user.GetPlatformOperator()}
+		if user.GetManageBilling() && !user.GetPlatformOperator() {
+			return nil, fmt.Errorf("manage_billing requires platform_operator for access user %q", name)
+		}
+		service.users[name] = userAccess{passwordHash: passwordHash{salt: salt, key: key}, memberships: memberships,
+			operator: user.GetPlatformOperator(), manageBilling: user.GetManageBilling()}
 	}
 	return service, nil
 }
@@ -208,8 +214,28 @@ func (s *Service) RequireActor(token, tenantID string, permission Permission) (s
 		if tenantID == "" && user.operator {
 			return username, nil
 		}
+	case ManageBilling:
+		if user.manageBilling {
+			if tenantID == "" || s.HasTenant(tenantID) {
+				return username, nil
+			}
+		}
 	}
 	return "", errors.Forbidden("ACCESS_DENIED", "permission denied")
+}
+
+func (s *Service) HasTenant(id string) bool {
+	_, exists := s.tenants[id]
+	return exists
+}
+
+func (s *Service) TenantIDs() []string {
+	ids := make([]string, 0, len(s.tenants))
+	for id := range s.tenants {
+		ids = append(ids, id)
+	}
+	sort.Strings(ids)
+	return ids
 }
 
 func activeMembership(role conf.TenantRole) bool {

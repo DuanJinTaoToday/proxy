@@ -20,7 +20,6 @@ type GatewayTx interface {
 	FindCredential(username string) (Credential, bool, error)
 	Reference(gateway, clientID, newReference string) (string, error)
 	FindReferences(gateway string, references []string) ([]Credential, error)
-	Quota(tenant string, now time.Time) (*Quota, error)
 }
 
 type Credential struct {

@@ -33,7 +33,16 @@ func wireApp(confServer *conf.Server, data *conf.Data, confBiz *conf.Biz, appCon
 	if err != nil {
 		return nil, nil, err
 	}
-	relay := biz.NewAuthRelay(httpControl)
+	config := gatewaySettings.Recorder
+	spoolPath := gatewaySettings.Spool
+	spool := repo.NewConfiguredSpool(spoolPath)
+	reportConfig := gatewaySettings.Report
+	httpReporter, err := acl.NewReporter(reportConfig, transport)
+	if err != nil {
+		return nil, nil, err
+	}
+	collector := recorder.New(config, spool, httpReporter)
+	relay := biz.NewAuthRelay(httpControl, collector)
 	addrPort := gatewaySettings.Address
 	string2 := gatewaySettings.LocalToken
 	authRelay := service.NewAuthRelay(relay, string2)
@@ -42,16 +51,6 @@ func wireApp(confServer *conf.Server, data *conf.Data, confBiz *conf.Biz, appCon
 	if err != nil {
 		return nil, nil, err
 	}
-	config := gatewaySettings.Recorder
-	spoolPath := gatewaySettings.Spool
-	spool := repo.NewConfiguredSpool(spoolPath)
-	reportConfig := gatewaySettings.Report
-	httpReporter, err := acl.NewReporter(reportConfig, transport)
-	if err != nil {
-		cleanup()
-		return nil, nil, err
-	}
-	collector := recorder.New(config, spool, httpReporter)
 	lifecycle := recorder.NewLifecycle(spool, httpReporter)
 	cronService := service.NewCronService(logger)
 	cronServerImpl, err := server.NewCronServer(appConfig, cronService)

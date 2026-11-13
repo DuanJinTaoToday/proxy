@@ -12,18 +12,19 @@ const TableNameBalanceLedger = "balance_ledger"
 
 // BalanceLedger mapped from table <balance_ledger>
 type BalanceLedger struct {
-	ID              int64     `gorm:"column:id;type:bigint;primaryKey;autoIncrement:true" json:"id"`
-	TenantID        string    `gorm:"column:tenant_id;type:text;not null" json:"tenant_id"`
-	Kind            string    `gorm:"column:kind;type:text;not null" json:"kind"`
-	GrantID         *int64    `gorm:"column:grant_id;type:bigint" json:"grant_id"`
-	DeltaBytes      int64     `gorm:"column:delta_bytes;type:bigint;not null" json:"delta_bytes"`
-	AvailableBefore int64     `gorm:"column:available_before;type:bigint;not null" json:"available_before"`
-	AvailableAfter  int64     `gorm:"column:available_after;type:bigint;not null" json:"available_after"`
-	ExternalRef     *string   `gorm:"column:external_ref;type:text" json:"external_ref"`
-	Reason          string    `gorm:"column:reason;type:text;not null" json:"reason"`
-	Operator        string    `gorm:"column:operator;type:text;not null" json:"operator"`
-	CreatedAt       time.Time `gorm:"column:created_at;type:timestamp with time zone;not null" json:"created_at"`
-	CorrectionOf    *int64    `gorm:"column:correction_of;type:bigint" json:"correction_of"`
+	ID                  int64     `gorm:"column:id;type:bigint;primaryKey;autoIncrement:true" json:"id"`
+	TenantID            string    `gorm:"column:tenant_id;type:text;not null" json:"tenant_id"`
+	Kind                string    `gorm:"column:kind;type:text;not null" json:"kind"`
+	GrantID             *int64    `gorm:"column:grant_id;type:bigint" json:"grant_id"`
+	DeltaBytes          int64     `gorm:"column:delta_bytes;type:bigint;not null" json:"delta_bytes"`
+	AvailableBefore     int64     `gorm:"column:available_before;type:bigint;not null" json:"available_before"`
+	AvailableAfter      int64     `gorm:"column:available_after;type:bigint;not null" json:"available_after"`
+	ExternalRef         *string   `gorm:"column:external_ref;type:text" json:"external_ref"`
+	Reason              string    `gorm:"column:reason;type:text;not null" json:"reason"`
+	Operator            string    `gorm:"column:operator;type:text;not null" json:"operator"`
+	CreatedAt           time.Time `gorm:"column:created_at;type:timestamp with time zone;not null" json:"created_at"`
+	CorrectionOf        *int64    `gorm:"column:correction_of;type:bigint" json:"correction_of"`
+	OverdraftAddedBytes *int64    `gorm:"column:overdraft_added_bytes;type:bigint" json:"overdraft_added_bytes"`
 }
 
 // TableName BalanceLedger's table name

@@ -20,6 +20,7 @@ type LedgerEntry struct {
 	ID, GrantID, DeltaBytes, AvailableBefore, AvailableAfter, CorrectionOf int64
 	Kind, ExternalRef, Reason, Operator                                    string
 	CreatedAt                                                              time.Time
+	OverdraftAddedBytes                                                    *int64
 }
 
 type RateVersion struct {

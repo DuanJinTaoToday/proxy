@@ -59,6 +59,8 @@ type Collector struct {
 	retries        map[string]retry
 	pendingSince   map[string]time.Time
 	lastBacklogLog time.Time
+	admission      admissionState
+	now            func() time.Time
 }
 
 func New(cfg Config, spool Spool, reporter Reporter) *Collector {
@@ -71,7 +73,8 @@ func New(cfg Config, spool Spool, reporter Reporter) *Collector {
 	if cfg.Interval <= 0 {
 		cfg.Interval = time.Second
 	}
-	return &Collector{cfg: cfg, spool: spool, reporter: reporter, retries: make(map[string]retry), pendingSince: make(map[string]time.Time)}
+	return &Collector{cfg: cfg, spool: spool, reporter: reporter, retries: make(map[string]retry), pendingSince: make(map[string]time.Time),
+		now: time.Now, admission: admissionState{blocked: true, pending: make(map[string]pendingFile)}}
 }
 
 func (c *Collector) Run(ctx context.Context) {
@@ -94,9 +97,18 @@ func (c *Collector) Run(ctx context.Context) {
 func (c *Collector) Scan(ctx context.Context) error {
 	boots, err := c.spool.Boots()
 	if err != nil {
+		c.admission.block()
 		return err
 	}
+	err = c.observeAdmission(boots)
+	if err != nil {
+		c.admission.block()
+	}
 	var errs []error
+	if err != nil {
+		errs = append(errs, err)
+	}
+	submissions := c.admission.submissions
 	var pendingBytes uint64
 	var oldest time.Time
 	now := time.Now()
@@ -122,7 +134,7 @@ func (c *Collector) Scan(ctx context.Context) error {
 			}
 		}
 		state := c.retries[boot]
-		if state.permanent || time.Now().Before(state.at) {
+		if state.permanent || c.now().Before(state.at) {
 			continue
 		}
 		err := c.scanBoot(ctx, boot)
@@ -135,10 +147,16 @@ func (c *Collector) Scan(ctx context.Context) error {
 			state.permanent = true
 		} else {
 			state.delay = min(max(time.Second, 2*state.delay), 30*time.Second)
-			state.at = time.Now().Add(state.delay)
+			state.at = c.now().Add(state.delay)
 		}
 		c.retries[boot] = state
 		errs = append(errs, fmt.Errorf("boot %s: %w", boot, err))
+	}
+	if err == nil {
+		if err := c.finishAdmission(submissions); err != nil {
+			c.admission.block()
+			errs = append(errs, err)
+		}
 	}
 	if !oldest.IsZero() && now.Sub(oldest) >= 5*time.Second && now.Sub(c.lastBacklogLog) >= 5*time.Second {
 		attrs := []any{"bytes", pendingBytes, "oldest_observed_wait", now.Sub(oldest)}
@@ -289,12 +307,19 @@ func (c *Collector) submit(ctx context.Context, boot string, batch *v1.SubmitBat
 			continue
 		}
 		if errors.Is(err, ErrBatchTooLarge) {
+			c.admission.failSubmission()
 			return PermanentError{errors.New("control plane rejected an individual line as too large")}
 		}
 		if err != nil {
+			c.admission.failSubmission()
 			return err
 		}
-		return c.spool.SaveOffset(boot, batch.Records[len(batch.Records)-1].EndOffset)
+		if err := c.spool.SaveOffset(boot, batch.Records[len(batch.Records)-1].EndOffset); err != nil {
+			c.admission.failSubmission()
+			return err
+		}
+		c.admission.submissions++
+		return nil
 	}
 }
 

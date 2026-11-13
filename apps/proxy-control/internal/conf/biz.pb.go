@@ -180,6 +180,7 @@ type User struct {
 	PasswordHash     string                 `protobuf:"bytes,2,opt,name=password_hash,json=passwordHash,proto3" json:"password_hash,omitempty"`
 	Memberships      []*Membership          `protobuf:"bytes,3,rep,name=memberships,proto3" json:"memberships,omitempty"`
 	PlatformOperator bool                   `protobuf:"varint,4,opt,name=platform_operator,json=platformOperator,proto3" json:"platform_operator,omitempty"`
+	ManageBilling    bool                   `protobuf:"varint,5,opt,name=manage_billing,json=manageBilling,proto3" json:"manage_billing,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -238,6 +239,13 @@ func (x *User) GetMemberships() []*Membership {
 func (x *User) GetPlatformOperator() bool {
 	if x != nil {
 		return x.PlatformOperator
+	}
+	return false
+}
+
+func (x *User) GetManageBilling() bool {
+	if x != nil {
+		return x.ManageBilling
 	}
 	return false
 }
@@ -416,12 +424,13 @@ const file_biz_proto_rawDesc = "" +
 	"\x05usage\x18\x02 \x01(\v2\x1d.proxycontrol.config.v1.UsageR\x05usage\"v\n" +
 	"\x06Access\x122\n" +
 	"\x05users\x18\x01 \x03(\v2\x1c.proxycontrol.config.v1.UserR\x05users\x128\n" +
-	"\atenants\x18\x02 \x03(\v2\x1e.proxycontrol.config.v1.TenantR\atenants\"\xba\x01\n" +
+	"\atenants\x18\x02 \x03(\v2\x1e.proxycontrol.config.v1.TenantR\atenants\"\xe1\x01\n" +
 	"\x04User\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\x12#\n" +
 	"\rpassword_hash\x18\x02 \x01(\tR\fpasswordHash\x12D\n" +
 	"\vmemberships\x18\x03 \x03(\v2\".proxycontrol.config.v1.MembershipR\vmemberships\x12+\n" +
-	"\x11platform_operator\x18\x04 \x01(\bR\x10platformOperator\",\n" +
+	"\x11platform_operator\x18\x04 \x01(\bR\x10platformOperator\x12%\n" +
+	"\x0emanage_billing\x18\x05 \x01(\bR\rmanageBilling\",\n" +
 	"\x06Tenant\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\"}\n" +

@@ -47,17 +47,22 @@ func loadThresholds(tx Transaction, a *Account, now time.Time) error {
 	if err != nil {
 		return err
 	}
-	a.Admission, a.Warning = 10*1024*1024, 1000*1024*1024
+	a.Admission, a.Warning = resolveThresholds(settings)
+	return nil
+}
+
+func resolveThresholds(settings []Threshold) (admission, warning int64) {
+	admission, warning = 10*1024*1024, 1000*1024*1024
 	var admissionSet, warningSet bool
 	for _, setting := range settings {
 		if !admissionSet && setting.AdmissionThresholdBytes != nil {
-			a.Admission, admissionSet = *setting.AdmissionThresholdBytes, true
+			admission, admissionSet = *setting.AdmissionThresholdBytes, true
 		}
 		if !warningSet && setting.WarningThresholdBytes != nil {
-			a.Warning, warningSet = *setting.WarningThresholdBytes, true
+			warning, warningSet = *setting.WarningThresholdBytes, true
 		}
 	}
-	return nil
+	return admission, warning
 }
 
 func (a *Account) available(now time.Time) (int64, error) {
@@ -96,12 +101,7 @@ func (a *Account) activate(tx Transaction, now time.Time) error {
 		if err != nil {
 			return err
 		}
-		offset := min(a.Overdraft, g.GrantedBytes-g.UsedBytes)
-		a.Overdraft -= offset
-		g.UsedBytes += offset
-		g.OverdraftOffsetBytes += offset
-		g.ActivatedAt = &now
-		g.dirty = true
+		offset := a.activateGrant(g, now)
 		if offset > 0 {
 			after, err := a.available(now)
 			if err != nil {
@@ -113,6 +113,16 @@ func (a *Account) activate(tx Transaction, now time.Time) error {
 		}
 	}
 	return nil
+}
+
+func (a *Account) activateGrant(g *Grant, now time.Time) int64 {
+	offset := min(a.Overdraft, g.GrantedBytes-g.UsedBytes)
+	a.Overdraft -= offset
+	g.UsedBytes += offset
+	g.OverdraftOffsetBytes += offset
+	g.ActivatedAt = &now
+	g.dirty = true
+	return offset
 }
 
 func (a *Account) save(tx Transaction, now time.Time) error {

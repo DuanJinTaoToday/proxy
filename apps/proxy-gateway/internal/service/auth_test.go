@@ -116,6 +116,31 @@ func TestRefreshAppliesDisableAndGatewayRevocation(t *testing.T) {
 	}
 }
 
+func TestAdmissionTracksRefreshedQuota(t *testing.T) {
+	now := time.Now()
+	remote := &control{load: snapshot()}
+	relay := authrelay.New(remote, func() time.Time { return now })
+	handler := service.NewAuthRelay(relay, localToken)
+	if _, ok, _ := authenticate(t, handler, localToken); !ok {
+		t.Fatal("initial balance should admit a connection")
+	}
+	for _, tc := range []struct {
+		available int64
+		admitted  bool
+	}{{9, false}, {-1, false}, {10, true}} {
+		now = now.Add(time.Second)
+		update := snapshot()
+		update.Quota.AvailableBytes = tc.available
+		remote.refresh = []*v1.AuthSnapshot{update}
+		if err := relay.Refresh(t.Context()); err != nil {
+			t.Fatal(err)
+		}
+		if _, ok, _ := authenticate(t, handler, localToken); ok != tc.admitted {
+			t.Fatalf("admission with %d bytes = %t, want %t", tc.available, ok, tc.admitted)
+		}
+	}
+}
+
 func TestOfflineAdmissionStillChecksSourceExpiryAndQuota(t *testing.T) {
 	now := time.Now()
 	state := snapshot()
