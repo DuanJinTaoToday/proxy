@@ -1,0 +1,35 @@
+server:
+  http:
+    addr: 0.0.0.0:8000
+  cron_tasks:
+    - name: MaintainUsage
+      spec: "0 * * * * *"
+      timeout: 0s
+data:
+  repo:
+    proxy_auth:
+      database_dsn: "postgres://proxy:proxy-local-test@db:5432/proxy?sslmode=disable"
+    usage:
+      database_dsn: "postgres://proxy:proxy-local-test@db:5432/proxy?sslmode=disable"
+biz:
+  access:
+    tenants:
+      - id: alpha
+        name: Alpha
+      - id: beta
+        name: Beta
+    users:
+      - username: alice
+        password_hash: "2bd806c97f0e00af1a1fc3328fa763a9:38c0e51748906648e4e5318e2990cea0f17670ee335eafe9556e85bbb437a725"
+        memberships:
+          - tenant_id: alpha
+            role: TENANT_ROLE_ADMIN
+      - username: bob
+        password_hash: "81b637d8fcd2c6da6359e6963113a117:3722a65d26a8a497f340de7d6380f3ae49f7e1e2be710439ddc6a374bf176a91"
+        memberships:
+          - tenant_id: beta
+            role: TENANT_ROLE_ADMIN
+      - username: operator
+        password_hash: "06e55b633481f7bb072957eabcf110c9:53683f816375ff5369a9d2b7d62b18d3d790341b14b425f87422353219d5c229"
+        platform_operator: true
+        manage_billing: true

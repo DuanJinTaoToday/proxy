@@ -19,3 +19,13 @@ init:
 	go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
 	go install github.com/pressly/goose/v3/cmd/goose@$(GOOSE_VERSION)
 	go install github.com/google/wire/cmd/wire@$(WIRE_VERSION)
+
+TEST_COMPOSE := docker compose -f deploy/test/compose.yaml
+
+.PHONY: test-env
+test-env:
+	$(TEST_COMPOSE) build --build-arg GOOSE_VERSION=$(GOOSE_VERSION)
+	$(TEST_COMPOSE) up -d --wait --wait-timeout 60 db
+	$(TEST_COMPOSE) run --rm migrate
+	$(TEST_COMPOSE) up -d --remove-orphans --wait --wait-timeout 120 console gateway
+	$(TEST_COMPOSE) ps

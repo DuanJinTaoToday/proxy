@@ -1,0 +1,29 @@
+authers:
+  - name: proxy-auth-relay
+    plugin:
+      type: http
+      addr: http://127.0.0.1:8091/v1/gateway/auth
+      token: "${LOCAL_AUTH_TOKEN}"
+      timeout: 500ms
+
+chains:
+  - name: proxy-wukong-mock
+    hops:
+      - name: supplier
+        nodes:
+          - name: proxy-wukong-mock
+            addr: proxy-wukong-mock:1081
+            connector:
+              type: socks5
+            dialer:
+              type: tcp
+
+services:
+  - name: socks5
+    addr: "0.0.0.0:1080"
+    listener:
+      type: tcp
+    handler:
+      type: socks5
+      auther: proxy-auth-relay
+      chain: proxy-wukong-mock

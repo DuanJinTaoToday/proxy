@@ -64,6 +64,7 @@
 | --- | --- |
 | `apps/proxy-control/` | `make build` 构建控制面，`make pb` 运行 `make api` 和 `make config`，`make lint` 检查控制面和 API Go 代码。 |
 | `apps/proxy-gateway/` | `make build` 构建 `proxy-gateway`，`make lint` 检查网关 Go 代码。整包目标随打包流程实现。 |
+| `apps/proxy-console/` | `make init` 安装依赖，`make run` 启动 Vite，`make build` 检查类型并打包到 `dist/`。 |
 
 控制面启动后可通过 `GET /healthz` 检查 HTTP 进程是否可响应。控制面的 `make dao` 用于生成持久化模型。
 

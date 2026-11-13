@@ -1,0 +1,19 @@
+server:
+  http:
+    addr: 127.0.0.1:8091
+data:
+  gost:
+    binary: /usr/local/bin/gost
+    config: /config/gost.yaml
+    local_auth_token: "xF7BYgCywEDoqSzEoCsHWxBdxY6AByM1FxbN6HiPo1E"
+  acl:
+    control:
+      url: https://console
+      ca_file: /tls/caddy/pki/authorities/local/root.crt
+      auth_token: "L5AQNJAvo_kCSOtz4a484-Y8-jt7x0fTTPsh4DjRgtM"
+      report_token: "TKR5RfqAtYQI4M70cO9hnpOkfvHqmvWRllr-DuALy2I"
+  repo:
+    recorder:
+      spool: /spool
+biz:
+  gateway_id: local-test

@@ -1,0 +1,21 @@
+https://localhost, https://console {
+	tls internal
+	@control path /v1/* /healthz
+	handle @control {
+		reverse_proxy control:8000
+	}
+	handle {
+		root * /srv/console
+		try_files {path} /index.html
+		file_server
+	}
+}
+
+:8080 {
+	handle /healthz {
+		reverse_proxy control:8000
+	}
+	handle /fixture {
+		respond "proxy-test" 200
+	}
+}
