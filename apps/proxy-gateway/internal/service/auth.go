@@ -13,12 +13,17 @@ import (
 )
 
 type AuthRelay struct {
-	relay     *authrelay.Relay
-	tokenHash [32]byte
+	relay           *authrelay.Relay
+	tokenHash       [32]byte
+	onAuthenticated func(client, tenant string)
 }
 
 func NewAuthRelay(relay *authrelay.Relay, token string) *AuthRelay {
 	return &AuthRelay{relay: relay, tokenHash: sha256.Sum256([]byte(token))}
+}
+
+func (r *AuthRelay) OnAuthenticated(callback func(client, tenant string)) {
+	r.onAuthenticated = callback
 }
 
 func (r *AuthRelay) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -48,7 +53,10 @@ func (r *AuthRelay) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	id, reason := r.relay.Authenticate(req.Context(), input.Username, input.Password, input.Client)
+	id, tenant, reason := r.relay.AuthenticateTenant(req.Context(), input.Username, input.Password, input.Client)
+	if id != "" && r.onAuthenticated != nil {
+		r.onAuthenticated(id, tenant)
+	}
 	authmetrics.RecordDecision(reason)
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Cache-Control", "no-store")

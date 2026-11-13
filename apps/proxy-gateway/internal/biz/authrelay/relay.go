@@ -74,8 +74,13 @@ func (r *Relay) quotaRenewal() (uint64, bool) {
 }
 
 func (r *Relay) Authenticate(ctx context.Context, username, password, client string) (string, string) {
+	id, _, reason := r.AuthenticateTenant(ctx, username, password, client)
+	return id, reason
+}
+
+func (r *Relay) AuthenticateTenant(ctx context.Context, username, password, client string) (id, tenant, reason string) {
 	if username == "" || password == "" || len(username) > 255 || len(password) > 255 {
-		return "", "INVALID_CREDENTIAL"
+		return "", "", "INVALID_CREDENTIAL"
 	}
 	now := r.now()
 	digest := sha256.Sum256([]byte(password))
@@ -87,13 +92,13 @@ func (r *Relay) Authenticate(ctx context.Context, username, password, client str
 		if err := r.coldLoad(ctx, username, password, digest, epoch); err != nil {
 			switch {
 			case errors.Is(err, ErrCredentialDenied):
-				return "", "INVALID_CREDENTIAL"
+				return "", "", "INVALID_CREDENTIAL"
 			case errors.Is(err, ErrCredentialDisabled):
-				return "", "CREDENTIAL_DISABLED"
+				return "", "", "CREDENTIAL_DISABLED"
 			case errors.Is(err, ErrCredentialExpired):
-				return "", "CREDENTIAL_EXPIRED"
+				return "", "", "CREDENTIAL_EXPIRED"
 			default:
-				return "", "AUTH_STATE_UNAVAILABLE"
+				return "", "", "AUTH_STATE_UNAVAILABLE"
 			}
 		}
 		entry, balance, _ = r.state(username)
@@ -104,23 +109,23 @@ func (r *Relay) Authenticate(ctx context.Context, username, password, client str
 	c := entry.snapshot
 	switch {
 	case c == nil || !now.Before(entry.synced.Add(stateLifetime)):
-		return "", "AUTH_STATE_UNAVAILABLE"
+		return "", "", "AUTH_STATE_UNAVAILABLE"
 	case c.GetExpiresAt() != nil && !now.Before(c.GetExpiresAt().AsTime()):
-		return "", "CREDENTIAL_EXPIRED"
+		return "", "", "CREDENTIAL_EXPIRED"
 	case !c.GetActive():
-		return "", "CREDENTIAL_DISABLED"
+		return "", "", "CREDENTIAL_DISABLED"
 	case subtle.ConstantTimeCompare(c.GetPasswordHash(), digest[:]) != 1:
-		return "", "INVALID_CREDENTIAL"
+		return "", "", "INVALID_CREDENTIAL"
 	case !allowedSource(client, c.GetAllowedSourceCidrs()):
-		return "", "SOURCE_NOT_ALLOWED"
+		return "", "", "SOURCE_NOT_ALLOWED"
 	case !validQuota(balance, now):
 		authmetrics.Counters.Add("quota_cache_miss", 1)
-		return "", "AUTH_STATE_UNAVAILABLE"
+		return "", "", "AUTH_STATE_UNAVAILABLE"
 	case balance.snapshot.GetAvailableBytes() < 0 || uint64(balance.snapshot.GetAvailableBytes()) < balance.snapshot.GetAdmissionThresholdBytes():
-		return "", "QUOTA_INSUFFICIENT"
+		return "", "", "QUOTA_INSUFFICIENT"
 	default:
 		authmetrics.Counters.Add("quota_cache_hit", 1)
-		return c.GetClientId(), "OK"
+		return c.GetClientId(), c.GetTenantId(), "OK"
 	}
 }
 

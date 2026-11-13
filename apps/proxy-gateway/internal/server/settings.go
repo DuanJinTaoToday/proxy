@@ -75,7 +75,7 @@ func NewGatewaySettings(server *conf.Server, cfg *conf.Data, biz *conf.Biz) (Gat
 	return GatewaySettings{
 		binary: gostCfg.GetBinary(), template: gostCfg.GetConfig(),
 		Spool: repo.SpoolPath(spool), LocalToken: local, Address: listen,
-		wukong:   gost.WukongConfig{Address: wukong.GetAddress(), Username: wukong.GetUsername(), Password: wukong.GetPassword()},
+		wukong:   gost.WukongConfig{Address: wukong.GetAddress(), Username: wukong.GetUsername(), Password: wukong.GetPassword(), Entries: wukong.GetEntries(), ProbeURL: wukong.GetProbeUrl(), BackupProbeURL: wukong.GetBackupProbeUrl(), ProbeTimeout: time.Duration(wukong.GetProbeTimeoutSeconds()) * time.Second},
 		Recorder: recorderSettings,
 		Auth:     acl.AuthConfig{Endpoint: controlCfg.GetUrl(), Token: remote},
 		Report:   acl.ReportConfig{Endpoint: controlCfg.GetUrl(), Token: report, Timeout: reportTimeout},

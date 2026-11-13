@@ -16,6 +16,10 @@ data:
       address: ""
       username: ""
       password: ""
+      entries: []
+      probe_url: ""
+      backup_probe_url: ""
+      probe_timeout_seconds: 2
   acl:
     control:
       url: ""
