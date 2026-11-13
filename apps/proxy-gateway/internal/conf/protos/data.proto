@@ -24,6 +24,10 @@ message Data {
     string address = 1;
     string username = 2;
     string password = 3;
+    repeated string entries = 4;
+    string probe_url = 5;
+    string backup_probe_url = 6;
+    uint32 probe_timeout_seconds = 7;
   }
   message Repo {
     message Recorder {

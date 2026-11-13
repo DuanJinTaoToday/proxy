@@ -15,6 +15,8 @@ import (
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/biz/recorder"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/data/gost"
 	recorderdata "github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/data/repo"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/data/wukong"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/service"
 )
 
 type App struct {
@@ -50,6 +52,28 @@ func (a *App) Address() string {
 func (a *App) Run() error {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
+
+	if len(a.wukong.Entries) > 0 {
+		pool, release, err := wukong.Open(a.spool, a.wukong.Username, a.wukong.Password, a.wukong.Entries,
+			a.wukong.ProbeURL, a.wukong.BackupProbeURL, a.localToken, a.wukong.ProbeTimeout)
+		if err != nil {
+			return err
+		}
+		defer release()
+		auth := service.NewAuthRelay(a.relay, a.localToken)
+		auth.OnAuthenticated(pool.RememberClient)
+		a.httpServer.Handler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			switch {
+			case req.Method == http.MethodConnect:
+				pool.Connect(ctx, w, req)
+			case req.URL.Path == "/v1/gateway/route":
+				pool.Route(w, req)
+			default:
+				auth.ServeHTTP(w, req)
+			}
+		})
+		go pool.Run(ctx)
+	}
 
 	process, err := gost.Start(ctx, a.binary, a.template, a.spool, "http://"+a.listener.Addr().String()+"/v1/gateway/auth", a.localToken, a.wukong)
 	if err != nil {

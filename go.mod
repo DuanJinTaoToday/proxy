@@ -3,6 +3,7 @@ module github.com/DuanJinTaoToday/proxy
 go 1.27.4
 
 require (
+	github.com/go-gost/gosocks5 v0.5.0
 	github.com/go-kratos/kratos/contrib/config/apollo/v3 v3.0.0-20261026152050-dd0fb7df1e32
 	github.com/go-kratos/kratos/v3 v3.0.0
 	github.com/google/uuid v1.6.0

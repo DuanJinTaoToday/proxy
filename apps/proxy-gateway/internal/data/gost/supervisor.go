@@ -25,9 +25,12 @@ type Process struct {
 }
 
 type WukongConfig struct {
-	Address  string `yaml:"address"`
-	Username string `yaml:"username"`
-	Password string `yaml:"password"`
+	Address                  string `yaml:"address"`
+	Username                 string `yaml:"username"`
+	Password                 string `yaml:"password"`
+	Entries                  []string
+	ProbeURL, BackupProbeURL string
+	ProbeTimeout             time.Duration
 }
 
 func Start(ctx context.Context, binary, template, spool, authEndpoint, token string, wukong WukongConfig) (Process, error) {
@@ -44,7 +47,7 @@ func Start(ctx context.Context, binary, template, spool, authEndpoint, token str
 	if err := file.Close(); err != nil {
 		return Process{}, err
 	}
-	rendered, err := renderGOST(template, path, token, wukong)
+	rendered, err := renderGOST(template, path, authEndpoint, token, wukong)
 	if err != nil {
 		return Process{}, err
 	}
@@ -103,7 +106,7 @@ func Start(ctx context.Context, binary, template, spool, authEndpoint, token str
 	return process, nil
 }
 
-func renderGOST(template, path, token string, wukong WukongConfig) ([]byte, error) {
+func renderGOST(template, path, authEndpoint, token string, wukong WukongConfig) ([]byte, error) {
 	raw, err := os.ReadFile(template)
 	if err != nil {
 		return nil, err
@@ -114,6 +117,14 @@ func renderGOST(template, path, token string, wukong WukongConfig) ([]byte, erro
 	}
 	if _, exists := config["recorders"]; exists {
 		return nil, errors.New("recorder is managed by the GOST wrapper")
+	}
+	poolTemplate, _ := config["wukongPool"].(bool)
+	delete(config, "wukongPool")
+	if poolTemplate != (len(wukong.Entries) > 0) {
+		return nil, errors.New("configure Wukong entries and the Wukong pool template together")
+	}
+	if poolTemplate && (config["hops"] != nil || config["chains"] != nil || config["api"] != nil) {
+		return nil, errors.New("Wukong pool template cannot define custom routing or a GOST API")
 	}
 	sid, err := rand.Int(rand.Reader, big.NewInt(1_000_000_000))
 	if err != nil {
@@ -135,6 +146,21 @@ func renderGOST(template, path, token string, wukong WukongConfig) ([]byte, erro
 		substitutions = append(substitutions, marker, value)
 	}
 	replaceValues(config, strings.NewReplacer(substitutions...))
+	if poolTemplate {
+		// Keep the first hop fixed. GOST can dial directly when every hop is empty.
+		endpoint := strings.TrimSuffix(authEndpoint, "/auth")
+		address := strings.TrimPrefix(strings.TrimSuffix(endpoint, "/v1/gateway"), "http://")
+		config["chains"] = []any{map[string]any{"name": "wukong-pool", "hops": []any{
+			map[string]any{"name": "local-egress", "nodes": []any{
+				map[string]any{"name": "local-egress", "addr": address,
+					"connector": map[string]any{"type": "http", "auth": map[string]string{"username": "gateway", "password": token}},
+					"dialer":    map[string]string{"type": "tcp"}},
+			}},
+			map[string]any{"name": "tenant-route", "plugin": map[string]string{
+				"type": "http", "addr": endpoint + "/route", "token": token, "timeout": "500ms",
+			}},
+		}}}
+	}
 	config["recorders"] = []map[string]any{{"name": "proxy-sessions", "file": map[string]any{"path": path, "sep": "\n"}}}
 	services, _ := config["services"].([]any)
 	for _, value := range services {
@@ -146,6 +172,19 @@ func renderGOST(template, path, token string, wukong WukongConfig) ([]byte, erro
 		if !ok {
 			return nil, errors.New("invalid GOST handler")
 		}
+		if poolTemplate {
+			for _, key := range []string{"resolver", "hosts", "forwarder"} {
+				delete(service, key)
+			}
+			delete(handler, "chainGroup")
+			if settings, ok := service["metadata"].(map[string]any); ok {
+				delete(settings, "ignoreChain")
+			}
+			if listener, ok := service["listener"].(map[string]any); ok && listener["type"] != "tcp" {
+				return nil, errors.New("Wukong pool requires a TCP listener")
+			}
+			handler["chain"] = "wukong-pool"
+		}
 		if _, exists := service["recorders"]; exists {
 			return nil, errors.New("service Recorder is managed by the GOST wrapper")
 		}
@@ -154,6 +193,11 @@ func renderGOST(template, path, token string, wukong WukongConfig) ([]byte, erro
 		if metadata == nil {
 			metadata = map[string]any{}
 			handler["metadata"] = metadata
+		}
+		if poolTemplate {
+			for _, key := range []string{"bind", "udp", "tor", "enableTor", "socks5.tor", "ignoreChain", "ignore.chain"} {
+				metadata[key] = false
+			}
 		}
 		metadata["recorder.period"] = "1s"
 	}

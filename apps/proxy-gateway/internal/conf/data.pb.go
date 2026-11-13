@@ -194,12 +194,16 @@ func (x *Data_GOST) GetWukong() *Data_Wukong {
 }
 
 type Data_Wukong struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Address       string                 `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
-	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
-	Password      string                 `protobuf:"bytes,3,opt,name=password,proto3" json:"password,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state               protoimpl.MessageState `protogen:"open.v1"`
+	Address             string                 `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
+	Username            string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
+	Password            string                 `protobuf:"bytes,3,opt,name=password,proto3" json:"password,omitempty"`
+	Entries             []string               `protobuf:"bytes,4,rep,name=entries,proto3" json:"entries,omitempty"`
+	ProbeUrl            string                 `protobuf:"bytes,5,opt,name=probe_url,json=probeUrl,proto3" json:"probe_url,omitempty"`
+	BackupProbeUrl      string                 `protobuf:"bytes,6,opt,name=backup_probe_url,json=backupProbeUrl,proto3" json:"backup_probe_url,omitempty"`
+	ProbeTimeoutSeconds uint32                 `protobuf:"varint,7,opt,name=probe_timeout_seconds,json=probeTimeoutSeconds,proto3" json:"probe_timeout_seconds,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
 }
 
 func (x *Data_Wukong) Reset() {
@@ -251,6 +255,34 @@ func (x *Data_Wukong) GetPassword() string {
 		return x.Password
 	}
 	return ""
+}
+
+func (x *Data_Wukong) GetEntries() []string {
+	if x != nil {
+		return x.Entries
+	}
+	return nil
+}
+
+func (x *Data_Wukong) GetProbeUrl() string {
+	if x != nil {
+		return x.ProbeUrl
+	}
+	return ""
+}
+
+func (x *Data_Wukong) GetBackupProbeUrl() string {
+	if x != nil {
+		return x.BackupProbeUrl
+	}
+	return ""
+}
+
+func (x *Data_Wukong) GetProbeTimeoutSeconds() uint32 {
+	if x != nil {
+		return x.ProbeTimeoutSeconds
+	}
+	return 0
 }
 
 type Data_Repo struct {
@@ -414,7 +446,7 @@ var File_data_proto protoreflect.FileDescriptor
 const file_data_proto_rawDesc = "" +
 	"\n" +
 	"\n" +
-	"data.proto\x12\x16proxygateway.config.v1\"\xf9\x05\n" +
+	"data.proto\x12\x16proxygateway.config.v1\"\x8f\a\n" +
 	"\x04Data\x125\n" +
 	"\x04gost\x18\x02 \x01(\v2!.proxygateway.config.v1.Data.GOSTR\x04gost\x122\n" +
 	"\x03acl\x18\x04 \x01(\v2 .proxygateway.config.v1.Data.ACLR\x03acl\x125\n" +
@@ -431,11 +463,15 @@ const file_data_proto_rawDesc = "" +
 	"\x06binary\x18\x01 \x01(\tR\x06binary\x12\x16\n" +
 	"\x06config\x18\x02 \x01(\tR\x06config\x12(\n" +
 	"\x10local_auth_token\x18\x03 \x01(\tR\x0elocalAuthToken\x12;\n" +
-	"\x06wukong\x18\x04 \x01(\v2#.proxygateway.config.v1.Data.WukongR\x06wukong\x1aZ\n" +
+	"\x06wukong\x18\x04 \x01(\v2#.proxygateway.config.v1.Data.WukongR\x06wukong\x1a\xef\x01\n" +
 	"\x06Wukong\x12\x18\n" +
 	"\aaddress\x18\x01 \x01(\tR\aaddress\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x1a\n" +
-	"\bpassword\x18\x03 \x01(\tR\bpassword\x1ap\n" +
+	"\bpassword\x18\x03 \x01(\tR\bpassword\x12\x18\n" +
+	"\aentries\x18\x04 \x03(\tR\aentries\x12\x1b\n" +
+	"\tprobe_url\x18\x05 \x01(\tR\bprobeUrl\x12(\n" +
+	"\x10backup_probe_url\x18\x06 \x01(\tR\x0ebackupProbeUrl\x122\n" +
+	"\x15probe_timeout_seconds\x18\a \x01(\rR\x13probeTimeoutSeconds\x1ap\n" +
 	"\x04Repo\x12F\n" +
 	"\brecorder\x18\x01 \x01(\v2*.proxygateway.config.v1.Data.Repo.RecorderR\brecorder\x1a \n" +
 	"\bRecorder\x12\x14\n" +

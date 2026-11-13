@@ -1,0 +1,18 @@
+wukongPool: true
+
+authers:
+  - name: proxy-auth-relay
+    plugin:
+      type: http
+      addr: http://127.0.0.1:8091/v1/gateway/auth
+      token: "${LOCAL_AUTH_TOKEN}"
+      timeout: 500ms
+
+services:
+  - name: socks5
+    addr: "127.0.0.1:1080"
+    listener:
+      type: tcp
+    handler:
+      type: socks5
+      auther: proxy-auth-relay
