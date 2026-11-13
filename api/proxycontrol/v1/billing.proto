@@ -68,6 +68,7 @@ message BillingSettingsResponse {
 message CreateBillingRateRequest {
   string scope_type = 1;
   string scope_id = 2;
+  // Each ratio is an integer in thousandths, from 0 to 4294967295.
   optional uint64 upload_ratio_milli = 3;
   optional uint64 download_ratio_milli = 4;
   // Omit to take effect immediately.

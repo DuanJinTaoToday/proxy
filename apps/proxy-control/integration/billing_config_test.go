@@ -77,6 +77,9 @@ func TestBillingConfiguration(t *testing.T) {
 		return reply
 	}
 	globalRate := createRate(rateBody)
+	testfixture.AssertStatus(t, testfixture.Request(f.http, "POST", base+"rates",
+		`{"scope_type":"global","upload_ratio_milli":"9223372036854775807","download_ratio_milli":"1000"}`, billing),
+		http.StatusBadRequest, "INVALID_RATE")
 	groupRate := createRate(`{"scope_type":"group","scope_id":"a","upload_ratio_milli":"1200","download_ratio_milli":"1000"}`)
 	beforeClear := time.Now().UTC().Truncate(time.Microsecond)
 	var cleared v1.TenantGroupMembership

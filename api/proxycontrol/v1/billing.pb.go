@@ -314,11 +314,12 @@ func (x *BillingSettingsResponse) GetEffective() *BillingThresholds {
 }
 
 type CreateBillingRateRequest struct {
-	state              protoimpl.MessageState `protogen:"open.v1"`
-	ScopeType          string                 `protobuf:"bytes,1,opt,name=scope_type,json=scopeType,proto3" json:"scope_type,omitempty"`
-	ScopeId            string                 `protobuf:"bytes,2,opt,name=scope_id,json=scopeId,proto3" json:"scope_id,omitempty"`
-	UploadRatioMilli   *uint64                `protobuf:"varint,3,opt,name=upload_ratio_milli,json=uploadRatioMilli,proto3,oneof" json:"upload_ratio_milli,omitempty"`
-	DownloadRatioMilli *uint64                `protobuf:"varint,4,opt,name=download_ratio_milli,json=downloadRatioMilli,proto3,oneof" json:"download_ratio_milli,omitempty"`
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	ScopeType string                 `protobuf:"bytes,1,opt,name=scope_type,json=scopeType,proto3" json:"scope_type,omitempty"`
+	ScopeId   string                 `protobuf:"bytes,2,opt,name=scope_id,json=scopeId,proto3" json:"scope_id,omitempty"`
+	// Each ratio is an integer in thousandths, from 0 to 4294967295.
+	UploadRatioMilli   *uint64 `protobuf:"varint,3,opt,name=upload_ratio_milli,json=uploadRatioMilli,proto3,oneof" json:"upload_ratio_milli,omitempty"`
+	DownloadRatioMilli *uint64 `protobuf:"varint,4,opt,name=download_ratio_milli,json=downloadRatioMilli,proto3,oneof" json:"download_ratio_milli,omitempty"`
 	// Omit to take effect immediately.
 	EffectiveFrom *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=effective_from,json=effectiveFrom,proto3" json:"effective_from,omitempty"`
 	unknownFields protoimpl.UnknownFields

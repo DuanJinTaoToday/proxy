@@ -40,14 +40,15 @@ type quota struct {
 }
 
 type Relay struct {
-	control     Control
-	now         func() time.Time
-	loads       singleflight.Group
-	mu          sync.RWMutex
-	credentials map[string]credential
-	quotas      map[string]quota
-	epoch       uint64
-	reporting   func() (uint64, bool)
+	control         Control
+	now             func() time.Time
+	loads           singleflight.Group
+	mu              sync.RWMutex
+	credentials     map[string]credential
+	quotas          map[string]quota
+	epoch           uint64
+	reporting       func() (uint64, bool)
+	authInterrupted func()
 }
 
 func New(control Control, now func() time.Time) *Relay {
@@ -58,9 +59,10 @@ func New(control Control, now func() time.Time) *Relay {
 		credentials: make(map[string]credential), quotas: make(map[string]quota)}
 }
 
-func NewWithReporting(control Control, reporting func() (uint64, bool)) *Relay {
+func NewWithReporting(control Control, reporting func() (uint64, bool), interrupted func()) *Relay {
 	relay := New(control, nil)
 	relay.reporting = reporting
+	relay.authInterrupted = interrupted
 	return relay
 }
 

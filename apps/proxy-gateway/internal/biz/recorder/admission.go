@@ -16,16 +16,28 @@ type pendingFile struct {
 }
 
 type admissionState struct {
-	mu         sync.Mutex
-	blocked    bool
-	generation uint64
-	deadline   time.Time
+	mu              sync.Mutex
+	blocked         bool
+	generation      uint64
+	deadline        time.Time
+	observedAt      time.Time
+	authInterrupted bool
 
 	// Only the scan loop reads or changes these fields.
 	pending     map[string]pendingFile
 	targets     map[string]uint64
 	failed      bool
 	submissions uint64
+}
+
+// AuthInterrupted requires a new spool observation before quota can renew.
+func (c *Collector) AuthInterrupted() {
+	a := &c.admission
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	a.blocked = true
+	a.generation++
+	a.authInterrupted = true
 }
 
 // QuotaRenewal identifies the reporting state in which a quota request starts
@@ -39,7 +51,11 @@ func (c *Collector) QuotaRenewal() (uint64, bool) {
 }
 
 func (a *admissionState) expire(now time.Time) {
-	if !a.deadline.IsZero() && !now.Before(a.deadline) && !a.blocked {
+	// A scan stalled in reporting cannot prove that no new file or complete
+	// record has appeared since the last observation.
+	stale := !now.Before(a.observedAt.Add(reportingGrace))
+	overdue := !a.deadline.IsZero() && !now.Before(a.deadline)
+	if (stale || overdue) && !a.blocked {
 		a.blocked = true
 		a.generation++
 	}
@@ -89,14 +105,25 @@ func (c *Collector) observeAdmission(boots []string) error {
 	a.pending = next
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	a.expire(now)
+	a.expire(c.now())
 	a.deadline = deadline
-	a.expire(now)
+	a.observedAt = now
+	a.expire(c.now())
 	return nil
 }
 
-func (c *Collector) finishAdmission(boots []string, submissions uint64) error {
+func (c *Collector) finishAdmission(submissions uint64) error {
 	a := &c.admission
+	a.mu.Lock()
+	if a.authInterrupted {
+		a.targets = nil
+		a.authInterrupted = false
+	}
+	a.mu.Unlock()
+	boots, err := c.spool.Boots()
+	if err != nil {
+		return err
+	}
 	_, allowed := c.QuotaRenewal()
 	if allowed {
 		return c.observeAdmission(boots)
@@ -132,9 +159,11 @@ func (c *Collector) finishAdmission(boots []string, submissions uint64) error {
 	}
 	a.targets = nil
 	a.mu.Lock()
-	a.blocked = false
-	a.generation++
-	a.expire(c.now())
+	if !a.authInterrupted {
+		a.blocked = false
+		a.generation++
+		a.expire(c.now())
+	}
 	a.mu.Unlock()
 	return nil
 }
@@ -142,18 +171,28 @@ func (c *Collector) finishAdmission(boots []string, submissions uint64) error {
 // Read backwards from the sampled file size. Bytes after the last LF are a
 // partial tail and never become a recovery target.
 func (c *Collector) completeOffsets(boot string) (confirmed, end uint64, err error) {
-	f, err := c.spool.OpenSession(boot)
+	size, err := c.spool.SessionSize(boot)
 	if os.IsNotExist(err) {
 		return 0, 0, nil
 	}
 	if err != nil {
 		return 0, 0, err
 	}
-	defer func() { _ = f.Close() }()
 	confirmed, err = c.spool.Offset(boot)
 	if err != nil {
 		return 0, 0, err
 	}
+	if size < 0 || confirmed > uint64(size) {
+		return 0, 0, fmt.Errorf("confirmation offset exceeds Recorder file size for boot %s", boot)
+	}
+	if confirmed == uint64(size) {
+		return confirmed, confirmed, nil
+	}
+	f, err := c.spool.OpenSession(boot)
+	if err != nil {
+		return 0, 0, err
+	}
+	defer func() { _ = f.Close() }()
 	info, err := f.Stat()
 	if err != nil {
 		return 0, 0, err
@@ -162,8 +201,9 @@ func (c *Collector) completeOffsets(boot string) (confirmed, end uint64, err err
 		return 0, 0, fmt.Errorf("invalid Recorder file or confirmation offset for boot %s", boot)
 	}
 	var chunk [4096]byte
-	for pos := info.Size(); pos > int64(confirmed); {
-		start := max(int64(confirmed), pos-int64(len(chunk)))
+	lower := max(int64(confirmed), size-int64(c.cfg.MaxBytes)-2)
+	for pos := size; pos > lower; {
+		start := max(lower, pos-int64(len(chunk)))
 		data := chunk[:pos-start]
 		if _, err := f.ReadAt(data, start); err != nil {
 			return 0, 0, err
@@ -172,6 +212,9 @@ func (c *Collector) completeOffsets(boot string) (confirmed, end uint64, err err
 			return confirmed, uint64(start) + uint64(i) + 1, nil
 		}
 		pos = start
+	}
+	if lower > int64(confirmed) {
+		return 0, 0, fmt.Errorf("oversized Recorder tail for boot %s", boot)
 	}
 	return confirmed, confirmed, nil
 }

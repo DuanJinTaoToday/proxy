@@ -153,7 +153,7 @@ func (c *Collector) Scan(ctx context.Context) error {
 		errs = append(errs, fmt.Errorf("boot %s: %w", boot, err))
 	}
 	if err == nil {
-		if err := c.finishAdmission(boots, submissions); err != nil {
+		if err := c.finishAdmission(submissions); err != nil {
 			c.admission.block()
 			errs = append(errs, err)
 		}

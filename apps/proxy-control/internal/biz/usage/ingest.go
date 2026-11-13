@@ -83,6 +83,10 @@ func (s *Service) SubmitBatch(ctx context.Context, token string, req Batch) (*Ba
 	}
 	reply := &BatchResult{}
 	var changed []string
+	// Hold the cache lock through commit and invalidation so that a duplicate
+	// acknowledgement cannot expose a balance cached before the original debit.
+	s.cacheMu.Lock()
+	defer s.cacheMu.Unlock()
 	err = s.repo.Transact(ctx, func(tx Transaction) error {
 		if err := authorizeGateway(tx, hash, req.GatewayID); err != nil {
 			return err
@@ -108,7 +112,9 @@ func (s *Service) SubmitBatch(ctx context.Context, token string, req Batch) (*Ba
 	if err != nil {
 		return nil, err
 	}
-	s.refreshBalances(ctx, changed)
+	for _, tenant := range changed {
+		delete(s.cache, tenant)
+	}
 	return reply, nil
 }
 

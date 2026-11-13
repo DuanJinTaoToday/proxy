@@ -22,6 +22,10 @@ type Settings struct {
 
 var groupIDPattern = regexp.MustCompile(`^[A-Za-z0-9_-]{1,64}$`)
 
+// Limit configuration to 32-bit thousandths so routine Recorder deltas
+// cannot overflow billable bytes because of an extreme configured multiplier.
+const maxRateMilli = math.MaxUint32
+
 func (s *Service) validateScope(tx Transaction, scope *Scope) error {
 	switch scope.Type {
 	case "global":
@@ -144,8 +148,8 @@ func (s *Service) CreateBillingRate(ctx context.Context, token string, scope Sco
 	if err != nil {
 		return RateVersion{}, err
 	}
-	if upload == nil || download == nil || *upload > math.MaxInt64 || *download > math.MaxInt64 {
-		return RateVersion{}, errors.BadRequest("INVALID_RATE", "provide both ratios in thousandths within the storage range")
+	if upload == nil || download == nil || *upload > maxRateMilli || *download > maxRateMilli {
+		return RateVersion{}, errors.BadRequest("INVALID_RATE", "provide both ratios in thousandths from 0 to 4294967295")
 	}
 	var result RateVersion
 	err = s.repo.Transact(ctx, func(tx Transaction) error {

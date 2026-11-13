@@ -126,3 +126,37 @@ func TestQuotaRenewalExpiresWhileCompleteRecordIsPending(t *testing.T) {
 		t.Fatal("partial tail should not block recovery")
 	}
 }
+
+func TestQuotaRenewalRequiresFreshScanAfterStallOrAuthInterruption(t *testing.T) {
+	spool := admissionSpool{root: t.TempDir(), offsets: make(map[string]uint64)}
+	collector := New(Config{MaxRecords: 1}, spool, &admissionReporter{})
+	now := time.Now()
+	collector.now = func() time.Time { return now }
+	check := func(want bool) {
+		t.Helper()
+		if _, allowed := collector.QuotaRenewal(); allowed != want {
+			t.Fatalf("renewal = %t, want %t", allowed, want)
+		}
+	}
+	scan := func() {
+		t.Helper()
+		if err := collector.Scan(t.Context()); err != nil {
+			t.Fatal(err)
+		}
+	}
+	scan()
+	check(true)
+	now = now.Add(reportingGrace)
+	check(false)
+	scan()
+	check(true)
+	if err := os.WriteFile(filepath.Join(spool.root, "a"), []byte("{}\n{}\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	collector.AuthInterrupted()
+	check(false)
+	scan()
+	check(false)
+	scan()
+	check(true)
+}

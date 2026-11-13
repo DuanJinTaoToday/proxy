@@ -9,5 +9,5 @@ import (
 var ProviderSet = wire.NewSet(NewAuthRelay, recorder.New, recorder.NewLifecycle)
 
 func NewAuthRelay(control authrelay.Control, collector *recorder.Collector) *authrelay.Relay {
-	return authrelay.NewWithReporting(control, collector.QuotaRenewal)
+	return authrelay.NewWithReporting(control, collector.QuotaRenewal, collector.AuthInterrupted)
 }
