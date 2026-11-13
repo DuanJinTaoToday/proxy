@@ -19,7 +19,7 @@
 | `migrations` | Goose 数据库迁移 |
 | `integration` | PostgreSQL 集成用例 |
 
-接口定义位于仓库根目录 [`api/proxycontrol`](../../api/proxycontrol/)。
+接口定义位于仓库根目录 [`api/protos/proxycontrol/v1`](../../api/protos/proxycontrol/v1/)。生成的 Go 绑定位于 [`api/proxycontrol/v1`](../../api/proxycontrol/v1/)，接口文档见 [`openapi.yaml`](../../api/proxycontrol/openapi.yaml)。
 
 ## 构建与启动
 
@@ -45,7 +45,8 @@ Windows 下可执行文件带 `.exe` 后缀。
 | 命令 | 说明 |
 | --- | --- |
 | `make build` | 构建到 `bin/proxy-control` |
-| `make pb` | 生成 API 与配置的 Protobuf 代码（`make api` / `make config`） |
+| `make api` | 生成控制面 Protobuf Go 代码、Kratos HTTP 绑定和 OpenAPI 文档 |
+| `make pb` | 运行 `make api` 和 `make config`，同时生成 API 和应用配置的产物 |
 | `make dao` | 生成 DAO 模型 |
 | `make wire` | 重新生成依赖注入 |
 | `make lint` | 运行 golangci-lint |

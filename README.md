@@ -11,7 +11,8 @@
 | [apps/proxy-control](apps/proxy-control/README.md) | 控制面：租户登录与授权、代理凭据、用量归集、流量额度、归档 |
 | [apps/proxy-gateway](apps/proxy-gateway/README.md) | 网关：基于原版 GOST 的 SOCKS5 接入、认证中继、Recorder 采集与上报 |
 | [apps/proxy-console](apps/proxy-console/README.md) | 控制台：租户与运营前端（尚未开始） |
-| `api/proxycontrol` | 控制面 Protobuf 与 HTTP 接口定义 |
+| `api/protos/proxycontrol` | 控制面 Protobuf 接口定义 |
+| `api/proxycontrol` | 生成的 Go 绑定与 OpenAPI 文档 |
 | `pkg` | 公共库：`client`、`cron`、`log` |
 | `build` | 构建工具（protoc 安装、工具链版本） |
 | `third_party` | 第三方 proto（googleapis） |
@@ -25,7 +26,7 @@
 前置：Go（版本见 `go.mod`）、PostgreSQL（控制面）、原版 GOST v3.3.3（网关）。
 
 ```sh
-# 安装 protoc、protoc-gen-go、golangci-lint、goose、wire 到 ./.tools
+# 安装 protoc、Go / HTTP / OpenAPI 生成插件、golangci-lint、goose、wire 到 ./.tools
 make init
 ```
 

@@ -24,4 +24,4 @@
 | GET | `/v1/tenants/{tenant_id}/balance` |
 | POST | `/v1/tenants/{tenant_id}/proxy-extractions` |
 
-正式环境复用哪个 HTTPS 入口在部署时确认。参阅[开发规范](../../docs/standards/proxy-development-conventions.md#控制台技术栈)和[控制面 API](../../api/proxycontrol/v1/)。
+正式环境复用哪个 HTTPS 入口在部署时确认。参阅[开发规范](../../docs/standards/proxy-development-conventions.md#控制台技术栈)和[控制面 API](../../api/proxycontrol/openapi.yaml)。

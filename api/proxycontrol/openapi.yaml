@@ -1,0 +1,1341 @@
+# Generated with protoc-gen-openapi
+# https://github.com/google/gnostic/tree/master/cmd/protoc-gen-openapi
+
+openapi: 3.0.3
+info:
+    title: ""
+    version: 0.0.1
+paths:
+    /healthz:
+        get:
+            tags:
+                - HealthService
+            operationId: HealthService_Check
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.CheckResponse'
+    /v1/access/check:
+        post:
+            tags:
+                - AccessService
+            operationId: AccessService_CheckPermission
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.CheckPermissionRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.CheckPermissionResponse'
+    /v1/access/login:
+        post:
+            tags:
+                - AccessService
+            operationId: AccessService_Login
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.LoginRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.LoginResponse'
+    /v1/access/tenants:
+        get:
+            tags:
+                - AccessService
+            operationId: AccessService_ListTenants
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.ListTenantsResponse'
+    /v1/access/tenants/{tenantId}:
+        get:
+            tags:
+                - AccessService
+            operationId: AccessService_GetTenantAccess
+            parameters:
+                - name: tenantId
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.TenantAccess'
+    /v1/gateway/auth-state/load:
+        post:
+            tags:
+                - GatewayAuthService
+            operationId: GatewayAuthService_LoadAuthState
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.LoadAuthStateRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.AuthSnapshot'
+    /v1/gateway/auth-state/refresh:
+        post:
+            tags:
+                - GatewayAuthService
+            operationId: GatewayAuthService_RefreshAuthState
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.RefreshAuthStateRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.RefreshAuthStateResponse'
+    /v1/operations/anomalies:
+        get:
+            tags:
+                - UsageService
+            operationId: UsageService_ListRecordAnomalies
+            parameters:
+                - name: gatewayId
+                  in: query
+                  schema:
+                    type: string
+                - name: bootId
+                  in: query
+                  schema:
+                    type: string
+                - name: tenantId
+                  in: query
+                  schema:
+                    type: string
+                - name: kind
+                  in: query
+                  schema:
+                    type: string
+                - name: pageSize
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+                - name: pageToken
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.ListRecordAnomaliesResponse'
+    /v1/operations/billing/groups:
+        post:
+            tags:
+                - BillingService
+            operationId: BillingService_CreateTenantGroup
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.CreateTenantGroupRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.TenantGroup'
+    /v1/operations/billing/rates:
+        get:
+            tags:
+                - BillingService
+            operationId: BillingService_ListBillingRates
+            parameters:
+                - name: scopeType
+                  in: query
+                  schema:
+                    type: string
+                - name: scopeId
+                  in: query
+                  schema:
+                    type: string
+                - name: pageSize
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+                - name: pageToken
+                  in: query
+                  schema:
+                    type: string
+                - name: rateId
+                  in: query
+                  description: Exact version lookup. Omit scope_type and scope_id when using rate_id.
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.ListBillingRatesResponse'
+        post:
+            tags:
+                - BillingService
+            operationId: BillingService_CreateBillingRate
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.CreateBillingRateRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.BillingRateVersion'
+    /v1/operations/billing/settings/{scopeType}/{scopeId}:
+        get:
+            tags:
+                - BillingService
+            operationId: BillingService_GetBillingSettings
+            parameters:
+                - name: scopeType
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+                - name: scopeId
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+                - name: tenantId
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.BillingSettingsResponse'
+        put:
+            tags:
+                - BillingService
+            operationId: BillingService_UpdateBillingSettings
+            parameters:
+                - name: scopeType
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+                - name: scopeId
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.UpdateBillingSettingsRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.BillingSettingsResponse'
+    /v1/operations/gaps:
+        get:
+            tags:
+                - UsageService
+            operationId: UsageService_ListUsageGaps
+            parameters:
+                - name: gatewayId
+                  in: query
+                  schema:
+                    type: string
+                - name: bootId
+                  in: query
+                  schema:
+                    type: string
+                - name: tenantId
+                  in: query
+                  schema:
+                    type: string
+                - name: kind
+                  in: query
+                  schema:
+                    type: string
+                - name: pageSize
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+                - name: pageToken
+                  in: query
+                  schema:
+                    type: string
+                - name: status
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.ListUsageGapsResponse'
+    /v1/operations/tenants/{tenantId}/adjustments:
+        post:
+            tags:
+                - BillingService
+            operationId: BillingService_AdjustBalance
+            parameters:
+                - name: tenantId
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.AdjustBalanceRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.BalanceLedgerEntry'
+    /v1/operations/tenants/{tenantId}/grants:
+        get:
+            tags:
+                - BillingService
+            operationId: BillingService_ListTrafficGrants
+            parameters:
+                - name: tenantId
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+                - name: pageSize
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+                - name: pageToken
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.ListTrafficGrantsResponse'
+    /v1/operations/tenants/{tenantId}/group:
+        put:
+            tags:
+                - BillingService
+            operationId: BillingService_SetTenantGroup
+            parameters:
+                - name: tenantId
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.SetTenantGroupRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.TenantGroupMembership'
+    /v1/operations/tenants/{tenantId}/ledger:
+        get:
+            tags:
+                - BillingService
+            operationId: BillingService_ListBalanceLedger
+            parameters:
+                - name: tenantId
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+                - name: pageSize
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+                - name: pageToken
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.ListBalanceLedgerResponse'
+    /v1/operations/tenants/{tenantId}/recharges:
+        post:
+            tags:
+                - BillingService
+            operationId: BillingService_CreateRecharge
+            parameters:
+                - name: tenantId
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.CreateRechargeRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.BalanceLedgerEntry'
+    /v1/operations/usage:
+        get:
+            tags:
+                - UsageService
+            operationId: UsageService_QueryUsage
+            parameters:
+                - name: tenantId
+                  in: query
+                  schema:
+                    type: string
+                - name: gatewayId
+                  in: query
+                  schema:
+                    type: string
+                - name: startTime
+                  in: query
+                  schema:
+                    type: string
+                    format: date-time
+                - name: endTime
+                  in: query
+                  schema:
+                    type: string
+                    format: date-time
+                - name: granularity
+                  in: query
+                  description: DAY selects whole Shanghai days by midnight within [start_time, end_time).
+                  schema:
+                    type: integer
+                    format: enum
+                - name: splitByGateway
+                  in: query
+                  schema:
+                    type: boolean
+                - name: splitByGrant
+                  in: query
+                  schema:
+                    type: boolean
+                - name: pageSize
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+                - name: pageToken
+                  in: query
+                  schema:
+                    type: string
+                - name: splitByRate
+                  in: query
+                  schema:
+                    type: boolean
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.QueryUsageResponse'
+    /v1/reporting/batches:
+        post:
+            tags:
+                - ReportingService
+            operationId: ReportingService_SubmitBatch
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.SubmitBatchRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.SubmitBatchResponse'
+    /v1/reporting/boots/{bootId}/replay-complete:
+        post:
+            tags:
+                - ReportingService
+            operationId: ReportingService_CompleteReplay
+            parameters:
+                - name: bootId
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.CompleteReplayRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.CompleteReplayResponse'
+    /v1/reporting/boots/{bootId}/unfinished-sessions:
+        post:
+            tags:
+                - ReportingService
+            operationId: ReportingService_ReportUnfinishedSessions
+            parameters:
+                - name: bootId
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.ReportUnfinishedSessionsRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.ReportUnfinishedSessionsResponse'
+    /v1/reporting/lifecycle:
+        post:
+            tags:
+                - ReportingService
+            operationId: ReportingService_ReportLifecycle
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.ReportLifecycleRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.ReportLifecycleResponse'
+    /v1/tenants/{tenantId}/balance:
+        get:
+            tags:
+                - UsageService
+            operationId: UsageService_GetTenantBalance
+            parameters:
+                - name: tenantId
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.TenantBalance'
+    /v1/tenants/{tenantId}/proxy-credentials:
+        post:
+            tags:
+                - CredentialService
+            operationId: CredentialService_CreateCredential
+            parameters:
+                - name: tenantId
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.CreateCredentialRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.CreateCredentialResponse'
+    /v1/tenants/{tenantId}/proxy-credentials/{clientId}:disable:
+        post:
+            tags:
+                - CredentialService
+            operationId: CredentialService_DisableCredential
+            parameters:
+                - name: tenantId
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+                - name: clientId
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.DisableCredentialRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.DisableCredentialResponse'
+    /v1/tenants/{tenantId}/proxy-extractions:
+        post:
+            tags:
+                - UsageService
+            operationId: UsageService_ExtractProxy
+            parameters:
+                - name: tenantId
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.ExtractProxyRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.ExtractProxyResponse'
+    /v1/tenants/{tenantId}/usage/daily:
+        get:
+            tags:
+                - UsageService
+            operationId: UsageService_GetTenantDailyUsage
+            parameters:
+                - name: tenantId
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+                - name: startDate
+                  in: query
+                  schema:
+                    type: string
+                - name: endDate
+                  in: query
+                  schema:
+                    type: string
+                - name: source
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.DailyUsageResponse'
+components:
+    schemas:
+        proxycontrol.v1.AdjustBalanceRequest:
+            type: object
+            properties:
+                tenantId:
+                    type: string
+                externalRef:
+                    type: string
+                mode:
+                    type: integer
+                    format: enum
+                bytes:
+                    type: string
+                grantId:
+                    type: string
+                reason:
+                    type: string
+        proxycontrol.v1.AuditedTrafficGrant:
+            type: object
+            properties:
+                grantId:
+                    type: string
+                grantedBytes:
+                    type: string
+                usedBytes:
+                    type: string
+                overdraftOffsetBytes:
+                    type: string
+                startsAt:
+                    type: string
+                    format: date-time
+                expiresAt:
+                    type: string
+                    format: date-time
+                status:
+                    type: string
+        proxycontrol.v1.AuthQuota:
+            type: object
+            properties:
+                availableBytes:
+                    type: string
+                admissionThresholdBytes:
+                    type: string
+                validUntil:
+                    type: string
+                    format: date-time
+        proxycontrol.v1.AuthSnapshot:
+            type: object
+            properties:
+                reference:
+                    type: string
+                username:
+                    type: string
+                clientId:
+                    type: string
+                tenantId:
+                    type: string
+                passwordHash:
+                    type: string
+                    format: bytes
+                active:
+                    type: boolean
+                expiresAt:
+                    type: string
+                    format: date-time
+                allowedSourceCidrs:
+                    type: array
+                    items:
+                        type: string
+                quota:
+                    $ref: '#/components/schemas/proxycontrol.v1.AuthQuota'
+        proxycontrol.v1.BalanceLedgerEntry:
+            type: object
+            properties:
+                ledgerId:
+                    type: string
+                kind:
+                    type: string
+                grantId:
+                    type: string
+                deltaBytes:
+                    type: string
+                availableBefore:
+                    type: string
+                availableAfter:
+                    type: string
+                externalRef:
+                    type: string
+                reason:
+                    type: string
+                operator:
+                    type: string
+                createdAt:
+                    type: string
+                    format: date-time
+                correctionOf:
+                    type: string
+                overdraftAddedBytes:
+                    type: string
+        proxycontrol.v1.BillingRateVersion:
+            type: object
+            properties:
+                rateId:
+                    type: string
+                scopeType:
+                    type: string
+                scopeId:
+                    type: string
+                uploadRatioMilli:
+                    type: string
+                downloadRatioMilli:
+                    type: string
+                effectiveFrom:
+                    type: string
+                    format: date-time
+        proxycontrol.v1.BillingSettingsResponse:
+            type: object
+            properties:
+                configured:
+                    $ref: '#/components/schemas/proxycontrol.v1.BillingThresholds'
+                effective:
+                    $ref: '#/components/schemas/proxycontrol.v1.BillingThresholds'
+        proxycontrol.v1.BillingThresholds:
+            type: object
+            properties:
+                admissionThresholdBytes:
+                    type: string
+                warningThresholdBytes:
+                    type: string
+        proxycontrol.v1.CheckPermissionRequest:
+            type: object
+            properties:
+                tenantId:
+                    type: string
+                permission:
+                    type: integer
+                    format: enum
+        proxycontrol.v1.CheckPermissionResponse:
+            type: object
+            properties: {}
+        proxycontrol.v1.CheckResponse:
+            type: object
+            properties: {}
+        proxycontrol.v1.CompleteReplayRequest:
+            type: object
+            properties:
+                gatewayId:
+                    type: string
+                bootId:
+                    type: string
+                unfinishedSessionCount:
+                    type: integer
+                    format: uint32
+                hasSessionRecords:
+                    type: boolean
+        proxycontrol.v1.CompleteReplayResponse:
+            type: object
+            properties: {}
+        proxycontrol.v1.CreateBillingRateRequest:
+            type: object
+            properties:
+                scopeType:
+                    type: string
+                scopeId:
+                    type: string
+                uploadRatioMilli:
+                    type: string
+                    description: Each ratio is an integer in thousandths, from 0 to 4294967295.
+                downloadRatioMilli:
+                    type: string
+                effectiveFrom:
+                    type: string
+                    description: Omit to take effect immediately.
+                    format: date-time
+        proxycontrol.v1.CreateCredentialRequest:
+            type: object
+            properties:
+                tenantId:
+                    type: string
+                expiresAt:
+                    type: string
+                    format: date-time
+                allowedSourceCidrs:
+                    type: array
+                    items:
+                        type: string
+        proxycontrol.v1.CreateCredentialResponse:
+            type: object
+            properties:
+                clientId:
+                    type: string
+                username:
+                    type: string
+                password:
+                    type: string
+        proxycontrol.v1.CreateRechargeRequest:
+            type: object
+            properties:
+                tenantId:
+                    type: string
+                externalRef:
+                    type: string
+                grantedBytes:
+                    type: string
+                startsAt:
+                    type: string
+                    format: date-time
+                expiresAt:
+                    type: string
+                    format: date-time
+                note:
+                    type: string
+        proxycontrol.v1.CreateTenantGroupRequest:
+            type: object
+            properties:
+                groupId:
+                    type: string
+                name:
+                    type: string
+        proxycontrol.v1.DailyUsage:
+            type: object
+            properties:
+                date:
+                    type: string
+                amount:
+                    $ref: '#/components/schemas/proxycontrol.v1.UsageAmount'
+        proxycontrol.v1.DailyUsageResponse:
+            type: object
+            properties:
+                days:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/proxycontrol.v1.DailyUsage'
+                lastReceivedAt:
+                    type: string
+                    format: date-time
+        proxycontrol.v1.DisableCredentialRequest:
+            type: object
+            properties:
+                tenantId:
+                    type: string
+                clientId:
+                    type: string
+        proxycontrol.v1.DisableCredentialResponse:
+            type: object
+            properties: {}
+        proxycontrol.v1.ExtractProxyRequest:
+            type: object
+            properties:
+                tenantId:
+                    type: string
+                count:
+                    type: integer
+                    format: int32
+        proxycontrol.v1.ExtractProxyResponse:
+            type: object
+            properties:
+                ipList:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/proxycontrol.v1.ProxyEndpoint'
+        proxycontrol.v1.ListBalanceLedgerResponse:
+            type: object
+            properties:
+                entries:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/proxycontrol.v1.BalanceLedgerEntry'
+                nextPageToken:
+                    type: string
+        proxycontrol.v1.ListBillingRatesResponse:
+            type: object
+            properties:
+                rates:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/proxycontrol.v1.BillingRateVersion'
+                nextPageToken:
+                    type: string
+        proxycontrol.v1.ListRecordAnomaliesResponse:
+            type: object
+            properties:
+                anomalies:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/proxycontrol.v1.RecordAnomaly'
+                nextPageToken:
+                    type: string
+        proxycontrol.v1.ListTenantsResponse:
+            type: object
+            properties:
+                tenants:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/proxycontrol.v1.TenantAccess'
+        proxycontrol.v1.ListTrafficGrantsResponse:
+            type: object
+            properties:
+                grants:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/proxycontrol.v1.AuditedTrafficGrant'
+                nextPageToken:
+                    type: string
+                overdraftBytes:
+                    type: string
+                    description: Current tenant-wide balance, read in the same snapshot as this page.
+        proxycontrol.v1.ListUsageGapsResponse:
+            type: object
+            properties:
+                gaps:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/proxycontrol.v1.UsageGap'
+                nextPageToken:
+                    type: string
+        proxycontrol.v1.LoadAuthStateRequest:
+            type: object
+            properties:
+                username:
+                    type: string
+                password:
+                    type: string
+        proxycontrol.v1.LoginRequest:
+            type: object
+            properties:
+                username:
+                    type: string
+                password:
+                    type: string
+        proxycontrol.v1.LoginResponse:
+            type: object
+            properties:
+                accessToken:
+                    type: string
+                expiresInSeconds:
+                    type: integer
+                    format: int32
+        proxycontrol.v1.ProxyEndpoint:
+            type: object
+            properties:
+                host:
+                    type: string
+                port:
+                    type: integer
+                    format: uint32
+                username:
+                    type: string
+                password:
+                    type: string
+                expiresAt:
+                    type: string
+                    format: date-time
+        proxycontrol.v1.QueryUsageResponse:
+            type: object
+            properties:
+                buckets:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/proxycontrol.v1.UsageBucket'
+                nextPageToken:
+                    type: string
+        proxycontrol.v1.RecordAnomaly:
+            type: object
+            properties:
+                anomalyId:
+                    type: string
+                gatewayId:
+                    type: string
+                bootId:
+                    type: string
+                tenantId:
+                    type: string
+                kind:
+                    type: string
+                fileId:
+                    type: string
+                fileOffset:
+                    type: string
+                detectedAt:
+                    type: string
+                    format: date-time
+                resolvedAt:
+                    type: string
+                    format: date-time
+        proxycontrol.v1.RecorderLine:
+            type: object
+            properties:
+                fileId:
+                    type: string
+                fileOffset:
+                    type: string
+                line:
+                    type: string
+                endOffset:
+                    type: string
+        proxycontrol.v1.RefreshAuthStateRequest:
+            type: object
+            properties:
+                references:
+                    type: array
+                    items:
+                        type: string
+        proxycontrol.v1.RefreshAuthStateResponse:
+            type: object
+            properties:
+                snapshots:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/proxycontrol.v1.AuthSnapshot'
+        proxycontrol.v1.ReportLifecycleRequest:
+            type: object
+            properties:
+                gatewayId:
+                    type: string
+                bootId:
+                    type: string
+                exitedAt:
+                    type: string
+                    format: date-time
+            description: A missing exit timestamp reports a heartbeat for the running boot.
+        proxycontrol.v1.ReportLifecycleResponse:
+            type: object
+            properties: {}
+        proxycontrol.v1.ReportUnfinishedSessionsRequest:
+            type: object
+            properties:
+                gatewayId:
+                    type: string
+                bootId:
+                    type: string
+                sessions:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/proxycontrol.v1.UnfinishedSession'
+        proxycontrol.v1.ReportUnfinishedSessionsResponse:
+            type: object
+            properties: {}
+        proxycontrol.v1.SetTenantGroupRequest:
+            type: object
+            properties:
+                tenantId:
+                    type: string
+                groupId:
+                    type: string
+                    description: Empty clears the current membership.
+        proxycontrol.v1.SubmitBatchRequest:
+            type: object
+            properties:
+                gatewayId:
+                    type: string
+                bootId:
+                    type: string
+                records:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/proxycontrol.v1.RecorderLine'
+        proxycontrol.v1.SubmitBatchResponse:
+            type: object
+            properties:
+                billable:
+                    type: integer
+                    format: uint32
+                notBillable:
+                    type: integer
+                    format: uint32
+                quarantined:
+                    type: integer
+                    format: uint32
+                duplicates:
+                    type: integer
+                    format: uint32
+        proxycontrol.v1.TenantAccess:
+            type: object
+            properties:
+                tenantId:
+                    type: string
+                name:
+                    type: string
+        proxycontrol.v1.TenantBalance:
+            type: object
+            properties:
+                tenantId:
+                    type: string
+                availableBytes:
+                    type: string
+                overdraftBytes:
+                    type: string
+                admissionThresholdBytes:
+                    type: string
+                warningThresholdBytes:
+                    type: string
+                warningSince:
+                    type: string
+                    format: date-time
+                grants:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/proxycontrol.v1.TrafficGrant'
+        proxycontrol.v1.TenantGroup:
+            type: object
+            properties:
+                groupId:
+                    type: string
+                name:
+                    type: string
+        proxycontrol.v1.TenantGroupMembership:
+            type: object
+            properties:
+                tenantId:
+                    type: string
+                groupId:
+                    type: string
+                effectiveFrom:
+                    type: string
+                    format: date-time
+        proxycontrol.v1.TrafficGrant:
+            type: object
+            properties:
+                grantId:
+                    type: string
+                grantedBytes:
+                    type: string
+                usedBytes:
+                    type: string
+                startsAt:
+                    type: string
+                    format: date-time
+                expiresAt:
+                    type: string
+                    format: date-time
+                source:
+                    type: string
+        proxycontrol.v1.UnfinishedSession:
+            type: object
+            properties:
+                sessionId:
+                    type: string
+                clientId:
+                    type: string
+                lastRecordedAt:
+                    type: string
+                    format: date-time
+        proxycontrol.v1.UpdateBillingSettingsRequest:
+            type: object
+            properties:
+                scopeType:
+                    type: string
+                scopeId:
+                    type: string
+                admissionThresholdBytes:
+                    type: string
+                    description: PUT replaces both overrides. An omitted field inherits its default.
+                warningThresholdBytes:
+                    type: string
+                tenantId:
+                    type: string
+        proxycontrol.v1.UsageAmount:
+            type: object
+            properties:
+                inputBytes:
+                    type: string
+                outputBytes:
+                    type: string
+                totalBytes:
+                    type: string
+                billableBytes:
+                    type: string
+        proxycontrol.v1.UsageBucket:
+            type: object
+            properties:
+                startTime:
+                    type: string
+                    format: date-time
+                gatewayId:
+                    type: string
+                grantId:
+                    type: string
+                amount:
+                    $ref: '#/components/schemas/proxycontrol.v1.UsageAmount'
+                rateId:
+                    type: string
+        proxycontrol.v1.UsageGap:
+            type: object
+            properties:
+                gapId:
+                    type: string
+                    description: Empty for a pending boot that has no session reports yet.
+                gatewayId:
+                    type: string
+                bootId:
+                    type: string
+                tenantId:
+                    type: string
+                kind:
+                    type: string
+                status:
+                    type: string
+                sessionId:
+                    type: string
+                fromAt:
+                    type: string
+                    format: date-time
+                detectedAt:
+                    type: string
+                    format: date-time
+                resolvedAt:
+                    type: string
+                    format: date-time
+                exitedAt:
+                    type: string
+                    format: date-time
+tags:
+    - name: AccessService
+    - name: BillingService
+    - name: CredentialService
+    - name: GatewayAuthService
+    - name: HealthService
+    - name: ReportingService
+    - name: UsageService

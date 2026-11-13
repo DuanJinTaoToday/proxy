@@ -36,10 +36,10 @@
 ### 接口与依赖
 
 - 工具链固定为 Go 1.27.4、Kratos v3.0.0、Protobuf Go v1.36.12 和 `protoc` 28.3，接口和配置使用 `proto3`。本地开发和 CI 使用相同的 Go 和 `protoc` 版本。
-- 跨应用通过协议交互。平台自有的服务间接口以 Protobuf 为契约，按接口提供方和版本放入 `api/<服务名>/<版本>/`。
-- `proxy-control` 提供的接口归 `api/proxycontrol/v1/`，PB 包名为 `proxycontrol.v1`。网关上报和控制台查询分别在 `reporting.proto` 和 `usage.proto` 定义，可分别声明服务并绑定对应的身份与权限规则。
+- 跨应用通过协议交互。平台自有的服务间接口以 Protobuf 为契约，源文件按接口提供方和版本放入 `api/protos/<服务名>/<版本>/`。
+- `proxy-control` 的接口源文件位于 `api/protos/proxycontrol/v1/`，PB 包名为 `proxycontrol.v1`。网关上报和控制台查询分别在 `reporting.proto` 和 `usage.proto` 定义，可分别声明服务并绑定对应的身份与权限规则。
 - 一期只启用 HTTP 服务。采集器通过 HTTP 批量上报，平台自有接口用 `google.api.http` 声明路由并生成 HTTP/JSON 绑定。
-- API 的 PB 源文件和生成的 Go 绑定归 `api/`。使用 `protoc` 和固定版本的生成插件，源文件与受影响的生成物同 PR 提交。
+- 在 `apps/proxy-control/` 运行 `make api`，用固定版本的 `protoc` 和插件生成 `api/proxycontrol/v1/` 下的 Go 绑定，以及 `api/proxycontrol/openapi.yaml`。源文件与受影响的生成物同 PR 提交。
 - 已发布的 `v1` 接口在滚动部署期间兼容仍在运行的旧调用方，包括 HTTP 路由、JSON 字段和批次重发的确认语义。保留已发布字段的编号，删除字段时使用 `reserved`，不兼容变更通过新版本交付。
 - GOST 认证插件遵循 GOST 自有协议。网关本机认证中继接收该协议，控制面提供凭据管理和网关状态同步。
 
@@ -51,6 +51,7 @@
 | --- | --- | --- |
 | Protobuf Go 生成插件 | `google.golang.org/protobuf/cmd/protoc-gen-go` | `v1.36.12` |
 | Kratos HTTP 生成插件 | `github.com/go-kratos/kratos/cmd/protoc-gen-go-http/v3` | `v3.0.0-20260526000039-30da04b769dc` |
+| OpenAPI 生成插件 | `github.com/google/gnostic/cmd/protoc-gen-openapi` | `v0.7.1` |
 | golangci-lint | `github.com/golangci/golangci-lint/v2/cmd/golangci-lint` | `v2.15.0` |
 | Goose | `github.com/pressly/goose/v3/cmd/goose` | `v3.30.0` |
 | Wire | `github.com/google/wire/cmd/wire` | `v0.7.0` |

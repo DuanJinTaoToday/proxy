@@ -7,9 +7,10 @@ import (
 	"slices"
 	"time"
 
-	v1 "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/pkg/authmetrics"
 )
+
+const refreshBatchLimit = 100
 
 func (r *Relay) Refresh(ctx context.Context) error {
 	defer authmetrics.RecordLatency("refresh", time.Now())
@@ -33,7 +34,7 @@ func (r *Relay) Refresh(ctx context.Context) error {
 	}
 	r.mu.Unlock()
 	slices.Sort(references)
-	for batch := range slices.Chunk(references, v1.GatewayAuthRefreshLimit) {
+	for batch := range slices.Chunk(references, refreshBatchLimit) {
 		if err := r.refreshBatch(ctx, batch, epoch); err != nil {
 			if r.authInterrupted != nil {
 				r.authInterrupted()
