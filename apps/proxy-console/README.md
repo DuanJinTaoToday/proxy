@@ -4,7 +4,7 @@
 
 ## 本地运行
 
-在本目录运行 `npm ci`，再运行 `npm run dev`。开发服务器默认将 `/v1/` 请求转发给 `http://127.0.0.1:8000`。可在启动前设置 `PROXY_CONTROL_URL` 指向本地控制面。
+在本目录运行 `make init` 安装依赖，运行 `make run` 启动开发服务器，运行 `make build` 检查类型并打包到 `dist/`。开发服务器默认将 `/v1/` 请求转发给 `http://127.0.0.1:8000`。可在启动前设置 `PROXY_CONTROL_URL` 指向本地控制面。
 
 ## 提取 Mock 演示
 

@@ -4,6 +4,10 @@
 
 一期目标是打通「隧道用量与流量额度」闭环：租户用平台凭据经网关访问目标，网关采集用量并上报，控制面按租户归集、结算额度，额度不足时拒绝新连接。
 
+## 本地 Docker 测试环境
+
+启动 Docker Desktop 后，在仓库根目录运行 `make test-env`，即可搭建或更新本地环境。控制台为 `https://localhost:8443`，SOCKS5 为 `127.0.0.1:1080`。测试账号、部署配置和命名规则见[本地 Docker 测试环境](docs/operations/local-test-environment.md)。
+
 ## 仓库结构
 
 | 目录 | 说明 |
