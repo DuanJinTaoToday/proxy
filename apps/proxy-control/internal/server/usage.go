@@ -25,7 +25,8 @@ func ReportingDecoder(maxBytes int64) http.DecodeRequestFunc {
 	return func(req *stdhttp.Request, body any) error {
 		message, ok := body.(proto.Message)
 		switch body.(type) {
-		case *v1.CreateRechargeRequest, *v1.AdjustBalanceRequest:
+		case *v1.CreateRechargeRequest, *v1.AdjustBalanceRequest, *v1.UpdateBillingSettingsRequest,
+			*v1.CreateBillingRateRequest, *v1.CreateTenantGroupRequest, *v1.SetTenantGroupRequest:
 			const maxBillingBody = 32 << 10
 			data, err := io.ReadAll(io.LimitReader(req.Body, maxBillingBody+1))
 			if len(data) > maxBillingBody {
@@ -59,6 +60,7 @@ func ReportingDecoder(maxBytes int64) http.DecodeRequestFunc {
 func UsageResponseEncoder(w stdhttp.ResponseWriter, req *stdhttp.Request, response any) error {
 	switch response.(type) {
 	case *v1.SubmitBatchResponse, *v1.DailyUsageResponse, *v1.QueryUsageResponse, *v1.TenantBalance,
+		*v1.BillingSettingsResponse, *v1.BillingRateVersion, *v1.TenantGroup, *v1.TenantGroupMembership,
 		*v1.ListRecordAnomaliesResponse, *v1.ListUsageGapsResponse,
 		*v1.ListTrafficGrantsResponse, *v1.ListBalanceLedgerResponse, *v1.ListBillingRatesResponse, *v1.ExtractProxyResponse, *v1.BalanceLedgerEntry:
 		_, extraction := response.(*v1.ExtractProxyResponse)

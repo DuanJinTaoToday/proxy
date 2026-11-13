@@ -214,6 +214,13 @@ func saveProgress(tx Transaction, req Batch, p ingestPlan) error {
 }
 
 func applyRecords(tx Transaction, gatewayID string, records []record, before string, now time.Time) ([]string, error) {
+	if len(records) == 0 {
+		return nil, nil
+	}
+	// Use a consistent set of thresholds, membership and rates for the batch.
+	if err := tx.LockBillingConfig(false); err != nil {
+		return nil, err
+	}
 	tenants := make(map[string]*Account)
 	var ids []string
 	for _, r := range records {

@@ -8,6 +8,21 @@ import "google/protobuf/timestamp.proto";
 option go_package = "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1";
 
 service BillingService {
+  rpc GetBillingSettings(GetBillingSettingsRequest) returns (BillingSettingsResponse) {
+    option (google.api.http) = { get: "/v1/operations/billing/settings/{scope_type}/{scope_id}" };
+  }
+  rpc UpdateBillingSettings(UpdateBillingSettingsRequest) returns (BillingSettingsResponse) {
+    option (google.api.http) = { put: "/v1/operations/billing/settings/{scope_type}/{scope_id}" body: "*" };
+  }
+  rpc CreateBillingRate(CreateBillingRateRequest) returns (BillingRateVersion) {
+    option (google.api.http) = { post: "/v1/operations/billing/rates" body: "*" };
+  }
+  rpc CreateTenantGroup(CreateTenantGroupRequest) returns (TenantGroup) {
+    option (google.api.http) = { post: "/v1/operations/billing/groups" body: "*" };
+  }
+  rpc SetTenantGroup(SetTenantGroupRequest) returns (TenantGroupMembership) {
+    option (google.api.http) = { put: "/v1/operations/tenants/{tenant_id}/group" body: "*" };
+  }
   rpc CreateRecharge(CreateRechargeRequest) returns (BalanceLedgerEntry) {
     option (google.api.http) = { post: "/v1/operations/tenants/{tenant_id}/recharges" body: "*" };
   }
@@ -23,6 +38,62 @@ service BillingService {
   rpc ListBillingRates(ListBillingRatesRequest) returns (ListBillingRatesResponse) {
     option (google.api.http) = { get: "/v1/operations/billing/rates" };
   }
+}
+
+message GetBillingSettingsRequest {
+  string scope_type = 1;
+  string scope_id = 2;
+  string tenant_id = 3;
+}
+
+message UpdateBillingSettingsRequest {
+  string scope_type = 1;
+  string scope_id = 2;
+  // PUT replaces both overrides. An omitted field inherits its default.
+  optional uint64 admission_threshold_bytes = 3;
+  optional uint64 warning_threshold_bytes = 4;
+  string tenant_id = 5;
+}
+
+message BillingThresholds {
+  optional uint64 admission_threshold_bytes = 1;
+  optional uint64 warning_threshold_bytes = 2;
+}
+
+message BillingSettingsResponse {
+  BillingThresholds configured = 1;
+  BillingThresholds effective = 2;
+}
+
+message CreateBillingRateRequest {
+  string scope_type = 1;
+  string scope_id = 2;
+  optional uint64 upload_ratio_milli = 3;
+  optional uint64 download_ratio_milli = 4;
+  // Omit to take effect immediately.
+  google.protobuf.Timestamp effective_from = 5;
+}
+
+message CreateTenantGroupRequest {
+  string group_id = 1;
+  string name = 2;
+}
+
+message TenantGroup {
+  string group_id = 1;
+  string name = 2;
+}
+
+message SetTenantGroupRequest {
+  string tenant_id = 1;
+  // Empty clears the current membership.
+  string group_id = 2;
+}
+
+message TenantGroupMembership {
+  string tenant_id = 1;
+  string group_id = 2;
+  google.protobuf.Timestamp effective_from = 3;
 }
 
 message CreateRechargeRequest {

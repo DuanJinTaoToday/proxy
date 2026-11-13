@@ -22,6 +22,9 @@ func (s *Service) ChangeBalance(ctx context.Context, token, tenant string, chang
 	if err != nil {
 		return LedgerEntry{}, err
 	}
+	if tenant == "" {
+		return LedgerEntry{}, errors.BadRequest("TENANT_REQUIRED", "tenant_id is required")
+	}
 	if strings.TrimSpace(change.ExternalRef) == "" || len(change.ExternalRef) > 256 || change.Bytes == 0 || change.Bytes > math.MaxInt64 ||
 		strings.ContainsRune(change.ExternalRef, 0) || strings.ContainsRune(change.Reason, 0) {
 		return LedgerEntry{}, errors.BadRequest("INVALID_BALANCE_CHANGE", "provide an external reference of at most 256 bytes and a positive byte amount")

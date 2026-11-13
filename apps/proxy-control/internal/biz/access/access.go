@@ -216,12 +216,26 @@ func (s *Service) RequireActor(token, tenantID string, permission Permission) (s
 		}
 	case ManageBilling:
 		if user.manageBilling {
-			if _, exists := s.tenants[tenantID]; exists {
+			if tenantID == "" || s.HasTenant(tenantID) {
 				return username, nil
 			}
 		}
 	}
 	return "", errors.Forbidden("ACCESS_DENIED", "permission denied")
+}
+
+func (s *Service) HasTenant(id string) bool {
+	_, exists := s.tenants[id]
+	return exists
+}
+
+func (s *Service) TenantIDs() []string {
+	ids := make([]string, 0, len(s.tenants))
+	for id := range s.tenants {
+		ids = append(ids, id)
+	}
+	sort.Strings(ids)
+	return ids
 }
 
 func activeMembership(role conf.TenantRole) bool {

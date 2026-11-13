@@ -113,11 +113,15 @@ func (s *Usage) ListBillingRates(ctx context.Context, req *v1.ListBillingRatesRe
 	}
 	reply := &v1.ListBillingRatesResponse{NextPageToken: page.NextToken}
 	for _, rate := range page.Items {
-		reply.Rates = append(reply.Rates, &v1.BillingRateVersion{
-			RateId: optionalNumericID(rate.ID), ScopeType: rate.ScopeType, ScopeId: rate.ScopeID,
-			UploadRatioMilli: uint64(rate.UploadRatioMilli), DownloadRatioMilli: uint64(rate.DownloadRatioMilli),
-			EffectiveFrom: timestamppb.New(rate.EffectiveFrom),
-		})
+		reply.Rates = append(reply.Rates, billingRateVersion(rate))
 	}
 	return reply, nil
+}
+
+func billingRateVersion(rate usage.RateVersion) *v1.BillingRateVersion {
+	return &v1.BillingRateVersion{
+		RateId: optionalNumericID(rate.ID), ScopeType: rate.ScopeType, ScopeId: rate.ScopeID,
+		UploadRatioMilli: uint64(rate.UploadRatioMilli), DownloadRatioMilli: uint64(rate.DownloadRatioMilli),
+		EffectiveFrom: timestamppb.New(rate.EffectiveFrom),
+	}
 }
