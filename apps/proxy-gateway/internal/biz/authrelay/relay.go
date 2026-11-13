@@ -47,6 +47,7 @@ type Relay struct {
 	credentials map[string]credential
 	quotas      map[string]quota
 	epoch       uint64
+	reporting   func() (uint64, bool)
 }
 
 func New(control Control, now func() time.Time) *Relay {
@@ -55,6 +56,19 @@ func New(control Control, now func() time.Time) *Relay {
 	}
 	return &Relay{control: control, now: now,
 		credentials: make(map[string]credential), quotas: make(map[string]quota)}
+}
+
+func NewWithReporting(control Control, reporting func() (uint64, bool)) *Relay {
+	relay := New(control, nil)
+	relay.reporting = reporting
+	return relay
+}
+
+func (r *Relay) quotaRenewal() (uint64, bool) {
+	if r.reporting == nil {
+		return 0, true
+	}
+	return r.reporting()
 }
 
 func (r *Relay) Authenticate(ctx context.Context, username, password, client string) (string, string) {
@@ -149,6 +163,7 @@ func (r *Relay) coldLoad(ctx context.Context, username, password string, digest 
 		lookup, stop := context.WithTimeout(context.WithoutCancel(ctx), syncTimeout)
 		defer stop()
 		started := r.now()
+		generation, renewQuota := r.quotaRenewal()
 		snapshot, err := r.control.Load(lookup, username, password)
 		if err != nil {
 			r.invalidateOnDenial(err, epoch)
@@ -160,7 +175,7 @@ func (r *Relay) coldLoad(ctx context.Context, username, password string, digest 
 		if err := lookup.Err(); err != nil {
 			return nil, err
 		}
-		r.apply([]*v1.AuthSnapshot{snapshot}, started, epoch)
+		r.apply([]*v1.AuthSnapshot{snapshot}, started, epoch, generation, renewQuota)
 		return nil, nil
 	})
 	select {
@@ -176,18 +191,20 @@ func validSnapshot(s *v1.AuthSnapshot) bool {
 		s.GetTenantId() != "" && (!s.GetActive() || len(s.GetPasswordHash()) == sha256.Size && s.GetQuota() != nil)
 }
 
-func (r *Relay) apply(snapshots []*v1.AuthSnapshot, started time.Time, epoch uint64) {
+func (r *Relay) apply(snapshots []*v1.AuthSnapshot, started time.Time, epoch, generation uint64, renewQuota bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if r.epoch != epoch {
 		return
 	}
+	currentGeneration, reportingReady := r.quotaRenewal()
+	renewQuota = renewQuota && reportingReady && currentGeneration == generation
 	for _, s := range snapshots {
 		if existing := r.credentials[s.GetUsername()]; !started.Before(existing.synced) &&
 			(existing.snapshot == nil || existing.snapshot.GetActive() || !s.GetActive()) {
 			r.credentials[s.GetUsername()] = credential{s, started}
 		}
-		if existing := r.quotas[s.GetTenantId()]; s.GetQuota() != nil && !started.Before(existing.synced) {
+		if existing := r.quotas[s.GetTenantId()]; renewQuota && s.GetQuota() != nil && !started.Before(existing.synced) {
 			r.quotas[s.GetTenantId()] = quota{s.GetQuota(), started}
 		}
 	}
