@@ -4,7 +4,7 @@
 
 ## 复现
 
-检出 [prototype/gost-recorder](https://github.com/DuanJinTaoToday/proxy/tree/prototype/gost-recorder/prototypes/gost-recorder)，从仓库根目录运行。原型需要 Python 3.8+、Go 1.26.3+ 和官方二进制，本次使用 Go 1.27.4 运行原型。Windows amd64 的发行包 SHA-256 为 `b00441624a66ebed94a2ddcc01ab2832069f053e6ca0abf19d7104b84fad1f78`，可用发行版的 `checksums.txt` 核对。
+检出 [archive/gost-recorder](https://github.com/DuanJinTaoToday/proxy/tree/archive/gost-recorder/prototypes/gost-recorder) tag，从仓库根目录运行。原型需要 Python 3.8+、Go 1.26.3+ 和官方二进制，本次使用 Go 1.27.4 运行原型。Windows amd64 的发行包 SHA-256 为 `b00441624a66ebed94a2ddcc01ab2832069f053e6ca0abf19d7104b84fad1f78`，可用发行版的 `checksums.txt` 核对。
 
 ```powershell
 go version -m C:\path\to\gost.exe
