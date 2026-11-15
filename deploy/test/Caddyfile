@@ -1,6 +1,6 @@
 https://localhost, https://console {
 	tls internal
-	@control path /v1/* /healthz
+	@control path /v1/* /public/* /healthz
 	handle @control {
 		reverse_proxy control:8000
 	}

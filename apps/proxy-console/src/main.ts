@@ -1,12 +1,14 @@
 import { createApp } from 'vue'
 import { createRouter, createWebHistory, RouterView } from 'vue-router'
 import App from './App.vue'
+import PublicProducts from './PublicProducts.vue'
 import './style.css'
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/', component: App, props: { operations: false } },
+    { path: '/products', component: PublicProducts },
     { path: '/operations', component: App, props: { operations: true } },
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],

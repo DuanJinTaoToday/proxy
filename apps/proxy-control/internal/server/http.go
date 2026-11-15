@@ -13,6 +13,10 @@ func NewHTTPServer(addr string, accessService *service.Access, options ...http.S
 	return srv
 }
 
+func RegisterProduct(srv *http.Server, product *service.Product) {
+	v1.RegisterProductServiceHTTPServer(srv, product)
+}
+
 func RegisterWallet(srv *http.Server, wallet *service.Wallet) {
 	v1.RegisterWalletServiceHTTPServer(srv, wallet)
 }

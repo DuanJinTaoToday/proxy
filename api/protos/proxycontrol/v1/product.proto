@@ -1,0 +1,90 @@
+syntax = "proto3";
+
+package proxycontrol.v1;
+
+import "google/api/annotations.proto";
+import "openapiv3/annotations.proto";
+import "proxycontrol/v1/common.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1";
+
+service ProductService {
+  rpc ListProducts(BaseRequest) returns (Products) {
+    option (google.api.http) = {get: "/public/products"};
+    option (openapi.v3.operation) = {summary: "查看两类商品的开售状态及公开套餐"};
+  }
+
+  rpc ListTrafficPackages(BaseRequest) returns (TrafficPackages) {
+    option (google.api.http) = {get: "/v1/operations/traffic-packages"};
+    option (openapi.v3.operation) = {summary: "查看运营套餐目录，含未定价及下架项"};
+  }
+
+  rpc UpdateTrafficPackage(UpdateTrafficPackageRequest) returns (TrafficPackage) {
+    option (google.api.http) = {patch: "/v1/operations/traffic-packages/{id}", body: "*"};
+    option (openapi.v3.operation) = {summary: "修改流量套餐并记录变更"};
+  }
+
+  rpc SetProductSale(SetProductSaleRequest) returns (Product) {
+    option (google.api.http) = {put: "/v1/operations/product-sales/{kind}", body: "*"};
+    option (openapi.v3.operation) = {summary: "手动开启或关闭指定商品"};
+  }
+}
+
+message Products {
+  repeated Product products = 1;
+}
+
+message Product {
+  // dynamic 或 static。
+  string kind = 1;
+  // 未开售时也公开的商品介绍。
+  string description = 2;
+  // 计费运营设置的开售状态。
+  bool open = 3;
+  // 购买入口可用。动态商品还需至少一档已定价的上架套餐。
+  bool can_purchase = 4;
+  // 仅动态商品开售后包含已定价的上架套餐。
+  repeated TrafficPackage packages = 5;
+}
+
+message TrafficPackages {
+  repeated TrafficPackage packages = 1;
+}
+
+message TrafficPackage {
+  // 稳定套餐 ID。
+  string id = 1;
+  // 套餐含流量，1 GB 等于 1,000,000,000 字节。
+  int64 capacity_bytes = 2;
+  // 套餐总价，单位分。0 表示未定价。
+  int64 price_minor = 3;
+  // 当前是否上架。
+  bool listed = 4;
+  // 当前配置版本，提交购买时用于确认报价。
+  int64 version = 5;
+}
+
+message UpdateTrafficPackageRequest {
+  // 目标套餐 ID。
+  string id = 1 [(validate.rules).string = {min_len: 1, max_len: 32}];
+  // 修改前读取的配置版本。
+  int64 version = 2 [(validate.rules).int64.gt = 0];
+  // 新的套餐容量，单位字节。
+  int64 capacity_bytes = 3 [(validate.rules).int64.gt = 0];
+  // 套餐总价，单位分。0 仅可用于保持未定价且下架。
+  int64 price_minor = 4 [(validate.rules).int64.gte = 0];
+  // 是否上架，必须显式提交。
+  optional bool listed = 5;
+}
+
+message SetProductSaleRequest {
+  // 目标商品，dynamic 或 static。
+  string kind = 1 [(validate.rules).string = {in: ["dynamic", "static"]}];
+  // 目标开售状态，必须显式提交。
+  optional bool open = 2;
+  // 运营确认对应商品报价已就绪。
+  bool quote_ready = 3;
+  // 开售时填写对应验收记录或链接。
+  string acceptance_evidence = 4 [(validate.rules).string.max_len = 1000];
+}

@@ -4,6 +4,7 @@ import { ApiError } from './api/control'
 import { canManageBilling, findWalletTenant, getWallet, quoteRecharge, rechargeWallet } from './api/wallet'
 import type { Recharge, RechargeQuote, WalletTenant } from './api/wallet'
 import WalletRecords from './WalletRecords.vue'
+import OperatorProducts from './OperatorProducts.vue'
 import { dateTime, money } from './wallet-format'
 
 const props = defineProps<{ token: string; operatorName: string }>()
@@ -191,6 +192,8 @@ async function submitRecharge() {
     <button type="submit" :disabled="searching || !!confirmation || quoting || submitting">{{ searching ? '正在查询…' : '查找租户' }}</button>
     <p v-if="searchError" class="error" role="alert">{{ searchError }}</p>
   </form>
+
+  <OperatorProducts v-if="permitted" :token="token" @expired="emit('expired')" />
 
   <template v-if="tenant">
     <section class="panel wallet-summary" aria-labelledby="tenant-heading">

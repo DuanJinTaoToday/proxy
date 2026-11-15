@@ -19,6 +19,19 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/proxycontrol.v1.BaseResp'
+    /public/products:
+        get:
+            tags:
+                - ProductService
+            summary: 查看两类商品的开售状态及公开套餐
+            operationId: ProductService_ListProducts
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.Products'
     /v1/access/check:
         post:
             tags:
@@ -228,6 +241,32 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/proxycontrol.v1.ListUsageGapsResponse'
+    /v1/operations/product-sales/{kind}:
+        put:
+            tags:
+                - ProductService
+            summary: 手动开启或关闭指定商品
+            operationId: ProductService_SetProductSale
+            parameters:
+                - name: kind
+                  in: path
+                  description: 目标商品，dynamic 或 static。
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.SetProductSaleRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.Product'
     /v1/operations/tenants:
         get:
             tags:
@@ -431,6 +470,45 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/proxycontrol.v1.BaseResp'
+    /v1/operations/traffic-packages:
+        get:
+            tags:
+                - ProductService
+            summary: 查看运营套餐目录，含未定价及下架项
+            operationId: ProductService_ListTrafficPackages
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.TrafficPackages'
+    /v1/operations/traffic-packages/{id}:
+        patch:
+            tags:
+                - ProductService
+            summary: 修改流量套餐并记录变更
+            operationId: ProductService_UpdateTrafficPackage
+            parameters:
+                - name: id
+                  in: path
+                  description: 目标套餐 ID。
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.UpdateTrafficPackageRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.TrafficPackage'
     /v1/operations/usage:
         get:
             tags:
@@ -796,6 +874,33 @@ components:
                     type: integer
                     description: 令牌从签发起的有效时长，单位为秒。
                     format: int32
+        proxycontrol.v1.Product:
+            type: object
+            properties:
+                kind:
+                    type: string
+                    description: dynamic 或 static。
+                description:
+                    type: string
+                    description: 未开售时也公开的商品介绍。
+                open:
+                    type: boolean
+                    description: 计费运营设置的开售状态。
+                canPurchase:
+                    type: boolean
+                    description: 购买入口可用。动态商品还需至少一档已定价的上架套餐。
+                packages:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/proxycontrol.v1.TrafficPackage'
+                    description: 仅动态商品开售后包含已定价的上架套餐。
+        proxycontrol.v1.Products:
+            type: object
+            properties:
+                products:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/proxycontrol.v1.Product'
         proxycontrol.v1.PurchaseOrder:
             type: object
             properties:
@@ -1030,6 +1135,21 @@ components:
                 password:
                     type: string
                     description: 新密码，至少 12 个字符。
+        proxycontrol.v1.SetProductSaleRequest:
+            type: object
+            properties:
+                kind:
+                    type: string
+                    description: 目标商品，dynamic 或 static。
+                open:
+                    type: boolean
+                    description: 目标开售状态，必须显式提交。
+                quoteReady:
+                    type: boolean
+                    description: 运营确认对应商品报价已就绪。
+                acceptanceEvidence:
+                    type: string
+                    description: 开售时填写对应验收记录或链接。
         proxycontrol.v1.SubmitBatchRequest:
             type: object
             properties:
@@ -1075,6 +1195,31 @@ components:
                 primaryAccountName:
                     type: string
                     description: 平台分配的全局唯一主账号名。
+        proxycontrol.v1.TrafficPackage:
+            type: object
+            properties:
+                id:
+                    type: string
+                    description: 稳定套餐 ID。
+                capacityBytes:
+                    type: string
+                    description: 套餐含流量，1 GB 等于 1,000,000,000 字节。
+                priceMinor:
+                    type: string
+                    description: 套餐总价，单位分。0 表示未定价。
+                listed:
+                    type: boolean
+                    description: 当前是否上架。
+                version:
+                    type: string
+                    description: 当前配置版本，提交购买时用于确认报价。
+        proxycontrol.v1.TrafficPackages:
+            type: object
+            properties:
+                packages:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/proxycontrol.v1.TrafficPackage'
         proxycontrol.v1.UnfinishedSession:
             type: object
             properties:
@@ -1088,6 +1233,24 @@ components:
                     type: string
                     description: 该会话最后一条已记录数据的时间。
                     format: date-time
+        proxycontrol.v1.UpdateTrafficPackageRequest:
+            type: object
+            properties:
+                id:
+                    type: string
+                    description: 目标套餐 ID。
+                version:
+                    type: string
+                    description: 修改前读取的配置版本。
+                capacityBytes:
+                    type: string
+                    description: 新的套餐容量，单位字节。
+                priceMinor:
+                    type: string
+                    description: 套餐总价，单位分。0 仅可用于保持未定价且下架。
+                listed:
+                    type: boolean
+                    description: 是否上架，必须显式提交。
         proxycontrol.v1.UsageAmount:
             type: object
             properties:
@@ -1241,6 +1404,7 @@ tags:
     - name: AccessService
     - name: GatewayAuthService
     - name: HealthService
+    - name: ProductService
     - name: ReportingService
     - name: UsageService
     - name: WalletService

@@ -8,6 +8,7 @@ package main
 
 import (
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/access"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/product"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/usage"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/wallet"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/conf"
@@ -37,7 +38,10 @@ func wireApp(confServer *conf.Server, confData *conf.Data, biz *conf.Biz, appCon
 	walletRepository := repo.ProvideWalletRepository(dataData)
 	walletService := wallet.NewService(walletRepository, accessService)
 	serviceWallet := service.NewWallet(walletService)
-	httpServer := server.NewConfiguredHTTPServer(confServer, biz, serviceAccess, serviceWallet)
+	productRepository := repo.ProvideProductRepository(dataData)
+	productService := product.NewService(productRepository, accessService)
+	serviceProduct := service.NewProduct(productService)
+	httpServer := server.NewConfiguredHTTPServer(confServer, biz, serviceAccess, serviceWallet, serviceProduct)
 	usageRepository := repo.ProvideUsageRepository(dataData)
 	usageService := usage.NewConfigured(biz, usageRepository, accessService)
 	serviceUsage := service.NewUsage(usageService)

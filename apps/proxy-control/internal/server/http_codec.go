@@ -19,7 +19,9 @@ func ReportingDecoder(maxBytes int64) http.DecodeRequestFunc {
 		message, ok := body.(proto.Message)
 		switch body.(type) {
 		case *v1.QuoteWalletRechargeRequest, *v1.RechargeWalletRequest:
-			return decodeWalletRecharge(req, message)
+			return decodeLimitedProto(req, message, "WALLET_REQUEST", "wallet request", "invalid recharge body")
+		case *v1.UpdateTrafficPackageRequest, *v1.SetProductSaleRequest:
+			return decodeLimitedProto(req, message, "PRODUCT_REQUEST", "product request", "invalid product configuration body")
 		case *v1.SubmitBatchRequest, *v1.ReportLifecycleRequest, *v1.ReportUnfinishedSessionsRequest, *v1.CompleteReplayRequest:
 		default:
 			return DecodeProxyAuthRequest(req, body)
@@ -41,24 +43,25 @@ func ReportingDecoder(maxBytes int64) http.DecodeRequestFunc {
 	}
 }
 
-func decodeWalletRecharge(req *stdhttp.Request, message proto.Message) error {
+func decodeLimitedProto(req *stdhttp.Request, message proto.Message, reason, name, invalidMessage string) error {
 	const maxBody = 8 << 10
 	if req.ContentLength > maxBody {
-		return errors.New(413, "WALLET_REQUEST_TOO_LARGE", "wallet request exceeds the body limit")
+		return errors.New(413, reason+"_TOO_LARGE", name+" exceeds the body limit")
 	}
 	data, err := io.ReadAll(io.LimitReader(req.Body, maxBody+1))
 	if len(data) > maxBody {
-		return errors.New(413, "WALLET_REQUEST_TOO_LARGE", "wallet request exceeds the body limit")
+		return errors.New(413, reason+"_TOO_LARGE", name+" exceeds the body limit")
 	}
 	if err != nil || protojson.Unmarshal(data, message) != nil {
-		return errors.BadRequest("INVALID_WALLET_REQUEST", "invalid recharge body")
+		return errors.BadRequest("INVALID_"+reason, invalidMessage)
 	}
 	return nil
 }
 
 func ControlResponseEncoder(w stdhttp.ResponseWriter, req *stdhttp.Request, response any) error {
 	switch response.(type) {
-	case *v1.WalletTenant, *v1.WalletRechargeQuote, *v1.WalletEntry, *v1.WalletEntries, *v1.PurchaseOrder, *v1.PurchaseOrders,
+	case *v1.Products, *v1.Product, *v1.TrafficPackage, *v1.TrafficPackages,
+		*v1.WalletTenant, *v1.WalletRechargeQuote, *v1.WalletEntry, *v1.WalletEntries, *v1.PurchaseOrder, *v1.PurchaseOrders,
 		*v1.SubmitBatchResponse, *v1.QueryUsageResponse, *v1.ListRecordAnomaliesResponse, *v1.ListUsageGapsResponse:
 		data, err := (protojson.MarshalOptions{UseProtoNames: true}).Marshal(response.(proto.Message))
 		if err != nil {

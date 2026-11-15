@@ -8,12 +8,13 @@ export async function request<T>(path: string, options: {
   token?: string
   signal?: AbortSignal
   body?: object
+  method?: 'PATCH' | 'PUT'
 } = {}): Promise<T> {
   const headers = new Headers({ Accept: 'application/json' })
   if (options.token) headers.set('Authorization', `Bearer ${options.token}`)
   if (options.body) headers.set('Content-Type', 'application/json')
   const response = await fetch(path, {
-    method: options.body ? 'POST' : 'GET',
+    method: options.method ?? (options.body ? 'POST' : 'GET'),
     headers,
     signal: options.signal,
     body: options.body && JSON.stringify(options.body),

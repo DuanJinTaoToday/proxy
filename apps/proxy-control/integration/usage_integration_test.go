@@ -14,6 +14,7 @@ import (
 	v1 "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/integration/testfixture"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/access"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/product"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/usage"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/wallet"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/data/repo"
@@ -50,7 +51,7 @@ func setupUsage(t *testing.T) usageFixture {
 	query.Set("search_path", schema)
 	address.RawQuery = query.Encode()
 	db := connect(t, address.String())
-	for _, path := range []string{"00001_proxy_auth.sql", "00002_usage.sql", "00003_gateway_lifecycle.sql", "00004_usage_gaps.sql", "00007_tenant_accounts.sql", "00008_wallet_orders.sql"} {
+	for _, path := range []string{"00001_proxy_auth.sql", "00002_usage.sql", "00003_gateway_lifecycle.sql", "00004_usage_gaps.sql", "00007_tenant_accounts.sql", "00008_wallet_orders.sql", "00009_products.sql"} {
 		migration, err := os.ReadFile("../migrations/" + path)
 		if err != nil {
 			t.Fatal(err)
@@ -75,6 +76,7 @@ func setupUsage(t *testing.T) usageFixture {
 		kratoshttp.RequestDecoder(server.ReportingDecoder(0)), kratoshttp.ResponseEncoder(server.ControlResponseEncoder))
 	server.RegisterUsage(handler, httpservice.NewUsage(service))
 	server.RegisterWallet(handler, httpservice.NewWallet(wallet.NewService(repo.NewWalletRepository(db), accessService)))
+	server.RegisterProduct(handler, httpservice.NewProduct(product.NewService(repo.NewProductRepository(db), accessService)))
 	return usageFixture{db: db, http: handler}
 }
 
