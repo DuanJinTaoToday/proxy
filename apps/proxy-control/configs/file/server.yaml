@@ -4,7 +4,7 @@ server:
     addr: 127.0.0.1:8000
   cron_tasks:
     # 修改任务列表后自动更新调度。将列表设为 [] 会停止后续调度。
-    # 启用用量模块后执行归档和流量额度结算。name 对应 CronService 方法名。
+    # 启用用量模块后执行用量归档。name 对应 CronService 方法名。
     - name: MaintainUsage
       # 六段 cron 表达式，第一段为秒。每分钟的第 0 秒执行。
       spec: "0 * * * * *"
@@ -16,10 +16,10 @@ server:
 # data:
 #   repo:
 #     proxy_auth:
-#       # 代理凭据管理和网关认证同步使用的 PostgreSQL DSN。
+#       # 用于账户访问的 PostgreSQL DSN。
 #       database_dsn: ""
 #     usage:
-#       # 用量上报和查询使用的 PostgreSQL DSN。需能读取 proxy_credentials 并维护用量分区。
+#       # 用量上报和查询使用的 PostgreSQL DSN。需能维护用量分区。
 #       database_dsn: ""
 
 biz:
@@ -28,32 +28,3 @@ biz:
     max_batch_records: 1000
     # 单次 Recorder 上报请求体的最大字节数（1 MiB）。
     max_batch_body_bytes: 1048576
-
-  # 启用登录时取消下面的注释，并为每个账号填写独立密码摘要。
-  # password_hash 使用 PBKDF2-HMAC-SHA256，迭代 600000 次。
-  # 格式为 <16 字节随机盐的 hex>:<32 字节摘要的 hex>。
-  # access:
-  #   tenants:
-  #     - id: alpha
-  #       name: Alpha
-  #     - id: beta
-  #       name: Beta
-  #   users:
-  #     - username: alice
-  #       password_hash: ""
-  #       memberships:
-  #         - tenant_id: alpha
-  #           role: TENANT_ROLE_ADMIN
-  #         - tenant_id: beta
-  #           role: TENANT_ROLE_MEMBER
-  #     - username: bob
-  #       password_hash: ""
-  #       memberships:
-  #         - tenant_id: beta
-  #           role: TENANT_ROLE_ADMIN
-  #         - tenant_id: alpha
-  #           role: TENANT_ROLE_MEMBER
-  #           disabled: true
-  #     - username: operator
-  #       password_hash: ""
-  #       platform_operator: true

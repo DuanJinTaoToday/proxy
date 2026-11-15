@@ -5,21 +5,29 @@ package proxycontrol.v1;
 import "google/api/annotations.proto";
 import "openapiv3/annotations.proto";
 import "proxycontrol/v1/common.proto";
+import "validate/validate.proto";
 
 option go_package = "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1";
 
 service AccessService {
-  rpc ListTenants(BaseRequest) returns (ListTenantsResponse) {
-    option (google.api.http) = {get: "/v1/access/tenants"};
-    option (openapi.v3.operation) = {
-      summary: "列出当前账号可访问的租户"
-    };
+  rpc Register(RegisterRequest) returns (TenantAccess) {
+    option (google.api.http) = {post: "/v1/access/register", body: "*"};
+    option (openapi.v3.operation) = {summary: "使用手机号注册租户管理员"};
   }
-  rpc GetTenantAccess(GetTenantAccessRequest) returns (TenantAccess) {
-    option (google.api.http) = {get: "/v1/access/tenants/{tenant_id}"};
-    option (openapi.v3.operation) = {
-      summary: "查询当前账号对指定租户的访问权限"
-    };
+
+  rpc GetAccount(BaseRequest) returns (TenantAccess) {
+    option (google.api.http) = {get: "/v1/tenant/account"};
+    option (openapi.v3.operation) = {summary: "查看当前管理员所属租户"};
+  }
+
+  rpc LoginOperator(LoginOperatorRequest) returns (LoginResponse) {
+    option (google.api.http) = {post: "/v1/operations/access/login", body: "*"};
+    option (openapi.v3.operation) = {summary: "登录运营控制台"};
+  }
+
+  rpc ResetTenantPassword(ResetTenantPasswordRequest) returns (BaseResp) {
+    option (google.api.http) = {post: "/v1/operations/tenants/{tenant_id}:reset-password", body: "*"};
+    option (openapi.v3.operation) = {summary: "运营核实租户归属后重置管理员密码"};
   }
 
   rpc CheckPermission(CheckPermissionRequest) returns (BaseResp) {
@@ -37,28 +45,41 @@ service AccessService {
   }
 }
 
-message ListTenantsResponse {
-  // 当前账号可访问的租户列表。
-  repeated TenantAccess tenants = 1;
-}
-
-message GetTenantAccessRequest {
-  // 租户 ID。
-  string tenant_id = 1;
-}
-
 message TenantAccess {
   // 租户 ID。
   string tenant_id = 1;
   // 租户显示名称。
   string name = 2;
+  // 平台分配的全局唯一主账号名。
+  string primary_account_name = 3;
 }
 
 message LoginRequest {
-  // 控制台登录用户名。
-  string username = 1;
+  // 中国大陆手机号，接受带或不带 +86。
+  string phone = 1 [(validate.rules).string = {min_len: 1, max_bytes: 32}];
   // 控制台登录密码。
-  string password = 2;
+  string password = 2 [(validate.rules).string = {min_len: 1, max_bytes: 1024}];
+}
+
+message RegisterRequest {
+  // 中国大陆手机号，接受带或不带 +86。
+  string phone = 1 [(validate.rules).string = {min_len: 1, max_bytes: 32}];
+  // 初始密码，至少 12 个字符。
+  string password = 2 [(validate.rules).string = {min_len: 12, max_bytes: 1024}];
+}
+
+message LoginOperatorRequest {
+  // 独立的运营登录名。
+  string username = 1 [(validate.rules).string = {min_len: 1, max_bytes: 128}];
+  // 运营登录密码。
+  string password = 2 [(validate.rules).string = {min_len: 1, max_bytes: 1024}];
+}
+
+message ResetTenantPasswordRequest {
+  // 运营已核实归属的租户 ID。
+  string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_bytes: 64}];
+  // 新密码，至少 12 个字符。
+  string password = 2 [(validate.rules).string = {min_len: 12, max_bytes: 1024}];
 }
 
 message LoginResponse {
@@ -69,12 +90,12 @@ message LoginResponse {
 }
 
 enum Permission {
+  reserved 2;
+  reserved "PERMISSION_MANAGE_PROXY_CREDENTIALS";
   PERMISSION_UNSPECIFIED = 0;
   PERMISSION_READ_TENANT_USAGE = 1;
-  PERMISSION_MANAGE_PROXY_CREDENTIALS = 2;
   PERMISSION_READ_OPERATIONS = 3;
   PERMISSION_MANAGE_BILLING = 4;
-  PERMISSION_EXTRACT_PROXY = 5;
 }
 
 message CheckPermissionRequest {

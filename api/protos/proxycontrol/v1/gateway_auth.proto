@@ -5,7 +5,6 @@ package proxycontrol.v1;
 import "google/api/annotations.proto";
 import "openapiv3/annotations.proto";
 import "validate/validate.proto";
-import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1";
 
@@ -42,6 +41,8 @@ message RefreshAuthStateResponse {
 }
 
 message AuthSnapshot {
+  reserved 7, 8;
+  reserved "expires_at", "allowed_source_cidrs";
   // 绑定到当前网关的凭据引用，用于后续刷新。
   string reference = 1;
   // 用于认证的用户名。
@@ -52,21 +53,15 @@ message AuthSnapshot {
   string tenant_id = 4;
   // 供网关本地认证使用的密码哈希。
   bytes password_hash = 5;
-  // 凭据当前是否启用且未过期。
+  // 凭据当前是否启用。
   bool active = 6;
-  // 失效时间。
-  google.protobuf.Timestamp expires_at = 7;
-  // 凭据允许访问的客户端来源网段，空列表表示不限制。
-  repeated string allowed_source_cidrs = 8;
   // 有效凭据所属租户的流量准入状态。
   AuthQuota quota = 9;
 }
 
 message AuthQuota {
+  reserved 2, 3;
+  reserved "admission_threshold_bytes", "valid_until";
   // 可用流量余额，单位为字节。
   int64 available_bytes = 1;
-  // 代理连接准入使用的最低可用余额阈值，单位为字节。
-  uint64 admission_threshold_bytes = 2;
-  // 网关可使用这份准入快照的截止时间。
-  google.protobuf.Timestamp valid_until = 3;
 }

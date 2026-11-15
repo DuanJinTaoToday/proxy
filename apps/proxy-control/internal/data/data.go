@@ -34,6 +34,9 @@ func NewData(settings *conf.Data) (*Data, func(), error) {
 		}
 	}
 	repoSettings := settings.GetRepo()
+	if repoSettings.GetProxyAuth() != nil && repoSettings.GetUsage() != nil && repoSettings.GetProxyAuth().GetDatabaseDsn() != repoSettings.GetUsage().GetDatabaseDsn() {
+		return nil, nil, errors.New("proxy auth and usage must use the same control plane database DSN")
+	}
 	if authSettings := repoSettings.GetProxyAuth(); authSettings != nil {
 		dsn := authSettings.GetDatabaseDsn()
 		if dsn == "" {
@@ -53,15 +56,16 @@ func NewData(settings *conf.Data) (*Data, func(), error) {
 			cleanup()
 			return nil, nil, errors.New("configure data.repo.usage.database_dsn")
 		}
-		client, closeDB, err := db.NewPgsqlClient(db.WithSource(dsn), db.WithLogger(logger.Default))
-		if err != nil {
-			cleanup()
-			return nil, nil, errors.New("could not connect to the control plane PostgreSQL database")
-		}
-		cleanups = append(cleanups, closeDB)
-		if err := client.Exec("SELECT client_id, tenant_id FROM proxy_credentials LIMIT 0").Error; err != nil {
-			cleanup()
-			return nil, nil, fmt.Errorf("usage requires the proxy_credentials mapping from Issue #3: %w", err)
+		client := data.repo.proxyAuthDB
+		if client == nil {
+			var closeDB func() error
+			var err error
+			client, closeDB, err = db.NewPgsqlClient(db.WithSource(dsn), db.WithLogger(logger.Default))
+			if err != nil {
+				cleanup()
+				return nil, nil, errors.New("could not connect to the control plane PostgreSQL database")
+			}
+			cleanups = append(cleanups, closeDB)
 		}
 		if err := client.Exec("SELECT gateway_id, boot_id, session_id FROM usage_gaps LIMIT 0").Error; err != nil {
 			cleanup()

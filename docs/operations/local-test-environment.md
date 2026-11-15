@@ -1,6 +1,6 @@
 # 本地 Docker 测试环境
 
-本环境用于回归当前动态隧道与 Recorder 链路，使用数据库种入的本地测试账号及模拟上游。此处的旧版运营接口用于为测试租户增加流量额度。首版开户、商业钱包和真实供应商交易的验收要求见[首版商业交付 Spec](../features/proxy-first-release/proxy-first-release-spec.md)。
+本环境用于验证开户、服务启动和 Recorder 基础能力，使用数据库种入的本地测试账号及模拟上游。首版商业链路使用新的本地数据库卷验证。首版开户、商业钱包和真实供应商交易的验收要求见[首版商业交付 Spec](../features/proxy-first-release/proxy-first-release-spec.md)。
 
 ## 启动与更新
 
@@ -28,7 +28,7 @@ Compose 项目名为 `proxy-test`。项目服务的镜像使用 `proxy-<组件>:
 ## 访问和联调
 
 - 控制台访问 `https://localhost:8443`。租户管理员测试手机号为 `13800000001`（Alpha）和 `13800000002`（Beta）。运营账号 `operator` 使用 `POST /v1/operations/access/login`，初始密码均为 `proxy-local-test`。也可以在控制台用其他测试手机号注册。
-- SOCKS5 访问 `127.0.0.1:1080`。使用旧版运营接口 `POST /v1/operations/tenants/{tenant_id}/recharges` 为测试租户增加流量额度，再用该租户账号发放 SOCKS5 凭据。通过代理访问 `http://console:8080/fixture` 可验证容器内转发，响应体为 `proxy-test`。
+- SOCKS5 监听为 `127.0.0.1:1080`。新版子账号与计量完成前，完整认证转发联调暂停。
 - HTTPS 使用 Caddy 测试 CA。浏览器需要信任时，从 Docker Desktop 的 `console-1` 容器导出 `/data/caddy/pki/authorities/local/root.crt`，导入当前用户的受信任根证书。网关通过挂载的 CA 校验 `https://console`。
 
 ## 搭建与维护约定

@@ -1,6 +1,6 @@
 # proxy-console
 
-控制台采用 Vue 3、TypeScript、Vite 和 Vue Router。当前代码支持手机号注册、登录，以及查询所属租户的上海自然日用量。首版客户入口、自助注册、子账号管理及商业页面见[首版商业交付 Spec](../../docs/features/proxy-first-release/proxy-first-release-spec.md)。
+控制台采用 Vue 3、TypeScript 和 Vite。当前代码支持手机号注册、登录和查看所属租户。首版客户入口、自助注册、子账号管理及商业页面见[首版商业交付 Spec](../../docs/features/proxy-first-release/proxy-first-release-spec.md)。
 
 ## 本地运行
 
@@ -15,7 +15,5 @@
 | POST | `/v1/access/register` |
 | POST | `/v1/access/login` |
 | GET | `/v1/tenant/account` |
-| GET | `/v1/tenants/{tenant_id}/usage/daily` |
-| GET | `/v1/tenants/{tenant_id}/balance` |
 
 首版的客户部署需核对新版 API 契约和购买入口。参阅[开发规范](../../docs/standards/proxy-development-conventions.md#控制台技术栈)和[控制面 API](../../api/proxycontrol/openapi.yaml)。

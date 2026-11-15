@@ -3,7 +3,6 @@ package usage
 import (
 	"crypto/sha256"
 	"encoding/base64"
-	"sync"
 	"time"
 	_ "time/tzdata"
 
@@ -26,21 +25,16 @@ func init() {
 
 type TenantAccess interface {
 	Require(string, string, access.Permission) error
-	RequireActor(string, string, access.Permission) (string, error)
-	HasTenant(string) bool
-	TenantIDs() []string
 }
 
 type Service struct {
 	repo       Repository
 	access     TenantAccess
 	maxRecords int
-	cacheMu    sync.Mutex
-	cache      map[string]cachedBalance
 }
 
 func New(repo Repository, access TenantAccess) *Service {
-	return &Service{repo: repo, access: access, maxRecords: DefaultBatchRecords, cache: make(map[string]cachedBalance)}
+	return &Service{repo: repo, access: access, maxRecords: DefaultBatchRecords}
 }
 
 func NewConfigured(settings *conf.Biz, repo Repository, access TenantAccess) *Service {

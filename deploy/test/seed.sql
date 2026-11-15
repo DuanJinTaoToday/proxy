@@ -10,4 +10,29 @@ VALUES
     ('local-test', 'report', decode('a1574854e46b7f33756b1146fa0719ebc7c810f2643737ad6b913baba0ba2817', 'hex'))
 ON CONFLICT DO NOTHING;
 
+-- Accounts below are only for the local test deployment.
+INSERT INTO tenants (id, name, primary_account_name)
+VALUES ('alpha', 'Alpha', 'localalpha'), ('beta', 'Beta', 'localbeta')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO tenant_admins (tenant_id, phone_e164, password_hash)
+VALUES ('alpha', '+8613800000001', '2bd806c97f0e00af1a1fc3328fa763a9:38c0e51748906648e4e5318e2990cea0f17670ee335eafe9556e85bbb437a725'),
+       ('beta', '+8613800000002', '81b637d8fcd2c6da6359e6963113a117:3722a65d26a8a497f340de7d6380f3ae49f7e1e2be710439ddc6a374bf176a91')
+ON CONFLICT (tenant_id) DO NOTHING;
+
+INSERT INTO wallets (tenant_id) VALUES ('alpha'), ('beta')
+ON CONFLICT (tenant_id) DO NOTHING;
+
+INSERT INTO tenant_balances (tenant_id, updated_at) VALUES ('alpha', now()), ('beta', now())
+ON CONFLICT (tenant_id) DO NOTHING;
+
+INSERT INTO operators (id, username, password_hash)
+VALUES ('local-operator', 'operator', '06e55b633481f7bb072957eabcf110c9:53683f816375ff5369a9d2b7d62b18d3d790341b14b425f87422353219d5c229')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO operator_permissions (operator_id, permission)
+VALUES ('local-operator', 'read_operations'), ('local-operator', 'manage_billing'),
+       ('local-operator', 'manage_tenant_accounts')
+ON CONFLICT DO NOTHING;
+
 COMMIT;

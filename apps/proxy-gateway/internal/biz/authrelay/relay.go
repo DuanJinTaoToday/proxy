@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"crypto/subtle"
 	"errors"
-	"net/netip"
 	"sync"
 	"time"
 
@@ -22,7 +21,6 @@ const (
 var ErrGatewayDenied = errors.New("gateway authentication rejected")
 var ErrCredentialDenied = errors.New("credential authentication rejected")
 var ErrCredentialDisabled = errors.New("credential disabled")
-var ErrCredentialExpired = errors.New("credential expired")
 
 type Control interface {
 	Load(context.Context, string, string) (*v1.AuthSnapshot, error)
@@ -78,7 +76,7 @@ func (r *Relay) Authenticate(ctx context.Context, username, password, client str
 	return id, reason
 }
 
-func (r *Relay) AuthenticateTenant(ctx context.Context, username, password, client string) (id, tenant, reason string) {
+func (r *Relay) AuthenticateTenant(ctx context.Context, username, password, _ string) (id, tenant, reason string) {
 	if username == "" || password == "" || len(username) > 255 || len(password) > 255 {
 		return "", "", "INVALID_CREDENTIAL"
 	}
@@ -95,8 +93,6 @@ func (r *Relay) AuthenticateTenant(ctx context.Context, username, password, clie
 				return "", "", "INVALID_CREDENTIAL"
 			case errors.Is(err, ErrCredentialDisabled):
 				return "", "", "CREDENTIAL_DISABLED"
-			case errors.Is(err, ErrCredentialExpired):
-				return "", "", "CREDENTIAL_EXPIRED"
 			default:
 				return "", "", "AUTH_STATE_UNAVAILABLE"
 			}
@@ -110,18 +106,14 @@ func (r *Relay) AuthenticateTenant(ctx context.Context, username, password, clie
 	switch {
 	case c == nil || !now.Before(entry.synced.Add(stateLifetime)):
 		return "", "", "AUTH_STATE_UNAVAILABLE"
-	case c.GetExpiresAt() != nil && !now.Before(c.GetExpiresAt().AsTime()):
-		return "", "", "CREDENTIAL_EXPIRED"
 	case !c.GetActive():
 		return "", "", "CREDENTIAL_DISABLED"
 	case subtle.ConstantTimeCompare(c.GetPasswordHash(), digest[:]) != 1:
 		return "", "", "INVALID_CREDENTIAL"
-	case !allowedSource(client, c.GetAllowedSourceCidrs()):
-		return "", "", "SOURCE_NOT_ALLOWED"
 	case !validQuota(balance, now):
 		authmetrics.Counters.Add("quota_cache_miss", 1)
 		return "", "", "AUTH_STATE_UNAVAILABLE"
-	case balance.snapshot.GetAvailableBytes() < 0 || uint64(balance.snapshot.GetAvailableBytes()) < balance.snapshot.GetAdmissionThresholdBytes():
+	case balance.snapshot.GetAvailableBytes() <= 0:
 		return "", "", "QUOTA_INSUFFICIENT"
 	default:
 		authmetrics.Counters.Add("quota_cache_hit", 1)
@@ -130,27 +122,7 @@ func (r *Relay) AuthenticateTenant(ctx context.Context, username, password, clie
 }
 
 func validQuota(q quota, now time.Time) bool {
-	return q.snapshot != nil && now.Before(q.synced.Add(stateLifetime)) &&
-		(q.snapshot.GetValidUntil() == nil || now.Before(q.snapshot.GetValidUntil().AsTime()))
-}
-
-func allowedSource(client string, cidrs []string) bool {
-	if len(cidrs) == 0 {
-		return true
-	}
-	var address netip.Addr
-	if addrPort, err := netip.ParseAddrPort(client); err == nil {
-		address = addrPort.Addr()
-	} else {
-		address, _ = netip.ParseAddr(client)
-	}
-	for _, cidr := range cidrs {
-		prefix, err := netip.ParsePrefix(cidr)
-		if err == nil && prefix.Contains(address.Unmap()) {
-			return true
-		}
-	}
-	return false
+	return q.snapshot != nil && now.Before(q.synced.Add(stateLifetime))
 }
 
 func (r *Relay) state(username string) (credential, quota, uint64) {

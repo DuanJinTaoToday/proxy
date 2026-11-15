@@ -21,15 +21,11 @@ type UsageQuery struct {
 	Start, End          time.Time
 	Granularity         Granularity
 	SplitByGateway      bool
-	SplitByGrant        bool `json:",omitempty"`
-	SplitByRate         bool `json:",omitempty"`
 }
 
 type UsageKey struct {
 	StartTime time.Time
 	GatewayID string
-	GrantID   int64
-	RateID    int64
 }
 
 type UsageBucket struct {
@@ -58,9 +54,7 @@ func (s *Service) QueryUsage(ctx context.Context, token string, query UsageQuery
 		return nil, err
 	}
 	if after != nil && (after.StartTime.IsZero() || !after.StartTime.Before(query.End) ||
-		(!query.SplitByGateway && after.GatewayID != "") ||
-		(!query.SplitByGrant && after.GrantID != 0) ||
-		(!query.SplitByRate && after.RateID != 0)) {
+		(!query.SplitByGateway && after.GatewayID != "")) {
 		return nil, errInvalidPageToken
 	}
 	buckets, err := s.repo.QueryUsageBuckets(ctx, query, after, pageSize+1)
@@ -73,7 +67,7 @@ func (s *Service) QueryUsage(ctx context.Context, token string, query UsageQuery
 	}
 	for _, bucket := range buckets {
 		if bucket.InputBytes+bucket.OutputBytes < bucket.InputBytes {
-			return nil, errByteOverflow
+			return nil, errors.InternalServer("USAGE_OVERFLOW", "byte count exceeds storage range")
 		}
 	}
 	return &UsagePage{Buckets: buckets, NextToken: nextToken}, nil

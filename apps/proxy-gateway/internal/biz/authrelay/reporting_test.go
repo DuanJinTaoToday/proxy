@@ -17,7 +17,7 @@ type reportingControl struct {
 func (c *reportingControl) Load(_ context.Context, user, password string) (*v1.AuthSnapshot, error) {
 	digest := sha256.Sum256([]byte(password))
 	return &v1.AuthSnapshot{Username: user, Reference: user, ClientId: user, TenantId: user, Active: true,
-		PasswordHash: digest[:], Quota: &v1.AuthQuota{AvailableBytes: c.available, AdmissionThresholdBytes: 10}}, nil
+		PasswordHash: digest[:], Quota: &v1.AuthQuota{AvailableBytes: c.available}}, nil
 }
 
 func (c *reportingControl) Refresh(ctx context.Context, refs []string) ([]*v1.AuthSnapshot, error) {
@@ -62,14 +62,14 @@ func TestReportingFailureFreezesQuotaWithoutFreezingCredentials(t *testing.T) {
 	auth("cold", "AUTH_STATE_UNAVAILABLE")
 	now = now.Add(time.Second)
 	auth("warm", "AUTH_STATE_UNAVAILABLE")
-	control.available = 9
+	control.available = 0
 	control.onRefresh = func() { generation++; ready = true }
 	refresh()
 	control.onRefresh = nil
 	auth("warm", "AUTH_STATE_UNAVAILABLE")
 	refresh()
 	auth("warm", "QUOTA_INSUFFICIENT")
-	control.available = 10
+	control.available = 1
 	refresh()
 	auth("warm", "OK")
 }

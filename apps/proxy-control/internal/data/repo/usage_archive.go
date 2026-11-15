@@ -1,7 +1,6 @@
 package repo
 
 import (
-	"context"
 	"fmt"
 	"time"
 
@@ -41,12 +40,12 @@ func ensurePartition(tx *gorm.DB, date string) error {
 
 func (t usageTx) ArchiveDay(date string) error {
 	if err := t.db.Exec(`INSERT INTO usage_daily
-		(tenant_id, gateway_id, usage_date, grant_id, rate_id, source, input_bytes, output_bytes, billable_bytes, record_count, last_received_at)
-		SELECT tenant_id, gateway_id, usage_date, grant_id, rate_id, source,
+		(tenant_id, gateway_id, usage_date, input_bytes, output_bytes, billable_bytes, record_count, last_received_at)
+		SELECT tenant_id, gateway_id, usage_date,
 			SUM(input_bytes), SUM(output_bytes), SUM(billable_bytes), SUM(record_count), MAX(last_received_at)
 		FROM usage_minutely WHERE usage_date = ?
-		GROUP BY tenant_id, gateway_id, usage_date, grant_id, rate_id, source
-		ON CONFLICT (tenant_id, gateway_id, usage_date, grant_id, rate_id, source) DO UPDATE SET
+		GROUP BY tenant_id, gateway_id, usage_date
+		ON CONFLICT (tenant_id, gateway_id, usage_date) DO UPDATE SET
 			input_bytes = usage_daily.input_bytes + EXCLUDED.input_bytes,
 			output_bytes = usage_daily.output_bytes + EXCLUDED.output_bytes,
 			billable_bytes = usage_daily.billable_bytes + EXCLUDED.billable_bytes,
@@ -70,22 +69,4 @@ func (t usageTx) DatesBefore(cutoff string) ([]string, error) {
 
 func (t usageTx) SetArchiveCutoff(cutoff string) error {
 	return t.db.Exec("UPDATE usage_archive_state SET before_date = ? WHERE singleton", cutoff).Error
-}
-
-func (r *UsageRepository) DueTenants(ctx context.Context, now time.Time) ([]string, error) {
-	var ids []string
-	err := r.db.WithContext(ctx).Raw(`SELECT DISTINCT tenant_id FROM traffic_grants g
-		WHERE status = 'active' AND starts_at <= @now AND
-		(activated_at IS NULL OR expires_at <= @now AND NOT EXISTS (
-			SELECT 1 FROM balance_ledger WHERE grant_id = g.id AND kind = 'grant_expire'
-		)) ORDER BY tenant_id`, map[string]any{"now": now}).Scan(&ids).Error
-	return ids, err
-}
-
-func (t usageTx) WriteExpiry(tenant string, grantID, delta, available int64, now time.Time) error {
-	return t.db.Exec(`INSERT INTO balance_ledger
-					(tenant_id, grant_id, kind, delta_bytes, available_before, available_after, operator, created_at)
-					VALUES (?, ?, 'grant_expire', ?, ?, ?, 'system', ?)
-					ON CONFLICT (grant_id) WHERE kind = 'grant_expire' DO NOTHING`,
-		tenant, grantID, delta, available, available, now).Error
 }

@@ -11,12 +11,9 @@ import (
 var ProviderSet = wire.NewSet(NewConfiguredHTTPServer, NewCronServer, NewServerList)
 
 func NewServerList(modules conf.Modules, httpServer *kratoshttp.Server,
-	proxyAuth *service.ProxyAuth, usageHandler *service.Usage, scheduler *cronServerImpl,
+	usageHandler *service.Usage, scheduler *cronServerImpl,
 ) []transport.Server {
 	servers := []transport.Server{httpServer}
-	if modules.ProxyAuth {
-		RegisterProxyAuth(httpServer, proxyAuth)
-	}
 	if modules.Usage {
 		RegisterUsage(httpServer, usageHandler)
 		servers = append(servers, scheduler)

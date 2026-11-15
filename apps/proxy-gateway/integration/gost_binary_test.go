@@ -26,7 +26,7 @@ func (smokeControl) Load(_ context.Context, username, password string) (*v1.Auth
 	}
 	hash := sha256.Sum256([]byte(password))
 	return &v1.AuthSnapshot{Reference: "test", Username: username, ClientId: "smoke-client", TenantId: "smoke-tenant",
-		Active: true, PasswordHash: hash[:], Quota: &v1.AuthQuota{AvailableBytes: 100, AdmissionThresholdBytes: 10}}, nil
+		Active: true, PasswordHash: hash[:], Quota: &v1.AuthQuota{AvailableBytes: 100}}, nil
 }
 
 func (smokeControl) Refresh(context.Context, []string) ([]*v1.AuthSnapshot, error) {

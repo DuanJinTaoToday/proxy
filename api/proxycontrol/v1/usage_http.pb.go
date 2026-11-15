@@ -17,17 +17,11 @@ var _ = new(context.Context)
 
 const _ = http.SupportPackageIsVersion3
 
-const OperationUsageServiceExtractProxy = "/proxycontrol.v1.UsageService/ExtractProxy"
-const OperationUsageServiceGetTenantBalance = "/proxycontrol.v1.UsageService/GetTenantBalance"
-const OperationUsageServiceGetTenantDailyUsage = "/proxycontrol.v1.UsageService/GetTenantDailyUsage"
 const OperationUsageServiceListRecordAnomalies = "/proxycontrol.v1.UsageService/ListRecordAnomalies"
 const OperationUsageServiceListUsageGaps = "/proxycontrol.v1.UsageService/ListUsageGaps"
 const OperationUsageServiceQueryUsage = "/proxycontrol.v1.UsageService/QueryUsage"
 
 type UsageServiceHTTPServer interface {
-	ExtractProxy(context.Context, *ExtractProxyRequest) (*ExtractProxyResponse, error)
-	GetTenantBalance(context.Context, *TenantBalanceRequest) (*TenantBalance, error)
-	GetTenantDailyUsage(context.Context, *DailyUsageRequest) (*DailyUsageResponse, error)
 	ListRecordAnomalies(context.Context, *ListRecordAnomaliesRequest) (*ListRecordAnomaliesResponse, error)
 	ListUsageGaps(context.Context, *ListUsageGapsRequest) (*ListUsageGapsResponse, error)
 	QueryUsage(context.Context, *QueryUsageRequest) (*QueryUsageResponse, error)
@@ -35,78 +29,9 @@ type UsageServiceHTTPServer interface {
 
 func RegisterUsageServiceHTTPServer(s *http.Server, srv UsageServiceHTTPServer) {
 	r := s.Route("/")
-	r.Handle("POST", "/v1/tenants/{tenant_id}/proxy-extractions", _UsageService_ExtractProxy0_HTTP_Handler(srv))
-	r.Handle("GET", "/v1/tenants/{tenant_id}/usage/daily", _UsageService_GetTenantDailyUsage0_HTTP_Handler(srv))
-	r.Handle("GET", "/v1/tenants/{tenant_id}/balance", _UsageService_GetTenantBalance0_HTTP_Handler(srv))
 	r.Handle("GET", "/v1/operations/usage", _UsageService_QueryUsage0_HTTP_Handler(srv))
 	r.Handle("GET", "/v1/operations/anomalies", _UsageService_ListRecordAnomalies0_HTTP_Handler(srv))
 	r.Handle("GET", "/v1/operations/gaps", _UsageService_ListUsageGaps0_HTTP_Handler(srv))
-}
-
-func _UsageService_ExtractProxy0_HTTP_Handler(srv UsageServiceHTTPServer) func(ctx http.Context) error {
-	return func(ctx http.Context) error {
-		var in ExtractProxyRequest
-		if err := ctx.Bind(&in); err != nil {
-			return err
-		}
-		if err := ctx.BindVars(&in); err != nil {
-			return err
-		}
-		http.SetOperation(ctx, OperationUsageServiceExtractProxy)
-		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
-			return srv.ExtractProxy(ctx, req.(*ExtractProxyRequest))
-		})
-		out, err := h(ctx, &in)
-		if err != nil {
-			return err
-		}
-		reply := out.(*ExtractProxyResponse)
-		return ctx.Result(200, reply)
-	}
-}
-
-func _UsageService_GetTenantDailyUsage0_HTTP_Handler(srv UsageServiceHTTPServer) func(ctx http.Context) error {
-	return func(ctx http.Context) error {
-		var in DailyUsageRequest
-		if err := ctx.BindQuery(&in); err != nil {
-			return err
-		}
-		if err := ctx.BindVars(&in); err != nil {
-			return err
-		}
-		http.SetOperation(ctx, OperationUsageServiceGetTenantDailyUsage)
-		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
-			return srv.GetTenantDailyUsage(ctx, req.(*DailyUsageRequest))
-		})
-		out, err := h(ctx, &in)
-		if err != nil {
-			return err
-		}
-		reply := out.(*DailyUsageResponse)
-		return ctx.Result(200, reply)
-	}
-}
-
-func _UsageService_GetTenantBalance0_HTTP_Handler(srv UsageServiceHTTPServer) func(ctx http.Context) error {
-	return func(ctx http.Context) error {
-		var in TenantBalanceRequest
-		if err := ctx.BindQuery(&in); err != nil {
-			return err
-		}
-		if err := ctx.BindVars(&in); err != nil {
-			return err
-		}
-		http.SetOperation(ctx, OperationUsageServiceGetTenantBalance)
-		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
-			return srv.GetTenantBalance(ctx, req.(*TenantBalanceRequest))
-		})
-		out, err := h(ctx, &in)
-		if err != nil {
-			return err
-		}
-		reply := out.(*TenantBalance)
-		return ctx.Result(200, reply)
-	}
 }
 
 func _UsageService_QueryUsage0_HTTP_Handler(srv UsageServiceHTTPServer) func(ctx http.Context) error {
@@ -167,9 +92,6 @@ func _UsageService_ListUsageGaps0_HTTP_Handler(srv UsageServiceHTTPServer) func(
 }
 
 type UsageServiceHTTPClient interface {
-	ExtractProxy(ctx context.Context, req *ExtractProxyRequest, opts ...http.CallOption) (rsp *ExtractProxyResponse, err error)
-	GetTenantBalance(ctx context.Context, req *TenantBalanceRequest, opts ...http.CallOption) (rsp *TenantBalance, err error)
-	GetTenantDailyUsage(ctx context.Context, req *DailyUsageRequest, opts ...http.CallOption) (rsp *DailyUsageResponse, err error)
 	ListRecordAnomalies(ctx context.Context, req *ListRecordAnomaliesRequest, opts ...http.CallOption) (rsp *ListRecordAnomaliesResponse, err error)
 	ListUsageGaps(ctx context.Context, req *ListUsageGapsRequest, opts ...http.CallOption) (rsp *ListUsageGapsResponse, err error)
 	QueryUsage(ctx context.Context, req *QueryUsageRequest, opts ...http.CallOption) (rsp *QueryUsageResponse, err error)
@@ -181,55 +103,6 @@ type UsageServiceHTTPClientImpl struct {
 
 func NewUsageServiceHTTPClient(client *http.Client) UsageServiceHTTPClient {
 	return &UsageServiceHTTPClientImpl{client}
-}
-
-func (c *UsageServiceHTTPClientImpl) ExtractProxy(ctx context.Context, in *ExtractProxyRequest, opts ...http.CallOption) (*ExtractProxyResponse, error) {
-	var out ExtractProxyResponse
-	pattern := "/v1/tenants/{tenant_id}/proxy-extractions"
-	path := http.BuildPath(pattern, in)
-	opts = append([]http.CallOption{
-		http.Accept("application/protojson"),
-		http.ContentType("application/protojson"),
-		http.Operation(OperationUsageServiceExtractProxy),
-		http.PathTemplate(pattern),
-	}, opts...)
-	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
-func (c *UsageServiceHTTPClientImpl) GetTenantBalance(ctx context.Context, in *TenantBalanceRequest, opts ...http.CallOption) (*TenantBalance, error) {
-	var out TenantBalance
-	pattern := "/v1/tenants/{tenant_id}/balance"
-	path := http.BuildPath(pattern, in, http.WithQueryParams())
-	opts = append([]http.CallOption{
-		http.Accept("application/protojson"),
-		http.Operation(OperationUsageServiceGetTenantBalance),
-		http.PathTemplate(pattern),
-	}, opts...)
-	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
-func (c *UsageServiceHTTPClientImpl) GetTenantDailyUsage(ctx context.Context, in *DailyUsageRequest, opts ...http.CallOption) (*DailyUsageResponse, error) {
-	var out DailyUsageResponse
-	pattern := "/v1/tenants/{tenant_id}/usage/daily"
-	path := http.BuildPath(pattern, in, http.WithQueryParams())
-	opts = append([]http.CallOption{
-		http.Accept("application/protojson"),
-		http.Operation(OperationUsageServiceGetTenantDailyUsage),
-		http.PathTemplate(pattern),
-	}, opts...)
-	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return &out, nil
 }
 
 func (c *UsageServiceHTTPClientImpl) ListRecordAnomalies(ctx context.Context, in *ListRecordAnomaliesRequest, opts ...http.CallOption) (*ListRecordAnomaliesResponse, error) {

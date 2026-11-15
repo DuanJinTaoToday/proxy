@@ -7,16 +7,9 @@ import (
 
 type Repository interface {
 	Transact(ctx context.Context, run func(Transaction) error) error
-	DailyUsage(ctx context.Context, tenantID string, start, end time.Time) ([]DailyTotals, *time.Time, error)
 	QueryUsageBuckets(ctx context.Context, query UsageQuery, after *UsageKey, limit int) ([]UsageBucket, error)
 	ListRecordAnomalies(ctx context.Context, filter FindingFilter, after *FindingKey, limit int) ([]RecordAnomaly, error)
 	ListUsageGaps(ctx context.Context, filter FindingFilter, after *FindingKey, limit int) ([]UsageGap, error)
-	AuditGrants(ctx context.Context, tenant string, after int64, limit int) ([]AuditedGrant, int64, error)
-	AuditLedger(ctx context.Context, tenant string, after int64, limit int) ([]LedgerEntry, error)
-	AuditRates(ctx context.Context, scopeType, scopeID string, id, after int64, limit int) ([]RateVersion, error)
-	MockEnabled(ctx context.Context, tenantID string) (bool, error)
-	MockDailyUsage(ctx context.Context, tenantID, start, end string) ([]Day, error)
-	DueTenants(ctx context.Context, now time.Time) ([]string, error)
 }
 
 // Transaction keeps the locks, usage writes and cursor updates in the same commit.
@@ -32,42 +25,10 @@ type Transaction interface {
 	Cursor(gatewayID, bootID, fileID string) (int64, error)
 	SaveCursor(gatewayID, bootID, fileID string, offset int64, now time.Time) error
 	SaveLastRecord(gatewayID, bootID string, recordedAt time.Time) error
-	TenantForClient(clientID string) (string, error)
 	Quarantine(gatewayID, bootID, fileID string, offset uint64, kind, detail string, now time.Time) error
-	LoadAccount(id string, now time.Time) (Account, error)
-	Thresholds(id string, now time.Time) ([]Threshold, error)
-	LockBillingConfig(exclusive bool) error
-	BillingSettings(scope Scope) (Threshold, error)
-	SaveBillingSettings(scope Scope, threshold Threshold, actor string, now time.Time) error
-	GroupExists(id string) (bool, error)
-	InsertGroup(id, name string, now time.Time) (bool, error)
-	AppendGroupMembership(tenant, group, actor string, now time.Time) (time.Time, error)
-	InsertBillingRate(rate RateVersion, actor string, now time.Time) (int64, error)
-	SaveGrant(Grant) error
-	CreateGrant(tenant, actor string, grant Grant, now time.Time) (int64, error)
-	SaveGrantAmount(grant Grant) error
-	FindBalanceChange(tenant, externalRef string) (LedgerEntry, error)
-	WriteBalanceChange(tenant string, entry LedgerEntry) (LedgerEntry, error)
-	SaveAccount(Account, time.Time) error
-	Rates([]RateSample) ([]Rate, error)
-	WriteBuckets([]Bucket, []Bucket) error
-	WriteLedger(tenant string, grantID int64, kind string, delta, before, after int64, correction *int64, now time.Time) error
-	ExpiryEntry(grantID int64) (int64, bool, error)
-	WriteExpiry(tenant string, grantID, delta, available int64, now time.Time) error
 	DatesBefore(cutoff string) ([]string, error)
 	ArchiveDay(date string) error
 	SetArchiveCutoff(cutoff string) error
-}
-
-type Threshold struct{ AdmissionThresholdBytes, WarningThresholdBytes *int64 }
-
-type RateSample struct {
-	TenantID   string
-	RecordedAt time.Time
-}
-
-type Rate struct {
-	ID, UploadRatioMilli, DownloadRatioMilli int64
 }
 
 type RecorderLine struct {
@@ -83,27 +44,4 @@ type Batch struct {
 
 type BatchResult struct {
 	Billable, NotBillable, Quarantined, Duplicates uint32
-}
-
-type DailyTotals struct {
-	Date                                   string
-	InputBytes, OutputBytes, BillableBytes uint64
-}
-
-type DailyUsage struct {
-	Days           []Day
-	LastReceivedAt *time.Time
-}
-
-type Day struct {
-	DailyTotals
-	TotalBytes uint64
-}
-
-type Balance struct {
-	TenantID                                                       string
-	AvailableBytes                                                 int64
-	OverdraftBytes, AdmissionThresholdBytes, WarningThresholdBytes uint64
-	WarningSince                                                   *time.Time
-	Grants                                                         []Grant
 }

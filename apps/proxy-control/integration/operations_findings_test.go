@@ -49,9 +49,9 @@ func TestOperationsRecordAnomalies(t *testing.T) {
 		query string
 		want  int
 	}{
-		{"gateway_id=gateway-a", 2}, {"boot_id=boot-b", 2}, {"tenant_id=alpha", 1},
+		{"gateway_id=gateway-a", 2}, {"boot_id=boot-b", 2}, {"tenant_id=alpha", 0},
 		{"kind=invalid_record", 1}, {"gateway_id=gateway-b&boot_id=boot-a", 0},
-		{"gateway_id=gateway-a&boot_id=boot-a&tenant_id=alpha&kind=invalid_counters", 1},
+		{"gateway_id=gateway-a&boot_id=boot-a&tenant_id=alpha&kind=invalid_counters", 0},
 	} {
 		var result v1.ListRecordAnomaliesResponse
 		read(anomaliesPath+"?"+tc.query, &result)
@@ -69,7 +69,7 @@ func TestOperationsRecordAnomalies(t *testing.T) {
 			rows[0].GetAnomalyId() == "" || (page.GetNextPageToken() != "") != (i < 2) {
 			t.Fatalf("unexpected anomaly page %d: %v", i, &page)
 		}
-		if i == 0 && (rows[0].GetTenantId() != "beta" || rows[0].GetResolvedAt() == nil) {
+		if i == 0 && (rows[0].GetTenantId() != "" || rows[0].GetResolvedAt() == nil) {
 			t.Fatalf("missing tenant or resolution time: %v", rows[0])
 		}
 		if i == 2 && rows[0].GetTenantId() != "" {
@@ -84,7 +84,7 @@ func TestOperationsRecordAnomalies(t *testing.T) {
 
 	// The operator uses the returned locator on a separately accessible
 	// gateway file. Control only receives the HTTP batch.
-	first := recorder(0, "client-a", beforeMidnight, 10, 20, 10, 20)
+	first := recorder(0, "", beforeMidnight, 10, 20, 10, 20)
 	bad := recorder(first.GetEndOffset(), "client-a", beforeMidnight, 10, 20, 11, 20)
 	root := t.TempDir()
 	dir := filepath.Join(root, "gateway-a", "boot")
@@ -94,11 +94,11 @@ func TestOperationsRecordAnomalies(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(dir, "sessions"), []byte(first.GetLine()+"\n"+bad.GetLine()+"\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if ack := submit(t, f, "gateway-a", reportToken, first, bad); ack.GetBillable() != 1 || ack.GetQuarantined() != 1 {
+	if ack := submit(t, f, "gateway-a", reportToken, first, bad); ack.GetNotBillable() != 1 || ack.GetQuarantined() != 1 {
 		t.Fatalf("unexpected dispositions: %v", ack)
 	}
 	var located v1.ListRecordAnomaliesResponse
-	read(anomaliesPath+"?gateway_id=gateway-a&boot_id=boot&tenant_id=alpha&kind=invalid_counters", &located)
+	read(anomaliesPath+"?gateway_id=gateway-a&boot_id=boot&kind=invalid_counters", &located)
 	if len(located.GetAnomalies()) != 1 {
 		t.Fatalf("expected one recorded anomaly: %v", &located)
 	}
@@ -148,9 +148,9 @@ func TestOperationsUsageGapStates(t *testing.T) {
 	post("boots/replay/unfinished-sessions", "{"+boot+`,"sessions":[
 		{"session_id":"session-a","client_id":"client-a","last_recorded_at":"2026-11-12T02:00:00Z"},
 		{"session_id":"session-b","client_id":"client-b","last_recorded_at":"2026-11-12T02:00:01Z"}]}`)
-	const sessionPath = gapsPath + "?gateway_id=gateway-a&boot_id=replay&tenant_id=alpha&kind=session"
+	const sessionPath = gapsPath + "?gateway_id=gateway-a&boot_id=replay&kind=session"
 	read(sessionPath+"&status=pending_replay", &state)
-	if len(state.GetGaps()) != 1 || state.GetGaps()[0].GetSessionId() != "session-a" || state.GetGaps()[0].GetStatus() != "pending_replay" {
+	if len(state.GetGaps()) != 2 || state.GetGaps()[0].GetSessionId() != "session-b" || state.GetGaps()[0].GetStatus() != "pending_replay" {
 		t.Fatalf("expected provisional session: %v", &state)
 	}
 	gapID := state.GetGaps()[0].GetGapId()
@@ -165,13 +165,13 @@ func TestOperationsUsageGapStates(t *testing.T) {
 		t.Fatalf("completed session still pending: %v", &state)
 	}
 	read(sessionPath+"&status=possible_gap", &state)
-	if len(state.GetGaps()) != 1 {
+	if len(state.GetGaps()) != 2 {
 		t.Fatalf("expected confirmed replay result: %v", &state)
 	}
 	gap := state.GetGaps()[0]
-	start := time.Date(2026, 11, 12, 2, 0, 0, 0, time.UTC)
-	if gap.GetGapId() != gapID || gapID == "" || gap.GetStatus() != "possible_gap" || gap.GetTenantId() != "alpha" ||
-		!gap.GetFromAt().AsTime().Equal(start) || !gap.GetExitedAt().AsTime().Equal(start.Add(2*time.Second)) {
+	start := time.Date(2026, 11, 12, 2, 0, 1, 0, time.UTC)
+	if gap.GetGapId() != gapID || gapID == "" || gap.GetStatus() != "possible_gap" || gap.GetTenantId() != "" ||
+		!gap.GetFromAt().AsTime().Equal(start) || !gap.GetExitedAt().AsTime().Equal(start.Add(time.Second)) {
 		t.Fatalf("unexpected gap: %v", gap)
 	}
 
@@ -192,9 +192,6 @@ func TestOperationsUsageGapStates(t *testing.T) {
 	}
 
 	for _, path := range []string{anomaliesPath, gapsPath} {
-		for _, role := range []struct{ tenant, token string }{{"alpha", f.alice}, {"beta", f.bob}} {
-			testfixture.AssertStatus(t, testfixture.Request(f.http, "GET", path+"?tenant_id="+role.tenant, "", role.token), 403, "ACCESS_DENIED")
-		}
 		testfixture.AssertStatus(t, testfixture.Request(f.http, "GET", path, "", ""), 401, "")
 	}
 }

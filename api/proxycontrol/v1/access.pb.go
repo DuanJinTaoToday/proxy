@@ -7,6 +7,7 @@
 package proxycontrolv1
 
 import (
+	_ "github.com/envoyproxy/protoc-gen-validate/validate"
 	_ "github.com/google/gnostic/openapiv3"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -26,12 +27,10 @@ const (
 type Permission int32
 
 const (
-	Permission_PERMISSION_UNSPECIFIED              Permission = 0
-	Permission_PERMISSION_READ_TENANT_USAGE        Permission = 1
-	Permission_PERMISSION_MANAGE_PROXY_CREDENTIALS Permission = 2
-	Permission_PERMISSION_READ_OPERATIONS          Permission = 3
-	Permission_PERMISSION_MANAGE_BILLING           Permission = 4
-	Permission_PERMISSION_EXTRACT_PROXY            Permission = 5
+	Permission_PERMISSION_UNSPECIFIED       Permission = 0
+	Permission_PERMISSION_READ_TENANT_USAGE Permission = 1
+	Permission_PERMISSION_READ_OPERATIONS   Permission = 3
+	Permission_PERMISSION_MANAGE_BILLING    Permission = 4
 )
 
 // Enum value maps for Permission.
@@ -39,18 +38,14 @@ var (
 	Permission_name = map[int32]string{
 		0: "PERMISSION_UNSPECIFIED",
 		1: "PERMISSION_READ_TENANT_USAGE",
-		2: "PERMISSION_MANAGE_PROXY_CREDENTIALS",
 		3: "PERMISSION_READ_OPERATIONS",
 		4: "PERMISSION_MANAGE_BILLING",
-		5: "PERMISSION_EXTRACT_PROXY",
 	}
 	Permission_value = map[string]int32{
-		"PERMISSION_UNSPECIFIED":              0,
-		"PERMISSION_READ_TENANT_USAGE":        1,
-		"PERMISSION_MANAGE_PROXY_CREDENTIALS": 2,
-		"PERMISSION_READ_OPERATIONS":          3,
-		"PERMISSION_MANAGE_BILLING":           4,
-		"PERMISSION_EXTRACT_PROXY":            5,
+		"PERMISSION_UNSPECIFIED":       0,
+		"PERMISSION_READ_TENANT_USAGE": 1,
+		"PERMISSION_READ_OPERATIONS":   3,
+		"PERMISSION_MANAGE_BILLING":    4,
 	}
 )
 
@@ -81,109 +76,21 @@ func (Permission) EnumDescriptor() ([]byte, []int) {
 	return file_proxycontrol_v1_access_proto_rawDescGZIP(), []int{0}
 }
 
-type ListTenantsResponse struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// 当前账号可访问的租户列表。
-	Tenants       []*TenantAccess `protobuf:"bytes,1,rep,name=tenants,proto3" json:"tenants,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ListTenantsResponse) Reset() {
-	*x = ListTenantsResponse{}
-	mi := &file_proxycontrol_v1_access_proto_msgTypes[0]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListTenantsResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListTenantsResponse) ProtoMessage() {}
-
-func (x *ListTenantsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_access_proto_msgTypes[0]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListTenantsResponse.ProtoReflect.Descriptor instead.
-func (*ListTenantsResponse) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_access_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *ListTenantsResponse) GetTenants() []*TenantAccess {
-	if x != nil {
-		return x.Tenants
-	}
-	return nil
-}
-
-type GetTenantAccessRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// 租户 ID。
-	TenantId      string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetTenantAccessRequest) Reset() {
-	*x = GetTenantAccessRequest{}
-	mi := &file_proxycontrol_v1_access_proto_msgTypes[1]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetTenantAccessRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetTenantAccessRequest) ProtoMessage() {}
-
-func (x *GetTenantAccessRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_access_proto_msgTypes[1]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetTenantAccessRequest.ProtoReflect.Descriptor instead.
-func (*GetTenantAccessRequest) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_access_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *GetTenantAccessRequest) GetTenantId() string {
-	if x != nil {
-		return x.TenantId
-	}
-	return ""
-}
-
 type TenantAccess struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 租户 ID。
 	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
 	// 租户显示名称。
-	Name          string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	// 平台分配的全局唯一主账号名。
+	PrimaryAccountName string `protobuf:"bytes,3,opt,name=primary_account_name,json=primaryAccountName,proto3" json:"primary_account_name,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
 func (x *TenantAccess) Reset() {
 	*x = TenantAccess{}
-	mi := &file_proxycontrol_v1_access_proto_msgTypes[2]
+	mi := &file_proxycontrol_v1_access_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -195,7 +102,7 @@ func (x *TenantAccess) String() string {
 func (*TenantAccess) ProtoMessage() {}
 
 func (x *TenantAccess) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_access_proto_msgTypes[2]
+	mi := &file_proxycontrol_v1_access_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -208,7 +115,7 @@ func (x *TenantAccess) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TenantAccess.ProtoReflect.Descriptor instead.
 func (*TenantAccess) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_access_proto_rawDescGZIP(), []int{2}
+	return file_proxycontrol_v1_access_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *TenantAccess) GetTenantId() string {
@@ -225,10 +132,17 @@ func (x *TenantAccess) GetName() string {
 	return ""
 }
 
+func (x *TenantAccess) GetPrimaryAccountName() string {
+	if x != nil {
+		return x.PrimaryAccountName
+	}
+	return ""
+}
+
 type LoginRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// 控制台登录用户名。
-	Username string `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
+	// 中国大陆手机号，接受带或不带 +86。
+	Phone string `protobuf:"bytes,1,opt,name=phone,proto3" json:"phone,omitempty"`
 	// 控制台登录密码。
 	Password      string `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -237,7 +151,7 @@ type LoginRequest struct {
 
 func (x *LoginRequest) Reset() {
 	*x = LoginRequest{}
-	mi := &file_proxycontrol_v1_access_proto_msgTypes[3]
+	mi := &file_proxycontrol_v1_access_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -249,7 +163,7 @@ func (x *LoginRequest) String() string {
 func (*LoginRequest) ProtoMessage() {}
 
 func (x *LoginRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_access_proto_msgTypes[3]
+	mi := &file_proxycontrol_v1_access_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -262,17 +176,179 @@ func (x *LoginRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LoginRequest.ProtoReflect.Descriptor instead.
 func (*LoginRequest) Descriptor() ([]byte, []int) {
+	return file_proxycontrol_v1_access_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *LoginRequest) GetPhone() string {
+	if x != nil {
+		return x.Phone
+	}
+	return ""
+}
+
+func (x *LoginRequest) GetPassword() string {
+	if x != nil {
+		return x.Password
+	}
+	return ""
+}
+
+type RegisterRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 中国大陆手机号，接受带或不带 +86。
+	Phone string `protobuf:"bytes,1,opt,name=phone,proto3" json:"phone,omitempty"`
+	// 初始密码，至少 12 个字符。
+	Password      string `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RegisterRequest) Reset() {
+	*x = RegisterRequest{}
+	mi := &file_proxycontrol_v1_access_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RegisterRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RegisterRequest) ProtoMessage() {}
+
+func (x *RegisterRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proxycontrol_v1_access_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RegisterRequest.ProtoReflect.Descriptor instead.
+func (*RegisterRequest) Descriptor() ([]byte, []int) {
+	return file_proxycontrol_v1_access_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *RegisterRequest) GetPhone() string {
+	if x != nil {
+		return x.Phone
+	}
+	return ""
+}
+
+func (x *RegisterRequest) GetPassword() string {
+	if x != nil {
+		return x.Password
+	}
+	return ""
+}
+
+type LoginOperatorRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 独立的运营登录名。
+	Username string `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
+	// 运营登录密码。
+	Password      string `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LoginOperatorRequest) Reset() {
+	*x = LoginOperatorRequest{}
+	mi := &file_proxycontrol_v1_access_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LoginOperatorRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LoginOperatorRequest) ProtoMessage() {}
+
+func (x *LoginOperatorRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proxycontrol_v1_access_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LoginOperatorRequest.ProtoReflect.Descriptor instead.
+func (*LoginOperatorRequest) Descriptor() ([]byte, []int) {
 	return file_proxycontrol_v1_access_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *LoginRequest) GetUsername() string {
+func (x *LoginOperatorRequest) GetUsername() string {
 	if x != nil {
 		return x.Username
 	}
 	return ""
 }
 
-func (x *LoginRequest) GetPassword() string {
+func (x *LoginOperatorRequest) GetPassword() string {
+	if x != nil {
+		return x.Password
+	}
+	return ""
+}
+
+type ResetTenantPasswordRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 运营已核实归属的租户 ID。
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// 新密码，至少 12 个字符。
+	Password      string `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ResetTenantPasswordRequest) Reset() {
+	*x = ResetTenantPasswordRequest{}
+	mi := &file_proxycontrol_v1_access_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResetTenantPasswordRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResetTenantPasswordRequest) ProtoMessage() {}
+
+func (x *ResetTenantPasswordRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proxycontrol_v1_access_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ResetTenantPasswordRequest.ProtoReflect.Descriptor instead.
+func (*ResetTenantPasswordRequest) Descriptor() ([]byte, []int) {
+	return file_proxycontrol_v1_access_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *ResetTenantPasswordRequest) GetTenantId() string {
+	if x != nil {
+		return x.TenantId
+	}
+	return ""
+}
+
+func (x *ResetTenantPasswordRequest) GetPassword() string {
 	if x != nil {
 		return x.Password
 	}
@@ -291,7 +367,7 @@ type LoginResponse struct {
 
 func (x *LoginResponse) Reset() {
 	*x = LoginResponse{}
-	mi := &file_proxycontrol_v1_access_proto_msgTypes[4]
+	mi := &file_proxycontrol_v1_access_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -303,7 +379,7 @@ func (x *LoginResponse) String() string {
 func (*LoginResponse) ProtoMessage() {}
 
 func (x *LoginResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_access_proto_msgTypes[4]
+	mi := &file_proxycontrol_v1_access_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -316,7 +392,7 @@ func (x *LoginResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LoginResponse.ProtoReflect.Descriptor instead.
 func (*LoginResponse) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_access_proto_rawDescGZIP(), []int{4}
+	return file_proxycontrol_v1_access_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *LoginResponse) GetAccessToken() string {
@@ -345,7 +421,7 @@ type CheckPermissionRequest struct {
 
 func (x *CheckPermissionRequest) Reset() {
 	*x = CheckPermissionRequest{}
-	mi := &file_proxycontrol_v1_access_proto_msgTypes[5]
+	mi := &file_proxycontrol_v1_access_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -357,7 +433,7 @@ func (x *CheckPermissionRequest) String() string {
 func (*CheckPermissionRequest) ProtoMessage() {}
 
 func (x *CheckPermissionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_access_proto_msgTypes[5]
+	mi := &file_proxycontrol_v1_access_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -370,7 +446,7 @@ func (x *CheckPermissionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CheckPermissionRequest.ProtoReflect.Descriptor instead.
 func (*CheckPermissionRequest) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_access_proto_rawDescGZIP(), []int{5}
+	return file_proxycontrol_v1_access_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *CheckPermissionRequest) GetTenantId() string {
@@ -391,17 +467,28 @@ var File_proxycontrol_v1_access_proto protoreflect.FileDescriptor
 
 const file_proxycontrol_v1_access_proto_rawDesc = "" +
 	"\n" +
-	"\x1cproxycontrol/v1/access.proto\x12\x0fproxycontrol.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1bopenapiv3/annotations.proto\x1a\x1cproxycontrol/v1/common.proto\"N\n" +
-	"\x13ListTenantsResponse\x127\n" +
-	"\atenants\x18\x01 \x03(\v2\x1d.proxycontrol.v1.TenantAccessR\atenants\"5\n" +
-	"\x16GetTenantAccessRequest\x12\x1b\n" +
-	"\ttenant_id\x18\x01 \x01(\tR\btenantId\"?\n" +
+	"\x1cproxycontrol/v1/access.proto\x12\x0fproxycontrol.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1bopenapiv3/annotations.proto\x1a\x1cproxycontrol/v1/common.proto\x1a\x17validate/validate.proto\"q\n" +
 	"\fTenantAccess\x12\x1b\n" +
 	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\"F\n" +
-	"\fLoginRequest\x12\x1a\n" +
-	"\busername\x18\x01 \x01(\tR\busername\x12\x1a\n" +
-	"\bpassword\x18\x02 \x01(\tR\bpassword\"`\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x120\n" +
+	"\x14primary_account_name\x18\x03 \x01(\tR\x12primaryAccountName\"W\n" +
+	"\fLoginRequest\x12\x1f\n" +
+	"\x05phone\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01( R\x05phone\x12&\n" +
+	"\bpassword\x18\x02 \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\x01(\x80\bR\bpassword\"Z\n" +
+	"\x0fRegisterRequest\x12\x1f\n" +
+	"\x05phone\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01( R\x05phone\x12&\n" +
+	"\bpassword\x18\x02 \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\f(\x80\bR\bpassword\"f\n" +
+	"\x14LoginOperatorRequest\x12&\n" +
+	"\busername\x18\x01 \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\x01(\x80\x01R\busername\x12&\n" +
+	"\bpassword\x18\x02 \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\x01(\x80\bR\bpassword\"l\n" +
+	"\x1aResetTenantPasswordRequest\x12&\n" +
+	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01(@R\btenantId\x12&\n" +
+	"\bpassword\x18\x02 \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\f(\x80\bR\bpassword\"`\n" +
 	"\rLoginResponse\x12!\n" +
 	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\x12,\n" +
 	"\x12expires_in_seconds\x18\x02 \x01(\x05R\x10expiresInSeconds\"r\n" +
@@ -409,18 +496,19 @@ const file_proxycontrol_v1_access_proto_rawDesc = "" +
 	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12;\n" +
 	"\n" +
 	"permission\x18\x02 \x01(\x0e2\x1b.proxycontrol.v1.PermissionR\n" +
-	"permission*\xd0\x01\n" +
+	"permission*\xb4\x01\n" +
 	"\n" +
 	"Permission\x12\x1a\n" +
 	"\x16PERMISSION_UNSPECIFIED\x10\x00\x12 \n" +
-	"\x1cPERMISSION_READ_TENANT_USAGE\x10\x01\x12'\n" +
-	"#PERMISSION_MANAGE_PROXY_CREDENTIALS\x10\x02\x12\x1e\n" +
+	"\x1cPERMISSION_READ_TENANT_USAGE\x10\x01\x12\x1e\n" +
 	"\x1aPERMISSION_READ_OPERATIONS\x10\x03\x12\x1d\n" +
-	"\x19PERMISSION_MANAGE_BILLING\x10\x04\x12\x1c\n" +
-	"\x18PERMISSION_EXTRACT_PROXY\x10\x052\x94\x05\n" +
-	"\rAccessService\x12\x96\x01\n" +
-	"\vListTenants\x12\x1c.proxycontrol.v1.BaseRequest\x1a$.proxycontrol.v1.ListTenantsResponse\"C\xbaG&\x12$列出当前账号可访问的租户\x82\xd3\xe4\x93\x02\x14\x12\x12/v1/access/tenants\x12\xb6\x01\n" +
-	"\x0fGetTenantAccess\x12'.proxycontrol.v1.GetTenantAccessRequest\x1a\x1d.proxycontrol.v1.TenantAccess\"[\xbaG2\x120查询当前账号对指定租户的访问权限\x82\xd3\xe4\x93\x02 \x12\x1e/v1/access/tenants/{tenant_id}\x12\xa1\x01\n" +
+	"\x19PERMISSION_MANAGE_BILLING\x10\x04\"\x04\b\x02\x10\x02*#PERMISSION_MANAGE_PROXY_CREDENTIALS2\xd5\a\n" +
+	"\rAccessService\x12\x94\x01\n" +
+	"\bRegister\x12 .proxycontrol.v1.RegisterRequest\x1a\x1d.proxycontrol.v1.TenantAccess\"G\xbaG&\x12$使用手机号注册租户管理员\x82\xd3\xe4\x93\x02\x18:\x01*\"\x13/v1/access/register\x12\x8b\x01\n" +
+	"\n" +
+	"GetAccount\x12\x1c.proxycontrol.v1.BaseRequest\x1a\x1d.proxycontrol.v1.TenantAccess\"@\xbaG#\x12!查看当前管理员所属租户\x82\xd3\xe4\x93\x02\x14\x12\x12/v1/tenant/account\x12\x98\x01\n" +
+	"\rLoginOperator\x12%.proxycontrol.v1.LoginOperatorRequest\x1a\x1e.proxycontrol.v1.LoginResponse\"@\xbaG\x17\x12\x15登录运营控制台\x82\xd3\xe4\x93\x02 :\x01*\"\x1b/v1/operations/access/login\x12\xd0\x01\n" +
+	"\x13ResetTenantPassword\x12+.proxycontrol.v1.ResetTenantPasswordRequest\x1a\x19.proxycontrol.v1.BaseResp\"q\xbaG2\x120运营核实租户归属后重置管理员密码\x82\xd3\xe4\x93\x026:\x01*\"1/v1/operations/tenants/{tenant_id}:reset-password\x12\xa1\x01\n" +
 	"\x0fCheckPermission\x12'.proxycontrol.v1.CheckPermissionRequest\x1a\x19.proxycontrol.v1.BaseResp\"J\xbaG,\x12*检查当前账号是否具备指定权限\x82\xd3\xe4\x93\x02\x15:\x01*\"\x10/v1/access/check\x12\x8c\x01\n" +
 	"\x05Login\x12\x1d.proxycontrol.v1.LoginRequest\x1a\x1e.proxycontrol.v1.LoginResponse\"D\xbaG&\x12$登录控制台并签发访问令牌\x82\xd3\xe4\x93\x02\x15:\x01*\"\x10/v1/access/loginBEZCgithub.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1b\x06proto3"
 
@@ -437,34 +525,38 @@ func file_proxycontrol_v1_access_proto_rawDescGZIP() []byte {
 }
 
 var file_proxycontrol_v1_access_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_proxycontrol_v1_access_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_proxycontrol_v1_access_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_proxycontrol_v1_access_proto_goTypes = []any{
-	(Permission)(0),                // 0: proxycontrol.v1.Permission
-	(*ListTenantsResponse)(nil),    // 1: proxycontrol.v1.ListTenantsResponse
-	(*GetTenantAccessRequest)(nil), // 2: proxycontrol.v1.GetTenantAccessRequest
-	(*TenantAccess)(nil),           // 3: proxycontrol.v1.TenantAccess
-	(*LoginRequest)(nil),           // 4: proxycontrol.v1.LoginRequest
-	(*LoginResponse)(nil),          // 5: proxycontrol.v1.LoginResponse
-	(*CheckPermissionRequest)(nil), // 6: proxycontrol.v1.CheckPermissionRequest
-	(*BaseRequest)(nil),            // 7: proxycontrol.v1.BaseRequest
-	(*BaseResp)(nil),               // 8: proxycontrol.v1.BaseResp
+	(Permission)(0),                    // 0: proxycontrol.v1.Permission
+	(*TenantAccess)(nil),               // 1: proxycontrol.v1.TenantAccess
+	(*LoginRequest)(nil),               // 2: proxycontrol.v1.LoginRequest
+	(*RegisterRequest)(nil),            // 3: proxycontrol.v1.RegisterRequest
+	(*LoginOperatorRequest)(nil),       // 4: proxycontrol.v1.LoginOperatorRequest
+	(*ResetTenantPasswordRequest)(nil), // 5: proxycontrol.v1.ResetTenantPasswordRequest
+	(*LoginResponse)(nil),              // 6: proxycontrol.v1.LoginResponse
+	(*CheckPermissionRequest)(nil),     // 7: proxycontrol.v1.CheckPermissionRequest
+	(*BaseRequest)(nil),                // 8: proxycontrol.v1.BaseRequest
+	(*BaseResp)(nil),                   // 9: proxycontrol.v1.BaseResp
 }
 var file_proxycontrol_v1_access_proto_depIdxs = []int32{
-	3, // 0: proxycontrol.v1.ListTenantsResponse.tenants:type_name -> proxycontrol.v1.TenantAccess
-	0, // 1: proxycontrol.v1.CheckPermissionRequest.permission:type_name -> proxycontrol.v1.Permission
-	7, // 2: proxycontrol.v1.AccessService.ListTenants:input_type -> proxycontrol.v1.BaseRequest
-	2, // 3: proxycontrol.v1.AccessService.GetTenantAccess:input_type -> proxycontrol.v1.GetTenantAccessRequest
-	6, // 4: proxycontrol.v1.AccessService.CheckPermission:input_type -> proxycontrol.v1.CheckPermissionRequest
-	4, // 5: proxycontrol.v1.AccessService.Login:input_type -> proxycontrol.v1.LoginRequest
-	1, // 6: proxycontrol.v1.AccessService.ListTenants:output_type -> proxycontrol.v1.ListTenantsResponse
-	3, // 7: proxycontrol.v1.AccessService.GetTenantAccess:output_type -> proxycontrol.v1.TenantAccess
-	8, // 8: proxycontrol.v1.AccessService.CheckPermission:output_type -> proxycontrol.v1.BaseResp
-	5, // 9: proxycontrol.v1.AccessService.Login:output_type -> proxycontrol.v1.LoginResponse
-	6, // [6:10] is the sub-list for method output_type
-	2, // [2:6] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	0, // 0: proxycontrol.v1.CheckPermissionRequest.permission:type_name -> proxycontrol.v1.Permission
+	3, // 1: proxycontrol.v1.AccessService.Register:input_type -> proxycontrol.v1.RegisterRequest
+	8, // 2: proxycontrol.v1.AccessService.GetAccount:input_type -> proxycontrol.v1.BaseRequest
+	4, // 3: proxycontrol.v1.AccessService.LoginOperator:input_type -> proxycontrol.v1.LoginOperatorRequest
+	5, // 4: proxycontrol.v1.AccessService.ResetTenantPassword:input_type -> proxycontrol.v1.ResetTenantPasswordRequest
+	7, // 5: proxycontrol.v1.AccessService.CheckPermission:input_type -> proxycontrol.v1.CheckPermissionRequest
+	2, // 6: proxycontrol.v1.AccessService.Login:input_type -> proxycontrol.v1.LoginRequest
+	1, // 7: proxycontrol.v1.AccessService.Register:output_type -> proxycontrol.v1.TenantAccess
+	1, // 8: proxycontrol.v1.AccessService.GetAccount:output_type -> proxycontrol.v1.TenantAccess
+	6, // 9: proxycontrol.v1.AccessService.LoginOperator:output_type -> proxycontrol.v1.LoginResponse
+	9, // 10: proxycontrol.v1.AccessService.ResetTenantPassword:output_type -> proxycontrol.v1.BaseResp
+	9, // 11: proxycontrol.v1.AccessService.CheckPermission:output_type -> proxycontrol.v1.BaseResp
+	6, // 12: proxycontrol.v1.AccessService.Login:output_type -> proxycontrol.v1.LoginResponse
+	7, // [7:13] is the sub-list for method output_type
+	1, // [1:7] is the sub-list for method input_type
+	1, // [1:1] is the sub-list for extension type_name
+	1, // [1:1] is the sub-list for extension extendee
+	0, // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_proxycontrol_v1_access_proto_init() }
@@ -479,7 +571,7 @@ func file_proxycontrol_v1_access_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proxycontrol_v1_access_proto_rawDesc), len(file_proxycontrol_v1_access_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   6,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

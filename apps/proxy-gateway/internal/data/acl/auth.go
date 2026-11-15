@@ -80,8 +80,6 @@ func (c *HTTPControl) post(ctx context.Context, path string, input, output proto
 			switch failure.Reason {
 			case "CREDENTIAL_DISABLED":
 				return authrelay.ErrCredentialDisabled
-			case "CREDENTIAL_EXPIRED":
-				return authrelay.ErrCredentialExpired
 			default:
 				return authrelay.ErrCredentialDenied
 			}

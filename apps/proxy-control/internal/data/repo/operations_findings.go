@@ -9,11 +9,9 @@ import (
 )
 
 func (r *UsageRepository) ListRecordAnomalies(ctx context.Context, filter usage.FindingFilter, after *usage.FindingKey, limit int) ([]usage.RecordAnomaly, error) {
-	// The immutable client-to-tenant mapping lets old evidence participate in
-	// tenant filters without returning stored detail or credential identifiers.
-	const source = `SELECT a.id, a.gateway_id, a.boot_id, COALESCE(c.tenant_id, '') AS tenant_id,
+	const source = `SELECT a.id, a.gateway_id, a.boot_id, '' AS tenant_id,
 		a.kind, a.file_id, a.file_offset, a.detected_at, a.resolved_at
-		FROM record_anomalies a LEFT JOIN proxy_credentials c ON c.client_id = a.detail->>'client_id'`
+		FROM record_anomalies a`
 	var rows []usage.RecordAnomaly
 	err := queryFindings(r.db.WithContext(ctx), source, filter, after, limit).Scan(&rows).Error
 	return rows, err

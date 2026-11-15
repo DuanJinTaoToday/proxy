@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"math"
-	"math/big"
-	"slices"
 	"strings"
 	"time"
 
@@ -40,18 +38,12 @@ func parseSample(line string) (sample, string, bool) {
 	return r, "", true
 }
 
-type record struct {
-	sample
-	tenantID string
-}
-
 type ingestCursor struct {
 	offset    int64
 	updatedAt time.Time
 }
 
 type ingestPlan struct {
-	records    []record
 	cursors    map[string]*ingestCursor
 	lastRecord time.Time
 }
@@ -82,16 +74,11 @@ func (s *Service) SubmitBatch(ctx context.Context, token string, req Batch) (*Ba
 		return nil, batchTooLarge()
 	}
 	reply := &BatchResult{}
-	var changed []string
-	// Hold the cache lock through commit and invalidation so that a duplicate
-	// acknowledgement cannot expose a balance cached before the original debit.
-	s.cacheMu.Lock()
-	defer s.cacheMu.Unlock()
 	err = s.repo.Transact(ctx, func(tx Transaction) error {
 		if err := authorizeGateway(tx, hash, req.GatewayID); err != nil {
 			return err
 		}
-		before, err := tx.LockArchive()
+		_, err := tx.LockArchive()
 		if err != nil {
 			return err
 		}
@@ -103,24 +90,16 @@ func (s *Service) SubmitBatch(ctx context.Context, token string, req Batch) (*Ba
 		if err != nil {
 			return err
 		}
-		changed, err = applyRecords(tx, req.GatewayID, plan.records, before, now)
-		if err != nil {
-			return err
-		}
 		return saveProgress(tx, req, plan)
 	})
 	if err != nil {
 		return nil, err
-	}
-	for _, tenant := range changed {
-		delete(s.cache, tenant)
 	}
 	return reply, nil
 }
 
 func planIngest(tx Transaction, req Batch, reply *BatchResult, now time.Time) (ingestPlan, error) {
 	p := ingestPlan{cursors: make(map[string]*ingestCursor)}
-	mappings := make(map[string]string)
 	ends := make(map[string]uint64)
 	for _, line := range req.Records {
 		fileID := line.FileID
@@ -147,22 +126,8 @@ func planIngest(tx Transaction, req Batch, reply *BatchResult, now time.Time) (i
 			p.lastRecord = r.Time
 		}
 		if qualified {
-			tenantID, ok := mappings[r.ClientID]
-			if !ok {
-				if validID(r.ClientID) {
-					tenantID, err = tx.TenantForClient(r.ClientID)
-					if err != nil {
-						return p, err
-					}
-				}
-				mappings[r.ClientID] = tenantID
-			}
-			if tenantID != "" {
-				p.records = append(p.records, record{sample: r, tenantID: tenantID})
-				reply.Billable++
-				continue
-			}
-			kind = "unknown_client_id"
+			// Until billing is wired, preserve complete records in the gateway spool.
+			return p, errors.ServiceUnavailable("METERING_UNAVAILABLE", "Recorder metering is unavailable")
 		}
 		if kind == "" {
 			reply.NotBillable++
@@ -217,67 +182,4 @@ func saveProgress(tx Transaction, req Batch, p ingestPlan) error {
 		return tx.SaveLastRecord(req.GatewayID, req.BootID, p.lastRecord)
 	}
 	return nil
-}
-
-func applyRecords(tx Transaction, gatewayID string, records []record, before string, now time.Time) ([]string, error) {
-	if len(records) == 0 {
-		return nil, nil
-	}
-	// Use a consistent set of thresholds, membership and rates for the batch.
-	if err := tx.LockBillingConfig(false); err != nil {
-		return nil, err
-	}
-	tenants := make(map[string]*Account)
-	var ids []string
-	for _, r := range records {
-		if _, ok := tenants[r.tenantID]; !ok {
-			tenants[r.tenantID] = nil
-			ids = append(ids, r.tenantID)
-		}
-	}
-	slices.Sort(ids)
-	for _, id := range ids {
-		a, err := loadAccount(tx, id, now)
-		if err != nil {
-			return nil, err
-		}
-		tenants[id] = a
-	}
-
-	rates, err := resolveRates(tx, records)
-	if err != nil {
-		return nil, err
-	}
-	buckets := make(map[bucketKey]Bucket)
-	for i, r := range records {
-		if err := allocateRecord(tx, tenants[r.tenantID], r, rates[i], before, now, buckets); err != nil {
-			return nil, err
-		}
-	}
-	if err := writeBuckets(tx, gatewayID, buckets, now); err != nil {
-		return nil, err
-	}
-	for _, id := range ids {
-		a := tenants[id]
-		if a.LastReceivedAt == nil || a.LastReceivedAt.Before(now) {
-			a.LastReceivedAt = &now
-		}
-		if err := a.save(tx, now); err != nil {
-			return nil, err
-		}
-	}
-	return ids, nil
-}
-
-func billableBytes(input, output, upload, download int64) (int64, error) {
-	var left, right big.Int
-	left.Mul(big.NewInt(input), big.NewInt(upload))
-	right.Mul(big.NewInt(output), big.NewInt(download))
-	left.Add(&left, &right)
-	left.Add(&left, big.NewInt(999))
-	left.Quo(&left, big.NewInt(1000))
-	if !left.IsInt64() {
-		return 0, errors.BadRequest("INVALID_BATCH", "billable byte count exceeds storage range")
-	}
-	return left.Int64(), nil
 }

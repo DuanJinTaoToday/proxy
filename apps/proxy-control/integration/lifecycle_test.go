@@ -14,7 +14,7 @@ func TestGatewayLifecycleRequiresReportIdentityAndPreservesExit(t *testing.T) {
 	const path = "/v1/reporting/lifecycle"
 	heartbeat := &v1.ReportLifecycleRequest{GatewayId: "gateway-a", BootId: "lifecycle"}
 	testfixture.AssertStatus(t, authStateRequest(t, f.http, path, authToken, heartbeat), 401, "GATEWAY_UNAUTHENTICATED")
-	testfixture.AssertStatus(t, authStateRequest(t, f.http, path, f.alice, heartbeat), 401, "GATEWAY_UNAUTHENTICATED")
+	testfixture.AssertStatus(t, authStateRequest(t, f.http, path, "console.session", heartbeat), 401, "GATEWAY_UNAUTHENTICATED")
 	testfixture.AssertStatus(t, authStateRequest(t, f.http, path, reportToken, &v1.ReportLifecycleRequest{GatewayId: "gateway-b", BootId: "lifecycle"}), 403, "GATEWAY_FORBIDDEN")
 	checkState := func(want string) {
 		t.Helper()

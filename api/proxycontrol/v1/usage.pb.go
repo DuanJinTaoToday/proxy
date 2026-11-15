@@ -640,14 +640,10 @@ type QueryUsageRequest struct {
 	Granularity UsageGranularity `protobuf:"varint,5,opt,name=granularity,proto3,enum=proxycontrol.v1.UsageGranularity" json:"granularity,omitempty"`
 	// 是否按网关拆分统计。
 	SplitByGateway bool `protobuf:"varint,6,opt,name=split_by_gateway,json=splitByGateway,proto3" json:"split_by_gateway,omitempty"`
-	// 是否按消耗的流量额度拆分统计。
-	SplitByGrant bool `protobuf:"varint,7,opt,name=split_by_grant,json=splitByGrant,proto3" json:"split_by_grant,omitempty"`
 	// 每页条数，取值为 1–500。省略或传 0 时使用 100。
 	PageSize int32 `protobuf:"varint,8,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	// 上一页返回的游标。查询条件应与上一页一致，首屏留空。
-	PageToken string `protobuf:"bytes,9,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
-	// 是否按计费倍率版本拆分统计。
-	SplitByRate   bool `protobuf:"varint,10,opt,name=split_by_rate,json=splitByRate,proto3" json:"split_by_rate,omitempty"`
+	PageToken     string `protobuf:"bytes,9,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -724,13 +720,6 @@ func (x *QueryUsageRequest) GetSplitByGateway() bool {
 	return false
 }
 
-func (x *QueryUsageRequest) GetSplitByGrant() bool {
-	if x != nil {
-		return x.SplitByGrant
-	}
-	return false
-}
-
 func (x *QueryUsageRequest) GetPageSize() int32 {
 	if x != nil {
 		return x.PageSize
@@ -745,25 +734,14 @@ func (x *QueryUsageRequest) GetPageToken() string {
 	return ""
 }
 
-func (x *QueryUsageRequest) GetSplitByRate() bool {
-	if x != nil {
-		return x.SplitByRate
-	}
-	return false
-}
-
 type UsageBucket struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 该统计桶的起始时间。
 	StartTime *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`
 	// 网关 ID。
 	GatewayId string `protobuf:"bytes,2,opt,name=gateway_id,json=gatewayId,proto3" json:"gateway_id,omitempty"`
-	// 流量额度 ID。
-	GrantId string `protobuf:"bytes,3,opt,name=grant_id,json=grantId,proto3" json:"grant_id,omitempty"`
 	// 该时间段的流量统计。
-	Amount *UsageAmount `protobuf:"bytes,4,opt,name=amount,proto3" json:"amount,omitempty"`
-	// 计费倍率版本 ID。
-	RateId        string `protobuf:"bytes,5,opt,name=rate_id,json=rateId,proto3" json:"rate_id,omitempty"`
+	Amount        *UsageAmount `protobuf:"bytes,4,opt,name=amount,proto3" json:"amount,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -812,25 +790,11 @@ func (x *UsageBucket) GetGatewayId() string {
 	return ""
 }
 
-func (x *UsageBucket) GetGrantId() string {
-	if x != nil {
-		return x.GrantId
-	}
-	return ""
-}
-
 func (x *UsageBucket) GetAmount() *UsageAmount {
 	if x != nil {
 		return x.Amount
 	}
 	return nil
-}
-
-func (x *UsageBucket) GetRateId() string {
-	if x != nil {
-		return x.RateId
-	}
-	return ""
 }
 
 type QueryUsageResponse struct {
@@ -887,303 +851,6 @@ func (x *QueryUsageResponse) GetNextPageToken() string {
 	return ""
 }
 
-type ExtractProxyRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// 租户 ID。
-	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	// 提取的代理地址数量，取值为 1–100。
-	Count         int32 `protobuf:"varint,2,opt,name=count,proto3" json:"count,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ExtractProxyRequest) Reset() {
-	*x = ExtractProxyRequest{}
-	mi := &file_proxycontrol_v1_usage_proto_msgTypes[9]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ExtractProxyRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ExtractProxyRequest) ProtoMessage() {}
-
-func (x *ExtractProxyRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_usage_proto_msgTypes[9]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ExtractProxyRequest.ProtoReflect.Descriptor instead.
-func (*ExtractProxyRequest) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_usage_proto_rawDescGZIP(), []int{9}
-}
-
-func (x *ExtractProxyRequest) GetTenantId() string {
-	if x != nil {
-		return x.TenantId
-	}
-	return ""
-}
-
-func (x *ExtractProxyRequest) GetCount() int32 {
-	if x != nil {
-		return x.Count
-	}
-	return 0
-}
-
-type ExtractProxyResponse struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// 返回的代理地址列表。
-	IpList        []*ProxyEndpoint `protobuf:"bytes,1,rep,name=ip_list,json=ipList,proto3" json:"ip_list,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ExtractProxyResponse) Reset() {
-	*x = ExtractProxyResponse{}
-	mi := &file_proxycontrol_v1_usage_proto_msgTypes[10]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ExtractProxyResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ExtractProxyResponse) ProtoMessage() {}
-
-func (x *ExtractProxyResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_usage_proto_msgTypes[10]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ExtractProxyResponse.ProtoReflect.Descriptor instead.
-func (*ExtractProxyResponse) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_usage_proto_rawDescGZIP(), []int{10}
-}
-
-func (x *ExtractProxyResponse) GetIpList() []*ProxyEndpoint {
-	if x != nil {
-		return x.IpList
-	}
-	return nil
-}
-
-type ProxyEndpoint struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// 代理主机名或 IP 地址。
-	Host string `protobuf:"bytes,1,opt,name=host,proto3" json:"host,omitempty"`
-	// 代理服务端口。
-	Port uint32 `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
-	// 用于认证的用户名。
-	Username string `protobuf:"bytes,3,opt,name=username,proto3" json:"username,omitempty"`
-	// 用于认证的原始密码。
-	Password string `protobuf:"bytes,4,opt,name=password,proto3" json:"password,omitempty"`
-	// 失效时间。
-	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ProxyEndpoint) Reset() {
-	*x = ProxyEndpoint{}
-	mi := &file_proxycontrol_v1_usage_proto_msgTypes[11]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ProxyEndpoint) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ProxyEndpoint) ProtoMessage() {}
-
-func (x *ProxyEndpoint) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_usage_proto_msgTypes[11]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ProxyEndpoint.ProtoReflect.Descriptor instead.
-func (*ProxyEndpoint) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_usage_proto_rawDescGZIP(), []int{11}
-}
-
-func (x *ProxyEndpoint) GetHost() string {
-	if x != nil {
-		return x.Host
-	}
-	return ""
-}
-
-func (x *ProxyEndpoint) GetPort() uint32 {
-	if x != nil {
-		return x.Port
-	}
-	return 0
-}
-
-func (x *ProxyEndpoint) GetUsername() string {
-	if x != nil {
-		return x.Username
-	}
-	return ""
-}
-
-func (x *ProxyEndpoint) GetPassword() string {
-	if x != nil {
-		return x.Password
-	}
-	return ""
-}
-
-func (x *ProxyEndpoint) GetExpiresAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.ExpiresAt
-	}
-	return nil
-}
-
-type DailyUsageRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// 租户 ID。
-	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	// 开始日期（含），使用上海时区和 YYYY-MM-DD 格式。
-	StartDate string `protobuf:"bytes,2,opt,name=start_date,json=startDate,proto3" json:"start_date,omitempty"`
-	// 结束日期（含），使用上海时区和 YYYY-MM-DD 格式。
-	EndDate string `protobuf:"bytes,3,opt,name=end_date,json=endDate,proto3" json:"end_date,omitempty"`
-	// 用量来源。省略时查询 tunnel，api_extraction_mock 查询演示用量。
-	Source        string `protobuf:"bytes,4,opt,name=source,proto3" json:"source,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *DailyUsageRequest) Reset() {
-	*x = DailyUsageRequest{}
-	mi := &file_proxycontrol_v1_usage_proto_msgTypes[12]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *DailyUsageRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DailyUsageRequest) ProtoMessage() {}
-
-func (x *DailyUsageRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_usage_proto_msgTypes[12]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DailyUsageRequest.ProtoReflect.Descriptor instead.
-func (*DailyUsageRequest) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_usage_proto_rawDescGZIP(), []int{12}
-}
-
-func (x *DailyUsageRequest) GetTenantId() string {
-	if x != nil {
-		return x.TenantId
-	}
-	return ""
-}
-
-func (x *DailyUsageRequest) GetStartDate() string {
-	if x != nil {
-		return x.StartDate
-	}
-	return ""
-}
-
-func (x *DailyUsageRequest) GetEndDate() string {
-	if x != nil {
-		return x.EndDate
-	}
-	return ""
-}
-
-func (x *DailyUsageRequest) GetSource() string {
-	if x != nil {
-		return x.Source
-	}
-	return ""
-}
-
-type TenantBalanceRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// 租户 ID。
-	TenantId      string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *TenantBalanceRequest) Reset() {
-	*x = TenantBalanceRequest{}
-	mi := &file_proxycontrol_v1_usage_proto_msgTypes[13]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *TenantBalanceRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*TenantBalanceRequest) ProtoMessage() {}
-
-func (x *TenantBalanceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_usage_proto_msgTypes[13]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use TenantBalanceRequest.ProtoReflect.Descriptor instead.
-func (*TenantBalanceRequest) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_usage_proto_rawDescGZIP(), []int{13}
-}
-
-func (x *TenantBalanceRequest) GetTenantId() string {
-	if x != nil {
-		return x.TenantId
-	}
-	return ""
-}
-
 type UsageAmount struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 写入代理的原始字节数。
@@ -1200,7 +867,7 @@ type UsageAmount struct {
 
 func (x *UsageAmount) Reset() {
 	*x = UsageAmount{}
-	mi := &file_proxycontrol_v1_usage_proto_msgTypes[14]
+	mi := &file_proxycontrol_v1_usage_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1212,7 +879,7 @@ func (x *UsageAmount) String() string {
 func (*UsageAmount) ProtoMessage() {}
 
 func (x *UsageAmount) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_usage_proto_msgTypes[14]
+	mi := &file_proxycontrol_v1_usage_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1225,7 +892,7 @@ func (x *UsageAmount) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UsageAmount.ProtoReflect.Descriptor instead.
 func (*UsageAmount) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_usage_proto_rawDescGZIP(), []int{14}
+	return file_proxycontrol_v1_usage_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *UsageAmount) GetInputBytes() uint64 {
@@ -1254,303 +921,6 @@ func (x *UsageAmount) GetBillableBytes() uint64 {
 		return x.BillableBytes
 	}
 	return 0
-}
-
-type DailyUsage struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// 上海时区自然日，格式为 YYYY-MM-DD。
-	Date string `protobuf:"bytes,1,opt,name=date,proto3" json:"date,omitempty"`
-	// 该时间段的流量统计。
-	Amount        *UsageAmount `protobuf:"bytes,2,opt,name=amount,proto3" json:"amount,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *DailyUsage) Reset() {
-	*x = DailyUsage{}
-	mi := &file_proxycontrol_v1_usage_proto_msgTypes[15]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *DailyUsage) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DailyUsage) ProtoMessage() {}
-
-func (x *DailyUsage) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_usage_proto_msgTypes[15]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DailyUsage.ProtoReflect.Descriptor instead.
-func (*DailyUsage) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_usage_proto_rawDescGZIP(), []int{15}
-}
-
-func (x *DailyUsage) GetDate() string {
-	if x != nil {
-		return x.Date
-	}
-	return ""
-}
-
-func (x *DailyUsage) GetAmount() *UsageAmount {
-	if x != nil {
-		return x.Amount
-	}
-	return nil
-}
-
-type DailyUsageResponse struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// 查询区间内按日期汇总的用量。
-	Days []*DailyUsage `protobuf:"bytes,1,rep,name=days,proto3" json:"days,omitempty"`
-	// 最近收到相关用量记录的时间。
-	LastReceivedAt *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=last_received_at,json=lastReceivedAt,proto3" json:"last_received_at,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
-}
-
-func (x *DailyUsageResponse) Reset() {
-	*x = DailyUsageResponse{}
-	mi := &file_proxycontrol_v1_usage_proto_msgTypes[16]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *DailyUsageResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DailyUsageResponse) ProtoMessage() {}
-
-func (x *DailyUsageResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_usage_proto_msgTypes[16]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DailyUsageResponse.ProtoReflect.Descriptor instead.
-func (*DailyUsageResponse) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_usage_proto_rawDescGZIP(), []int{16}
-}
-
-func (x *DailyUsageResponse) GetDays() []*DailyUsage {
-	if x != nil {
-		return x.Days
-	}
-	return nil
-}
-
-func (x *DailyUsageResponse) GetLastReceivedAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.LastReceivedAt
-	}
-	return nil
-}
-
-type TenantBalance struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// 租户 ID。
-	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	// 可用流量余额，单位为字节。
-	AvailableBytes int64 `protobuf:"varint,2,opt,name=available_bytes,json=availableBytes,proto3" json:"available_bytes,omitempty"`
-	// 当前透支流量，单位为字节。
-	OverdraftBytes uint64 `protobuf:"varint,3,opt,name=overdraft_bytes,json=overdraftBytes,proto3" json:"overdraft_bytes,omitempty"`
-	// 代理连接准入使用的最低可用余额阈值，单位为字节。
-	AdmissionThresholdBytes uint64 `protobuf:"varint,4,opt,name=admission_threshold_bytes,json=admissionThresholdBytes,proto3" json:"admission_threshold_bytes,omitempty"`
-	// 余额预警阈值，单位为字节。
-	WarningThresholdBytes uint64 `protobuf:"varint,5,opt,name=warning_threshold_bytes,json=warningThresholdBytes,proto3" json:"warning_threshold_bytes,omitempty"`
-	// 当前余额预警开始时间。
-	WarningSince *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=warning_since,json=warningSince,proto3" json:"warning_since,omitempty"`
-	// 返回的租户流量额度。
-	Grants        []*TrafficGrant `protobuf:"bytes,7,rep,name=grants,proto3" json:"grants,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *TenantBalance) Reset() {
-	*x = TenantBalance{}
-	mi := &file_proxycontrol_v1_usage_proto_msgTypes[17]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *TenantBalance) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*TenantBalance) ProtoMessage() {}
-
-func (x *TenantBalance) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_usage_proto_msgTypes[17]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use TenantBalance.ProtoReflect.Descriptor instead.
-func (*TenantBalance) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_usage_proto_rawDescGZIP(), []int{17}
-}
-
-func (x *TenantBalance) GetTenantId() string {
-	if x != nil {
-		return x.TenantId
-	}
-	return ""
-}
-
-func (x *TenantBalance) GetAvailableBytes() int64 {
-	if x != nil {
-		return x.AvailableBytes
-	}
-	return 0
-}
-
-func (x *TenantBalance) GetOverdraftBytes() uint64 {
-	if x != nil {
-		return x.OverdraftBytes
-	}
-	return 0
-}
-
-func (x *TenantBalance) GetAdmissionThresholdBytes() uint64 {
-	if x != nil {
-		return x.AdmissionThresholdBytes
-	}
-	return 0
-}
-
-func (x *TenantBalance) GetWarningThresholdBytes() uint64 {
-	if x != nil {
-		return x.WarningThresholdBytes
-	}
-	return 0
-}
-
-func (x *TenantBalance) GetWarningSince() *timestamppb.Timestamp {
-	if x != nil {
-		return x.WarningSince
-	}
-	return nil
-}
-
-func (x *TenantBalance) GetGrants() []*TrafficGrant {
-	if x != nil {
-		return x.Grants
-	}
-	return nil
-}
-
-type TrafficGrant struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// 流量额度 ID。
-	GrantId string `protobuf:"bytes,1,opt,name=grant_id,json=grantId,proto3" json:"grant_id,omitempty"`
-	// 发放的流量额度，单位为字节。
-	GrantedBytes uint64 `protobuf:"varint,2,opt,name=granted_bytes,json=grantedBytes,proto3" json:"granted_bytes,omitempty"`
-	// 已消耗的流量额度，单位为字节。
-	UsedBytes uint64 `protobuf:"varint,3,opt,name=used_bytes,json=usedBytes,proto3" json:"used_bytes,omitempty"`
-	// 流量额度开始生效的时间。
-	StartsAt *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=starts_at,json=startsAt,proto3" json:"starts_at,omitempty"`
-	// 失效时间。
-	ExpiresAt *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
-	// 流量额度的发放来源。
-	Source        string `protobuf:"bytes,6,opt,name=source,proto3" json:"source,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *TrafficGrant) Reset() {
-	*x = TrafficGrant{}
-	mi := &file_proxycontrol_v1_usage_proto_msgTypes[18]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *TrafficGrant) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*TrafficGrant) ProtoMessage() {}
-
-func (x *TrafficGrant) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_usage_proto_msgTypes[18]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use TrafficGrant.ProtoReflect.Descriptor instead.
-func (*TrafficGrant) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_usage_proto_rawDescGZIP(), []int{18}
-}
-
-func (x *TrafficGrant) GetGrantId() string {
-	if x != nil {
-		return x.GrantId
-	}
-	return ""
-}
-
-func (x *TrafficGrant) GetGrantedBytes() uint64 {
-	if x != nil {
-		return x.GrantedBytes
-	}
-	return 0
-}
-
-func (x *TrafficGrant) GetUsedBytes() uint64 {
-	if x != nil {
-		return x.UsedBytes
-	}
-	return 0
-}
-
-func (x *TrafficGrant) GetStartsAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.StartsAt
-	}
-	return nil
-}
-
-func (x *TrafficGrant) GetExpiresAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.ExpiresAt
-	}
-	return nil
-}
-
-func (x *TrafficGrant) GetSource() string {
-	if x != nil {
-		return x.Source
-	}
-	return ""
 }
 
 var File_proxycontrol_v1_usage_proto protoreflect.FileDescriptor
@@ -1616,7 +986,7 @@ const file_proxycontrol_v1_usage_proto_rawDesc = "" +
 	"\texited_at\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\bexitedAt\"n\n" +
 	"\x15ListUsageGapsResponse\x12-\n" +
 	"\x04gaps\x18\x01 \x03(\v2\x19.proxycontrol.v1.UsageGapR\x04gaps\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\xeb\x03\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\xa1\x03\n" +
 	"\x11QueryUsageRequest\x12$\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\a\xfaB\x04r\x02 \x01R\btenantId\x12\x1d\n" +
 	"\n" +
@@ -1626,87 +996,33 @@ const file_proxycontrol_v1_usage_proto_rawDesc = "" +
 	"\bend_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampB\b\xfaB\x05\xb2\x01\x02\b\x01R\aendTime\x12O\n" +
 	"\vgranularity\x18\x05 \x01(\x0e2!.proxycontrol.v1.UsageGranularityB\n" +
 	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\vgranularity\x12(\n" +
-	"\x10split_by_gateway\x18\x06 \x01(\bR\x0esplitByGateway\x12$\n" +
-	"\x0esplit_by_grant\x18\a \x01(\bR\fsplitByGrant\x12'\n" +
+	"\x10split_by_gateway\x18\x06 \x01(\bR\x0esplitByGateway\x12'\n" +
 	"\tpage_size\x18\b \x01(\x05B\n" +
 	"\xfaB\a\x1a\x05\x18\xf4\x03(\x00R\bpageSize\x12\x1d\n" +
 	"\n" +
-	"page_token\x18\t \x01(\tR\tpageToken\x12\"\n" +
-	"\rsplit_by_rate\x18\n" +
-	" \x01(\bR\vsplitByRate\"\xd1\x01\n" +
+	"page_token\x18\t \x01(\tR\tpageToken\"\x9d\x01\n" +
 	"\vUsageBucket\x129\n" +
 	"\n" +
 	"start_time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\tstartTime\x12\x1d\n" +
 	"\n" +
-	"gateway_id\x18\x02 \x01(\tR\tgatewayId\x12\x19\n" +
-	"\bgrant_id\x18\x03 \x01(\tR\agrantId\x124\n" +
-	"\x06amount\x18\x04 \x01(\v2\x1c.proxycontrol.v1.UsageAmountR\x06amount\x12\x17\n" +
-	"\arate_id\x18\x05 \x01(\tR\x06rateId\"t\n" +
+	"gateway_id\x18\x02 \x01(\tR\tgatewayId\x124\n" +
+	"\x06amount\x18\x04 \x01(\v2\x1c.proxycontrol.v1.UsageAmountR\x06amount\"t\n" +
 	"\x12QueryUsageResponse\x126\n" +
 	"\abuckets\x18\x01 \x03(\v2\x1c.proxycontrol.v1.UsageBucketR\abuckets\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"S\n" +
-	"\x13ExtractProxyRequest\x12\x1b\n" +
-	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x1f\n" +
-	"\x05count\x18\x02 \x01(\x05B\t\xfaB\x06\x1a\x04\x18d(\x01R\x05count\"O\n" +
-	"\x14ExtractProxyResponse\x127\n" +
-	"\aip_list\x18\x01 \x03(\v2\x1e.proxycontrol.v1.ProxyEndpointR\x06ipList\"\xaa\x01\n" +
-	"\rProxyEndpoint\x12\x12\n" +
-	"\x04host\x18\x01 \x01(\tR\x04host\x12\x12\n" +
-	"\x04port\x18\x02 \x01(\rR\x04port\x12\x1a\n" +
-	"\busername\x18\x03 \x01(\tR\busername\x12\x1a\n" +
-	"\bpassword\x18\x04 \x01(\tR\bpassword\x129\n" +
-	"\n" +
-	"expires_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\"\xbc\x01\n" +
-	"\x11DailyUsageRequest\x12\x1b\n" +
-	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12'\n" +
-	"\n" +
-	"start_date\x18\x02 \x01(\tB\b\xfaB\x05r\x03\x98\x01\n" +
-	"R\tstartDate\x12#\n" +
-	"\bend_date\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x98\x01\n" +
-	"R\aendDate\x12<\n" +
-	"\x06source\x18\x04 \x01(\tB$\xfaB!r\x1fR\x00R\x06tunnelR\x13api_extraction_mockR\x06source\"3\n" +
-	"\x14TenantBalanceRequest\x12\x1b\n" +
-	"\ttenant_id\x18\x01 \x01(\tR\btenantId\"\x99\x01\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\x99\x01\n" +
 	"\vUsageAmount\x12\x1f\n" +
 	"\vinput_bytes\x18\x01 \x01(\x04R\n" +
 	"inputBytes\x12!\n" +
 	"\foutput_bytes\x18\x02 \x01(\x04R\voutputBytes\x12\x1f\n" +
 	"\vtotal_bytes\x18\x03 \x01(\x04R\n" +
 	"totalBytes\x12%\n" +
-	"\x0ebillable_bytes\x18\x04 \x01(\x04R\rbillableBytes\"V\n" +
-	"\n" +
-	"DailyUsage\x12\x12\n" +
-	"\x04date\x18\x01 \x01(\tR\x04date\x124\n" +
-	"\x06amount\x18\x02 \x01(\v2\x1c.proxycontrol.v1.UsageAmountR\x06amount\"\x8b\x01\n" +
-	"\x12DailyUsageResponse\x12/\n" +
-	"\x04days\x18\x01 \x03(\v2\x1b.proxycontrol.v1.DailyUsageR\x04days\x12D\n" +
-	"\x10last_received_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x0elastReceivedAt\"\xea\x02\n" +
-	"\rTenantBalance\x12\x1b\n" +
-	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12'\n" +
-	"\x0favailable_bytes\x18\x02 \x01(\x03R\x0eavailableBytes\x12'\n" +
-	"\x0foverdraft_bytes\x18\x03 \x01(\x04R\x0eoverdraftBytes\x12:\n" +
-	"\x19admission_threshold_bytes\x18\x04 \x01(\x04R\x17admissionThresholdBytes\x126\n" +
-	"\x17warning_threshold_bytes\x18\x05 \x01(\x04R\x15warningThresholdBytes\x12?\n" +
-	"\rwarning_since\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\fwarningSince\x125\n" +
-	"\x06grants\x18\a \x03(\v2\x1d.proxycontrol.v1.TrafficGrantR\x06grants\"\xf9\x01\n" +
-	"\fTrafficGrant\x12\x19\n" +
-	"\bgrant_id\x18\x01 \x01(\tR\agrantId\x12#\n" +
-	"\rgranted_bytes\x18\x02 \x01(\x04R\fgrantedBytes\x12\x1d\n" +
-	"\n" +
-	"used_bytes\x18\x03 \x01(\x04R\tusedBytes\x127\n" +
-	"\tstarts_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\bstartsAt\x129\n" +
-	"\n" +
-	"expires_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x12\x16\n" +
-	"\x06source\x18\x06 \x01(\tR\x06source*\x8a\x01\n" +
+	"\x0ebillable_bytes\x18\x04 \x01(\x04R\rbillableBytes*\x8a\x01\n" +
 	"\x10UsageGranularity\x12!\n" +
 	"\x1dUSAGE_GRANULARITY_UNSPECIFIED\x10\x00\x12\x1c\n" +
 	"\x18USAGE_GRANULARITY_MINUTE\x10\x01\x12\x1a\n" +
 	"\x16USAGE_GRANULARITY_HOUR\x10\x02\x12\x19\n" +
-	"\x15USAGE_GRANULARITY_DAY\x10\x032\xca\b\n" +
-	"\fUsageService\x12\xbd\x01\n" +
-	"\fExtractProxy\x12$.proxycontrol.v1.ExtractProxyRequest\x1a%.proxycontrol.v1.ExtractProxyResponse\"`\xbaG)\x12'提取指定租户的代理地址样例\x82\xd3\xe4\x93\x02.:\x01*\")/v1/tenants/{tenant_id}/proxy-extractions\x12\xbd\x01\n" +
-	"\x13GetTenantDailyUsage\x12\".proxycontrol.v1.DailyUsageRequest\x1a#.proxycontrol.v1.DailyUsageResponse\"]\xbaG/\x12-查询租户按上海自然日汇总的用量\x82\xd3\xe4\x93\x02%\x12#/v1/tenants/{tenant_id}/usage/daily\x12\xae\x01\n" +
-	"\x10GetTenantBalance\x12%.proxycontrol.v1.TenantBalanceRequest\x1a\x1e.proxycontrol.v1.TenantBalance\"S\xbaG)\x12'查询租户可用流量和准入阈值\x82\xd3\xe4\x93\x02!\x12\x1f/v1/tenants/{tenant_id}/balance\x12\x9c\x01\n" +
+	"\x15USAGE_GRANULARITY_DAY\x10\x032\x99\x04\n" +
+	"\fUsageService\x12\x9c\x01\n" +
 	"\n" +
 	"QueryUsage\x12\".proxycontrol.v1.QueryUsageRequest\x1a#.proxycontrol.v1.QueryUsageResponse\"E\xbaG&\x12$按时间和维度查询运营用量\x82\xd3\xe4\x93\x02\x16\x12\x14/v1/operations/usage\x12\xb9\x01\n" +
 	"\x13ListRecordAnomalies\x12+.proxycontrol.v1.ListRecordAnomaliesRequest\x1a,.proxycontrol.v1.ListRecordAnomaliesResponse\"G\xbaG$\x12\"分页查询 Recorder 记录异常\x82\xd3\xe4\x93\x02\x1a\x12\x18/v1/operations/anomalies\x12\xad\x01\n" +
@@ -1725,7 +1041,7 @@ func file_proxycontrol_v1_usage_proto_rawDescGZIP() []byte {
 }
 
 var file_proxycontrol_v1_usage_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_proxycontrol_v1_usage_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
+var file_proxycontrol_v1_usage_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_proxycontrol_v1_usage_proto_goTypes = []any{
 	(UsageGranularity)(0),               // 0: proxycontrol.v1.UsageGranularity
 	(*ListRecordAnomaliesRequest)(nil),  // 1: proxycontrol.v1.ListRecordAnomaliesRequest
@@ -1737,59 +1053,35 @@ var file_proxycontrol_v1_usage_proto_goTypes = []any{
 	(*QueryUsageRequest)(nil),           // 7: proxycontrol.v1.QueryUsageRequest
 	(*UsageBucket)(nil),                 // 8: proxycontrol.v1.UsageBucket
 	(*QueryUsageResponse)(nil),          // 9: proxycontrol.v1.QueryUsageResponse
-	(*ExtractProxyRequest)(nil),         // 10: proxycontrol.v1.ExtractProxyRequest
-	(*ExtractProxyResponse)(nil),        // 11: proxycontrol.v1.ExtractProxyResponse
-	(*ProxyEndpoint)(nil),               // 12: proxycontrol.v1.ProxyEndpoint
-	(*DailyUsageRequest)(nil),           // 13: proxycontrol.v1.DailyUsageRequest
-	(*TenantBalanceRequest)(nil),        // 14: proxycontrol.v1.TenantBalanceRequest
-	(*UsageAmount)(nil),                 // 15: proxycontrol.v1.UsageAmount
-	(*DailyUsage)(nil),                  // 16: proxycontrol.v1.DailyUsage
-	(*DailyUsageResponse)(nil),          // 17: proxycontrol.v1.DailyUsageResponse
-	(*TenantBalance)(nil),               // 18: proxycontrol.v1.TenantBalance
-	(*TrafficGrant)(nil),                // 19: proxycontrol.v1.TrafficGrant
-	(*timestamppb.Timestamp)(nil),       // 20: google.protobuf.Timestamp
+	(*UsageAmount)(nil),                 // 10: proxycontrol.v1.UsageAmount
+	(*timestamppb.Timestamp)(nil),       // 11: google.protobuf.Timestamp
 }
 var file_proxycontrol_v1_usage_proto_depIdxs = []int32{
-	20, // 0: proxycontrol.v1.RecordAnomaly.detected_at:type_name -> google.protobuf.Timestamp
-	20, // 1: proxycontrol.v1.RecordAnomaly.resolved_at:type_name -> google.protobuf.Timestamp
+	11, // 0: proxycontrol.v1.RecordAnomaly.detected_at:type_name -> google.protobuf.Timestamp
+	11, // 1: proxycontrol.v1.RecordAnomaly.resolved_at:type_name -> google.protobuf.Timestamp
 	2,  // 2: proxycontrol.v1.ListRecordAnomaliesResponse.anomalies:type_name -> proxycontrol.v1.RecordAnomaly
-	20, // 3: proxycontrol.v1.UsageGap.from_at:type_name -> google.protobuf.Timestamp
-	20, // 4: proxycontrol.v1.UsageGap.detected_at:type_name -> google.protobuf.Timestamp
-	20, // 5: proxycontrol.v1.UsageGap.resolved_at:type_name -> google.protobuf.Timestamp
-	20, // 6: proxycontrol.v1.UsageGap.exited_at:type_name -> google.protobuf.Timestamp
+	11, // 3: proxycontrol.v1.UsageGap.from_at:type_name -> google.protobuf.Timestamp
+	11, // 4: proxycontrol.v1.UsageGap.detected_at:type_name -> google.protobuf.Timestamp
+	11, // 5: proxycontrol.v1.UsageGap.resolved_at:type_name -> google.protobuf.Timestamp
+	11, // 6: proxycontrol.v1.UsageGap.exited_at:type_name -> google.protobuf.Timestamp
 	5,  // 7: proxycontrol.v1.ListUsageGapsResponse.gaps:type_name -> proxycontrol.v1.UsageGap
-	20, // 8: proxycontrol.v1.QueryUsageRequest.start_time:type_name -> google.protobuf.Timestamp
-	20, // 9: proxycontrol.v1.QueryUsageRequest.end_time:type_name -> google.protobuf.Timestamp
+	11, // 8: proxycontrol.v1.QueryUsageRequest.start_time:type_name -> google.protobuf.Timestamp
+	11, // 9: proxycontrol.v1.QueryUsageRequest.end_time:type_name -> google.protobuf.Timestamp
 	0,  // 10: proxycontrol.v1.QueryUsageRequest.granularity:type_name -> proxycontrol.v1.UsageGranularity
-	20, // 11: proxycontrol.v1.UsageBucket.start_time:type_name -> google.protobuf.Timestamp
-	15, // 12: proxycontrol.v1.UsageBucket.amount:type_name -> proxycontrol.v1.UsageAmount
+	11, // 11: proxycontrol.v1.UsageBucket.start_time:type_name -> google.protobuf.Timestamp
+	10, // 12: proxycontrol.v1.UsageBucket.amount:type_name -> proxycontrol.v1.UsageAmount
 	8,  // 13: proxycontrol.v1.QueryUsageResponse.buckets:type_name -> proxycontrol.v1.UsageBucket
-	12, // 14: proxycontrol.v1.ExtractProxyResponse.ip_list:type_name -> proxycontrol.v1.ProxyEndpoint
-	20, // 15: proxycontrol.v1.ProxyEndpoint.expires_at:type_name -> google.protobuf.Timestamp
-	15, // 16: proxycontrol.v1.DailyUsage.amount:type_name -> proxycontrol.v1.UsageAmount
-	16, // 17: proxycontrol.v1.DailyUsageResponse.days:type_name -> proxycontrol.v1.DailyUsage
-	20, // 18: proxycontrol.v1.DailyUsageResponse.last_received_at:type_name -> google.protobuf.Timestamp
-	20, // 19: proxycontrol.v1.TenantBalance.warning_since:type_name -> google.protobuf.Timestamp
-	19, // 20: proxycontrol.v1.TenantBalance.grants:type_name -> proxycontrol.v1.TrafficGrant
-	20, // 21: proxycontrol.v1.TrafficGrant.starts_at:type_name -> google.protobuf.Timestamp
-	20, // 22: proxycontrol.v1.TrafficGrant.expires_at:type_name -> google.protobuf.Timestamp
-	10, // 23: proxycontrol.v1.UsageService.ExtractProxy:input_type -> proxycontrol.v1.ExtractProxyRequest
-	13, // 24: proxycontrol.v1.UsageService.GetTenantDailyUsage:input_type -> proxycontrol.v1.DailyUsageRequest
-	14, // 25: proxycontrol.v1.UsageService.GetTenantBalance:input_type -> proxycontrol.v1.TenantBalanceRequest
-	7,  // 26: proxycontrol.v1.UsageService.QueryUsage:input_type -> proxycontrol.v1.QueryUsageRequest
-	1,  // 27: proxycontrol.v1.UsageService.ListRecordAnomalies:input_type -> proxycontrol.v1.ListRecordAnomaliesRequest
-	4,  // 28: proxycontrol.v1.UsageService.ListUsageGaps:input_type -> proxycontrol.v1.ListUsageGapsRequest
-	11, // 29: proxycontrol.v1.UsageService.ExtractProxy:output_type -> proxycontrol.v1.ExtractProxyResponse
-	17, // 30: proxycontrol.v1.UsageService.GetTenantDailyUsage:output_type -> proxycontrol.v1.DailyUsageResponse
-	18, // 31: proxycontrol.v1.UsageService.GetTenantBalance:output_type -> proxycontrol.v1.TenantBalance
-	9,  // 32: proxycontrol.v1.UsageService.QueryUsage:output_type -> proxycontrol.v1.QueryUsageResponse
-	3,  // 33: proxycontrol.v1.UsageService.ListRecordAnomalies:output_type -> proxycontrol.v1.ListRecordAnomaliesResponse
-	6,  // 34: proxycontrol.v1.UsageService.ListUsageGaps:output_type -> proxycontrol.v1.ListUsageGapsResponse
-	29, // [29:35] is the sub-list for method output_type
-	23, // [23:29] is the sub-list for method input_type
-	23, // [23:23] is the sub-list for extension type_name
-	23, // [23:23] is the sub-list for extension extendee
-	0,  // [0:23] is the sub-list for field type_name
+	7,  // 14: proxycontrol.v1.UsageService.QueryUsage:input_type -> proxycontrol.v1.QueryUsageRequest
+	1,  // 15: proxycontrol.v1.UsageService.ListRecordAnomalies:input_type -> proxycontrol.v1.ListRecordAnomaliesRequest
+	4,  // 16: proxycontrol.v1.UsageService.ListUsageGaps:input_type -> proxycontrol.v1.ListUsageGapsRequest
+	9,  // 17: proxycontrol.v1.UsageService.QueryUsage:output_type -> proxycontrol.v1.QueryUsageResponse
+	3,  // 18: proxycontrol.v1.UsageService.ListRecordAnomalies:output_type -> proxycontrol.v1.ListRecordAnomaliesResponse
+	6,  // 19: proxycontrol.v1.UsageService.ListUsageGaps:output_type -> proxycontrol.v1.ListUsageGapsResponse
+	17, // [17:20] is the sub-list for method output_type
+	14, // [14:17] is the sub-list for method input_type
+	14, // [14:14] is the sub-list for extension type_name
+	14, // [14:14] is the sub-list for extension extendee
+	0,  // [0:14] is the sub-list for field type_name
 }
 
 func init() { file_proxycontrol_v1_usage_proto_init() }
@@ -1803,7 +1095,7 @@ func file_proxycontrol_v1_usage_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proxycontrol_v1_usage_proto_rawDesc), len(file_proxycontrol_v1_usage_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   19,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

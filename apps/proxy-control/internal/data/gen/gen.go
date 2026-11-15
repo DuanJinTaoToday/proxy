@@ -36,11 +36,10 @@ func generateModels(db *gorm.DB) error {
 	})
 	g.UseDB(db)
 	for _, name := range []string{
+		"tenants", "tenant_admins", "operators", "operator_permissions", "wallets",
 		"gateways", "gateway_tokens", "gateway_boots", "ingest_cursors",
-		"proxy_credentials", "gateway_auth_references",
-		"tenant_groups", "tenant_group_members", "billing_settings", "billing_rates",
-		"traffic_grants", "tenant_balances", "balance_ledger",
-		"usage_minutely", "usage_daily", "usage_archive_state", "record_anomalies", "usage_gaps", "mock_supplier_usage",
+		"tenant_balances",
+		"usage_minutely", "usage_daily", "usage_archive_state", "record_anomalies", "usage_gaps",
 	} {
 		g.GenerateModel(name)
 	}

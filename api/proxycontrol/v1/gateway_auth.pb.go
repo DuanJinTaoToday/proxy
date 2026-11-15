@@ -12,7 +12,6 @@ import (
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -181,12 +180,8 @@ type AuthSnapshot struct {
 	TenantId string `protobuf:"bytes,4,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
 	// 供网关本地认证使用的密码哈希。
 	PasswordHash []byte `protobuf:"bytes,5,opt,name=password_hash,json=passwordHash,proto3" json:"password_hash,omitempty"`
-	// 凭据当前是否启用且未过期。
+	// 凭据当前是否启用。
 	Active bool `protobuf:"varint,6,opt,name=active,proto3" json:"active,omitempty"`
-	// 失效时间。
-	ExpiresAt *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
-	// 凭据允许访问的客户端来源网段，空列表表示不限制。
-	AllowedSourceCidrs []string `protobuf:"bytes,8,rep,name=allowed_source_cidrs,json=allowedSourceCidrs,proto3" json:"allowed_source_cidrs,omitempty"`
 	// 有效凭据所属租户的流量准入状态。
 	Quota         *AuthQuota `protobuf:"bytes,9,opt,name=quota,proto3" json:"quota,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -265,20 +260,6 @@ func (x *AuthSnapshot) GetActive() bool {
 	return false
 }
 
-func (x *AuthSnapshot) GetExpiresAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.ExpiresAt
-	}
-	return nil
-}
-
-func (x *AuthSnapshot) GetAllowedSourceCidrs() []string {
-	if x != nil {
-		return x.AllowedSourceCidrs
-	}
-	return nil
-}
-
 func (x *AuthSnapshot) GetQuota() *AuthQuota {
 	if x != nil {
 		return x.Quota
@@ -290,12 +271,8 @@ type AuthQuota struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 可用流量余额，单位为字节。
 	AvailableBytes int64 `protobuf:"varint,1,opt,name=available_bytes,json=availableBytes,proto3" json:"available_bytes,omitempty"`
-	// 代理连接准入使用的最低可用余额阈值，单位为字节。
-	AdmissionThresholdBytes uint64 `protobuf:"varint,2,opt,name=admission_threshold_bytes,json=admissionThresholdBytes,proto3" json:"admission_threshold_bytes,omitempty"`
-	// 网关可使用这份准入快照的截止时间。
-	ValidUntil    *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=valid_until,json=validUntil,proto3" json:"valid_until,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *AuthQuota) Reset() {
@@ -335,25 +312,11 @@ func (x *AuthQuota) GetAvailableBytes() int64 {
 	return 0
 }
 
-func (x *AuthQuota) GetAdmissionThresholdBytes() uint64 {
-	if x != nil {
-		return x.AdmissionThresholdBytes
-	}
-	return 0
-}
-
-func (x *AuthQuota) GetValidUntil() *timestamppb.Timestamp {
-	if x != nil {
-		return x.ValidUntil
-	}
-	return nil
-}
-
 var File_proxycontrol_v1_gateway_auth_proto protoreflect.FileDescriptor
 
 const file_proxycontrol_v1_gateway_auth_proto_rawDesc = "" +
 	"\n" +
-	"\"proxycontrol/v1/gateway_auth.proto\x12\x0fproxycontrol.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1bopenapiv3/annotations.proto\x1a\x17validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"f\n" +
+	"\"proxycontrol/v1/gateway_auth.proto\x12\x0fproxycontrol.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1bopenapiv3/annotations.proto\x1a\x17validate/validate.proto\"f\n" +
 	"\x14LoadAuthStateRequest\x12&\n" +
 	"\busername\x18\x01 \x01(\tB\n" +
 	"\xfaB\ar\x05 \x01(\xff\x01R\busername\x12&\n" +
@@ -364,23 +327,18 @@ const file_proxycontrol_v1_gateway_auth_proto_rawDesc = "" +
 	"references\x18\x01 \x03(\tB\x13\xfaB\x10\x92\x01\r\b\x01\x10d\"\ar\x05 \x01(\x80\x01R\n" +
 	"references\"W\n" +
 	"\x18RefreshAuthStateResponse\x12;\n" +
-	"\tsnapshots\x18\x01 \x03(\v2\x1d.proxycontrol.v1.AuthSnapshotR\tsnapshots\"\xde\x02\n" +
+	"\tsnapshots\x18\x01 \x03(\v2\x1d.proxycontrol.v1.AuthSnapshotR\tsnapshots\"\x9f\x02\n" +
 	"\fAuthSnapshot\x12\x1c\n" +
 	"\treference\x18\x01 \x01(\tR\treference\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x1b\n" +
 	"\tclient_id\x18\x03 \x01(\tR\bclientId\x12\x1b\n" +
 	"\ttenant_id\x18\x04 \x01(\tR\btenantId\x12#\n" +
 	"\rpassword_hash\x18\x05 \x01(\fR\fpasswordHash\x12\x16\n" +
-	"\x06active\x18\x06 \x01(\bR\x06active\x129\n" +
-	"\n" +
-	"expires_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x120\n" +
-	"\x14allowed_source_cidrs\x18\b \x03(\tR\x12allowedSourceCidrs\x120\n" +
-	"\x05quota\x18\t \x01(\v2\x1a.proxycontrol.v1.AuthQuotaR\x05quota\"\xad\x01\n" +
+	"\x06active\x18\x06 \x01(\bR\x06active\x120\n" +
+	"\x05quota\x18\t \x01(\v2\x1a.proxycontrol.v1.AuthQuotaR\x05quotaJ\x04\b\a\x10\bJ\x04\b\b\x10\tR\n" +
+	"expires_atR\x14allowed_source_cidrs\"h\n" +
 	"\tAuthQuota\x12'\n" +
-	"\x0favailable_bytes\x18\x01 \x01(\x03R\x0eavailableBytes\x12:\n" +
-	"\x19admission_threshold_bytes\x18\x02 \x01(\x04R\x17admissionThresholdBytes\x12;\n" +
-	"\vvalid_until\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"validUntil2\x8a\x03\n" +
+	"\x0favailable_bytes\x18\x01 \x01(\x03R\x0eavailableBytesJ\x04\b\x02\x10\x03J\x04\b\x03\x10\x04R\x19admission_threshold_bytesR\vvalid_until2\x8a\x03\n" +
 	"\x12GatewayAuthService\x12\xa9\x01\n" +
 	"\rLoadAuthState\x12%.proxycontrol.v1.LoadAuthStateRequest\x1a\x1d.proxycontrol.v1.AuthSnapshot\"R\xbaG)\x12'校验代理凭据并加载认证状态\x82\xd3\xe4\x93\x02 :\x01*\"\x1b/v1/gateway/auth-state/load\x12\xc7\x01\n" +
 	"\x10RefreshAuthState\x12(.proxycontrol.v1.RefreshAuthStateRequest\x1a).proxycontrol.v1.RefreshAuthStateResponse\"^\xbaG2\x120批量刷新网关缓存的凭据和准入状态\x82\xd3\xe4\x93\x02#:\x01*\"\x1e/v1/gateway/auth-state/refreshBEZCgithub.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1b\x06proto3"
@@ -404,22 +362,19 @@ var file_proxycontrol_v1_gateway_auth_proto_goTypes = []any{
 	(*RefreshAuthStateResponse)(nil), // 2: proxycontrol.v1.RefreshAuthStateResponse
 	(*AuthSnapshot)(nil),             // 3: proxycontrol.v1.AuthSnapshot
 	(*AuthQuota)(nil),                // 4: proxycontrol.v1.AuthQuota
-	(*timestamppb.Timestamp)(nil),    // 5: google.protobuf.Timestamp
 }
 var file_proxycontrol_v1_gateway_auth_proto_depIdxs = []int32{
 	3, // 0: proxycontrol.v1.RefreshAuthStateResponse.snapshots:type_name -> proxycontrol.v1.AuthSnapshot
-	5, // 1: proxycontrol.v1.AuthSnapshot.expires_at:type_name -> google.protobuf.Timestamp
-	4, // 2: proxycontrol.v1.AuthSnapshot.quota:type_name -> proxycontrol.v1.AuthQuota
-	5, // 3: proxycontrol.v1.AuthQuota.valid_until:type_name -> google.protobuf.Timestamp
-	0, // 4: proxycontrol.v1.GatewayAuthService.LoadAuthState:input_type -> proxycontrol.v1.LoadAuthStateRequest
-	1, // 5: proxycontrol.v1.GatewayAuthService.RefreshAuthState:input_type -> proxycontrol.v1.RefreshAuthStateRequest
-	3, // 6: proxycontrol.v1.GatewayAuthService.LoadAuthState:output_type -> proxycontrol.v1.AuthSnapshot
-	2, // 7: proxycontrol.v1.GatewayAuthService.RefreshAuthState:output_type -> proxycontrol.v1.RefreshAuthStateResponse
-	6, // [6:8] is the sub-list for method output_type
-	4, // [4:6] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	4, // 1: proxycontrol.v1.AuthSnapshot.quota:type_name -> proxycontrol.v1.AuthQuota
+	0, // 2: proxycontrol.v1.GatewayAuthService.LoadAuthState:input_type -> proxycontrol.v1.LoadAuthStateRequest
+	1, // 3: proxycontrol.v1.GatewayAuthService.RefreshAuthState:input_type -> proxycontrol.v1.RefreshAuthStateRequest
+	3, // 4: proxycontrol.v1.GatewayAuthService.LoadAuthState:output_type -> proxycontrol.v1.AuthSnapshot
+	2, // 5: proxycontrol.v1.GatewayAuthService.RefreshAuthState:output_type -> proxycontrol.v1.RefreshAuthStateResponse
+	4, // [4:6] is the sub-list for method output_type
+	2, // [2:4] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_proxycontrol_v1_gateway_auth_proto_init() }

@@ -19,33 +19,11 @@ func NewAccess(biz *access.Service) *Access {
 
 func (s *Access) Login(ctx context.Context, req *v1.LoginRequest) (*v1.LoginResponse, error) {
 	noStore(ctx)
-	token, expires, err := s.biz.Login(req.GetUsername(), req.GetPassword())
+	token, expires, err := s.biz.LoginCustomer(ctx, req.GetPhone(), req.GetPassword())
 	if err != nil {
 		return nil, err
 	}
 	return &v1.LoginResponse{AccessToken: token, ExpiresInSeconds: expires}, nil
-}
-
-func (s *Access) ListTenants(ctx context.Context, _ *v1.BaseRequest) (*v1.ListTenantsResponse, error) {
-	noStore(ctx)
-	tenants, err := s.biz.ListTenants(bearerToken(ctx))
-	if err != nil {
-		return nil, err
-	}
-	reply := &v1.ListTenantsResponse{}
-	for _, tenant := range tenants {
-		reply.Tenants = append(reply.Tenants, tenantAccess(tenant))
-	}
-	return reply, nil
-}
-
-func (s *Access) GetTenantAccess(ctx context.Context, req *v1.GetTenantAccessRequest) (*v1.TenantAccess, error) {
-	noStore(ctx)
-	tenant, err := s.biz.GetTenantAccess(bearerToken(ctx), req.GetTenantId())
-	if err != nil {
-		return nil, err
-	}
-	return tenantAccess(tenant), nil
 }
 
 func (s *Access) CheckPermission(ctx context.Context, req *v1.CheckPermissionRequest) (*v1.BaseResp, error) {
@@ -54,12 +32,8 @@ func (s *Access) CheckPermission(ctx context.Context, req *v1.CheckPermissionReq
 	switch req.GetPermission() {
 	case v1.Permission_PERMISSION_READ_TENANT_USAGE:
 		permission = access.ReadTenantUsage
-	case v1.Permission_PERMISSION_MANAGE_PROXY_CREDENTIALS:
-		permission = access.ManageProxyCredentials
 	case v1.Permission_PERMISSION_READ_OPERATIONS:
 		permission = access.ReadOperations
-	case v1.Permission_PERMISSION_EXTRACT_PROXY:
-		permission = access.ExtractProxy
 	case v1.Permission_PERMISSION_MANAGE_BILLING:
 		permission = access.ManageBilling
 	}
@@ -69,8 +43,43 @@ func (s *Access) CheckPermission(ctx context.Context, req *v1.CheckPermissionReq
 	return &v1.BaseResp{}, nil
 }
 
+func (s *Access) Register(ctx context.Context, req *v1.RegisterRequest) (*v1.TenantAccess, error) {
+	noStore(ctx)
+	tenant, err := s.biz.Register(ctx, req.GetPhone(), req.GetPassword())
+	if err != nil {
+		return nil, err
+	}
+	return tenantAccess(tenant), nil
+}
+
+func (s *Access) GetAccount(ctx context.Context, _ *v1.BaseRequest) (*v1.TenantAccess, error) {
+	noStore(ctx)
+	tenant, err := s.biz.Account(ctx, bearerToken(ctx))
+	if err != nil {
+		return nil, err
+	}
+	return tenantAccess(tenant), nil
+}
+
+func (s *Access) LoginOperator(ctx context.Context, req *v1.LoginOperatorRequest) (*v1.LoginResponse, error) {
+	noStore(ctx)
+	token, expires, err := s.biz.LoginOperator(ctx, req.GetUsername(), req.GetPassword())
+	if err != nil {
+		return nil, err
+	}
+	return &v1.LoginResponse{AccessToken: token, ExpiresInSeconds: expires}, nil
+}
+
+func (s *Access) ResetTenantPassword(ctx context.Context, req *v1.ResetTenantPasswordRequest) (*v1.BaseResp, error) {
+	noStore(ctx)
+	if err := s.biz.ResetTenantPassword(ctx, bearerToken(ctx), req.GetTenantId(), req.GetPassword()); err != nil {
+		return nil, err
+	}
+	return &v1.BaseResp{}, nil
+}
+
 func tenantAccess(tenant access.Tenant) *v1.TenantAccess {
-	return &v1.TenantAccess{TenantId: tenant.ID, Name: tenant.Name}
+	return &v1.TenantAccess{TenantId: tenant.ID, Name: tenant.Name, PrimaryAccountName: tenant.PrimaryAccountName}
 }
 
 func noStore(ctx context.Context) {

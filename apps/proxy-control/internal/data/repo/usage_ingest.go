@@ -41,12 +41,6 @@ func (t usageTx) SaveLastRecord(gatewayID, bootID string, recordedAt time.Time) 
 			WHERE gateway_id = ? AND boot_id = ?`, recordedAt, gatewayID, bootID).Error
 }
 
-func (t usageTx) TenantForClient(clientID string) (string, error) {
-	var tenantID string
-	err := t.db.Raw("SELECT tenant_id FROM proxy_credentials WHERE client_id = ?", clientID).Scan(&tenantID).Error
-	return tenantID, err
-}
-
 func (t usageTx) Quarantine(gatewayID, bootID, fileID string, offset uint64, kind, detail string, now time.Time) error {
 	return t.db.Exec(`INSERT INTO record_anomalies (gateway_id, boot_id, file_id, file_offset, kind, detail, detected_at)
 		VALUES (?, ?, ?, ?, ?, ?::jsonb, ?)`, gatewayID, bootID, fileID, offset, kind, detail, now).Error

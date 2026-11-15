@@ -7,8 +7,7 @@
 package main
 
 import (
-	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz"
-	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/proxyauth"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/access"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/usage"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/conf"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/data"
@@ -21,23 +20,22 @@ import (
 
 // Injectors from wire.go:
 
-func wireApp(confServer *conf.Server, confData *conf.Data, confBiz *conf.Biz, appConfig *conf.AppConfig, logger *slog.Logger) (*kratos.App, func(), error) {
+func wireApp(confServer *conf.Server, confData *conf.Data, biz *conf.Biz, appConfig *conf.AppConfig, logger *slog.Logger) (*kratos.App, func(), error) {
 	modules := conf.NewModules(confData)
-	accessService, err := biz.NewAccess(confBiz)
-	if err != nil {
-		return nil, nil, err
-	}
-	access := service.NewAccess(accessService)
-	httpServer := server.NewConfiguredHTTPServer(confServer, confBiz, access)
 	dataData, cleanup, err := data.NewData(confData)
 	if err != nil {
 		return nil, nil, err
 	}
-	proxyAuthRepository := repo.ProvideProxyAuthRepository(dataData)
+	repository := repo.ProvideAccounts(dataData)
+	accessService, err := access.NewPersistent(repository)
+	if err != nil {
+		cleanup()
+		return nil, nil, err
+	}
+	serviceAccess := service.NewAccess(accessService)
+	httpServer := server.NewConfiguredHTTPServer(confServer, biz, serviceAccess)
 	usageRepository := repo.ProvideUsageRepository(dataData)
-	usageService := usage.NewConfigured(confBiz, usageRepository, accessService)
-	proxyauthService := proxyauth.New(proxyAuthRepository, accessService, usageService)
-	proxyAuth := service.NewProxyAuth(proxyauthService)
+	usageService := usage.NewConfigured(biz, usageRepository, accessService)
 	serviceUsage := service.NewUsage(usageService)
 	cronService := service.NewCronService(usageService)
 	cronServerImpl, err := server.NewCronServer(appConfig, cronService)
@@ -45,7 +43,7 @@ func wireApp(confServer *conf.Server, confData *conf.Data, confBiz *conf.Biz, ap
 		cleanup()
 		return nil, nil, err
 	}
-	v := server.NewServerList(modules, httpServer, proxyAuth, serviceUsage, cronServerImpl)
+	v := server.NewServerList(modules, httpServer, serviceUsage, cronServerImpl)
 	app := newApp(logger, v)
 	return app, func() {
 		cleanup()

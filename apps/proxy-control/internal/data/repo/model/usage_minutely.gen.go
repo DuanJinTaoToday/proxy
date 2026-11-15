@@ -15,9 +15,6 @@ type UsageMinutely struct {
 	TenantID       string    `gorm:"column:tenant_id;type:text;primaryKey" json:"tenant_id"`
 	GatewayID      string    `gorm:"column:gateway_id;type:text;primaryKey" json:"gateway_id"`
 	UsageDate      time.Time `gorm:"column:usage_date;type:date;primaryKey" json:"usage_date"`
-	GrantID        int64     `gorm:"column:grant_id;type:bigint;primaryKey" json:"grant_id"`
-	RateID         int64     `gorm:"column:rate_id;type:bigint;primaryKey" json:"rate_id"`
-	Source         string    `gorm:"column:source;type:text;primaryKey" json:"source"`
 	InputBytes     int64     `gorm:"column:input_bytes;type:bigint;not null" json:"input_bytes"`
 	OutputBytes    int64     `gorm:"column:output_bytes;type:bigint;not null" json:"output_bytes"`
 	BillableBytes  int64     `gorm:"column:billable_bytes;type:bigint;not null" json:"billable_bytes"`

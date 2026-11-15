@@ -6,19 +6,13 @@ import (
 	stdhttp "net/http"
 
 	v1 "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1"
-	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/service"
 	"github.com/go-kratos/kratos/v3/errors"
 	"github.com/go-kratos/kratos/v3/transport/http"
 )
 
-func RegisterProxyAuth(srv *http.Server, auth *service.ProxyAuth) {
-	v1.RegisterCredentialServiceHTTPServer(srv, auth)
-	v1.RegisterGatewayAuthServiceHTTPServer(srv, auth)
-}
-
 func DecodeProxyAuthRequest(req *stdhttp.Request, target any) error {
 	switch target.(type) {
-	case *v1.LoadAuthStateRequest, *v1.RefreshAuthStateRequest, *v1.CreateCredentialRequest, *v1.DisableCredentialRequest:
+	case *v1.LoadAuthStateRequest, *v1.RefreshAuthStateRequest:
 		const maxBody = 32 << 10
 		if req.ContentLength > maxBody {
 			return errors.New(413, "AUTH_REQUEST_TOO_LARGE", "authentication request exceeds the size limit")

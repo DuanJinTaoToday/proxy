@@ -14,7 +14,6 @@ import (
 	v1 "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/biz/authrelay"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/service"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type control struct {
@@ -34,7 +33,7 @@ func (c *control) Refresh(context.Context, []string) ([]*v1.AuthSnapshot, error)
 func snapshot() *v1.AuthSnapshot {
 	hash := sha256.Sum256([]byte("password"))
 	return &v1.AuthSnapshot{Reference: "ref", Username: "user", ClientId: "client", TenantId: "tenant",
-		PasswordHash: hash[:], Active: true, Quota: &v1.AuthQuota{AvailableBytes: 11, AdmissionThresholdBytes: 10}}
+		PasswordHash: hash[:], Active: true, Quota: &v1.AuthQuota{AvailableBytes: 11}}
 }
 
 const localToken = "test-local-token"
@@ -127,7 +126,7 @@ func TestAdmissionTracksRefreshedQuota(t *testing.T) {
 	for _, tc := range []struct {
 		available int64
 		admitted  bool
-	}{{9, false}, {-1, false}, {10, true}} {
+	}{{0, false}, {-1, false}, {1, true}} {
 		now = now.Add(time.Second)
 		update := snapshot()
 		update.Quota.AvailableBytes = tc.available
@@ -138,45 +137,5 @@ func TestAdmissionTracksRefreshedQuota(t *testing.T) {
 		if _, ok, _ := authenticate(t, handler, localToken); ok != tc.admitted {
 			t.Fatalf("admission with %d bytes = %t, want %t", tc.available, ok, tc.admitted)
 		}
-	}
-}
-
-func TestOfflineAdmissionStillChecksSourceExpiryAndQuota(t *testing.T) {
-	now := time.Now()
-	state := snapshot()
-	state.AllowedSourceCidrs = []string{"192.0.2.0/24"}
-	remote := &control{load: state}
-	relay := authrelay.New(remote, func() time.Time { return now })
-	handler := service.NewAuthRelay(relay, localToken)
-	if _, ok, _ := authenticate(t, handler, localToken); ok {
-		t.Fatal("disallowed source was accepted")
-	}
-	update := snapshot()
-	update.AllowedSourceCidrs = []string{"127.0.0.0/8"}
-	update.ExpiresAt = timestamppb.New(now.Add(3 * time.Second))
-	update.Quota.ValidUntil = timestamppb.New(now.Add(2 * time.Second))
-	remote.refresh = []*v1.AuthSnapshot{update}
-	if err := relay.Refresh(t.Context()); err != nil {
-		t.Fatal(err)
-	}
-	remote.err = errors.New("offline")
-	now = now.Add(time.Second)
-	if _, ok, _ := authenticate(t, handler, localToken); !ok {
-		t.Fatal("allowed source should pass within both validity windows")
-	}
-	now = now.Add(time.Second)
-	if _, ok, _ := authenticate(t, handler, localToken); ok {
-		t.Fatal("quota snapshot crossed its known grant boundary")
-	}
-	remote.err = nil
-	update = snapshot()
-	update.ExpiresAt = timestamppb.New(now.Add(time.Second))
-	remote.refresh = []*v1.AuthSnapshot{update}
-	if err := relay.Refresh(t.Context()); err != nil {
-		t.Fatal(err)
-	}
-	now = now.Add(time.Second)
-	if _, ok, _ := authenticate(t, handler, localToken); ok {
-		t.Fatal("credential expiry must be enforced independently of quota freshness")
 	}
 }

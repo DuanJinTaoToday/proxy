@@ -8,6 +8,11 @@ import (
 	"github.com/go-kratos/kratos/v3/errors"
 )
 
+type AuditPage[T any] struct {
+	Items []T
+	NextToken string
+}
+
 type FindingFilter struct {
 	GatewayID, BootID, TenantID, Kind, Status string
 }

@@ -18,62 +18,106 @@ var _ = new(context.Context)
 const _ = http.SupportPackageIsVersion3
 
 const OperationAccessServiceCheckPermission = "/proxycontrol.v1.AccessService/CheckPermission"
-const OperationAccessServiceGetTenantAccess = "/proxycontrol.v1.AccessService/GetTenantAccess"
-const OperationAccessServiceListTenants = "/proxycontrol.v1.AccessService/ListTenants"
+const OperationAccessServiceGetAccount = "/proxycontrol.v1.AccessService/GetAccount"
 const OperationAccessServiceLogin = "/proxycontrol.v1.AccessService/Login"
+const OperationAccessServiceLoginOperator = "/proxycontrol.v1.AccessService/LoginOperator"
+const OperationAccessServiceRegister = "/proxycontrol.v1.AccessService/Register"
+const OperationAccessServiceResetTenantPassword = "/proxycontrol.v1.AccessService/ResetTenantPassword"
 
 type AccessServiceHTTPServer interface {
 	CheckPermission(context.Context, *CheckPermissionRequest) (*BaseResp, error)
-	GetTenantAccess(context.Context, *GetTenantAccessRequest) (*TenantAccess, error)
-	ListTenants(context.Context, *BaseRequest) (*ListTenantsResponse, error)
+	GetAccount(context.Context, *BaseRequest) (*TenantAccess, error)
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
+	LoginOperator(context.Context, *LoginOperatorRequest) (*LoginResponse, error)
+	Register(context.Context, *RegisterRequest) (*TenantAccess, error)
+	ResetTenantPassword(context.Context, *ResetTenantPasswordRequest) (*BaseResp, error)
 }
 
 func RegisterAccessServiceHTTPServer(s *http.Server, srv AccessServiceHTTPServer) {
 	r := s.Route("/")
-	r.Handle("GET", "/v1/access/tenants", _AccessService_ListTenants0_HTTP_Handler(srv))
-	r.Handle("GET", "/v1/access/tenants/{tenant_id}", _AccessService_GetTenantAccess0_HTTP_Handler(srv))
+	r.Handle("POST", "/v1/access/register", _AccessService_Register0_HTTP_Handler(srv))
+	r.Handle("GET", "/v1/tenant/account", _AccessService_GetAccount0_HTTP_Handler(srv))
+	r.Handle("POST", "/v1/operations/access/login", _AccessService_LoginOperator0_HTTP_Handler(srv))
+	r.Handle("POST", "/v1/operations/tenants/{tenant_id}:reset-password", _AccessService_ResetTenantPassword0_HTTP_Handler(srv))
 	r.Handle("POST", "/v1/access/check", _AccessService_CheckPermission0_HTTP_Handler(srv))
 	r.Handle("POST", "/v1/access/login", _AccessService_Login0_HTTP_Handler(srv))
 }
 
-func _AccessService_ListTenants0_HTTP_Handler(srv AccessServiceHTTPServer) func(ctx http.Context) error {
+func _AccessService_Register0_HTTP_Handler(srv AccessServiceHTTPServer) func(ctx http.Context) error {
 	return func(ctx http.Context) error {
-		var in BaseRequest
-		if err := ctx.BindQuery(&in); err != nil {
+		var in RegisterRequest
+		if err := ctx.Bind(&in); err != nil {
 			return err
 		}
-		http.SetOperation(ctx, OperationAccessServiceListTenants)
+		http.SetOperation(ctx, OperationAccessServiceRegister)
 		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
-			return srv.ListTenants(ctx, req.(*BaseRequest))
-		})
-		out, err := h(ctx, &in)
-		if err != nil {
-			return err
-		}
-		reply := out.(*ListTenantsResponse)
-		return ctx.Result(200, reply)
-	}
-}
-
-func _AccessService_GetTenantAccess0_HTTP_Handler(srv AccessServiceHTTPServer) func(ctx http.Context) error {
-	return func(ctx http.Context) error {
-		var in GetTenantAccessRequest
-		if err := ctx.BindQuery(&in); err != nil {
-			return err
-		}
-		if err := ctx.BindVars(&in); err != nil {
-			return err
-		}
-		http.SetOperation(ctx, OperationAccessServiceGetTenantAccess)
-		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
-			return srv.GetTenantAccess(ctx, req.(*GetTenantAccessRequest))
+			return srv.Register(ctx, req.(*RegisterRequest))
 		})
 		out, err := h(ctx, &in)
 		if err != nil {
 			return err
 		}
 		reply := out.(*TenantAccess)
+		return ctx.Result(200, reply)
+	}
+}
+
+func _AccessService_GetAccount0_HTTP_Handler(srv AccessServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in BaseRequest
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationAccessServiceGetAccount)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.GetAccount(ctx, req.(*BaseRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*TenantAccess)
+		return ctx.Result(200, reply)
+	}
+}
+
+func _AccessService_LoginOperator0_HTTP_Handler(srv AccessServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in LoginOperatorRequest
+		if err := ctx.Bind(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationAccessServiceLoginOperator)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.LoginOperator(ctx, req.(*LoginOperatorRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*LoginResponse)
+		return ctx.Result(200, reply)
+	}
+}
+
+func _AccessService_ResetTenantPassword0_HTTP_Handler(srv AccessServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in ResetTenantPasswordRequest
+		if err := ctx.Bind(&in); err != nil {
+			return err
+		}
+		if err := ctx.BindVars(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationAccessServiceResetTenantPassword)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.ResetTenantPassword(ctx, req.(*ResetTenantPasswordRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*BaseResp)
 		return ctx.Result(200, reply)
 	}
 }
@@ -118,9 +162,11 @@ func _AccessService_Login0_HTTP_Handler(srv AccessServiceHTTPServer) func(ctx ht
 
 type AccessServiceHTTPClient interface {
 	CheckPermission(ctx context.Context, req *CheckPermissionRequest, opts ...http.CallOption) (rsp *BaseResp, err error)
-	GetTenantAccess(ctx context.Context, req *GetTenantAccessRequest, opts ...http.CallOption) (rsp *TenantAccess, err error)
-	ListTenants(ctx context.Context, req *BaseRequest, opts ...http.CallOption) (rsp *ListTenantsResponse, err error)
+	GetAccount(ctx context.Context, req *BaseRequest, opts ...http.CallOption) (rsp *TenantAccess, err error)
 	Login(ctx context.Context, req *LoginRequest, opts ...http.CallOption) (rsp *LoginResponse, err error)
+	LoginOperator(ctx context.Context, req *LoginOperatorRequest, opts ...http.CallOption) (rsp *LoginResponse, err error)
+	Register(ctx context.Context, req *RegisterRequest, opts ...http.CallOption) (rsp *TenantAccess, err error)
+	ResetTenantPassword(ctx context.Context, req *ResetTenantPasswordRequest, opts ...http.CallOption) (rsp *BaseResp, err error)
 }
 
 type AccessServiceHTTPClientImpl struct {
@@ -148,29 +194,13 @@ func (c *AccessServiceHTTPClientImpl) CheckPermission(ctx context.Context, in *C
 	return &out, nil
 }
 
-func (c *AccessServiceHTTPClientImpl) GetTenantAccess(ctx context.Context, in *GetTenantAccessRequest, opts ...http.CallOption) (*TenantAccess, error) {
+func (c *AccessServiceHTTPClientImpl) GetAccount(ctx context.Context, in *BaseRequest, opts ...http.CallOption) (*TenantAccess, error) {
 	var out TenantAccess
-	pattern := "/v1/access/tenants/{tenant_id}"
+	pattern := "/v1/tenant/account"
 	path := http.BuildPath(pattern, in, http.WithQueryParams())
 	opts = append([]http.CallOption{
 		http.Accept("application/protojson"),
-		http.Operation(OperationAccessServiceGetTenantAccess),
-		http.PathTemplate(pattern),
-	}, opts...)
-	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
-func (c *AccessServiceHTTPClientImpl) ListTenants(ctx context.Context, in *BaseRequest, opts ...http.CallOption) (*ListTenantsResponse, error) {
-	var out ListTenantsResponse
-	pattern := "/v1/access/tenants"
-	path := http.BuildPath(pattern, in, http.WithQueryParams())
-	opts = append([]http.CallOption{
-		http.Accept("application/protojson"),
-		http.Operation(OperationAccessServiceListTenants),
+		http.Operation(OperationAccessServiceGetAccount),
 		http.PathTemplate(pattern),
 	}, opts...)
 	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
@@ -188,6 +218,57 @@ func (c *AccessServiceHTTPClientImpl) Login(ctx context.Context, in *LoginReques
 		http.Accept("application/protojson"),
 		http.ContentType("application/protojson"),
 		http.Operation(OperationAccessServiceLogin),
+		http.PathTemplate(pattern),
+	}, opts...)
+	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (c *AccessServiceHTTPClientImpl) LoginOperator(ctx context.Context, in *LoginOperatorRequest, opts ...http.CallOption) (*LoginResponse, error) {
+	var out LoginResponse
+	pattern := "/v1/operations/access/login"
+	path := http.BuildPath(pattern, in)
+	opts = append([]http.CallOption{
+		http.Accept("application/protojson"),
+		http.ContentType("application/protojson"),
+		http.Operation(OperationAccessServiceLoginOperator),
+		http.PathTemplate(pattern),
+	}, opts...)
+	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (c *AccessServiceHTTPClientImpl) Register(ctx context.Context, in *RegisterRequest, opts ...http.CallOption) (*TenantAccess, error) {
+	var out TenantAccess
+	pattern := "/v1/access/register"
+	path := http.BuildPath(pattern, in)
+	opts = append([]http.CallOption{
+		http.Accept("application/protojson"),
+		http.ContentType("application/protojson"),
+		http.Operation(OperationAccessServiceRegister),
+		http.PathTemplate(pattern),
+	}, opts...)
+	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (c *AccessServiceHTTPClientImpl) ResetTenantPassword(ctx context.Context, in *ResetTenantPasswordRequest, opts ...http.CallOption) (*BaseResp, error) {
+	var out BaseResp
+	pattern := "/v1/operations/tenants/{tenant_id}:reset-password"
+	path := http.BuildPath(pattern, in)
+	opts = append([]http.CallOption{
+		http.Accept("application/protojson"),
+		http.ContentType("application/protojson"),
+		http.Operation(OperationAccessServiceResetTenantPassword),
 		http.PathTemplate(pattern),
 	}, opts...)
 	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)

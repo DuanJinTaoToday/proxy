@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"strconv"
+	"time"
 
 	v1 "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/usage"
@@ -64,38 +65,12 @@ func (s *Usage) CompleteReplay(ctx context.Context, req *v1.CompleteReplayReques
 	return &v1.BaseResp{}, nil
 }
 
-func (s *Usage) ExtractProxy(ctx context.Context, req *v1.ExtractProxyRequest) (*v1.ExtractProxyResponse, error) {
-	noStore(ctx)
-	endpoints, err := s.biz.ExtractMock(ctx, bearerToken(ctx), req.GetTenantId(), req.GetCount())
-	if err != nil {
-		return nil, err
-	}
-	reply := &v1.ExtractProxyResponse{}
-	for _, endpoint := range endpoints {
-		reply.IpList = append(reply.IpList, &v1.ProxyEndpoint{
-			Host: endpoint.Host, Port: endpoint.Port, Username: endpoint.Username,
-			Password: endpoint.Password, ExpiresAt: timestamppb.New(endpoint.ExpiresAt),
-		})
-	}
-	return reply, nil
-}
-
-func (s *Usage) GetTenantDailyUsage(ctx context.Context, req *v1.DailyUsageRequest) (*v1.DailyUsageResponse, error) {
-	noStore(ctx)
-	result, err := s.biz.GetTenantDailyUsage(ctx, bearerToken(ctx), req.GetTenantId(), req.GetStartDate(), req.GetEndDate(), req.GetSource())
-	if err != nil {
-		return nil, err
-	}
-	return dailyUsageResponse(result), nil
-}
-
 func (s *Usage) QueryUsage(ctx context.Context, req *v1.QueryUsageRequest) (*v1.QueryUsageResponse, error) {
 	noStore(ctx)
 	start, _ := readTimestamp(req.GetStartTime())
 	end, _ := readTimestamp(req.GetEndTime())
 	query := usage.UsageQuery{
 		TenantID: req.GetTenantId(), GatewayID: req.GetGatewayId(), SplitByGateway: req.GetSplitByGateway(),
-		SplitByGrant: req.GetSplitByGrant(), SplitByRate: req.GetSplitByRate(),
 	}
 	if start != nil && end != nil {
 		query.Start, query.End = *start, *end
@@ -117,8 +92,6 @@ func (s *Usage) QueryUsage(ctx context.Context, req *v1.QueryUsageRequest) (*v1.
 		reply.Buckets = append(reply.Buckets, &v1.UsageBucket{
 			StartTime: timestamppb.New(bucket.StartTime),
 			GatewayId: bucket.GatewayID,
-			GrantId:   optionalNumericID(bucket.GrantID),
-			RateId:    optionalNumericID(bucket.RateID),
 			Amount: &v1.UsageAmount{
 				InputBytes: bucket.InputBytes, OutputBytes: bucket.OutputBytes,
 				TotalBytes: bucket.InputBytes + bucket.OutputBytes, BillableBytes: bucket.BillableBytes,
@@ -135,36 +108,20 @@ func optionalNumericID(id int64) string {
 	return strconv.FormatInt(id, 10)
 }
 
-func dailyUsageResponse(result *usage.DailyUsage) *v1.DailyUsageResponse {
-	reply := &v1.DailyUsageResponse{LastReceivedAt: timestamp(result.LastReceivedAt)}
-	for _, day := range result.Days {
-		reply.Days = append(reply.Days, &v1.DailyUsage{Date: day.Date, Amount: dailyAmount(day)})
+func readTimestamp(value *timestamppb.Timestamp) (at *time.Time, invalid bool) {
+	if value == nil {
+		return nil, false
 	}
-	return reply
+	if !value.IsValid() {
+		return nil, true
+	}
+	t := value.AsTime()
+	return &t, false
 }
 
-func dailyAmount(day usage.Day) *v1.UsageAmount {
-	return &v1.UsageAmount{
-		InputBytes: day.InputBytes, OutputBytes: day.OutputBytes, TotalBytes: day.TotalBytes, BillableBytes: day.BillableBytes,
+func timestamp(at *time.Time) *timestamppb.Timestamp {
+	if at == nil {
+		return nil
 	}
-}
-
-func (s *Usage) GetTenantBalance(ctx context.Context, req *v1.TenantBalanceRequest) (*v1.TenantBalance, error) {
-	noStore(ctx)
-	balance, err := s.biz.GetTenantBalance(ctx, bearerToken(ctx), req.GetTenantId())
-	if err != nil {
-		return nil, err
-	}
-	reply := &v1.TenantBalance{
-		TenantId: balance.TenantID, AvailableBytes: balance.AvailableBytes, OverdraftBytes: balance.OverdraftBytes,
-		AdmissionThresholdBytes: balance.AdmissionThresholdBytes, WarningThresholdBytes: balance.WarningThresholdBytes,
-		WarningSince: timestamp(balance.WarningSince),
-	}
-	for _, grant := range balance.Grants {
-		reply.Grants = append(reply.Grants, &v1.TrafficGrant{
-			GrantId: strconv.FormatInt(grant.ID, 10), GrantedBytes: uint64(grant.GrantedBytes), UsedBytes: uint64(grant.UsedBytes),
-			StartsAt: timestamppb.New(grant.StartsAt), ExpiresAt: timestamp(grant.ExpiresAt), Source: grant.Source,
-		})
-	}
-	return reply, nil
+	return timestamppb.New(*at)
 }

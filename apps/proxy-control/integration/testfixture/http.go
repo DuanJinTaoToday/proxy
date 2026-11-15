@@ -7,9 +7,6 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-
-	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/access"
-	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/conf"
 )
 
 func Request(handler http.Handler, method, path, body, token string) *httptest.ResponseRecorder {
@@ -31,7 +28,7 @@ func Login(t *testing.T, handler http.Handler, username string) string {
 	if err != nil {
 		t.Fatal(err)
 	}
-	reply := Request(handler, "POST", "/v1/access/login", string(body), "")
+	reply := Request(handler, "POST", "/v1/operations/access/login", string(body), "")
 	if reply.Code != http.StatusOK {
 		t.Fatalf("login: %d %s", reply.Code, reply.Body)
 	}
@@ -42,19 +39,6 @@ func Login(t *testing.T, handler http.Handler, username string) string {
 		t.Fatalf("invalid login response: %v", err)
 	}
 	return session.AccessToken
-}
-
-func AuthAccess(t *testing.T) *access.Service {
-	t.Helper()
-	users := []*conf.User{
-		{Username: "alice", PasswordHash: PasswordHash, Memberships: []*conf.Membership{{TenantId: "alpha", Role: conf.TenantRole_TENANT_ROLE_ADMIN}}},
-		{Username: "bob", PasswordHash: PasswordHash, Memberships: []*conf.Membership{{TenantId: "alpha", Role: conf.TenantRole_TENANT_ROLE_MEMBER}}},
-	}
-	accessService, err := access.New(&conf.Access{Tenants: []*conf.Tenant{{Id: "alpha", Name: "A"}, {Id: "beta", Name: "B"}}, Users: users})
-	if err != nil {
-		t.Fatal(err)
-	}
-	return accessService
 }
 
 func AssertStatus(t *testing.T, reply *httptest.ResponseRecorder, status int, reason string) {

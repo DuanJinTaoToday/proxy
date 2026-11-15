@@ -18,15 +18,13 @@ type cronUsageRepo struct {
 	runs chan time.Time
 }
 
-func (r cronUsageRepo) Transact(context.Context, func(usage.Transaction) error) error { return nil }
-
-func (r cronUsageRepo) DueTenants(ctx context.Context, _ time.Time) ([]string, error) {
+func (r cronUsageRepo) Transact(ctx context.Context, _ func(usage.Transaction) error) error {
 	deadline, _ := ctx.Deadline()
 	select {
 	case r.runs <- deadline:
-		return nil, nil
+		return nil
 	case <-ctx.Done():
-		return nil, ctx.Err()
+		return ctx.Err()
 	}
 }
 

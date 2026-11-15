@@ -2,7 +2,7 @@
 
 多租户代理服务。首版商业交付包含悟空动态住宅 GB 和皇冠静态住宅 IP。客户自助开户，由运营为租户钱包充值，客户从钱包购买商品。动态住宅通过 SOCKS5 隧道接入，静态住宅 IP 按实际交付数量结算并支持到期前手动保号续费。两类商品独立验收和开售。 [首版商业交付 Spec #36](https://github.com/DuanJinTaoToday/proxy/issues/36)
 
-当前工作区已有手机号注册和登录、动态隧道接入、Recorder 采集上报及租户用量查询。开售仍须按 Spec 验收。首版规划时的实现差距见[差异审计](docs/product/proxy-first-release-gap-audit.md)。
+当前工作区保留手机号开户、GOST 转发和 Recorder 基础链路。动态接入等待首版子账号认证与计量接入。规划时的实现差距见[差异审计](docs/product/proxy-first-release-gap-audit.md)。
 
 ## 本地 Docker 测试环境
 
@@ -12,9 +12,9 @@
 
 | 目录 | 说明 |
 | --- | --- |
-| [apps/proxy-control](apps/proxy-control/README.md) | 控制面：租户登录与授权、代理凭据、用量归集、流量额度、归档 |
+| [apps/proxy-control](apps/proxy-control/README.md) | 控制面：租户登录与授权、Recorder 上报、回放与归档 |
 | [apps/proxy-gateway](apps/proxy-gateway/README.md) | 网关：基于原版 GOST 的 SOCKS5 接入、认证中继、Recorder 采集与上报 |
-| [apps/proxy-console](apps/proxy-console/README.md) | 控制台：手机号注册、登录与租户用量页面，商业页面待实现 |
+| [apps/proxy-console](apps/proxy-console/README.md) | 控制台：手机号注册、登录与租户信息，商业页面待实现 |
 | `api/protos/proxycontrol` | 控制面 Protobuf 接口定义 |
 | `api/proxycontrol` | 生成的 Go 绑定与 OpenAPI 文档 |
 | `pkg` | 公共库：`client`、`cron`、`log` |
