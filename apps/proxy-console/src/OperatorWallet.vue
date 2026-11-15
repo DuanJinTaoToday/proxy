@@ -1,19 +1,25 @@
 <script setup lang="ts">
-import { onUnmounted, ref, watch } from 'vue'
+import { nextTick, onUnmounted, ref, watch } from 'vue'
+import { Search, Wallet } from 'lucide-vue-next'
 import { ApiError } from './api/control'
 import { canManageBilling, findWalletTenant, getWallet, quoteRecharge, rechargeWallet } from './api/wallet'
 import type { Recharge, RechargeQuote, WalletTenant } from './api/wallet'
 import WalletRecords from './WalletRecords.vue'
 import OperatorProducts from './OperatorProducts.vue'
+import DashboardShell from './DashboardShell.vue'
+import { Button } from './ui/button'
+import Card from './ui/card/Card.vue'
+import Input from './ui/input/Input.vue'
 import { dateTime, money } from './wallet-format'
 
 const props = defineProps<{ token: string; operatorName: string }>()
-const emit = defineEmits<{ expired: [] }>()
+const emit = defineEmits<{ expired: []; logout: [] }>()
 const pendingKey = 'proxy-console.pending-recharge.' + props.operatorName
 type Confirmation = RechargeQuote & Recharge
 const restored = readPending()
 const tenant = ref<WalletTenant | null>(restored?.tenant ?? null)
 const query = ref('')
+const queryInput = ref<InstanceType<typeof Input> | null>(null)
 const searching = ref(false)
 const searchError = ref('')
 const permitted = ref(false)
@@ -30,6 +36,12 @@ const revision = ref(0)
 
 let searchController: AbortController | undefined
 onUnmounted(() => searchController?.abort())
+
+async function focusLookup(closeSidebar: () => void) {
+  closeSidebar()
+  await nextTick()
+  queryInput.value?.$el.focus()
+}
 
 function readPending(): Confirmation | null {
   try {
@@ -184,55 +196,67 @@ async function submitRecharge() {
 </script>
 
 <template>
-  <div class="page-heading"><h1>租户钱包</h1></div>
-  <form class="panel filters wallet-filters" @submit.prevent="findTenant">
-    <label>主账号名或手机号
-      <input v-model="query" required maxlength="128" placeholder="输入完整主账号名或手机号">
-    </label>
-    <button type="submit" :disabled="searching || !!confirmation || quoting || submitting">{{ searching ? '正在查询…' : '查找租户' }}</button>
-    <p v-if="searchError" class="error" role="alert">{{ searchError }}</p>
-  </form>
+  <DashboardShell brand="运营控制台" area="运营控制台" title="租户钱包" :account-name="operatorName" @logout="emit('logout')">
+    <template #navigation="{ closeSidebar }">
+      <nav aria-label="运营导航">
+        <Button variant="ghost" type="button" aria-current="page" @click="focusLookup(closeSidebar)"><Wallet />租户钱包</Button>
+      </nav>
+    </template>
 
-  <OperatorProducts v-if="permitted" :token="token" @expired="emit('expired')" />
-
-  <template v-if="tenant">
-    <section class="panel wallet-summary" aria-labelledby="tenant-heading">
-      <div class="section-head"><h2 id="tenant-heading">{{ tenant.name }}</h2></div>
-      <dl class="record-details">
-        <div><dt>主账号名</dt><dd>{{ tenant.primary_account_name }}</dd></div>
-        <div><dt>当前钱包余额</dt><dd>{{ money(tenant.available_minor) }}</dd></div>
-      </dl>
-    </section>
-
-    <section v-if="permitted" class="panel" aria-labelledby="recharge-heading">
-      <div class="section-head"><h2 id="recharge-heading">钱包充值</h2></div>
-      <form v-if="!confirmation" class="filters wallet-filters" @submit.prevent="prepareRecharge">
-        <label>充值金额（人民币元）
-          <input v-model="amount" inputmode="decimal" maxlength="20" placeholder="0.00" required>
+    <Card role="region" class="panel gap-0 py-0" aria-labelledby="tenant-lookup-heading">
+      <div class="section-head"><h2 id="tenant-lookup-heading">查询租户</h2></div>
+      <form class="filters wallet-filters" @submit.prevent="findTenant">
+        <label class="tenant-lookup-field">主账号名或手机号
+          <Input ref="queryInput" v-model="query" required maxlength="128" placeholder="输入完整主账号名或手机号" />
         </label>
-        <label class="recharge-reason">充值原因
-          <input v-model="reason" maxlength="500" required>
-        </label>
-        <button v-if="needsRefresh" type="button" class="secondary" :disabled="searching || submitting" @click="refreshTenant">刷新余额</button>
-        <button v-else type="submit" :disabled="quoting || submitting">{{ quoting ? '正在获取确认信息…' : '核对充值' }}</button>
+        <Button class="dashboard-primary" type="submit" :disabled="searching || !!confirmation || quoting || submitting">
+          <Search :size="15" />{{ searching ? '正在查询…' : '查找租户' }}
+        </Button>
+        <p v-if="searchError" class="error" role="alert">{{ searchError }}</p>
       </form>
-      <form v-else class="recharge-confirm" @submit.prevent="submitRecharge">
-        <h3>确认充值信息</h3>
+    </Card>
+
+    <OperatorProducts v-if="permitted" :token="token" @expired="emit('expired')" />
+
+    <template v-if="tenant">
+      <Card role="region" class="panel operator-summary gap-0 py-0" aria-labelledby="tenant-heading">
+        <div class="section-head"><h2 id="tenant-heading">{{ tenant.name }}</h2></div>
         <dl class="record-details">
-          <div><dt>租户名</dt><dd>{{ tenant.name }}</dd></div>
           <div><dt>主账号名</dt><dd>{{ tenant.primary_account_name }}</dd></div>
-          <div><dt>充值金额</dt><dd>{{ money(confirmation.amount_minor) }}</dd></div>
-          <div><dt>预计到账后余额</dt><dd>{{ money(confirmation.expected_after_minor) }}</dd></div>
-          <div><dt>充值原因</dt><dd>{{ confirmation.reason }}</dd></div>
+          <div><dt>当前钱包余额</dt><dd class="summary-number">{{ money(tenant.available_minor) }}</dd></div>
         </dl>
-        <div class="confirm-actions">
-          <button type="button" class="secondary" :disabled="submitting || !!rechargeError" @click="cancelConfirmation">返回修改</button>
-          <button type="submit" :disabled="submitting">{{ submitting ? '正在提交…' : rechargeError ? '重试本次充值' : '确认充值' }}</button>
-        </div>
-      </form>
-      <p v-if="rechargeError" class="form-notice error" role="alert">{{ rechargeError }}</p>
-      <p v-if="success" class="form-notice" role="status">{{ success }}</p>
-    </section>
-    <WalletRecords :key="tenant.tenant_id" :token="token" :tenant-id="tenant.tenant_id" :revision="revision" @expired="emit('expired')" />
-  </template>
+      </Card>
+
+      <Card v-if="permitted" role="region" class="panel gap-0 py-0" aria-labelledby="recharge-heading">
+        <div class="section-head"><h2 id="recharge-heading">钱包充值</h2></div>
+        <form v-if="!confirmation" class="filters wallet-filters" @submit.prevent="prepareRecharge">
+          <label>充值金额（人民币元）
+            <Input v-model="amount" inputmode="decimal" maxlength="20" placeholder="0.00" required />
+          </label>
+          <label class="recharge-reason">充值原因
+            <Input v-model="reason" maxlength="500" required />
+          </label>
+          <Button variant="outline" v-if="needsRefresh" type="button" class="secondary" :disabled="searching || submitting" @click="refreshTenant">刷新余额</Button>
+          <Button v-else class="dashboard-primary" type="submit" :disabled="quoting || submitting">{{ quoting ? '正在获取确认信息…' : '核对充值' }}</Button>
+        </form>
+        <form v-else class="recharge-confirm" @submit.prevent="submitRecharge">
+          <h3>确认充值信息</h3>
+          <dl class="record-details">
+            <div><dt>租户名</dt><dd>{{ tenant.name }}</dd></div>
+            <div><dt>主账号名</dt><dd>{{ tenant.primary_account_name }}</dd></div>
+            <div><dt>充值金额</dt><dd>{{ money(confirmation.amount_minor) }}</dd></div>
+            <div><dt>预计到账后余额</dt><dd>{{ money(confirmation.expected_after_minor) }}</dd></div>
+            <div><dt>充值原因</dt><dd>{{ confirmation.reason }}</dd></div>
+          </dl>
+          <div class="confirm-actions">
+            <Button variant="outline" type="button" class="secondary" :disabled="submitting || !!rechargeError" @click="cancelConfirmation">返回修改</Button>
+            <Button class="dashboard-primary" type="submit" :disabled="submitting">{{ submitting ? '正在提交…' : rechargeError ? '重试本次充值' : '确认充值' }}</Button>
+          </div>
+        </form>
+        <p v-if="rechargeError" class="form-notice error" role="alert">{{ rechargeError }}</p>
+        <p v-if="success" class="form-notice" role="status">{{ success }}</p>
+      </Card>
+      <WalletRecords :key="tenant.tenant_id" :token="token" :tenant-id="tenant.tenant_id" :revision="revision" @expired="emit('expired')" />
+    </template>
+  </DashboardShell>
 </template>

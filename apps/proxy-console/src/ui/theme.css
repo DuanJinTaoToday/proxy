@@ -1,0 +1,32 @@
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css";
+
+@theme inline {
+  --color-background: var(--shadcn-background);
+  --color-foreground: var(--shadcn-foreground);
+  --color-card: var(--shadcn-background);
+  --color-card-foreground: var(--shadcn-foreground);
+  --color-primary: var(--shadcn-foreground);
+  --color-primary-foreground: var(--shadcn-background);
+  --color-muted: var(--shadcn-muted);
+  --color-muted-foreground: var(--shadcn-muted-foreground);
+  --color-accent: var(--shadcn-muted);
+  --color-accent-foreground: var(--shadcn-foreground);
+  --color-border: var(--shadcn-border);
+  --color-input: var(--shadcn-border);
+  --color-ring: var(--shadcn-ring);
+  --color-destructive: var(--shadcn-destructive);
+}
+
+:root {
+  --shadcn-background: #fff;
+  --shadcn-foreground: #18181b;
+  --shadcn-muted: #f4f4f5;
+  --shadcn-muted-foreground: #64646d;
+  --shadcn-border: #e4e4e7;
+  --shadcn-ring: #71717a;
+  --shadcn-destructive: #a12d23;
+}
+
+.login-block [data-slot="card"] { border-color: var(--shadcn-border); }
+.login-block :focus-visible { outline-color: var(--shadcn-ring); }
