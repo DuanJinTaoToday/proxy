@@ -57,6 +57,8 @@ message AuthSnapshot {
   bool active = 6;
   // 有效凭据所属租户的流量准入状态。
   AuthQuota quota = 9;
+  // Monotonic credential revision, including password and active status changes.
+  int64 credential_version = 10;
 }
 
 message AuthQuota {

@@ -3,6 +3,7 @@ package integration
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/base64"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -15,8 +16,10 @@ import (
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/integration/testfixture"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/access"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/product"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/subaccount"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/usage"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/wallet"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/conf"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/data/repo"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/server"
 	httpservice "github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/service"
@@ -51,7 +54,7 @@ func setupUsage(t *testing.T) usageFixture {
 	query.Set("search_path", schema)
 	address.RawQuery = query.Encode()
 	db := connect(t, address.String())
-	for _, path := range []string{"00001_proxy_auth.sql", "00002_usage.sql", "00003_gateway_lifecycle.sql", "00004_usage_gaps.sql", "00007_tenant_accounts.sql", "00008_wallet_orders.sql", "00009_products.sql"} {
+	for _, path := range []string{"00001_proxy_auth.sql", "00002_usage.sql", "00003_gateway_lifecycle.sql", "00004_usage_gaps.sql", "00007_tenant_accounts.sql", "00008_wallet_orders.sql", "00009_products.sql", "00010_proxy_subaccounts.sql"} {
 		migration, err := os.ReadFile("../migrations/" + path)
 		if err != nil {
 			t.Fatal(err)
@@ -77,6 +80,13 @@ func setupUsage(t *testing.T) usageFixture {
 	server.RegisterUsage(handler, httpservice.NewUsage(service))
 	server.RegisterWallet(handler, httpservice.NewWallet(wallet.NewService(repo.NewWalletRepository(db), accessService)))
 	server.RegisterProduct(handler, httpservice.NewProduct(product.NewService(repo.NewProductRepository(db), accessService)))
+	subs, err := subaccount.NewService(repo.NewSubaccountRepository(db), accessService, &conf.Biz{
+		Subaccounts: &conf.Subaccounts{PasswordKey: base64.RawURLEncoding.EncodeToString(make([]byte, 32)), GatewayHost: "gateway.example.test", GatewayPort: 1080},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	server.RegisterSubaccounts(handler, httpservice.NewSubaccounts(subs))
 	return usageFixture{db: db, http: handler}
 }
 

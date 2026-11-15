@@ -179,8 +179,9 @@ func (r *Relay) apply(snapshots []*v1.AuthSnapshot, started time.Time, epoch, ge
 	currentGeneration, reportingReady := r.quotaRenewal()
 	renewQuota = renewQuota && reportingReady && currentGeneration == generation
 	for _, s := range snapshots {
-		if existing := r.credentials[s.GetUsername()]; !started.Before(existing.synced) &&
-			(existing.snapshot == nil || existing.snapshot.GetActive() || !s.GetActive()) {
+		existing := r.credentials[s.GetUsername()]
+		oldVersion, newVersion := existing.snapshot.GetCredentialVersion(), s.GetCredentialVersion()
+		if newVersion > oldVersion || newVersion == oldVersion && !started.Before(existing.synced) {
 			r.credentials[s.GetUsername()] = credential{s, started}
 		}
 		if existing := r.quotas[s.GetTenantId()]; renewQuota && s.GetQuota() != nil && !started.Before(existing.synced) {

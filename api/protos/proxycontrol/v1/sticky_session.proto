@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package proxycontrol.v1;
+
+import "google/api/annotations.proto";
+import "openapiv3/annotations.proto";
+import "proxycontrol/v1/common.proto";
+
+option go_package = "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1";
+
+service StickySessionService {
+  rpc AcquireStickySession(StickySessionRequest) returns (StickySession) {
+    option (google.api.http) = { post: "/v1/gateway/sticky-sessions:acquire" body: "*" };
+    option (openapi.v3.operation) = { summary: "获取共享 SID 或领取首次拨号租约" };
+  }
+  rpc CommitStickySession(StickySessionRequest) returns (StickySession) {
+    option (google.api.http) = { post: "/v1/gateway/sticky-sessions:commit" body: "*" };
+    option (openapi.v3.operation) = { summary: "确认首次成功拨号并开始会话计时" };
+  }
+  rpc ReleaseStickySession(StickySessionRequest) returns (BaseResp) {
+    option (google.api.http) = { post: "/v1/gateway/sticky-sessions:release" body: "*" };
+    option (openapi.v3.operation) = { summary: "释放未成功拨号的会话租约" };
+  }
+}
+
+message StickySessionRequest {
+  string client_id = 1;
+  // Empty is the subaccount's default session.
+  string session_key = 2;
+  // Returned by acquire when this gateway owns the first dial.
+  string lease_token = 3;
+}
+
+message StickySession {
+  int64 upstream_sid = 1;
+  string lease_token = 2;
+}

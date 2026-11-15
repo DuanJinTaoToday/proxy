@@ -5,6 +5,12 @@ data:
   gost:
     binary: /usr/local/bin/gost
     config: /config/gost.yaml
+    wukong:
+      entries: ["proxy-wukong-mock:1081"]
+      username: fixture
+      password: fixture
+      probe_url: https://console/fixture/primary
+      backup_probe_url: https://console/fixture/backup
     local_auth_token: "xF7BYgCywEDoqSzEoCsHWxBdxY6AByM1FxbN6HiPo1E"
   acl:
     control:

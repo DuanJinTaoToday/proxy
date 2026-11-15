@@ -6,16 +6,17 @@ import (
 	"crypto/subtle"
 	"encoding/json"
 	"io"
-	"log/slog"
 	"net"
 	"net/http"
 	"strings"
 	"time"
+
+	v1 "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1"
 )
 
 type routeTicket struct {
-	tenant, target string
-	until          time.Time
+	client, session, target string
+	until                   time.Time
 }
 
 func (p *Pool) Route(w http.ResponseWriter, req *http.Request) {
@@ -35,13 +36,14 @@ func (p *Pool) Route(w http.ResponseWriter, req *http.Request) {
 	p.mu.Lock()
 	now := time.Now()
 	client := p.clients[input.Client]
-	if client.tenant == "" || !now.Before(client.until) || p.selectEntry(client.tenant) < 0 {
+	delete(p.clients, input.Client)
+	if client.client == "" || !now.Before(client.until) || p.selectEntry(client.client) < 0 {
 		p.mu.Unlock()
 		w.WriteHeader(http.StatusServiceUnavailable)
 		return
 	}
 	key := strings.ToLower(rand.Text()) + ".route.invalid:1"
-	p.tickets[key] = routeTicket{tenant: client.tenant, target: input.Addr, until: now.Add(5 * time.Second)}
+	p.tickets[key] = routeTicket{client: client.client, session: client.key, target: input.Addr, until: now.Add(5 * time.Second)}
 	p.mu.Unlock()
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Cache-Control", "no-store")
@@ -68,7 +70,7 @@ func (p *Pool) Connect(ctx context.Context, w http.ResponseWriter, req *http.Req
 	ticket := p.tickets[req.Host]
 	delete(p.tickets, req.Host)
 	var candidates []int
-	if preferred := p.selectEntry(ticket.tenant); preferred >= 0 {
+	if preferred := p.selectEntry(ticket.client); preferred >= 0 {
 		candidates = append(candidates, preferred)
 		for i := range p.entries {
 			if i != preferred && p.entries[i].healthy {
@@ -77,15 +79,27 @@ func (p *Pool) Connect(ctx context.Context, w http.ResponseWriter, req *http.Req
 		}
 	}
 	p.mu.Unlock()
-	if ticket.tenant == "" || !time.Now().Before(ticket.until) || len(candidates) == 0 {
+	if ticket.client == "" || !time.Now().Before(ticket.until) || len(candidates) == 0 {
 		w.WriteHeader(http.StatusServiceUnavailable)
 		return
 	}
-	sid, err := p.sids.get("tenant:" + ticket.tenant)
-	if err != nil {
-		slog.Error("persist Wukong tenant SID", "error", err)
+	request := &v1.StickySessionRequest{ClientId: ticket.client, SessionKey: ticket.session}
+	session, err := p.control.AcquireStickySession(req.Context(), request)
+	sid := session.GetUpstreamSid()
+	if err != nil || sid < 100000000 || sid >= 900000000 {
 		w.WriteHeader(http.StatusServiceUnavailable)
 		return
+	}
+	request.LeaseToken = session.GetLeaseToken()
+	if request.LeaseToken != "" {
+		defer func() {
+			if request.LeaseToken == "" {
+				return
+			}
+			releaseCtx, cancelRelease := context.WithTimeout(context.WithoutCancel(req.Context()), time.Second)
+			defer cancelRelease()
+			_ = p.control.ReleaseStickySession(releaseCtx, request)
+		}()
 	}
 
 	_ = http.NewResponseController(w).SetWriteDeadline(time.Now().Add(14 * time.Second))
@@ -112,9 +126,20 @@ func (p *Pool) Connect(ctx context.Context, w http.ResponseWriter, req *http.Req
 		return
 	}
 	defer func() { _ = upstream.Close() }()
+	if request.LeaseToken != "" {
+		confirmed, commitErr := p.control.CommitStickySession(req.Context(), request)
+		if commitErr != nil {
+			confirmed, commitErr = p.control.CommitStickySession(req.Context(), request)
+		}
+		if commitErr != nil || confirmed.GetUpstreamSid() != sid {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			return
+		}
+		request.LeaseToken = ""
+	}
 
 	p.mu.Lock()
-	p.preferred[ticket.tenant] = index
+	p.preferred[ticket.client] = index
 	p.mu.Unlock()
 
 	client, rw, err := http.NewResponseController(w).Hijack()

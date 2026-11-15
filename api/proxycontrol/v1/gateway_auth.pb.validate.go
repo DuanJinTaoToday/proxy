@@ -487,6 +487,8 @@ func (m *AuthSnapshot) validate(all bool) error {
 		}
 	}
 
+	// no validation rules for CredentialVersion
+
 	if len(errors) > 0 {
 		return AuthSnapshotMultiError(errors)
 	}

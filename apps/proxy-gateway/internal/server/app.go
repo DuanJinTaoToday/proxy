@@ -13,6 +13,7 @@ import (
 
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/biz/authrelay"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/biz/recorder"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/data/acl"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/data/gost"
 	recorderdata "github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/data/repo"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/data/wukong"
@@ -22,6 +23,7 @@ import (
 type App struct {
 	binary, template, spool, localToken string
 	wukong                              gost.WukongConfig
+	control                             *acl.HTTPControl
 	gatewayID                           string
 	reportTimeout                       time.Duration
 	relay                               *authrelay.Relay
@@ -33,12 +35,12 @@ type App struct {
 }
 
 func NewApp(settings GatewaySettings, relay *authrelay.Relay, httpServer *http.Server, listener net.Listener,
-	collector *recorder.Collector, lifecycle *recorder.Lifecycle, scheduler *cronServerImpl,
+	collector *recorder.Collector, lifecycle *recorder.Lifecycle, scheduler *cronServerImpl, control *acl.HTTPControl,
 ) *App {
 	return &App{
 		binary: settings.binary, template: settings.template,
 		spool: string(settings.Spool), localToken: settings.LocalToken,
-		wukong: settings.wukong, gatewayID: settings.Recorder.GatewayID,
+		wukong: settings.wukong, control: control, gatewayID: settings.Recorder.GatewayID,
 		reportTimeout: settings.Report.Timeout,
 		relay:         relay, httpServer: httpServer, listener: listener,
 		collector: collector, lifecycle: lifecycle, scheduler: scheduler,
@@ -55,13 +57,14 @@ func (a *App) Run() error {
 
 	if len(a.wukong.Entries) > 0 {
 		pool, release, err := wukong.Open(a.spool, a.wukong.Username, a.wukong.Password, a.wukong.Entries,
-			a.wukong.ProbeURL, a.wukong.BackupProbeURL, a.localToken, a.wukong.ProbeTimeout)
+			a.wukong.ProbeURL, a.wukong.BackupProbeURL, a.localToken, a.wukong.ProbeTimeout, a.control)
 		if err != nil {
 			return err
 		}
 		defer release()
+		a.collector.SetConnectionKey(pool.ConnectionKey())
 		auth := service.NewAuthRelay(a.relay, a.localToken)
-		auth.OnAuthenticated(pool.RememberClient)
+		auth.OnSession(pool.RememberSession)
 		a.httpServer.Handler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			switch {
 			case req.Method == http.MethodConnect:

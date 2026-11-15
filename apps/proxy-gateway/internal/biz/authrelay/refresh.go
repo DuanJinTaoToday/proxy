@@ -23,9 +23,7 @@ func (r *Relay) Refresh(ctx context.Context) error {
 			delete(r.credentials, username)
 			continue
 		}
-		if entry.snapshot.GetActive() {
-			references = append(references, entry.snapshot.GetReference())
-		}
+		references = append(references, entry.snapshot.GetReference())
 	}
 	for tenant, balance := range r.quotas {
 		if !validQuota(balance, started) {

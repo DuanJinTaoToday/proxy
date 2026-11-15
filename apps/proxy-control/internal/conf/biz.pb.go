@@ -24,6 +24,7 @@ const (
 type Biz struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Usage         *Usage                 `protobuf:"bytes,2,opt,name=usage,proto3" json:"usage,omitempty"`
+	Subaccounts   *Subaccounts           `protobuf:"bytes,3,opt,name=subaccounts,proto3" json:"subaccounts,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -61,6 +62,13 @@ func (*Biz) Descriptor() ([]byte, []int) {
 func (x *Biz) GetUsage() *Usage {
 	if x != nil {
 		return x.Usage
+	}
+	return nil
+}
+
+func (x *Biz) GetSubaccounts() *Subaccounts {
+	if x != nil {
+		return x.Subaccounts
 	}
 	return nil
 }
@@ -117,16 +125,81 @@ func (x *Usage) GetMaxBatchBodyBytes() uint32 {
 	return 0
 }
 
+type Subaccounts struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PasswordKey   string                 `protobuf:"bytes,1,opt,name=password_key,json=passwordKey,proto3" json:"password_key,omitempty"`
+	GatewayHost   string                 `protobuf:"bytes,2,opt,name=gateway_host,json=gatewayHost,proto3" json:"gateway_host,omitempty"`
+	GatewayPort   uint32                 `protobuf:"varint,3,opt,name=gateway_port,json=gatewayPort,proto3" json:"gateway_port,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Subaccounts) Reset() {
+	*x = Subaccounts{}
+	mi := &file_biz_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Subaccounts) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Subaccounts) ProtoMessage() {}
+
+func (x *Subaccounts) ProtoReflect() protoreflect.Message {
+	mi := &file_biz_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Subaccounts.ProtoReflect.Descriptor instead.
+func (*Subaccounts) Descriptor() ([]byte, []int) {
+	return file_biz_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *Subaccounts) GetPasswordKey() string {
+	if x != nil {
+		return x.PasswordKey
+	}
+	return ""
+}
+
+func (x *Subaccounts) GetGatewayHost() string {
+	if x != nil {
+		return x.GatewayHost
+	}
+	return ""
+}
+
+func (x *Subaccounts) GetGatewayPort() uint32 {
+	if x != nil {
+		return x.GatewayPort
+	}
+	return 0
+}
+
 var File_biz_proto protoreflect.FileDescriptor
 
 const file_biz_proto_rawDesc = "" +
 	"\n" +
-	"\tbiz.proto\x12\x16proxycontrol.config.v1\"H\n" +
+	"\tbiz.proto\x12\x16proxycontrol.config.v1\"\x8f\x01\n" +
 	"\x03Biz\x123\n" +
-	"\x05usage\x18\x02 \x01(\v2\x1d.proxycontrol.config.v1.UsageR\x05usageJ\x04\b\x01\x10\x02R\x06access\"d\n" +
+	"\x05usage\x18\x02 \x01(\v2\x1d.proxycontrol.config.v1.UsageR\x05usage\x12E\n" +
+	"\vsubaccounts\x18\x03 \x01(\v2#.proxycontrol.config.v1.SubaccountsR\vsubaccountsJ\x04\b\x01\x10\x02R\x06access\"d\n" +
 	"\x05Usage\x12*\n" +
 	"\x11max_batch_records\x18\x01 \x01(\rR\x0fmaxBatchRecords\x12/\n" +
-	"\x14max_batch_body_bytes\x18\x02 \x01(\rR\x11maxBatchBodyBytesBHZFgithub.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/conf;confb\x06proto3"
+	"\x14max_batch_body_bytes\x18\x02 \x01(\rR\x11maxBatchBodyBytes\"v\n" +
+	"\vSubaccounts\x12!\n" +
+	"\fpassword_key\x18\x01 \x01(\tR\vpasswordKey\x12!\n" +
+	"\fgateway_host\x18\x02 \x01(\tR\vgatewayHost\x12!\n" +
+	"\fgateway_port\x18\x03 \x01(\rR\vgatewayPortBHZFgithub.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/conf;confb\x06proto3"
 
 var (
 	file_biz_proto_rawDescOnce sync.Once
@@ -140,18 +213,20 @@ func file_biz_proto_rawDescGZIP() []byte {
 	return file_biz_proto_rawDescData
 }
 
-var file_biz_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_biz_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_biz_proto_goTypes = []any{
-	(*Biz)(nil),   // 0: proxycontrol.config.v1.Biz
-	(*Usage)(nil), // 1: proxycontrol.config.v1.Usage
+	(*Biz)(nil),         // 0: proxycontrol.config.v1.Biz
+	(*Usage)(nil),       // 1: proxycontrol.config.v1.Usage
+	(*Subaccounts)(nil), // 2: proxycontrol.config.v1.Subaccounts
 }
 var file_biz_proto_depIdxs = []int32{
 	1, // 0: proxycontrol.config.v1.Biz.usage:type_name -> proxycontrol.config.v1.Usage
-	1, // [1:1] is the sub-list for method output_type
-	1, // [1:1] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	2, // 1: proxycontrol.config.v1.Biz.subaccounts:type_name -> proxycontrol.config.v1.Subaccounts
+	2, // [2:2] is the sub-list for method output_type
+	2, // [2:2] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_biz_proto_init() }
@@ -165,7 +240,7 @@ func file_biz_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_biz_proto_rawDesc), len(file_biz_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

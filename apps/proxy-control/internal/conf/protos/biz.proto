@@ -8,9 +8,16 @@ message Biz {
   reserved 1;
   reserved "access";
   Usage usage = 2;
+  Subaccounts subaccounts = 3;
 }
 
 message Usage {
   uint32 max_batch_records = 1;
   uint32 max_batch_body_bytes = 2;
+}
+
+message Subaccounts {
+  string password_key = 1;
+  string gateway_host = 2;
+  uint32 gateway_port = 3;
 }

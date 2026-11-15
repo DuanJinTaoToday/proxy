@@ -33,3 +33,14 @@
 PostgreSQL 集成用例在独立临时 schema 中应用迁移，通过真实 HTTP 路由验证开户、上报、生命周期和回放。 [集成用例配置](../../../../docs/standards/proxy-development-conventions.md#pr-检查与业务回归)
 
 网关生命周期使用同一 `report` 令牌调用 `POST /v1/reporting/lifecycle`。应用 `00003_gateway_lifecycle.sql` 后，可用 `gateway_boot_lifecycle` 核对心跳、失联和退出状态。
+
+
+### 代理子账号
+
+启用客户子账号时，在本地或受保护的配置源中设置 `biz.subaccounts.password_key`、`gateway_host` 和
+`gateway_port`。密钥使用独立的 32 字节随机值，以无填充 base64url 编码。所有控制面实例使用同一密钥，
+并持久备份，以便解密已有子账号密码。地址和端口填写客户实际使用的 SOCKS5 监听地址。
+
+网关通过已分配的 `auth` 范围令牌加载凭据、刷新状态和协调普通粘性会话。显式 SID 需要悟空出口池模式。
+会话确认由首次成功的上游 SOCKS5 CONNECT 触发，平台使用现有 `3600` 参数和一小时平台会话窗口。
+供应商实际时长和到期行为继续由 #40 验证。

@@ -27,5 +27,6 @@ apps/proxy-console/.env*
 !deploy/test/control.yaml
 !deploy/test/gateway.yaml
 !deploy/test/gost.yaml
+!deploy/test/supplier.yaml
 !deploy/test/seed.sql
 !deploy/test/Caddyfile

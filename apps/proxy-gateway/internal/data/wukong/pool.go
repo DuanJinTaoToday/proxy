@@ -13,6 +13,9 @@ import (
 	"sync"
 
 	"time"
+
+	v1 "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/pkg/connectionid"
 )
 
 const (
@@ -26,29 +29,36 @@ type entry struct {
 	successes, failures int
 }
 
+type SessionControl interface {
+	AcquireStickySession(context.Context, *v1.StickySessionRequest) (*v1.StickySession, error)
+	CommitStickySession(context.Context, *v1.StickySessionRequest) (*v1.StickySession, error)
+	ReleaseStickySession(context.Context, *v1.StickySessionRequest) error
+}
+
 type Pool struct {
+	control            SessionControl
 	probeTLS           *tls.Config
 	probeTimeout       time.Duration
 	poolUnavailable    bool
 	mu                 sync.Mutex
 	entries            []entry
 	preferred          map[string]int
-	clients            map[string]clientTenant
+	clients            map[string]authenticatedSession
 	tickets            map[string]routeTicket
 	username, password string
 	primary, backup    string
-	sids               *sidStore
 	probeSID           int64
 	token              string
+	connectionKey      string
 }
 
-type clientTenant struct {
-	tenant string
-	until  time.Time
+type authenticatedSession struct {
+	client, key string
+	until       time.Time
 }
 
-func Open(dir, username, password string, entries []string, primary, backup, token string, timeout time.Duration) (*Pool, func(), error) {
-	if len(entries) == 0 || username == "" || len(username)+36 > 255 || password == "" || len(password) > 255 {
+func Open(dir, username, password string, entries []string, primary, backup, token string, timeout time.Duration, control SessionControl) (*Pool, func(), error) {
+	if control == nil || len(entries) == 0 || username == "" || len(username)+36 > 255 || password == "" || len(password) > 255 {
 		return nil, nil, errors.New("configure Wukong entries and SOCKS5 credentials")
 	}
 	for _, raw := range []string{primary, backup} {
@@ -66,10 +76,15 @@ func Open(dir, username, password string, entries []string, primary, backup, tok
 	if timeout < 0 || timeout > 15*time.Second {
 		return nil, nil, errors.New("the Wukong probe timeout must be between 1 and 15 seconds")
 	}
+	connectionKey, err := openConnectionKey(dir)
+	if err != nil {
+		return nil, nil, err
+	}
 	pool := &Pool{
-		probeTimeout: timeout,
-		username:     username, password: password, primary: primary, backup: backup, token: token,
-		preferred: make(map[string]int), clients: make(map[string]clientTenant), tickets: make(map[string]routeTicket),
+		connectionKey: connectionKey,
+		probeTimeout:  timeout, control: control,
+		username: username, password: password, primary: primary, backup: backup, token: token,
+		preferred: make(map[string]int), clients: make(map[string]authenticatedSession), tickets: make(map[string]routeTicket),
 	}
 	seen := make(map[string]bool)
 	for _, address := range entries {
@@ -85,7 +100,6 @@ func Open(dir, username, password string, entries []string, primary, backup, tok
 	if err != nil {
 		return nil, nil, err
 	}
-	pool.sids = store
 	pool.probeSID, err = store.get("probe")
 	if err != nil {
 		release()
@@ -94,11 +108,15 @@ func Open(dir, username, password string, entries []string, primary, backup, tok
 	return pool, release, nil
 }
 
-func (p *Pool) RememberClient(client, tenant string) {
+func (p *Pool) RememberSession(client, _, sid string) string {
+	id := connectionid.New(p.connectionKey, client)
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	p.clients[client] = clientTenant{tenant: tenant, until: time.Now().Add(time.Minute)}
+	p.clients[id] = authenticatedSession{client: client, key: sid, until: time.Now().Add(5 * time.Second)}
+	return id
 }
+
+func (p *Pool) ConnectionKey() string { return p.connectionKey }
 
 func (p *Pool) Run(ctx context.Context) {
 	ticker := time.NewTicker(probeInterval)

@@ -10,6 +10,8 @@ import (
 	"slices"
 	"strings"
 	"time"
+
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/pkg/connectionid"
 )
 
 type UnfinishedSession struct {
@@ -101,8 +103,12 @@ func (c *Collector) unfinishedSessions(ctx context.Context, source io.Reader) (m
 		hasSessionRecords = true
 		previous := sessions[record.SessionID]
 		if !record.Time.Before(previous.LastRecordedAt) {
+			clientID, valid := connectionid.Stable(c.cfg.ConnectionKey, record.ClientID)
+			if !valid || !validReplayID(clientID) {
+				continue
+			}
 			sessions[record.SessionID] = UnfinishedSession{
-				SessionID: record.SessionID, ClientID: record.ClientID, LastRecordedAt: record.Time,
+				SessionID: record.SessionID, ClientID: clientID, LastRecordedAt: record.Time,
 			}
 		}
 	}

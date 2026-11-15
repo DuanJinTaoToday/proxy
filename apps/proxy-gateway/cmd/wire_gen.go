@@ -58,7 +58,7 @@ func wireApp(confServer *conf.Server, data *conf.Data, confBiz *conf.Biz, appCon
 		cleanup()
 		return nil, nil, err
 	}
-	app := server.NewApp(gatewaySettings, relay, httpServer, listener, collector, lifecycle, cronServerImpl)
+	app := server.NewApp(gatewaySettings, relay, httpServer, listener, collector, lifecycle, cronServerImpl, httpControl)
 	return app, func() {
 		cleanup()
 	}, nil

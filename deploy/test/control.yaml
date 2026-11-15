@@ -11,3 +11,10 @@ data:
       database_dsn: "postgres://proxy:proxy-local-test@db:5432/proxy?sslmode=disable"
     usage:
       database_dsn: "postgres://proxy:proxy-local-test@db:5432/proxy?sslmode=disable"
+
+biz:
+  subaccounts:
+    # Public fixture key for the local Docker environment only.
+    password_key: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+    gateway_host: 127.0.0.1
+    gateway_port: 1080

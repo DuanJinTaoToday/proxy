@@ -1,0 +1,82 @@
+syntax = "proto3";
+
+package proxycontrol.v1;
+
+import "google/api/annotations.proto";
+import "openapiv3/annotations.proto";
+import "proxycontrol/v1/common.proto";
+import "google/protobuf/field_mask.proto";
+
+option go_package = "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1";
+
+service SubaccountService {
+  rpc ListSubaccounts(BaseRequest) returns (Subaccounts) {
+    option (google.api.http) = { get: "/v1/tenant/subaccounts" };
+    option (openapi.v3.operation) = { summary: "列出当前租户的代理子账号" };
+  }
+  rpc CreateSubaccount(CreateSubaccountRequest) returns (Subaccount) {
+    option (google.api.http) = { post: "/v1/tenant/subaccounts" body: "*" };
+    option (openapi.v3.operation) = { summary: "创建代理子账号" };
+  }
+  rpc UpdateSubaccount(UpdateSubaccountRequest) returns (Subaccount) {
+    option (google.api.http) = { patch: "/v1/tenant/subaccounts/{client_id}" body: "*" };
+    option (openapi.v3.operation) = { summary: "按字段更新代理子账号" };
+  }
+  rpc RevealSubaccountPassword(SubaccountRequest) returns (SubaccountPassword) {
+    option (google.api.http) = { get: "/v1/tenant/subaccounts/{client_id}/password" };
+    option (openapi.v3.operation) = { summary: "查看当前租户子账号的密码" };
+  }
+  rpc GetProxyConfig(SubaccountRequest) returns (SubaccountProxyConfig) {
+    option (google.api.http) = { get: "/v1/tenant/subaccounts/{client_id}/proxy-config" };
+    option (openapi.v3.operation) = { summary: "获取已启用子账号的 SOCKS5 接入配置" };
+  }
+}
+
+message SubaccountRequest {
+  string client_id = 1;
+}
+
+message CreateSubaccountRequest {
+  string name = 1;
+  string password = 2;
+  string remark = 3;
+  bool active = 4;
+  // 累计流量上限，单位为字节。缺省表示不限。
+  optional int64 limit_bytes = 5;
+}
+
+message UpdateSubaccountRequest {
+  string client_id = 1;
+  string password = 2;
+  string remark = 3;
+  bool active = 4;
+  optional int64 limit_bytes = 5;
+  // 提交 limitBytes 且省略 limit_bytes 时取消上限。
+  google.protobuf.FieldMask update_mask = 6;
+}
+
+message Subaccount {
+  string client_id = 1;
+  string name = 2;
+  string remark = 3;
+  bool active = 4;
+  optional int64 limit_bytes = 5;
+  // 历史累计流量，单位为字节。
+  int64 used_bytes = 6;
+}
+
+message Subaccounts {
+  repeated Subaccount accounts = 1;
+}
+
+message SubaccountPassword {
+  string password = 1;
+}
+
+message SubaccountProxyConfig {
+  string host = 1;
+  uint32 port = 2;
+  string username = 3;
+  string password = 4;
+  bool explicit_sid = 5;
+}

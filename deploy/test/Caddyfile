@@ -1,5 +1,8 @@
 https://localhost, https://console {
 	tls internal
+    handle /fixture/* {
+        respond "proxy-test" 200
+    }
 	@control path /v1/* /public/* /healthz
 	handle @control {
 		reverse_proxy control:8000
@@ -15,6 +18,10 @@ https://localhost, https://console {
 	handle /healthz {
 		reverse_proxy control:8000
 	}
+    handle /supplier-auth {
+        header Content-Type application/json
+        respond `{"ok":true}` 200
+    }
 	handle /fixture {
 		respond "proxy-test" 200
 	}
