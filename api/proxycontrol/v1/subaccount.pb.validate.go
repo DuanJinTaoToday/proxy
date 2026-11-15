@@ -35,6 +35,9 @@ var (
 	_ = sort.Sort
 )
 
+// define the regex for a UUID once up-front
+var _subaccount_uuidPattern = regexp.MustCompile("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
+
 // Validate checks the field values on SubaccountRequest with the rules defined
 // in the proto definition for this message. If any rules are violated, the
 // first error encountered is returned, or nil if there are no violations.
@@ -57,10 +60,28 @@ func (m *SubaccountRequest) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for ClientId
+	if err := m._validateUuid(m.GetClientId()); err != nil {
+		err = SubaccountRequestValidationError{
+			field:  "ClientId",
+			reason: "value must be a valid UUID",
+			cause:  err,
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
 	if len(errors) > 0 {
 		return SubaccountRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+func (m *SubaccountRequest) _validateUuid(uuid string) error {
+	if matched := _subaccount_uuidPattern.MatchString(uuid); !matched {
+		return errors.New("invalid uuid format")
 	}
 
 	return nil
@@ -161,16 +182,65 @@ func (m *CreateSubaccountRequest) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for Name
+	if !_CreateSubaccountRequest_Name_Pattern.MatchString(m.GetName()) {
+		err := CreateSubaccountRequestValidationError{
+			field:  "Name",
+			reason: "value does not match regex pattern \"^[a-z][a-z0-9]{3,7}$\"",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
-	// no validation rules for Password
+	if l := len(m.GetPassword()); l < 6 || l > 12 {
+		err := CreateSubaccountRequestValidationError{
+			field:  "Password",
+			reason: "value length must be between 6 and 12 bytes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
-	// no validation rules for Remark
+	if !_CreateSubaccountRequest_Password_Pattern.MatchString(m.GetPassword()) {
+		err := CreateSubaccountRequestValidationError{
+			field:  "Password",
+			reason: "value does not match regex pattern \"^[A-Za-z0-9]+$\"",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(m.GetRemark()) > 512 {
+		err := CreateSubaccountRequestValidationError{
+			field:  "Remark",
+			reason: "value length must be at most 512 bytes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
 	// no validation rules for Active
 
 	if m.LimitBytes != nil {
-		// no validation rules for LimitBytes
+
+		if m.GetLimitBytes() < 0 {
+			err := CreateSubaccountRequestValidationError{
+				field:  "LimitBytes",
+				reason: "value must be greater than or equal to 0",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
 	}
 
 	if len(errors) > 0 {
@@ -253,6 +323,10 @@ var _ interface {
 	ErrorName() string
 } = CreateSubaccountRequestValidationError{}
 
+var _CreateSubaccountRequest_Name_Pattern = regexp.MustCompile("^[a-z][a-z0-9]{3,7}$")
+
+var _CreateSubaccountRequest_Password_Pattern = regexp.MustCompile("^[A-Za-z0-9]+$")
+
 // Validate checks the field values on UpdateSubaccountRequest with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
@@ -275,11 +349,54 @@ func (m *UpdateSubaccountRequest) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for ClientId
+	if err := m._validateUuid(m.GetClientId()); err != nil {
+		err = UpdateSubaccountRequestValidationError{
+			field:  "ClientId",
+			reason: "value must be a valid UUID",
+			cause:  err,
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
-	// no validation rules for Password
+	if m.GetPassword() != "" {
 
-	// no validation rules for Remark
+		if l := len(m.GetPassword()); l < 6 || l > 12 {
+			err := UpdateSubaccountRequestValidationError{
+				field:  "Password",
+				reason: "value length must be between 6 and 12 bytes, inclusive",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+		if !_UpdateSubaccountRequest_Password_Pattern.MatchString(m.GetPassword()) {
+			err := UpdateSubaccountRequestValidationError{
+				field:  "Password",
+				reason: "value does not match regex pattern \"^[A-Za-z0-9]+$\"",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if len(m.GetRemark()) > 512 {
+		err := UpdateSubaccountRequestValidationError{
+			field:  "Remark",
+			reason: "value length must be at most 512 bytes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
 	// no validation rules for Active
 
@@ -313,11 +430,30 @@ func (m *UpdateSubaccountRequest) validate(all bool) error {
 	}
 
 	if m.LimitBytes != nil {
-		// no validation rules for LimitBytes
+
+		if m.GetLimitBytes() < 0 {
+			err := UpdateSubaccountRequestValidationError{
+				field:  "LimitBytes",
+				reason: "value must be greater than or equal to 0",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
 	}
 
 	if len(errors) > 0 {
 		return UpdateSubaccountRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+func (m *UpdateSubaccountRequest) _validateUuid(uuid string) error {
+	if matched := _subaccount_uuidPattern.MatchString(uuid); !matched {
+		return errors.New("invalid uuid format")
 	}
 
 	return nil
@@ -395,6 +531,8 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = UpdateSubaccountRequestValidationError{}
+
+var _UpdateSubaccountRequest_Password_Pattern = regexp.MustCompile("^[A-Za-z0-9]+$")
 
 // Validate checks the field values on Subaccount with the rules defined in the
 // proto definition for this message. If any rules are violated, the first

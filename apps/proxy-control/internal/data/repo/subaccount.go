@@ -5,6 +5,7 @@ import (
 
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/subaccount"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/data"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/data/repo/model"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -28,16 +29,20 @@ func NewSubaccountRepository(db *gorm.DB) *SubaccountRepository {
 }
 
 func (r *SubaccountRepository) List(ctx context.Context, tenant string) ([]subaccount.Account, error) {
-	var rows []subaccount.Account
+	var rows []model.ProxySubaccount
 	err := r.db.WithContext(ctx).Raw(`SELECT client_id,name,remark,active,limit_bytes,used_bytes
         FROM proxy_subaccounts WHERE tenant_id=? ORDER BY name`, tenant).Scan(&rows).Error
-	return rows, err
+	accounts := make([]subaccount.Account, 0, len(rows))
+	for _, row := range rows {
+		accounts = append(accounts, proxyAccount(row))
+	}
+	return accounts, err
 }
 
 func (r *SubaccountRepository) Find(ctx context.Context, tenant, id string) (subaccount.Account, error) {
-	var row subaccount.Account
+	var row model.ProxySubaccount
 	err := r.db.WithContext(ctx).Raw(`SELECT * FROM proxy_subaccounts WHERE tenant_id=? AND client_id=?`, tenant, id).Scan(&row).Error
-	return row, err
+	return proxyAccount(row), err
 }
 
 func (r *SubaccountRepository) Create(ctx context.Context, a subaccount.Account) error {
@@ -67,7 +72,7 @@ func (r *SubaccountRepository) Create(ctx context.Context, a subaccount.Account)
 }
 
 func (r *SubaccountRepository) Update(ctx context.Context, tenant, id string, u subaccount.Update, encrypted []byte) (subaccount.Account, error) {
-	var row subaccount.Account
+	var row model.ProxySubaccount
 	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Raw(`SELECT client_id,name,remark,active,limit_bytes,used_bytes FROM proxy_subaccounts
             WHERE tenant_id=? AND client_id=? FOR UPDATE`, tenant, id).Scan(&row).Error; err != nil || row.ClientID == "" {
@@ -81,7 +86,7 @@ func (r *SubaccountRepository) Update(ctx context.Context, tenant, id string, u 
             WHERE tenant_id=? AND client_id=? RETURNING client_id,name,remark,active,limit_bytes,used_bytes`,
 			encrypted != nil, encrypted, u.Remark, u.Active, u.UpdateLimit, u.LimitBytes, tenant, id).Scan(&row).Error
 	})
-	return row, err
+	return proxyAccount(row), err
 }
 
 func (r *SubaccountRepository) Gateway(ctx context.Context, hash []byte) (string, error) {
@@ -91,15 +96,37 @@ func (r *SubaccountRepository) Gateway(ctx context.Context, hash []byte) (string
 	return id, err
 }
 
+func proxyAccount(row model.ProxySubaccount) subaccount.Account {
+	return subaccount.Account{
+		ClientID: row.ClientID, TenantID: row.TenantID, Name: row.Name, Remark: row.Remark,
+		PasswordCiphertext: row.PasswordCiphertext, Active: row.Active, LimitBytes: row.LimitBytes, UsedBytes: row.UsedBytes,
+	}
+}
+
+type proxyAuthRow struct {
+	model.ProxySubaccount `gorm:"embedded"`
+	Reference, Username   string
+	AvailableBytes        int64
+}
+
+func (row proxyAuthRow) authState() subaccount.AuthState {
+	state := subaccount.AuthState{Account: proxyAccount(row.ProxySubaccount), Reference: row.Reference,
+		Username: row.Username, AvailableBytes: row.AvailableBytes}
+	if row.CredentialVersion != nil {
+		state.CredentialVersion = *row.CredentialVersion
+	}
+	return state
+}
+
 const authProjection = `SELECT s.*,t.primary_account_name || '.' || s.name AS username,b.available_bytes`
 const authJoins = ` FROM proxy_subaccounts s JOIN tenants t ON t.id=s.tenant_id JOIN tenant_balances b ON b.tenant_id=s.tenant_id`
 
 func (r *SubaccountRepository) Load(ctx context.Context, username string) (subaccount.AuthState, error) {
-	var row subaccount.AuthState
+	var row proxyAuthRow
 	err := r.db.WithContext(ctx).Raw(authProjection+authJoins+
 		` WHERE t.primary_account_name=split_part(?,'.',1) AND s.name=split_part(?,'.',2)
            AND t.primary_account_name || '.' || s.name=?`, username, username, username).Scan(&row).Error
-	return row, err
+	return row.authState(), err
 }
 
 func (r *SubaccountRepository) Bind(ctx context.Context, gateway, client string) (string, error) {
@@ -111,8 +138,12 @@ func (r *SubaccountRepository) Bind(ctx context.Context, gateway, client string)
 }
 
 func (r *SubaccountRepository) Refresh(ctx context.Context, gateway string, refs []string) ([]subaccount.AuthState, error) {
-	var rows []subaccount.AuthState
+	var rows []proxyAuthRow
 	err := r.db.WithContext(ctx).Raw(authProjection+`,r.reference`+authJoins+
 		` JOIN gateway_auth_references r ON r.client_id=s.client_id WHERE r.gateway_id=? AND r.reference IN ?`, gateway, refs).Scan(&rows).Error
-	return rows, err
+	states := make([]subaccount.AuthState, 0, len(rows))
+	for _, row := range rows {
+		states = append(states, row.authState())
+	}
+	return states, err
 }

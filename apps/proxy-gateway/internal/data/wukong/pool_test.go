@@ -75,8 +75,8 @@ type testSessions struct {
 
 func (s testSessions) AcquireStickySession(_ context.Context, req *v1.StickySessionRequest) (*v1.StickySession, error) {
 	// Keep the integration fixture on the same customer SID range as the control plane.
-	sid, err := s.store.get("client:" + req.GetClientId() + ":" + req.GetSessionKey())
-	return &v1.StickySession{UpstreamSid: sid}, err
+	sid, err := s.store.get("client:" + req.GetReference() + ":" + req.GetSessionKey())
+	return &v1.StickySession{UpstreamSid: sid, ExpiresInMillis: time.Hour.Milliseconds()}, err
 }
 
 func (testSessions) CommitStickySession(context.Context, *v1.StickySessionRequest) (*v1.StickySession, error) {

@@ -7,6 +7,7 @@
 package proxycontrolv1
 
 import (
+	_ "github.com/envoyproxy/protoc-gen-validate/validate"
 	_ "github.com/google/gnostic/openapiv3"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -404,12 +405,14 @@ func (x *SubaccountPassword) GetPassword() string {
 }
 
 type SubaccountProxyConfig struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Host          string                 `protobuf:"bytes,1,opt,name=host,proto3" json:"host,omitempty"`
-	Port          uint32                 `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
-	Username      string                 `protobuf:"bytes,3,opt,name=username,proto3" json:"username,omitempty"`
-	Password      string                 `protobuf:"bytes,4,opt,name=password,proto3" json:"password,omitempty"`
-	ExplicitSid   bool                   `protobuf:"varint,5,opt,name=explicit_sid,json=explicitSid,proto3" json:"explicit_sid,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Host  string                 `protobuf:"bytes,1,opt,name=host,proto3" json:"host,omitempty"`
+	Port  uint32                 `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
+	// 由主账号名和子账号名组成的基础用户名，不含 SID 后缀。
+	Username string `protobuf:"bytes,3,opt,name=username,proto3" json:"username,omitempty"`
+	Password string `protobuf:"bytes,4,opt,name=password,proto3" json:"password,omitempty"`
+	// 为 true 时可追加 -sid-<会话标识>；默认会话无需追加。
+	ExplicitSid   bool `protobuf:"varint,5,opt,name=explicit_sid,json=explicitSid,proto3" json:"explicit_sid,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -483,23 +486,23 @@ var File_proxycontrol_v1_subaccount_proto protoreflect.FileDescriptor
 
 const file_proxycontrol_v1_subaccount_proto_rawDesc = "" +
 	"\n" +
-	" proxycontrol/v1/subaccount.proto\x12\x0fproxycontrol.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1bopenapiv3/annotations.proto\x1a\x1cproxycontrol/v1/common.proto\x1a google/protobuf/field_mask.proto\"0\n" +
-	"\x11SubaccountRequest\x12\x1b\n" +
-	"\tclient_id\x18\x01 \x01(\tR\bclientId\"\xaf\x01\n" +
-	"\x17CreateSubaccountRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1a\n" +
-	"\bpassword\x18\x02 \x01(\tR\bpassword\x12\x16\n" +
-	"\x06remark\x18\x03 \x01(\tR\x06remark\x12\x16\n" +
-	"\x06active\x18\x04 \x01(\bR\x06active\x12$\n" +
-	"\vlimit_bytes\x18\x05 \x01(\x03H\x00R\n" +
+	" proxycontrol/v1/subaccount.proto\x12\x0fproxycontrol.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1bopenapiv3/annotations.proto\x1a\x17validate/validate.proto\x1a\x1cproxycontrol/v1/common.proto\x1a google/protobuf/field_mask.proto\":\n" +
+	"\x11SubaccountRequest\x12%\n" +
+	"\tclient_id\x18\x01 \x01(\tB\b\xfaB\x05r\x03\xb0\x01\x01R\bclientId\"\xfa\x01\n" +
+	"\x17CreateSubaccountRequest\x12/\n" +
+	"\x04name\x18\x01 \x01(\tB\x1b\xfaB\x18r\x162\x14^[a-z][a-z0-9]{3,7}$R\x04name\x125\n" +
+	"\bpassword\x18\x02 \x01(\tB\x19\xfaB\x16r\x14 \x06(\f2\x0e^[A-Za-z0-9]+$R\bpassword\x12 \n" +
+	"\x06remark\x18\x03 \x01(\tB\b\xfaB\x05r\x03(\x80\x04R\x06remark\x12\x16\n" +
+	"\x06active\x18\x04 \x01(\bR\x06active\x12-\n" +
+	"\vlimit_bytes\x18\x05 \x01(\x03B\a\xfaB\x04\"\x02(\x00H\x00R\n" +
 	"limitBytes\x88\x01\x01B\x0e\n" +
-	"\f_limit_bytes\"\xf5\x01\n" +
-	"\x17UpdateSubaccountRequest\x12\x1b\n" +
-	"\tclient_id\x18\x01 \x01(\tR\bclientId\x12\x1a\n" +
-	"\bpassword\x18\x02 \x01(\tR\bpassword\x12\x16\n" +
-	"\x06remark\x18\x03 \x01(\tR\x06remark\x12\x16\n" +
-	"\x06active\x18\x04 \x01(\bR\x06active\x12$\n" +
-	"\vlimit_bytes\x18\x05 \x01(\x03H\x00R\n" +
+	"\f_limit_bytes\"\xb0\x02\n" +
+	"\x17UpdateSubaccountRequest\x12%\n" +
+	"\tclient_id\x18\x01 \x01(\tB\b\xfaB\x05r\x03\xb0\x01\x01R\bclientId\x128\n" +
+	"\bpassword\x18\x02 \x01(\tB\x1c\xfaB\x19r\x17 \x06(\f2\x0e^[A-Za-z0-9]+$\xd0\x01\x01R\bpassword\x12 \n" +
+	"\x06remark\x18\x03 \x01(\tB\b\xfaB\x05r\x03(\x80\x04R\x06remark\x12\x16\n" +
+	"\x06active\x18\x04 \x01(\bR\x06active\x12-\n" +
+	"\vlimit_bytes\x18\x05 \x01(\x03B\a\xfaB\x04\"\x02(\x00H\x00R\n" +
 	"limitBytes\x88\x01\x01\x12;\n" +
 	"\vupdate_mask\x18\x06 \x01(\v2\x1a.google.protobuf.FieldMaskR\n" +
 	"updateMaskB\x0e\n" +

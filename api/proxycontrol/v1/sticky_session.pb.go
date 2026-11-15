@@ -7,6 +7,7 @@
 package proxycontrolv1
 
 import (
+	_ "github.com/envoyproxy/protoc-gen-validate/validate"
 	_ "github.com/google/gnostic/openapiv3"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -24,12 +25,15 @@ const (
 )
 
 type StickySessionRequest struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	ClientId string                 `protobuf:"bytes,1,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Reference for the subaccount bound to the authenticated gateway.
+	Reference string `protobuf:"bytes,1,opt,name=reference,proto3" json:"reference,omitempty"`
 	// Empty is the subaccount's default session.
 	SessionKey string `protobuf:"bytes,2,opt,name=session_key,json=sessionKey,proto3" json:"session_key,omitempty"`
 	// Returned by acquire when this gateway owns the first dial.
-	LeaseToken    string `protobuf:"bytes,3,opt,name=lease_token,json=leaseToken,proto3" json:"lease_token,omitempty"`
+	LeaseToken string `protobuf:"bytes,3,opt,name=lease_token,json=leaseToken,proto3" json:"lease_token,omitempty"`
+	// Stable across retries of a single acquire operation.
+	RequestKey    string `protobuf:"bytes,4,opt,name=request_key,json=requestKey,proto3" json:"request_key,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -64,9 +68,9 @@ func (*StickySessionRequest) Descriptor() ([]byte, []int) {
 	return file_proxycontrol_v1_sticky_session_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *StickySessionRequest) GetClientId() string {
+func (x *StickySessionRequest) GetReference() string {
 	if x != nil {
-		return x.ClientId
+		return x.Reference
 	}
 	return ""
 }
@@ -85,12 +89,23 @@ func (x *StickySessionRequest) GetLeaseToken() string {
 	return ""
 }
 
+func (x *StickySessionRequest) GetRequestKey() string {
+	if x != nil {
+		return x.RequestKey
+	}
+	return ""
+}
+
 type StickySession struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	UpstreamSid   int64                  `protobuf:"varint,1,opt,name=upstream_sid,json=upstreamSid,proto3" json:"upstream_sid,omitempty"`
-	LeaseToken    string                 `protobuf:"bytes,2,opt,name=lease_token,json=leaseToken,proto3" json:"lease_token,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Nine-digit SID for the upstream SOCKS5 credentials.
+	UpstreamSid int64 `protobuf:"varint,1,opt,name=upstream_sid,json=upstreamSid,proto3" json:"upstream_sid,omitempty"`
+	// Empty for an already established session.
+	LeaseToken string `protobuf:"bytes,2,opt,name=lease_token,json=leaseToken,proto3" json:"lease_token,omitempty"`
+	// Confirmed lifetime remaining, in milliseconds. Zero while a lease is pending.
+	ExpiresInMillis int64 `protobuf:"varint,3,opt,name=expires_in_millis,json=expiresInMillis,proto3" json:"expires_in_millis,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *StickySession) Reset() {
@@ -137,21 +152,31 @@ func (x *StickySession) GetLeaseToken() string {
 	return ""
 }
 
+func (x *StickySession) GetExpiresInMillis() int64 {
+	if x != nil {
+		return x.ExpiresInMillis
+	}
+	return 0
+}
+
 var File_proxycontrol_v1_sticky_session_proto protoreflect.FileDescriptor
 
 const file_proxycontrol_v1_sticky_session_proto_rawDesc = "" +
 	"\n" +
-	"$proxycontrol/v1/sticky_session.proto\x12\x0fproxycontrol.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1bopenapiv3/annotations.proto\x1a\x1cproxycontrol/v1/common.proto\"u\n" +
-	"\x14StickySessionRequest\x12\x1b\n" +
-	"\tclient_id\x18\x01 \x01(\tR\bclientId\x12\x1f\n" +
-	"\vsession_key\x18\x02 \x01(\tR\n" +
-	"sessionKey\x12\x1f\n" +
-	"\vlease_token\x18\x03 \x01(\tR\n" +
-	"leaseToken\"S\n" +
+	"$proxycontrol/v1/sticky_session.proto\x12\x0fproxycontrol.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1bopenapiv3/annotations.proto\x1a\x17validate/validate.proto\x1a\x1cproxycontrol/v1/common.proto\"\xd4\x01\n" +
+	"\x14StickySessionRequest\x12&\n" +
+	"\treference\x18\x01 \x01(\tB\b\xfaB\x05r\x03\xb0\x01\x01R\treference\x128\n" +
+	"\vsession_key\x18\x02 \x01(\tB\x17\xfaB\x14r\x122\x10^[a-z0-9]{0,32}$R\n" +
+	"sessionKey\x12,\n" +
+	"\vlease_token\x18\x03 \x01(\tB\v\xfaB\br\x06\xd0\x01\x01\xb0\x01\x01R\n" +
+	"leaseToken\x12,\n" +
+	"\vrequest_key\x18\x04 \x01(\tB\v\xfaB\br\x06\xd0\x01\x01\xb0\x01\x01R\n" +
+	"requestKey\"\x7f\n" +
 	"\rStickySession\x12!\n" +
 	"\fupstream_sid\x18\x01 \x01(\x03R\vupstreamSid\x12\x1f\n" +
 	"\vlease_token\x18\x02 \x01(\tR\n" +
-	"leaseToken2\xcb\x04\n" +
+	"leaseToken\x12*\n" +
+	"\x11expires_in_millis\x18\x03 \x01(\x03R\x0fexpiresInMillis2\xcb\x04\n" +
 	"\x14StickySessionService\x12\xbe\x01\n" +
 	"\x14AcquireStickySession\x12%.proxycontrol.v1.StickySessionRequest\x1a\x1e.proxycontrol.v1.StickySession\"_\xbaG.\x12,获取共享 SID 或领取首次拨号租约\x82\xd3\xe4\x93\x02(:\x01*\"#/v1/gateway/sticky-sessions:acquire\x12\xbd\x01\n" +
 	"\x13CommitStickySession\x12%.proxycontrol.v1.StickySessionRequest\x1a\x1e.proxycontrol.v1.StickySession\"_\xbaG/\x12-确认首次成功拨号并开始会话计时\x82\xd3\xe4\x93\x02':\x01*\"\"/v1/gateway/sticky-sessions:commit\x12\xb1\x01\n" +

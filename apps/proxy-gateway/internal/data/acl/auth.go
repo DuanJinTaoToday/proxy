@@ -14,6 +14,7 @@ import (
 
 	v1 "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/biz/authrelay"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/biz/stickysession"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
@@ -86,6 +87,9 @@ func (c *HTTPControl) post(ctx context.Context, path string, input, output proto
 		return err
 	}
 	defer func() { _ = response.Body.Close() }()
+	if _, sticky := input.(*v1.StickySessionRequest); sticky && response.StatusCode >= 400 && response.StatusCode < 500 {
+		return stickysession.ErrRejected
+	}
 	switch response.StatusCode {
 	case http.StatusUnauthorized, http.StatusForbidden:
 		return authrelay.ErrGatewayDenied

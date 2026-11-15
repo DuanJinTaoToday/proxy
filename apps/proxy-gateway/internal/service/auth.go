@@ -16,14 +16,14 @@ import (
 type AuthRelay struct {
 	relay     *authrelay.Relay
 	tokenHash [32]byte
-	onSession func(client, tenant, sid string) string
+	onSession func(client, reference, sid string) string
 }
 
 func NewAuthRelay(relay *authrelay.Relay, token string) *AuthRelay {
 	return &AuthRelay{relay: relay, tokenHash: sha256.Sum256([]byte(token))}
 }
 
-func (r *AuthRelay) OnSession(callback func(client, tenant, sid string) string) {
+func (r *AuthRelay) OnSession(callback func(client, reference, sid string) string) {
 	r.onSession = callback
 }
 
@@ -57,12 +57,12 @@ func (r *AuthRelay) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	username, sid, explicit := strings.Cut(input.Username, "-sid-")
-	id, tenant, reason := "", "", "INVALID_CREDENTIAL"
+	id, reference, reason := "", "", "INVALID_CREDENTIAL"
 	if !strings.Contains(username, "-sidtime-") && (!explicit || r.onSession != nil && explicitSID.MatchString(sid)) {
-		id, tenant, reason = r.relay.AuthenticateTenant(req.Context(), username, input.Password, input.Client)
+		id, reference, reason = r.relay.AuthenticateTenant(req.Context(), username, input.Password, input.Client)
 	}
 	if id != "" && r.onSession != nil {
-		id = r.onSession(id, tenant, sid)
+		id = r.onSession(id, reference, sid)
 	}
 	authmetrics.RecordDecision(reason)
 	w.Header().Set("Content-Type", "application/json")

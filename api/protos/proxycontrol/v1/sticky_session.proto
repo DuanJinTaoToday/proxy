@@ -4,6 +4,7 @@ package proxycontrol.v1;
 
 import "google/api/annotations.proto";
 import "openapiv3/annotations.proto";
+import "validate/validate.proto";
 import "proxycontrol/v1/common.proto";
 
 option go_package = "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1";
@@ -24,14 +25,21 @@ service StickySessionService {
 }
 
 message StickySessionRequest {
-  string client_id = 1;
+  // Reference for the subaccount bound to the authenticated gateway.
+  string reference = 1 [(validate.rules).string.uuid = true];
   // Empty is the subaccount's default session.
-  string session_key = 2;
+  string session_key = 2 [(validate.rules).string.pattern = "^[a-z0-9]{0,32}$"];
   // Returned by acquire when this gateway owns the first dial.
-  string lease_token = 3;
+  string lease_token = 3 [(validate.rules).string = {ignore_empty: true, uuid: true}];
+  // Stable across retries of a single acquire operation.
+  string request_key = 4 [(validate.rules).string = {ignore_empty: true, uuid: true}];
 }
 
 message StickySession {
+  // Nine-digit SID for the upstream SOCKS5 credentials.
   int64 upstream_sid = 1;
+  // Empty for an already established session.
   string lease_token = 2;
+  // Confirmed lifetime remaining, in milliseconds. Zero while a lease is pending.
+  int64 expires_in_millis = 3;
 }

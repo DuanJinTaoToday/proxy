@@ -11,12 +11,13 @@ import (
 	"strings"
 	"time"
 
-	v1 "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/biz/stickysession"
 )
 
 type routeTicket struct {
-	client, session, target string
-	until                   time.Time
+	identity          stickysession.Identity
+	reference, target string
+	until             time.Time
 }
 
 func (p *Pool) Route(w http.ResponseWriter, req *http.Request) {
@@ -37,13 +38,13 @@ func (p *Pool) Route(w http.ResponseWriter, req *http.Request) {
 	now := time.Now()
 	client := p.clients[input.Client]
 	delete(p.clients, input.Client)
-	if client.client == "" || !now.Before(client.until) || p.selectEntry(client.client) < 0 {
+	if client.identity.Client == "" || !now.Before(client.until) || p.selectEntry(-1) < 0 {
 		p.mu.Unlock()
 		w.WriteHeader(http.StatusServiceUnavailable)
 		return
 	}
 	key := strings.ToLower(rand.Text()) + ".route.invalid:1"
-	p.tickets[key] = routeTicket{client: client.client, session: client.key, target: input.Addr, until: now.Add(5 * time.Second)}
+	p.tickets[key] = routeTicket{identity: client.identity, reference: client.reference, target: input.Addr, until: now.Add(5 * time.Second)}
 	p.mu.Unlock()
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Cache-Control", "no-store")
@@ -69,8 +70,22 @@ func (p *Pool) Connect(ctx context.Context, w http.ResponseWriter, req *http.Req
 	p.mu.Lock()
 	ticket := p.tickets[req.Host]
 	delete(p.tickets, req.Host)
+	available := p.selectEntry(-1) >= 0
+	p.mu.Unlock()
+	if ticket.identity.Client == "" || !time.Now().Before(ticket.until) || !available {
+		w.WriteHeader(http.StatusServiceUnavailable)
+		return
+	}
+	attempt, err := p.sessions.Resolve(req.Context(), ticket.identity, ticket.reference)
+	if err != nil {
+		w.WriteHeader(http.StatusServiceUnavailable)
+		return
+	}
+	defer p.sessions.Release(req.Context(), &attempt)
+
+	p.mu.Lock()
 	var candidates []int
-	if preferred := p.selectEntry(ticket.client); preferred >= 0 {
+	if preferred := p.selectEntry(attempt.Preferred); preferred >= 0 {
 		candidates = append(candidates, preferred)
 		for i := range p.entries {
 			if i != preferred && p.entries[i].healthy {
@@ -79,37 +94,14 @@ func (p *Pool) Connect(ctx context.Context, w http.ResponseWriter, req *http.Req
 		}
 	}
 	p.mu.Unlock()
-	if ticket.client == "" || !time.Now().Before(ticket.until) || len(candidates) == 0 {
-		w.WriteHeader(http.StatusServiceUnavailable)
-		return
-	}
-	request := &v1.StickySessionRequest{ClientId: ticket.client, SessionKey: ticket.session}
-	session, err := p.control.AcquireStickySession(req.Context(), request)
-	sid := session.GetUpstreamSid()
-	if err != nil || sid < 100000000 || sid >= 900000000 {
-		w.WriteHeader(http.StatusServiceUnavailable)
-		return
-	}
-	request.LeaseToken = session.GetLeaseToken()
-	if request.LeaseToken != "" {
-		defer func() {
-			if request.LeaseToken == "" {
-				return
-			}
-			releaseCtx, cancelRelease := context.WithTimeout(context.WithoutCancel(req.Context()), time.Second)
-			defer cancelRelease()
-			_ = p.control.ReleaseStickySession(releaseCtx, request)
-		}()
-	}
-
 	_ = http.NewResponseController(w).SetWriteDeadline(time.Now().Add(14 * time.Second))
 	dialCtx, cancel := context.WithTimeout(req.Context(), 12*time.Second)
 	stopDial := context.AfterFunc(ctx, cancel)
 	var upstream *net.TCPConn
 	var index int
 	for _, candidate := range candidates {
-		attempt, stop := context.WithTimeout(dialCtx, 6*time.Second)
-		upstream, _, err = p.dial(attempt, p.entries[candidate].address, sid, ticket.target)
+		dialAttempt, stop := context.WithTimeout(dialCtx, 6*time.Second)
+		upstream, _, err = p.dial(dialAttempt, p.entries[candidate].address, attempt.SID, ticket.target)
 		stop()
 		if err == nil {
 			index = candidate
@@ -126,21 +118,10 @@ func (p *Pool) Connect(ctx context.Context, w http.ResponseWriter, req *http.Req
 		return
 	}
 	defer func() { _ = upstream.Close() }()
-	if request.LeaseToken != "" {
-		confirmed, commitErr := p.control.CommitStickySession(req.Context(), request)
-		if commitErr != nil {
-			confirmed, commitErr = p.control.CommitStickySession(req.Context(), request)
-		}
-		if commitErr != nil || confirmed.GetUpstreamSid() != sid {
-			w.WriteHeader(http.StatusServiceUnavailable)
-			return
-		}
-		request.LeaseToken = ""
+	if err := p.sessions.Confirm(req.Context(), &attempt, index); err != nil {
+		w.WriteHeader(http.StatusServiceUnavailable)
+		return
 	}
-
-	p.mu.Lock()
-	p.preferred[ticket.client] = index
-	p.mu.Unlock()
 
 	client, rw, err := http.NewResponseController(w).Hijack()
 	if err != nil {

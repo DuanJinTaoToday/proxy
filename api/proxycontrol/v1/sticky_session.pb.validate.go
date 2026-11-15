@@ -35,6 +35,9 @@ var (
 	_ = sort.Sort
 )
 
+// define the regex for a UUID once up-front
+var _sticky_session_uuidPattern = regexp.MustCompile("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
+
 // Validate checks the field values on StickySessionRequest with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
@@ -57,14 +60,71 @@ func (m *StickySessionRequest) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for ClientId
+	if err := m._validateUuid(m.GetReference()); err != nil {
+		err = StickySessionRequestValidationError{
+			field:  "Reference",
+			reason: "value must be a valid UUID",
+			cause:  err,
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
-	// no validation rules for SessionKey
+	if !_StickySessionRequest_SessionKey_Pattern.MatchString(m.GetSessionKey()) {
+		err := StickySessionRequestValidationError{
+			field:  "SessionKey",
+			reason: "value does not match regex pattern \"^[a-z0-9]{0,32}$\"",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
-	// no validation rules for LeaseToken
+	if m.GetLeaseToken() != "" {
+
+		if err := m._validateUuid(m.GetLeaseToken()); err != nil {
+			err = StickySessionRequestValidationError{
+				field:  "LeaseToken",
+				reason: "value must be a valid UUID",
+				cause:  err,
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if m.GetRequestKey() != "" {
+
+		if err := m._validateUuid(m.GetRequestKey()); err != nil {
+			err = StickySessionRequestValidationError{
+				field:  "RequestKey",
+				reason: "value must be a valid UUID",
+				cause:  err,
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
 
 	if len(errors) > 0 {
 		return StickySessionRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+func (m *StickySessionRequest) _validateUuid(uuid string) error {
+	if matched := _sticky_session_uuidPattern.MatchString(uuid); !matched {
+		return errors.New("invalid uuid format")
 	}
 
 	return nil
@@ -143,6 +203,8 @@ var _ interface {
 	ErrorName() string
 } = StickySessionRequestValidationError{}
 
+var _StickySessionRequest_SessionKey_Pattern = regexp.MustCompile("^[a-z0-9]{0,32}$")
+
 // Validate checks the field values on StickySession with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -168,6 +230,8 @@ func (m *StickySession) validate(all bool) error {
 	// no validation rules for UpstreamSid
 
 	// no validation rules for LeaseToken
+
+	// no validation rules for ExpiresInMillis
 
 	if len(errors) > 0 {
 		return StickySessionMultiError(errors)

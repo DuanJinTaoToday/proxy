@@ -1,4 +1,4 @@
-package wukong
+package repo
 
 import (
 	"crypto/rand"
@@ -6,14 +6,12 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
-
-	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/data/repo"
 )
 
 // Recorder files can outlive the local GOST bearer token.
-func openConnectionKey(dir string) (string, error) {
+func OpenConnectionKey(dir string) (string, error) {
 	const name = "connection-signing.key"
-	release, err := lockFile(filepath.Join(dir, name+".lock"))
+	release, err := LockStateFile(filepath.Join(dir, name+".lock"))
 	if err != nil {
 		return "", err
 	}
@@ -35,6 +33,6 @@ func openConnectionKey(dir string) (string, error) {
 			return "", err
 		}
 		encoded := base64.RawURLEncoding.EncodeToString(key)
-		return encoded, repo.WriteDurable(dir, name, encoded)
+		return encoded, WriteDurable(dir, name, encoded)
 	}
 }

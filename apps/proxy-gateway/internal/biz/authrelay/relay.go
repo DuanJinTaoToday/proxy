@@ -76,7 +76,7 @@ func (r *Relay) Authenticate(ctx context.Context, username, password, client str
 	return id, reason
 }
 
-func (r *Relay) AuthenticateTenant(ctx context.Context, username, password, _ string) (id, tenant, reason string) {
+func (r *Relay) AuthenticateTenant(ctx context.Context, username, password, _ string) (id, reference, reason string) {
 	if username == "" || password == "" || len(username) > 255 || len(password) > 255 {
 		return "", "", "INVALID_CREDENTIAL"
 	}
@@ -117,7 +117,7 @@ func (r *Relay) AuthenticateTenant(ctx context.Context, username, password, _ st
 		return "", "", "QUOTA_INSUFFICIENT"
 	default:
 		authmetrics.Counters.Add("quota_cache_hit", 1)
-		return c.GetClientId(), c.GetTenantId(), "OK"
+		return c.GetClientId(), c.GetReference(), "OK"
 	}
 }
 

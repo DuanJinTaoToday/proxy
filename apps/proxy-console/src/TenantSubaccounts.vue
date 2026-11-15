@@ -7,6 +7,14 @@ import { Button } from './ui/button'
 import Card from './ui/card/Card.vue'
 import CardContent from './ui/card/CardContent.vue'
 import CardHeader from './ui/card/CardHeader.vue'
+import Input from './ui/input/Input.vue'
+import FieldLabel from './ui/field/FieldLabel.vue'
+import Table from './ui/table/Table.vue'
+import TableBody from './ui/table/TableBody.vue'
+import TableCell from './ui/table/TableCell.vue'
+import TableHead from './ui/table/TableHead.vue'
+import TableHeader from './ui/table/TableHeader.vue'
+import TableRow from './ui/table/TableRow.vue'
 
 const props = defineProps<{ token: string; primaryAccount: string }>()
 const emit = defineEmits<{ expired: [] }>()
@@ -22,6 +30,19 @@ const password = ref('')
 const remark = ref('')
 const active = ref(true)
 const limit = ref('')
+const GB = 1_000_000_000n
+
+function asGB(bytes: string) {
+  const value = BigInt(bytes)
+  const fraction = String(value % GB).padStart(9, '0').replace(/0+$/, '')
+  return String(value / GB) + (fraction ? '.' + fraction : '')
+}
+
+function asBytes(gb: string) {
+  const [whole, fraction = ''] = gb.split('.')
+  return String(BigInt(whole) * GB + BigInt(fraction.padEnd(9, '0')))
+}
+
 const credential = ref<{ username: string; password: string; config?: ProxyConfig } | null>(null)
 
 function showError(cause: unknown) {
@@ -69,7 +90,7 @@ function edit(account?: Subaccount) {
   password.value = ''
   active.value = account ? Boolean(account.active) : true
   remark.value = account?.remark ?? ''
-  limit.value = account?.limit_bytes ?? ''
+  limit.value = account?.limit_bytes === undefined ? '' : asGB(account.limit_bytes)
   error.value = ''
   notice.value = ''
 }
@@ -85,7 +106,7 @@ async function save() {
   busy.value = true
   error.value = ''
   try {
-    const limit_bytes = limit.value || undefined
+    const limit_bytes = limit.value ? asBytes(limit.value) : undefined
     if (account === 'new') {
       await createSubaccount(props.token, { name: name.value, password: password.value, remark: remark.value, active: active.value, limit_bytes })
     } else {
@@ -155,21 +176,21 @@ onBeforeUnmount(() => {
       <CardContent class="overflow-x-auto">
         <p v-if="loading" role="status">正在加载子账号…</p>
         <p v-else-if="!accounts.length">暂无子账号。</p>
-        <table v-else class="w-full min-w-[650px] text-left text-sm">
-          <thead><tr><th>名称</th><th>备注</th><th>状态</th><th>累计用量 / 上限（字节）</th><th>操作</th></tr></thead>
-          <tbody>
-            <tr v-for="account in accounts" :key="account.client_id" class="border-t">
-              <td class="py-2 pr-4">{{ account.name }}</td><td class="max-w-40 truncate pr-4" :title="account.remark">{{ account.remark || '—' }}</td>
-              <td class="pr-4">{{ account.active ? '启用' : '禁用' }}</td>
-              <td class="pr-4">{{ account.used_bytes ?? '0' }} / {{ account.limit_bytes ?? '不限' }}</td>
-              <td class="whitespace-nowrap">
+        <Table v-else class="w-full min-w-[650px] text-left text-sm">
+          <TableHeader><TableRow><TableHead>名称</TableHead><TableHead>备注</TableHead><TableHead>状态</TableHead><TableHead>累计用量 / 上限（GB）</TableHead><TableHead>操作</TableHead></TableRow></TableHeader>
+          <TableBody>
+            <TableRow v-for="account in accounts" :key="account.client_id" class="border-t">
+              <TableCell class="py-2 pr-4">{{ account.name }}</TableCell><TableCell class="max-w-40 truncate pr-4" :title="account.remark">{{ account.remark || '—' }}</TableCell>
+              <TableCell class="pr-4">{{ account.active ? '启用' : '禁用' }}</TableCell>
+              <TableCell class="pr-4">{{ asGB(account.used_bytes ?? '0') }} / {{ account.limit_bytes === undefined ? '不限' : asGB(account.limit_bytes) }}</TableCell>
+              <TableCell class="whitespace-nowrap">
                 <Button type="button" size="sm" variant="ghost" :disabled="busy" @click="edit(account)">编辑</Button>
                 <Button type="button" size="sm" variant="ghost" :disabled="busy" @click="reveal(account, false)">查看账密</Button>
                 <Button v-if="account.active" type="button" size="sm" variant="ghost" :disabled="busy" @click="reveal(account, true)">接入配置</Button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+              </TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
       </CardContent>
     </Card>
 
@@ -180,18 +201,24 @@ onBeforeUnmount(() => {
       <CardHeader><h2 class="font-semibold">{{ editing === 'new' ? '创建子账号' : '编辑 ' + editing.name }}</h2></CardHeader>
       <CardContent>
         <form class="grid max-w-lg gap-3" @submit.prevent="save">
-          <label v-if="editing === 'new'" class="grid gap-1">
-            名称（4–8 位，以小写字母开头，其余为小写字母或数字）
-            <input v-model="name" class="rounded border bg-background p-2" pattern="[a-z][a-z0-9]{3,7}" required>
-          </label>
-          <label class="grid gap-1">
-            {{ editing === 'new' ? '密码' : '新密码（留空时保留原密码）' }}
-            <input v-model="password" class="rounded border bg-background p-2" type="password" autocomplete="new-password"
-              pattern="(?=.*[A-Za-z])(?=.*[0-9])[A-Za-z0-9]{6,12}" :required="editing === 'new'">
+          <div v-if="editing === 'new'" class="grid gap-1">
+            <FieldLabel for="subaccount-name">名称（4–8 位，以小写字母开头，其余为小写字母或数字）</FieldLabel>
+            <Input id="subaccount-name" v-model="name" pattern="[a-z][a-z0-9]{3,7}" required />
+          </div>
+          <div class="grid gap-1">
+            <FieldLabel for="subaccount-password">{{ editing === 'new' ? '密码' : '新密码（留空时保留原密码）' }}</FieldLabel>
+            <Input id="subaccount-password" v-model="password" type="password" autocomplete="new-password"
+              pattern="(?=.*[A-Za-z])(?=.*[0-9])[A-Za-z0-9]{6,12}" :required="editing === 'new'" />
             <span class="text-sm text-muted-foreground">6–12 位，须包含英文字母和数字。</span>
-          </label>
-          <label class="grid gap-1">备注<input v-model="remark" class="rounded border bg-background p-2" maxlength="512"></label>
-          <label class="grid gap-1">累计上限（字节，留空不限）<input v-model="limit" class="rounded border bg-background p-2" inputmode="numeric" pattern="[0-9]+"></label>
+          </div>
+          <div class="grid gap-1">
+            <FieldLabel for="subaccount-remark">备注</FieldLabel>
+            <Input id="subaccount-remark" v-model="remark" maxlength="512" />
+          </div>
+          <div class="grid gap-1">
+            <FieldLabel for="subaccount-limit">累计上限（GB，留空不限）</FieldLabel>
+            <Input id="subaccount-limit" v-model="limit" inputmode="decimal" pattern="[0-9]+([.][0-9]{1,9})?" />
+          </div>
           <label class="flex items-center gap-2"><input v-model="active" type="checkbox">启用</label>
           <div class="flex gap-2">
             <Button type="submit" :disabled="busy">保存</Button>

@@ -1323,19 +1323,28 @@ components:
             properties:
                 upstreamSid:
                     type: string
+                    description: Nine-digit SID for the upstream SOCKS5 credentials.
                 leaseToken:
                     type: string
+                    description: Empty for an already established session.
+                expiresInMillis:
+                    type: string
+                    description: Confirmed lifetime remaining, in milliseconds. Zero while a lease is pending.
         proxycontrol.v1.StickySessionRequest:
             type: object
             properties:
-                clientId:
+                reference:
                     type: string
+                    description: Reference for the subaccount bound to the authenticated gateway.
                 sessionKey:
                     type: string
                     description: Empty is the subaccount's default session.
                 leaseToken:
                     type: string
                     description: Returned by acquire when this gateway owns the first dial.
+                requestKey:
+                    type: string
+                    description: Stable across retries of a single acquire operation.
         proxycontrol.v1.Subaccount:
             type: object
             properties:
@@ -1367,10 +1376,12 @@ components:
                     format: uint32
                 username:
                     type: string
+                    description: 由主账号名和子账号名组成的基础用户名，不含 SID 后缀。
                 password:
                     type: string
                 explicitSid:
                     type: boolean
+                    description: 为 true 时可追加 -sid-<会话标识>；默认会话无需追加。
         proxycontrol.v1.Subaccounts:
             type: object
             properties:

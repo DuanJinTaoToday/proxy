@@ -1,6 +1,6 @@
 //go:build unix
 
-package wukong
+package repo
 
 import (
 	"os"
@@ -8,7 +8,7 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-func lockFile(path string) (func(), error) {
+func LockStateFile(path string) (func(), error) {
 	file, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR, 0600)
 	if err != nil {
 		return nil, err

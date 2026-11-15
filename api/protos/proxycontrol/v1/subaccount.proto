@@ -4,6 +4,7 @@ package proxycontrol.v1;
 
 import "google/api/annotations.proto";
 import "openapiv3/annotations.proto";
+import "validate/validate.proto";
 import "proxycontrol/v1/common.proto";
 import "google/protobuf/field_mask.proto";
 
@@ -33,24 +34,24 @@ service SubaccountService {
 }
 
 message SubaccountRequest {
-  string client_id = 1;
+  string client_id = 1 [(validate.rules).string.uuid = true];
 }
 
 message CreateSubaccountRequest {
-  string name = 1;
-  string password = 2;
-  string remark = 3;
+  string name = 1 [(validate.rules).string.pattern = "^[a-z][a-z0-9]{3,7}$"];
+  string password = 2 [(validate.rules).string = {min_bytes: 6, max_bytes: 12, pattern: "^[A-Za-z0-9]+$"}];
+  string remark = 3 [(validate.rules).string.max_bytes = 512];
   bool active = 4;
   // 累计流量上限，单位为字节。缺省表示不限。
-  optional int64 limit_bytes = 5;
+  optional int64 limit_bytes = 5 [(validate.rules).int64.gte = 0];
 }
 
 message UpdateSubaccountRequest {
-  string client_id = 1;
-  string password = 2;
-  string remark = 3;
+  string client_id = 1 [(validate.rules).string.uuid = true];
+  string password = 2 [(validate.rules).string = {ignore_empty: true, min_bytes: 6, max_bytes: 12, pattern: "^[A-Za-z0-9]+$"}];
+  string remark = 3 [(validate.rules).string.max_bytes = 512];
   bool active = 4;
-  optional int64 limit_bytes = 5;
+  optional int64 limit_bytes = 5 [(validate.rules).int64.gte = 0];
   // 提交 limitBytes 且省略 limit_bytes 时取消上限。
   google.protobuf.FieldMask update_mask = 6;
 }
@@ -76,7 +77,9 @@ message SubaccountPassword {
 message SubaccountProxyConfig {
   string host = 1;
   uint32 port = 2;
+  // 由主账号名和子账号名组成的基础用户名，不含 SID 后缀。
   string username = 3;
   string password = 4;
+  // 为 true 时可追加 -sid-<会话标识>；默认会话无需追加。
   bool explicit_sid = 5;
 }

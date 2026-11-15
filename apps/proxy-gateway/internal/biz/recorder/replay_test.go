@@ -4,11 +4,13 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/biz/recorder"
 	recorderdata "github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/data/repo"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/pkg/connectionid"
 )
 
 type replayReporting struct {
@@ -31,11 +33,12 @@ func (r *replayReporting) CompleteReplay(_ context.Context, _, boot string, coun
 
 func TestCollectorReconcilesConfirmedPrefixesAndRetainsTruncatedFiles(t *testing.T) {
 	root := t.TempDir()
-	const records = `{"sessionID":"closed","clientID":"client","phase":"interim","time":"2026-11-12T02:00:00Z"}
+	const key = "test-boot-independent-key"
+	records := strings.ReplaceAll(`{"sessionID":"closed","clientID":"client","phase":"interim","time":"2026-11-12T02:00:00Z"}
 {"sessionID":"active","clientID":"client","phase":"interim","time":"2026-11-12T02:00:00Z"}
 {"sessionID":"closed","phase":"final","time":"2026-11-12T02:00:01Z"}
 {"sessionID":"active","clientID":"client","phase":"interim","time":"2026-11-12T02:00:02Z"}
-`
+`, `"clientID":"client"`, `"clientID":"`+connectionid.New(key, "client")+`"`)
 	for boot, content := range map[string]string{"closed": records, "running": records, "truncated": records + "partial", "invalid": "invalid\n"} {
 		dir := filepath.Join(root, boot)
 		if err := os.Mkdir(dir, 0o700); err != nil {
@@ -59,7 +62,7 @@ func TestCollectorReconcilesConfirmedPrefixesAndRetainsTruncatedFiles(t *testing
 		completed:  make(map[string]uint32),
 		hasRecords: make(map[string]bool),
 	}
-	collector := recorder.New(recorder.Config{GatewayID: "gateway"}, spool, out)
+	collector := recorder.New(recorder.Config{GatewayID: "gateway", ConnectionKey: key}, spool, out)
 	if err := collector.Scan(t.Context()); err == nil {
 		t.Fatal("expected an error for the truncated boot")
 	}

@@ -23,7 +23,7 @@ type sidStore struct {
 
 func openSIDs(dir, account string) (*sidStore, func(), error) {
 	name := fmt.Sprintf("wukong-sids-%x.json", sha256.Sum256([]byte(account)))
-	release, err := lockFile(filepath.Join(dir, name+".lock"))
+	release, err := repo.LockStateFile(filepath.Join(dir, name+".lock"))
 	if err != nil {
 		return nil, nil, fmt.Errorf("lock Wukong SID state: %w", err)
 	}

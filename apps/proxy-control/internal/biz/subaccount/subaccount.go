@@ -32,6 +32,7 @@ type AuthState struct {
 }
 
 type Update struct {
+	InvalidMask      bool
 	Password, Remark *string
 	Active           *bool
 	UpdateLimit      bool
@@ -47,9 +48,9 @@ type Repository interface {
 	Load(context.Context, string) (AuthState, error)
 	Bind(context.Context, string, string) (string, error)
 	Refresh(context.Context, string, []string) ([]AuthState, error)
-	Acquire(context.Context, string, string, string) (StickySession, error)
-	Commit(context.Context, string, string, string, string) (StickySession, error)
-	Release(context.Context, string, string, string, string) error
+	Acquire(context.Context, string, SessionRequest) (StickySession, error)
+	Commit(context.Context, string, SessionRequest) (StickySession, error)
+	Release(context.Context, string, SessionRequest) error
 }
 
 var (
@@ -134,7 +135,7 @@ func (s *Service) List(ctx context.Context, token string) ([]Account, error) {
 	return rows, nil
 }
 
-func (s *Service) Create(ctx context.Context, token, name, password, remark string, active bool, limit *int64) (Account, error) {
+func (s *Service) Create(ctx context.Context, token, name, password, remark string, active bool, limit *int64, validate func() error) (Account, error) {
 	tenant, err := s.customer(ctx, token)
 	if err != nil {
 		return Account{}, err
@@ -151,6 +152,9 @@ func (s *Service) Create(ctx context.Context, token, name, password, remark stri
 	if err != nil {
 		return Account{}, err
 	}
+	if validate() != nil {
+		return Account{}, kerrors.BadRequest("INVALID_SUBACCOUNT", "invalid subaccount request")
+	}
 	switch err = s.repo.Create(ctx, a); {
 	case errors.Is(err, ErrTooMany):
 		return Account{}, kerrors.Conflict("SUBACCOUNT_LIMIT_REACHED", "each tenant may have at most 10 subaccounts")
@@ -162,10 +166,13 @@ func (s *Service) Create(ctx context.Context, token, name, password, remark stri
 	return a, nil
 }
 
-func (s *Service) Update(ctx context.Context, token, id string, update Update) (Account, error) {
+func (s *Service) Update(ctx context.Context, token, id string, update Update, validate func() error) (Account, error) {
 	tenant, err := s.customer(ctx, token)
 	if err != nil {
 		return Account{}, err
+	}
+	if update.InvalidMask {
+		return Account{}, kerrors.BadRequest("INVALID_UPDATE_MASK", "provide supported subaccount fields to update")
 	}
 	if update.Remark != nil && len(*update.Remark) > 512 || update.UpdateLimit && update.LimitBytes != nil && *update.LimitBytes < 0 {
 		return Account{}, kerrors.BadRequest("INVALID_SUBACCOUNT", "invalid remark or cumulative limit")
@@ -176,6 +183,9 @@ func (s *Service) Update(ctx context.Context, token, id string, update Update) (
 		if err != nil {
 			return Account{}, err
 		}
+	}
+	if validate() != nil {
+		return Account{}, kerrors.BadRequest("INVALID_SUBACCOUNT", "invalid subaccount request")
 	}
 	a, err := s.repo.Update(ctx, tenant.ID, id, update, encrypted)
 	if errors.Is(err, ErrLimitDecrease) {
@@ -190,10 +200,13 @@ func (s *Service) Update(ctx context.Context, token, id string, update Update) (
 	return a, nil
 }
 
-func (s *Service) Credentials(ctx context.Context, token, id string, requireActive bool) (string, string, error) {
+func (s *Service) Credentials(ctx context.Context, token, id string, requireActive bool, validate func() error) (string, string, error) {
 	tenant, err := s.customer(ctx, token)
 	if err != nil {
 		return "", "", err
+	}
+	if validate() != nil {
+		return "", "", kerrors.BadRequest("INVALID_SUBACCOUNT", "invalid subaccount identifier")
 	}
 	a, err := s.repo.Find(ctx, tenant.ID, id)
 	if err != nil {
@@ -224,10 +237,13 @@ func (s *Service) gateway(ctx context.Context, token string) (string, error) {
 	return id, nil
 }
 
-func (s *Service) Load(ctx context.Context, token, username, password string) (AuthState, []byte, error) {
+func (s *Service) Load(ctx context.Context, token, username, password string, validate func() error) (AuthState, []byte, error) {
 	gateway, err := s.gateway(ctx, token)
 	if err != nil {
 		return AuthState{}, nil, err
+	}
+	if validate() != nil {
+		return AuthState{}, nil, kerrors.BadRequest("INVALID_AUTH_REQUEST", "invalid authentication request")
 	}
 	state, err := s.repo.Load(ctx, username)
 	if err != nil {
@@ -255,10 +271,13 @@ func (s *Service) Load(ctx context.Context, token, username, password string) (A
 	return state, hash, nil
 }
 
-func (s *Service) Refresh(ctx context.Context, token string, refs []string) ([]AuthState, error) {
+func (s *Service) Refresh(ctx context.Context, token string, refs []string, validate func() error) ([]AuthState, error) {
 	gateway, err := s.gateway(ctx, token)
 	if err != nil {
 		return nil, err
+	}
+	if validate() != nil {
+		return nil, kerrors.BadRequest("INVALID_AUTH_REQUEST", "invalid authentication request")
 	}
 	rows, err := s.repo.Refresh(ctx, gateway, refs)
 	if err != nil {
