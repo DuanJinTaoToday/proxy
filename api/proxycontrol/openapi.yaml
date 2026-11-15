@@ -228,6 +228,183 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/proxycontrol.v1.ListUsageGapsResponse'
+    /v1/operations/tenants:
+        get:
+            tags:
+                - WalletService
+            summary: 按主账号名或手机号查找租户
+            operationId: WalletService_FindTenants
+            parameters:
+                - name: query
+                  in: query
+                  description: 精确匹配主账号名，或手机号（可省略 +86）。
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.WalletTenant'
+    /v1/operations/tenants/{tenantId}:
+        get:
+            tags:
+                - WalletService
+            summary: 查看运营租户钱包
+            operationId: WalletService_GetTenant
+            parameters:
+                - name: tenantId
+                  in: path
+                  description: 租户 ID。
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.WalletTenant'
+    /v1/operations/tenants/{tenantId}/orders:
+        get:
+            tags:
+                - WalletService
+            summary: 筛选租户订单
+            operationId: WalletService_ListOperatorPurchaseOrders
+            parameters:
+                - name: tenantId
+                  in: path
+                  description: 租户 ID。
+                  required: true
+                  schema:
+                    type: string
+                - name: beforeId
+                  in: query
+                  description: 查询此编号之前的订单。默认从最新开始。
+                  schema:
+                    type: string
+                - name: kind
+                  in: query
+                  description: 产品类型。空值表示全部。
+                  schema:
+                    type: string
+                - name: status
+                  in: query
+                  description: 交付状态。空值表示全部。
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.PurchaseOrders'
+    /v1/operations/tenants/{tenantId}/orders/{orderId}:
+        get:
+            tags:
+                - WalletService
+            summary: 查看租户订单详情
+            operationId: WalletService_GetOperatorPurchaseOrder
+            parameters:
+                - name: tenantId
+                  in: path
+                  description: 租户 ID。
+                  required: true
+                  schema:
+                    type: string
+                - name: orderId
+                  in: path
+                  description: 该租户的订单编号。
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.PurchaseOrder'
+    /v1/operations/tenants/{tenantId}/wallet/ledger:
+        get:
+            tags:
+                - WalletService
+            summary: 查看租户钱包流水
+            operationId: WalletService_ListOperatorWalletEntries
+            parameters:
+                - name: tenantId
+                  in: path
+                  description: 租户 ID。
+                  required: true
+                  schema:
+                    type: string
+                - name: beforeId
+                  in: query
+                  description: 查询此编号之前的流水。默认从最新开始。
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.WalletEntries'
+    /v1/operations/tenants/{tenantId}/wallet/recharge-quotes:
+        post:
+            tags:
+                - WalletService
+            summary: 获取运营钱包充值确认信息
+            operationId: WalletService_QuoteWalletRecharge
+            parameters:
+                - name: tenantId
+                  in: path
+                  description: 待核对的租户 ID。
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.QuoteWalletRechargeRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.WalletRechargeQuote'
+    /v1/operations/tenants/{tenantId}/wallet/recharges:
+        post:
+            tags:
+                - WalletService
+            summary: 确认运营钱包充值
+            operationId: WalletService_RechargeWallet
+            parameters:
+                - name: tenantId
+                  in: path
+                  description: 已核对的租户 ID。
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.RechargeWalletRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.WalletEntry'
     /v1/operations/tenants/{tenantId}:reset-password:
         post:
             tags:
@@ -415,6 +592,87 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/proxycontrol.v1.TenantAccess'
+    /v1/tenant/orders:
+        get:
+            tags:
+                - WalletService
+            summary: 筛选当前租户订单
+            operationId: WalletService_ListCustomerPurchaseOrders
+            parameters:
+                - name: beforeId
+                  in: query
+                  description: 查询此编号之前的订单。默认从最新开始。
+                  schema:
+                    type: string
+                - name: kind
+                  in: query
+                  description: 产品类型。空值表示全部。
+                  schema:
+                    type: string
+                - name: status
+                  in: query
+                  description: 交付状态。空值表示全部。
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.PurchaseOrders'
+    /v1/tenant/orders/{orderId}:
+        get:
+            tags:
+                - WalletService
+            summary: 查看当前租户订单详情
+            operationId: WalletService_GetCustomerPurchaseOrder
+            parameters:
+                - name: orderId
+                  in: path
+                  description: 当前租户的订单编号。
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.PurchaseOrder'
+    /v1/tenant/wallet:
+        get:
+            tags:
+                - WalletService
+            summary: 查看当前租户钱包
+            operationId: WalletService_GetCustomerWallet
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.WalletTenant'
+    /v1/tenant/wallet/ledger:
+        get:
+            tags:
+                - WalletService
+            summary: 查看当前租户钱包流水
+            operationId: WalletService_ListCustomerWalletEntries
+            parameters:
+                - name: beforeId
+                  in: query
+                  description: 查询此编号之前的流水。默认从最新开始。
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.WalletEntries'
 components:
     schemas:
         proxycontrol.v1.AuthQuota:
@@ -538,6 +796,93 @@ components:
                     type: integer
                     description: 令牌从签发起的有效时长，单位为秒。
                     format: int32
+        proxycontrol.v1.PurchaseOrder:
+            type: object
+            properties:
+                id:
+                    type: string
+                    description: 订单编号。
+                kind:
+                    type: string
+                    description: 产品类型 traffic_package、static_purchase 或 static_renewal。
+                status:
+                    type: string
+                    description: 交付状态 pending、succeeded、partial 或 failed。
+                lockedMinor:
+                    type: string
+                    description: 确认提交时锁定的总价，人民币分。
+                debitedMinor:
+                    type: string
+                    description: 扣款或预扣金额，人民币分。
+                releasedMinor:
+                    type: string
+                    description: 预扣释放金额，人民币分。
+                refundedMinor:
+                    type: string
+                    description: 已退回的总金额，包含释放的预扣，人民币分。
+                deliveredBytes:
+                    type: string
+                    description: 流量实际到账字节数。静态 IP 订单为 0。
+                deliveredCount:
+                    type: string
+                    description: 静态 IP 实际交付或续费数量。流量订单为 0。
+                createdAt:
+                    type: string
+                    description: 下单时间。
+                    format: date-time
+                prepaidMinor:
+                    type: string
+                    description: 静态订单提交时预扣的金额，人民币分。流量订单为 0。
+                settledMinor:
+                    type: string
+                    description: 已确认实扣且未退回的金额，人民币分。
+                unsettledMinor:
+                    type: string
+                    description: 预扣中仍待确认实扣或退回的金额，人民币分。
+                items:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/proxycontrol.v1.PurchaseOrderItem'
+                    description: 详情返回已锁定的商品明细及逐项交付数量。
+        proxycontrol.v1.PurchaseOrderItem:
+            type: object
+            properties:
+                position:
+                    type: integer
+                    description: 订单内的明细序号，从 1 开始。
+                    format: int32
+                specification:
+                    type: string
+                    description: 下单时锁定的商品规格描述。
+                capacityBytes:
+                    type: string
+                    description: 锁定的套餐容量，字节。静态订单为 0。
+                termDays:
+                    type: integer
+                    description: 锁定的采购或续费租期，天。流量订单为 0。
+                    format: int32
+                unitMinor:
+                    type: string
+                    description: 锁定的商品单价，人民币分。
+                quantity:
+                    type: integer
+                    description: 申请购买或续费的数量。
+                    format: int32
+                deliveredCount:
+                    type: integer
+                    description: 实际到账的套餐数量，或实际交付、续费的 IP 数量。
+                    format: int32
+        proxycontrol.v1.PurchaseOrders:
+            type: object
+            properties:
+                orders:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/proxycontrol.v1.PurchaseOrder'
+                    description: 按订单编号倒序，每页最多 25 笔。
+                nextBeforeId:
+                    type: string
+                    description: 下一页的 before_id，0 表示已到末页。
         proxycontrol.v1.QueryUsageResponse:
             type: object
             properties:
@@ -549,6 +894,33 @@ components:
                 nextPageToken:
                     type: string
                     description: 下一页的游标。为空表示没有更多记录。
+        proxycontrol.v1.QuoteWalletRechargeRequest:
+            type: object
+            properties:
+                tenantId:
+                    type: string
+                    description: 待核对的租户 ID。
+                requestKey:
+                    type: string
+                    description: 单次充值的幂等键。结果未知时使用同一请求重试。
+                amountMinor:
+                    type: string
+                    description: 充值金额，人民币分。
+                reason:
+                    type: string
+                    description: 运营填写的充值原因。
+        proxycontrol.v1.RechargeWalletRequest:
+            type: object
+            properties:
+                tenantId:
+                    type: string
+                    description: 已核对的租户 ID。
+                requestKey:
+                    type: string
+                    description: 获取确认信息时提供的请求键。
+                confirmationToken:
+                    type: string
+                    description: 获取确认信息时返回的凭证。
         proxycontrol.v1.RecordAnomaly:
             type: object
             properties:
@@ -785,9 +1157,90 @@ components:
                     type: string
                     description: 网关退出时间。
                     format: date-time
+        proxycontrol.v1.WalletEntries:
+            type: object
+            properties:
+                entries:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/proxycontrol.v1.WalletEntry'
+                    description: 按流水编号倒序，每页最多 25 笔。
+                nextBeforeId:
+                    type: string
+                    description: 下一页的 before_id，0 表示已到末页。
+        proxycontrol.v1.WalletEntry:
+            type: object
+            properties:
+                id:
+                    type: string
+                    description: 流水编号。
+                orderId:
+                    type: string
+                    description: 关联订单编号。充值时为 0。
+                kind:
+                    type: string
+                    description: 变动类型 recharge、debit、hold、release 或 refund。
+                beforeMinor:
+                    type: string
+                    description: 变动前可用余额，人民币分。
+                afterMinor:
+                    type: string
+                    description: 变动后可用余额，人民币分。
+                createdAt:
+                    type: string
+                    description: 入账时间。
+                    format: date-time
+                operatorId:
+                    type: string
+                    description: 运营账号 ID，仅运营视图返回。
+                reason:
+                    type: string
+                    description: 充值原因，仅运营视图返回。
+                operatorName:
+                    type: string
+                    description: 运营登录名，仅运营视图返回。
+        proxycontrol.v1.WalletRechargeQuote:
+            type: object
+            properties:
+                tenant:
+                    allOf:
+                        - $ref: '#/components/schemas/proxycontrol.v1.WalletTenant'
+                    description: 待核对的租户及当前钱包余额。
+                amountMinor:
+                    type: string
+                    description: 充值金额，人民币分。
+                reason:
+                    type: string
+                    description: 运营填写的充值原因。
+                expectedAfterMinor:
+                    type: string
+                    description: 预计到账后余额，人民币分。
+                confirmationToken:
+                    type: string
+                    description: 绑定租户、运营账号、请求键、确认金额与原因的凭证。
+                expiresAt:
+                    type: string
+                    description: 新提交必须在此时间之前。已入账请求仍可重试查询原流水。
+                    format: date-time
+        proxycontrol.v1.WalletTenant:
+            type: object
+            properties:
+                tenantId:
+                    type: string
+                    description: 租户 ID。
+                name:
+                    type: string
+                    description: 租户显示名。
+                primaryAccountName:
+                    type: string
+                    description: 全局唯一的主账号名。
+                availableMinor:
+                    type: string
+                    description: 可用余额，人民币分。
 tags:
     - name: AccessService
     - name: GatewayAuthService
     - name: HealthService
     - name: ReportingService
     - name: UsageService
+    - name: WalletService

@@ -1,6 +1,6 @@
 # proxy-console
 
-控制台采用 Vue 3、TypeScript 和 Vite。当前代码支持手机号注册、登录和查看所属租户。首版客户入口、自助注册、子账号管理及商业页面见[首版商业交付 Spec](../../docs/features/proxy-first-release/proxy-first-release-spec.md)。
+控制台采用 Vue 3、TypeScript 和 Vite。客户从 `/` 注册或登录，查看钱包流水和订单。运营从 `/operations` 登录，按主账号名或手机号查找租户。具备 `manage_billing` 权限的运营可以核对并提交充值。 [首版商业交付 Spec](../../docs/features/proxy-first-release/proxy-first-release-spec.md)
 
 ## 本地运行
 
@@ -14,6 +14,9 @@
 | --- | --- |
 | POST | `/v1/access/register` |
 | POST | `/v1/access/login` |
-| GET | `/v1/tenant/account` |
+| GET | `/v1/tenant/wallet`、`/v1/tenant/wallet/ledger`、`/v1/tenant/orders`、`/v1/tenant/orders/{order_id}` |
+| POST | `/v1/operations/access/login`、`/v1/access/check` |
+| GET | `/v1/operations/tenants`、`/v1/operations/tenants/{tenant_id}` 及其流水、订单查询子路径 |
+| POST | `/v1/operations/tenants/{tenant_id}/wallet/recharge-quotes`、`/v1/operations/tenants/{tenant_id}/wallet/recharges` |
 
 首版的客户部署需核对新版 API 契约和购买入口。参阅[开发规范](../../docs/standards/proxy-development-conventions.md#控制台技术栈)和[控制面 API](../../api/proxycontrol/openapi.yaml)。

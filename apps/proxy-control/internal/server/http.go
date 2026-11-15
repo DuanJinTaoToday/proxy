@@ -12,3 +12,7 @@ func NewHTTPServer(addr string, accessService *service.Access, options ...http.S
 	v1.RegisterAccessServiceHTTPServer(srv, accessService)
 	return srv
 }
+
+func RegisterWallet(srv *http.Server, wallet *service.Wallet) {
+	v1.RegisterWalletServiceHTTPServer(srv, wallet)
+}

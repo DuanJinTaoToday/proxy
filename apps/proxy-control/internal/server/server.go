@@ -21,9 +21,11 @@ func NewServerList(modules conf.Modules, httpServer *kratoshttp.Server,
 	return servers
 }
 
-func NewConfiguredHTTPServer(server *conf.Server, biz *conf.Biz, access *service.Access) *kratoshttp.Server {
-	return NewHTTPServer(server.GetHttp().GetAddr(), access,
+func NewConfiguredHTTPServer(server *conf.Server, biz *conf.Biz, access *service.Access, wallet *service.Wallet) *kratoshttp.Server {
+	srv := NewHTTPServer(server.GetHttp().GetAddr(), access,
 		kratoshttp.RequestDecoder(ReportingDecoder(int64(biz.GetUsage().GetMaxBatchBodyBytes()))),
-		kratoshttp.ResponseEncoder(UsageResponseEncoder),
+		kratoshttp.ResponseEncoder(ControlResponseEncoder),
 	)
+	RegisterWallet(srv, wallet)
+	return srv
 }

@@ -46,7 +46,7 @@ func NewPersistent(repo Repository) (*Service, error) {
 	return s, nil
 }
 
-func normalizePhone(phone string) string {
+func NormalizePhone(phone string) string {
 	if len(phone) > 32 {
 		return ""
 	}
@@ -83,7 +83,7 @@ func accessUnavailable() error {
 }
 
 func (s *Service) Register(ctx context.Context, phone, password string) (Tenant, error) {
-	phone = normalizePhone(phone)
+	phone = NormalizePhone(phone)
 	if phone == "" {
 		return Tenant{}, errors.BadRequest("INVALID_PHONE", "valid mainland China mobile number required")
 	}
@@ -111,7 +111,7 @@ func (s *Service) Register(ctx context.Context, phone, password string) (Tenant,
 }
 
 func (s *Service) LoginCustomer(ctx context.Context, phone, password string) (string, int32, error) {
-	return s.loginPrincipal(ctx, "customer", normalizePhone(phone), password, s.repoCustomer)
+	return s.loginPrincipal(ctx, "customer", NormalizePhone(phone), password, s.repoCustomer)
 }
 
 func (s *Service) repoCustomer(ctx context.Context, phone string) (Principal, error) {
@@ -271,6 +271,23 @@ func (s *Service) requirePersistent(token, tenant string, permission Permission)
 			if target.ID != "" {
 				return user.ID, nil
 			}
+		}
+	}
+	return "", errors.Forbidden("ACCESS_DENIED", "permission denied")
+}
+
+// AuthorizeOperator returns the authenticated actor when at least one requested permission is granted.
+func (s *Service) AuthorizeOperator(ctx context.Context, token string, permissions ...Permission) (string, error) {
+	if s.repo == nil {
+		return "", accessUnavailable()
+	}
+	user, err := s.principal(ctx, token)
+	if err != nil {
+		return "", err
+	}
+	for _, permission := range permissions {
+		if user.Permissions[permission] {
+			return user.ID, nil
 		}
 	}
 	return "", errors.Forbidden("ACCESS_DENIED", "permission denied")

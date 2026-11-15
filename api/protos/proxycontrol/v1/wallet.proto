@@ -1,0 +1,251 @@
+syntax = "proto3";
+
+package proxycontrol.v1;
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+import "openapiv3/annotations.proto";
+import "proxycontrol/v1/common.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1";
+
+service WalletService {
+  rpc FindTenants(FindWalletTenantRequest) returns (WalletTenant) {
+    option (google.api.http) = {get: "/v1/operations/tenants"};
+    option (openapi.v3.operation) = {summary: "按主账号名或手机号查找租户"};
+  }
+
+  rpc GetTenant(WalletTenantRequest) returns (WalletTenant) {
+    option (google.api.http) = {get: "/v1/operations/tenants/{tenant_id}"};
+    option (openapi.v3.operation) = {summary: "查看运营租户钱包"};
+  }
+
+  rpc QuoteWalletRecharge(QuoteWalletRechargeRequest) returns (WalletRechargeQuote) {
+    option (google.api.http) = {post: "/v1/operations/tenants/{tenant_id}/wallet/recharge-quotes", body: "*"};
+    option (openapi.v3.operation) = {summary: "获取运营钱包充值确认信息"};
+  }
+
+  rpc RechargeWallet(RechargeWalletRequest) returns (WalletEntry) {
+    option (google.api.http) = {post: "/v1/operations/tenants/{tenant_id}/wallet/recharges", body: "*"};
+    option (openapi.v3.operation) = {summary: "确认运营钱包充值"};
+  }
+
+  rpc ListOperatorWalletEntries(OperatorWalletEntriesRequest) returns (WalletEntries) {
+    option (google.api.http) = {get: "/v1/operations/tenants/{tenant_id}/wallet/ledger"};
+    option (openapi.v3.operation) = {summary: "查看租户钱包流水"};
+  }
+
+  rpc ListCustomerWalletEntries(CustomerWalletEntriesRequest) returns (WalletEntries) {
+    option (google.api.http) = {get: "/v1/tenant/wallet/ledger"};
+    option (openapi.v3.operation) = {summary: "查看当前租户钱包流水"};
+  }
+
+  rpc GetCustomerWallet(BaseRequest) returns (WalletTenant) {
+    option (google.api.http) = {get: "/v1/tenant/wallet"};
+    option (openapi.v3.operation) = {summary: "查看当前租户钱包"};
+  }
+
+  rpc ListOperatorPurchaseOrders(OperatorPurchaseOrdersRequest) returns (PurchaseOrders) {
+    option (google.api.http) = {get: "/v1/operations/tenants/{tenant_id}/orders"};
+    option (openapi.v3.operation) = {summary: "筛选租户订单"};
+  }
+
+  rpc ListCustomerPurchaseOrders(CustomerPurchaseOrdersRequest) returns (PurchaseOrders) {
+    option (google.api.http) = {get: "/v1/tenant/orders"};
+    option (openapi.v3.operation) = {summary: "筛选当前租户订单"};
+  }
+
+  rpc GetOperatorPurchaseOrder(OperatorPurchaseOrderRequest) returns (PurchaseOrder) {
+    option (google.api.http) = {get: "/v1/operations/tenants/{tenant_id}/orders/{order_id}"};
+    option (openapi.v3.operation) = {summary: "查看租户订单详情"};
+  }
+
+  rpc GetCustomerPurchaseOrder(CustomerPurchaseOrderRequest) returns (PurchaseOrder) {
+    option (google.api.http) = {get: "/v1/tenant/orders/{order_id}"};
+    option (openapi.v3.operation) = {summary: "查看当前租户订单详情"};
+  }
+}
+
+message FindWalletTenantRequest {
+  // 精确匹配主账号名，或手机号（可省略 +86）。
+  string query = 1 [(validate.rules).string = {min_len: 1, max_bytes: 128}];
+}
+
+message WalletTenantRequest {
+  // 租户 ID。
+  string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_bytes: 64}];
+}
+
+message QuoteWalletRechargeRequest {
+  // 待核对的租户 ID。
+  string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_bytes: 64}];
+  // 单次充值的幂等键。结果未知时使用同一请求重试。
+  string request_key = 2 [(validate.rules).string = {min_len: 1, max_bytes: 128}];
+  // 充值金额，人民币分。
+  int64 amount_minor = 3 [(validate.rules).int64.gt = 0];
+  // 运营填写的充值原因。
+  string reason = 4 [(validate.rules).string = {min_len: 1, max_bytes: 500}];
+}
+
+message WalletRechargeQuote {
+  // 待核对的租户及当前钱包余额。
+  WalletTenant tenant = 1;
+  // 充值金额，人民币分。
+  int64 amount_minor = 2;
+  // 运营填写的充值原因。
+  string reason = 3;
+  // 预计到账后余额，人民币分。
+  int64 expected_after_minor = 4;
+  // 绑定租户、运营账号、请求键、确认金额与原因的凭证。
+  string confirmation_token = 5;
+  // 新提交必须在此时间之前。已入账请求仍可重试查询原流水。
+  google.protobuf.Timestamp expires_at = 6;
+}
+
+message RechargeWalletRequest {
+  // 已核对的租户 ID。
+  string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_bytes: 64}];
+  // 获取确认信息时提供的请求键。
+  string request_key = 2 [(validate.rules).string = {min_len: 1, max_bytes: 128}];
+  // 获取确认信息时返回的凭证。
+  string confirmation_token = 3 [(validate.rules).string = {len: 36}];
+}
+
+message WalletTenant {
+  // 租户 ID。
+  string tenant_id = 1;
+  // 租户显示名。
+  string name = 2;
+  // 全局唯一的主账号名。
+  string primary_account_name = 3;
+  // 可用余额，人民币分。
+  int64 available_minor = 4;
+}
+
+message WalletEntry {
+  // 流水编号。
+  int64 id = 1;
+  // 关联订单编号。充值时为 0。
+  int64 order_id = 2;
+  // 变动类型 recharge、debit、hold、release 或 refund。
+  string kind = 3;
+  // 变动前可用余额，人民币分。
+  int64 before_minor = 4;
+  // 变动后可用余额，人民币分。
+  int64 after_minor = 5;
+  // 入账时间。
+  google.protobuf.Timestamp created_at = 6;
+  // 运营账号 ID，仅运营视图返回。
+  string operator_id = 7;
+  // 充值原因，仅运营视图返回。
+  string reason = 8;
+  // 运营登录名，仅运营视图返回。
+  string operator_name = 9;
+}
+
+message WalletEntries {
+  // 按流水编号倒序，每页最多 25 笔。
+  repeated WalletEntry entries = 1;
+  // 下一页的 before_id，0 表示已到末页。
+  int64 next_before_id = 2;
+}
+
+message PurchaseOrders {
+  // 按订单编号倒序，每页最多 25 笔。
+  repeated PurchaseOrder orders = 1;
+  // 下一页的 before_id，0 表示已到末页。
+  int64 next_before_id = 2;
+}
+
+message PurchaseOrder {
+  // 订单编号。
+  int64 id = 1;
+  // 产品类型 traffic_package、static_purchase 或 static_renewal。
+  string kind = 2;
+  // 交付状态 pending、succeeded、partial 或 failed。
+  string status = 3;
+  // 确认提交时锁定的总价，人民币分。
+  int64 locked_minor = 4;
+  // 扣款或预扣金额，人民币分。
+  int64 debited_minor = 5;
+  // 预扣释放金额，人民币分。
+  int64 released_minor = 6;
+  // 已退回的总金额，包含释放的预扣，人民币分。
+  int64 refunded_minor = 7;
+  // 流量实际到账字节数。静态 IP 订单为 0。
+  int64 delivered_bytes = 8;
+  // 静态 IP 实际交付或续费数量。流量订单为 0。
+  int64 delivered_count = 9;
+  // 下单时间。
+  google.protobuf.Timestamp created_at = 10;
+  // 静态订单提交时预扣的金额，人民币分。流量订单为 0。
+  int64 prepaid_minor = 11;
+  // 已确认实扣且未退回的金额，人民币分。
+  int64 settled_minor = 12;
+  // 预扣中仍待确认实扣或退回的金额，人民币分。
+  int64 unsettled_minor = 13;
+  // 详情返回已锁定的商品明细及逐项交付数量。
+  repeated PurchaseOrderItem items = 14;
+}
+
+message PurchaseOrderItem {
+  // 订单内的明细序号，从 1 开始。
+  int32 position = 1;
+  // 下单时锁定的商品规格描述。
+  string specification = 2;
+  // 锁定的套餐容量，字节。静态订单为 0。
+  int64 capacity_bytes = 3;
+  // 锁定的采购或续费租期，天。流量订单为 0。
+  int32 term_days = 4;
+  // 锁定的商品单价，人民币分。
+  int64 unit_minor = 5;
+  // 申请购买或续费的数量。
+  int32 quantity = 6;
+  // 实际到账的套餐数量，或实际交付、续费的 IP 数量。
+  int32 delivered_count = 7;
+}
+
+message CustomerWalletEntriesRequest {
+  // 查询此编号之前的流水。默认从最新开始。
+  int64 before_id = 1 [(validate.rules).int64.gte = 0];
+}
+
+message OperatorWalletEntriesRequest {
+  // 租户 ID。
+  string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_bytes: 64}];
+  // 查询此编号之前的流水。默认从最新开始。
+  int64 before_id = 2 [(validate.rules).int64.gte = 0];
+}
+
+message CustomerPurchaseOrdersRequest {
+  // 查询此编号之前的订单。默认从最新开始。
+  int64 before_id = 1 [(validate.rules).int64.gte = 0];
+  // 产品类型。空值表示全部。
+  string kind = 2 [(validate.rules).string = {in: ["", "traffic_package", "static_purchase", "static_renewal"]}];
+  // 交付状态。空值表示全部。
+  string status = 3 [(validate.rules).string = {in: ["", "pending", "succeeded", "partial", "failed"]}];
+}
+
+message OperatorPurchaseOrdersRequest {
+  // 租户 ID。
+  string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_bytes: 64}];
+  // 查询此编号之前的订单。默认从最新开始。
+  int64 before_id = 2 [(validate.rules).int64.gte = 0];
+  // 产品类型。空值表示全部。
+  string kind = 3 [(validate.rules).string = {in: ["", "traffic_package", "static_purchase", "static_renewal"]}];
+  // 交付状态。空值表示全部。
+  string status = 4 [(validate.rules).string = {in: ["", "pending", "succeeded", "partial", "failed"]}];
+}
+
+message CustomerPurchaseOrderRequest {
+  // 当前租户的订单编号。
+  int64 order_id = 1 [(validate.rules).int64.gt = 0];
+}
+
+message OperatorPurchaseOrderRequest {
+  // 租户 ID。
+  string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_bytes: 64}];
+  // 该租户的订单编号。
+  int64 order_id = 2 [(validate.rules).int64.gt = 0];
+}

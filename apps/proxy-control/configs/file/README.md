@@ -1,6 +1,6 @@
 # 控制面租户登录与授权
 
-在 `server.local.yaml` 中配置 `data.repo.proxy_auth.database_dsn` 或 `data.repo.usage.database_dsn`，并对该数据库执行下文的完整 Goose `up`，包括 `00007_tenant_accounts.sql`。同时启用认证和用量时，两项配置使用同一 DSN。客户注册后自动创建租户、唯一管理员、零钱包及零流量账户。运营通过数据库初始化，使用独立登录入口。 [首版商业交付 Spec](../../../../docs/features/proxy-first-release/proxy-first-release-spec.md)
+在 `server.local.yaml` 中配置 `data.repo.proxy_auth.database_dsn` 或 `data.repo.usage.database_dsn`，并对该数据库执行下文的完整 Goose `up`。同时启用认证和用量时，两项配置使用同一 DSN。客户注册后自动创建租户、唯一管理员、零余额钱包及零流量账户。运营通过数据库初始化，使用独立登录入口。 [首版商业交付 Spec](../../../../docs/features/proxy-first-release/proxy-first-release-spec.md)
 
 | HTTP 接口 | 用途 |
 | --- | --- |
