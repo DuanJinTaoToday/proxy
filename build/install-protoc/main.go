@@ -50,7 +50,7 @@ func install(root string) error {
 	if err != nil {
 		return err
 	}
-	defer response.Body.Close()
+	defer func() { _ = response.Body.Close() }()
 	if response.StatusCode != http.StatusOK {
 		return fmt.Errorf("download protoc %s: %s", version, response.Status)
 	}
@@ -91,7 +91,7 @@ func extract(file *zip.File, path string) error {
 	if err != nil {
 		return err
 	}
-	defer source.Close()
+	defer func() { _ = source.Close() }()
 	data, err := io.ReadAll(source)
 	if err != nil {
 		return err

@@ -111,7 +111,7 @@ func (p *Pool) Connect(ctx context.Context, w http.ResponseWriter, req *http.Req
 		w.WriteHeader(http.StatusBadGateway)
 		return
 	}
-	defer upstream.Close()
+	defer func() { _ = upstream.Close() }()
 
 	p.mu.Lock()
 	p.preferred[ticket.tenant] = index
@@ -121,7 +121,7 @@ func (p *Pool) Connect(ctx context.Context, w http.ResponseWriter, req *http.Req
 	if err != nil {
 		return
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 	_ = client.SetDeadline(time.Time{})
 	if _, err := rw.WriteString("HTTP/1.1 200 Connection Established\r\n\r\n"); err != nil || rw.Flush() != nil {
 		return

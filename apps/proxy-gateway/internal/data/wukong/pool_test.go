@@ -68,7 +68,7 @@ func listenEntry(t *testing.T, probeTarget string) *testEntry {
 }
 
 func (e *testEntry) handle(conn net.Conn, probeTarget string) {
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 	if e.down.Load() {
 		return
 	}
@@ -95,7 +95,7 @@ func (e *testEntry) handle(conn net.Conn, probeTarget string) {
 		if err != nil {
 			return
 		}
-		defer upstream.Close()
+		defer func() { _ = upstream.Close() }()
 		if gosocks5.NewReply(gosocks5.Succeeded, nil).Write(conn) != nil {
 			return
 		}
@@ -233,7 +233,7 @@ func TestGOSTWukongPool(t *testing.T) {
 	reject()
 	routeUnavailable.Store(false)
 	live, sidA := open("A", first)
-	defer live.Close()
+	defer func() { _ = live.Close() }()
 	a2, sidA2 := open("A2", first)
 	_ = a2.Close()
 	b, sidB := open("B", first)

@@ -124,7 +124,7 @@ func renderGOST(template, path, authEndpoint, token string, wukong WukongConfig)
 		return nil, errors.New("configure Wukong entries and the Wukong pool template together")
 	}
 	if poolTemplate && (config["hops"] != nil || config["chains"] != nil || config["api"] != nil) {
-		return nil, errors.New("Wukong pool template cannot define custom routing or a GOST API")
+		return nil, errors.New("the Wukong pool template cannot define custom routing or a GOST API")
 	}
 	sid, err := rand.Int(rand.Reader, big.NewInt(1_000_000_000))
 	if err != nil {
@@ -181,7 +181,7 @@ func renderGOST(template, path, authEndpoint, token string, wukong WukongConfig)
 				delete(settings, "ignoreChain")
 			}
 			if listener, ok := service["listener"].(map[string]any); ok && listener["type"] != "tcp" {
-				return nil, errors.New("Wukong pool requires a TCP listener")
+				return nil, errors.New("the Wukong pool requires a TCP listener")
 			}
 			handler["chain"] = "wukong-pool"
 		}

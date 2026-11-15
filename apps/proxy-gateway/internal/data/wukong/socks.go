@@ -55,7 +55,7 @@ func (p *Pool) negotiate(conn net.Conn, sid int64, addr *gosocks5.Addr) (probeSt
 		return stageSOCKS, err
 	}
 	if method != [2]byte{5, gosocks5.MethodUserPass} {
-		return stageSOCKS, errors.New("Wukong did not select SOCKS5 username/password")
+		return stageSOCKS, errors.New("the Wukong server did not select SOCKS5 username/password")
 	}
 	username := fmt.Sprintf("%s-res-any-sid-%09d-sidtime-3600", p.username, sid)
 	if err := gosocks5.NewUserPassRequest(gosocks5.UserPassVer, username, p.password).Write(conn); err != nil {
@@ -66,7 +66,7 @@ func (p *Pool) negotiate(conn net.Conn, sid int64, addr *gosocks5.Addr) (probeSt
 		return stageSOCKS, err
 	}
 	if response.Status != 0 {
-		return stageSOCKS, errors.New("Wukong SOCKS5 authentication failed")
+		return stageSOCKS, errors.New("SOCKS5 authentication with Wukong failed")
 	}
 	if err := gosocks5.NewRequest(gosocks5.CmdConnect, addr).Write(conn); err != nil {
 		return stageConnect, err
@@ -76,7 +76,7 @@ func (p *Pool) negotiate(conn net.Conn, sid int64, addr *gosocks5.Addr) (probeSt
 		return stageConnect, err
 	}
 	if reply.Rep != gosocks5.Succeeded {
-		return stageConnect, errors.New("Wukong SOCKS5 CONNECT rejected")
+		return stageConnect, errors.New("the Wukong server rejected SOCKS5 CONNECT")
 	}
 	return stageHTTPS, nil
 }

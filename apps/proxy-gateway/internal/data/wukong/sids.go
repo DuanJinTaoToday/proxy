@@ -78,5 +78,5 @@ func (s *sidStore) get(key string) (int64, error) {
 		s.used[sid] = true
 		return sid, nil
 	}
-	return 0, errors.New("Wukong SID space exhausted")
+	return 0, errors.New("the Wukong SID space is exhausted")
 }

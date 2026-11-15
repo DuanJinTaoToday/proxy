@@ -1,11 +1,6 @@
 package repo
 
-import (
-	"fmt"
-	"time"
-
-	"gorm.io/gorm"
-)
+import "time"
 
 // Ingestion and partition maintenance acquire this lock before touching any
 // usage partition. CREATE/DROP PARTITION locks the parent table.
@@ -16,26 +11,12 @@ func (t usageTx) LockArchive() (string, error) {
 	return state.BeforeDate, err
 }
 
-func partitionName(date string) (string, time.Time, error) {
+func partitionName(date string) (string, error) {
 	day, err := time.Parse(time.DateOnly, date)
 	if err != nil {
-		return "", time.Time{}, err
+		return "", err
 	}
-	return "usage_minutely_" + day.Format("20060102"), day, nil
-}
-
-func ensurePartition(tx *gorm.DB, date string) error {
-	name, day, err := partitionName(date)
-	if err != nil {
-		return err
-	}
-	var exists bool
-	if err := tx.Raw("SELECT to_regclass(?) IS NOT NULL", name).Scan(&exists).Error; err != nil || exists {
-		return err
-	}
-	statement := fmt.Sprintf("CREATE TABLE %s PARTITION OF usage_minutely FOR VALUES FROM ('%s') TO ('%s')",
-		name, day.Format(time.DateOnly), day.AddDate(0, 0, 1).Format(time.DateOnly))
-	return tx.Exec(statement).Error
+	return "usage_minutely_" + day.Format("20060102"), nil
 }
 
 func (t usageTx) ArchiveDay(date string) error {
@@ -53,7 +34,7 @@ func (t usageTx) ArchiveDay(date string) error {
 			last_received_at = GREATEST(usage_daily.last_received_at, EXCLUDED.last_received_at)`, date).Error; err != nil {
 		return err
 	}
-	name, _, err := partitionName(date)
+	name, err := partitionName(date)
 	if err != nil {
 		return err
 	}

@@ -64,7 +64,7 @@ func Open(dir, username, password string, entries []string, primary, backup, tok
 		timeout = defaultProbeTimeout
 	}
 	if timeout < 0 || timeout > 15*time.Second {
-		return nil, nil, errors.New("Wukong probe timeout must be between 1 and 15 seconds")
+		return nil, nil, errors.New("the Wukong probe timeout must be between 1 and 15 seconds")
 	}
 	pool := &Pool{
 		probeTimeout: timeout,
@@ -234,7 +234,7 @@ func (p *Pool) probeThroughEntry(ctx context.Context, entry, target string) (pro
 	if err != nil {
 		return stage, false
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 	return stage, p.probeHTTPS(ctx, target, func(context.Context, string, string) (net.Conn, error) {
 		return conn, nil
 	})
