@@ -1,5 +1,7 @@
 # 本地 Docker 测试环境
 
+本环境用于回归当前动态隧道与 Recorder 链路，使用数据库种入的本地测试账号及模拟上游。此处的旧版运营接口用于为测试租户增加流量额度。首版开户、商业钱包和真实供应商交易的验收要求见[首版商业交付 Spec](../features/proxy-first-release/proxy-first-release-spec.md)。
+
 ## 启动与更新
 
 启动 Docker Desktop 的 Linux 容器引擎，确认 `make`、`docker compose` 可用，并且本机的 `8443` 和 `1080` 端口空闲或已由该环境占用。在仓库根目录运行：
@@ -25,15 +27,15 @@ Compose 项目名为 `proxy-test`。项目服务的镜像使用 `proxy-<组件>:
 
 ## 访问和联调
 
-- 控制台访问 `https://localhost:8443`。测试账号为 `alice`（Alpha）、`bob`（Beta）和 `operator`（运营），初始密码均为 `proxy-local-test`。
-- SOCKS5 访问 `127.0.0.1:1080`。由运营 API 为测试租户充值，再用该租户账号发放 SOCKS5 凭据。通过代理访问 `http://console:8080/fixture` 可验证容器内转发，响应体为 `proxy-test`。
+- 控制台访问 `https://localhost:8443`。租户管理员测试手机号为 `13800000001`（Alpha）和 `13800000002`（Beta）。运营账号 `operator` 使用 `POST /v1/operations/access/login`，初始密码均为 `proxy-local-test`。也可以在控制台用其他测试手机号注册。
+- SOCKS5 访问 `127.0.0.1:1080`。使用旧版运营接口 `POST /v1/operations/tenants/{tenant_id}/recharges` 为测试租户增加流量额度，再用该租户账号发放 SOCKS5 凭据。通过代理访问 `http://console:8080/fixture` 可验证容器内转发，响应体为 `proxy-test`。
 - HTTPS 使用 Caddy 测试 CA。浏览器需要信任时，从 Docker Desktop 的 `console-1` 容器导出 `/data/caddy/pki/authorities/local/root.crt`，导入当前用户的受信任根证书。网关通过挂载的 CA 校验 `https://console`。
 
 ## 搭建与维护约定
 
 - 在 [Compose 配置](../../deploy/test/compose.yaml) 定义服务、依赖、健康检查和数据卷，在 [Dockerfile](../../deploy/test/Dockerfile) 定义各服务的构建阶段。Caddy、控制面、网关和 GOST 模板都在 `deploy/test/`，修改后通过 `make test-env` 构建并应用。
 - 控制台和 SOCKS5 入口只绑定宿主机回环地址。控制面、模拟悟空和数据库使用 Docker 网络通信。测试配置使用本地专用账号、令牌和 CA。
-- 数据库结构通过 Goose 迁移维护。初始化 SQL 负责创建测试网关和令牌摘要，重复执行可保留已有记录。PostgreSQL 数据、网关 Recorder 文件和 Caddy CA 分别存放在 `db`、`recorder` 和 `caddy` 命名卷，日常更新和停止服务均保留这些卷。
+- 数据库结构通过 Goose 迁移维护。初始化 SQL 负责种入测试网关、令牌摘要、租户、两类余额账户和运营账号，重复执行可保留已有记录。PostgreSQL 数据、网关 Recorder 文件和 Caddy CA 分别存放在 `db`、`recorder` 和 `caddy` 命名卷，日常更新和停止服务均保留这些卷。
 
 在 Docker Desktop 的 **Containers** 中查看 `proxy-test`。也可以从仓库根目录运行：
 

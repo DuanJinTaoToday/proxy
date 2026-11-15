@@ -2,6 +2,8 @@
 
 状态：已采纳 · 日期：2026-11-11 · 相关任务：[#3](https://github.com/DuanJinTaoToday/proxy/issues/3)、[#4](https://github.com/DuanJinTaoToday/proxy/issues/4)
 
+> **首版规则差异**　客户多租户成员模式、代理密码仅发放时可见与[首版商业交付 Spec](../features/proxy-first-release/proxy-first-release-spec.md)存在差异。本文保留旧实现决策。首版已确认的替换范围和沿用约束见[模块契约](../features/proxy-first-release/proxy-first-release-module-contracts.md#替换范围adr-与验证)。
+
 > 认证部署与准入时效的现行约定见 [ADR 0005 一期代理认证可用性](0005-proxy-auth-availability.md#取代条款)。
 
 ## 背景

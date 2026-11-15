@@ -1,5 +1,7 @@
 # IPCrown 静态独享 IP 接口核查
 
+本页记录供应商接口证据和联调缺口。首版对客价格、部分交付、退款和续费规则见[首版商业交付 Spec](../features/proxy-first-release/proxy-first-release-spec.md#静态住宅-ip)。
+
 IPCrown v2.0.0 文档提供节点库存查询、直接采购、订单详情及列表。下单成功的示例在同一响应内返回代理连接信息。文档未说明库存刷新延迟、独立锁库存或预留、客户端幂等键、异步交付回调及部分交付规则。2026-11-13 只读复核了供应商文档。2026-11-09 已验证生产目录接口；真实扣款、订单查询、交付和代理连通性仍待实测。 [CrownIP 接口文档](https://www.yuque.com/ludeng-4v9rr/egw6bz/lq4d0lxmbgb1izii)
 
 ## 库存与价格

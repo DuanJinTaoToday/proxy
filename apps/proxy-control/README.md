@@ -1,10 +1,12 @@
 # proxy-control
 
-控制面服务（Go）。负责：
+控制面服务（Go）。以下为当前代码的能力与本地配置。首版验收范围见[首版商业交付 Spec](../../docs/features/proxy-first-release/proxy-first-release-spec.md)。
 
-- 租户登录、租户选择与权限检查（`internal/proxyauth`）
+## 当前实现
+
+- 手机号注册、登录、运营重置与租户权限检查（`internal/biz/access`）
 - 代理凭据发放与停用，向网关提供认证与额度同步
-- 接收网关 Recorder 批次上报，按租户、网关、分钟归集计费汇总（`internal/usage`）
+- 接收网关 Recorder 批次上报，按租户、网关、分钟归集计费汇总（`internal/biz/usage`）
 - 流量额度、倍率、准入门槛与欠费结算，用量归档（Cron 任务 `MaintainUsage`）
 - 租户与运营的用量、余额查询接口
 
@@ -53,7 +55,7 @@ Windows 下可执行文件带 `.exe` 后缀。
 
 ## 文档
 
-- [配置说明：租户登录、授权与用量上报](configs/file/README.md)
+- [配置说明：手机号开户、租户授权与用量上报](configs/file/README.md)
 - [开发规范](../../docs/standards/proxy-development-conventions.md)
-- [一期技术方案](../../docs/features/proxy-phase-one/proxy-phase-one-architecture.md)
+- [用量技术方案](../../docs/features/proxy-phase-one/proxy-phase-one-architecture.md)
 - [AGENTS.md](AGENTS.md)

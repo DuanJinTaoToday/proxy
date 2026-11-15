@@ -1,25 +1,18 @@
 # 控制面租户登录与授权
 
-在 `apps/proxy-control/` 按开发规范准备本地配置并启动服务。在 `server.local.yaml` 中启用 `biz.access` 所需配置，并为每个账号填写独立的 `password_hash`。 [本地启动](../../../../docs/standards/proxy-development-conventions.md#本地启动)
-
-可以在可信终端运行以下命令生成摘要。
-
-```sh
-python -c "import getpass, hashlib, secrets; salt = secrets.token_bytes(16); key = hashlib.pbkdf2_hmac('sha256', getpass.getpass().encode(), salt, 600000); print(salt.hex() + ':' + key.hex())"
-```
+在 `server.local.yaml` 中配置 `data.repo.proxy_auth.database_dsn` 或 `data.repo.usage.database_dsn`，并对该数据库执行下文的完整 Goose `up`，包括 `00007_tenant_accounts.sql`。同时启用认证和用量时，两项配置使用同一 DSN。客户注册后自动创建租户、唯一管理员、零钱包及零流量账户。运营通过数据库初始化，使用独立登录入口。 [首版商业交付 Spec](../../../../docs/features/proxy-first-release/proxy-first-release-spec.md)
 
 | HTTP 接口 | 用途 |
 | --- | --- |
-| `POST /v1/access/login` | 用 JSON 的 `username`、`password` 换取 `access_token` 和 `expires_in_seconds`。 |
-| `GET /v1/access/tenants` | 返回当前身份的有效租户列表。 |
-| `GET /v1/access/tenants/{tenant_id}` | 验证并返回选中的租户。控制台保存选择，每个后续业务请求仍需独立授权。 |
-| `POST /v1/access/check` | 用 JSON 的 `permission` 和 `tenant_id` 检查当前身份。普通 JSON 的权限值为 1（读租户用量）、2（管理代理凭据）、3（读平台运营数据）、4（管理计费）。权限 3 省略 `tenant_id`。 |
+| `POST /v1/access/register` | 提交 `phone` 和 `password`，返回租户和主账号名。带或不带 +86 是同一账号，密码至少 12 位。 |
+| `POST /v1/access/login` | 提交 `phone` 和 `password`，获取租户管理员会话。 |
+| `GET /v1/tenant/account` | 通过会话读取所属租户。 |
+| `POST /v1/operations/access/login` | 独立的运营账号登录，提交 `username` 和 `password`。 |
+| `POST /v1/operations/tenants/{tenant_id}:reset-password` | 运营核实租户归属后提交 `password`。需要 `manage_tenant_accounts`，重置后原有会话失效。 |
 
-登录后通过 `Authorization: Bearer <access_token>` 传递令牌。无有效身份返回 401，无权限返回 403。租户管理员只获得其有效成员关系内的权限。业务接口调用 `access.Service.Require`，传入本次实际操作的租户和服务端指定的权限。
+运营账号由受权部署方写入 `operators` 和 `operator_permissions`。给需要的账号分别授予 `read_operations`、`manage_billing` 或 `manage_tenant_accounts`。密码摘要格式为 `<16 字节随机盐的 hex>:<32 字节摘要的 hex>`，使用 PBKDF2-HMAC-SHA256，迭代 600000 次。测试初始化示例见 [本地 Docker 测试环境](../../../../docs/operations/local-test-environment.md)。
 
-默认配置允许启动健康检查，但没有预置登录账号。预置成员关系由启动配置加载，变更后重启控制面生效。会话有效期为八小时，签名密钥随进程启动生成，因此重启后需要重新登录。对外访问由部署入口提供 HTTPS 和登录频率限制。
-
-运营用户需同时配置 `platform_operator: true` 和 `manage_billing: true` 才能调用充值和额度调整接口。
+下文记录当前的 Recorder 和代理凭据用法。流量套餐、子账号和准入改造由后续业务票交付。
 
 ## Recorder 上报与租户用量
 
@@ -43,7 +36,7 @@ PostgreSQL 集成用例在独立临时 schema 中应用迁移，通过真实 HTT
 
 ## 代理凭据与网关认证同步
 
-应用 `00001_proxy_auth.sql` Goose 迁移，在 `server.local.yaml` 中填写 `data.repo.proxy_auth.database_dsn`。
+在 `server.local.yaml` 中填写 `data.repo.proxy_auth.database_dsn`，并在使用租户会话发放凭据前完成上文的全部迁移。
 
 租户管理员使用控制台会话令牌发放和停用代理凭据。发放响应仅交付一次密码。
 

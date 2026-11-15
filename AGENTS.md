@@ -4,7 +4,7 @@
 
 ## 项目文档
 
-一期开发与验收参阅[一期 Spec](docs/features/proxy-phase-one/proxy-phase-one-spec.md)和[开发任务](docs/features/proxy-phase-one/proxy-phase-one-development.md)。设计、实现或排查用量链路时参阅[一期技术方案](docs/features/proxy-phase-one/proxy-phase-one-architecture.md)。讨论产品形态与供应商时参阅[产品对齐](docs/product/proxy-product-alignment.md)。
+首版产品范围与验收以 [GitHub Spec #36](https://github.com/DuanJinTaoToday/proxy/issues/36) 为准，仓库内参阅[首版商业交付 Spec](docs/features/proxy-first-release/proxy-first-release-spec.md)。设计、实现或排查用量链路时参阅[用量技术方案](docs/features/proxy-phase-one/proxy-phase-one-architecture.md)。产品讨论参阅[首版产品决策](docs/product/proxy-first-release-decisions.md)。旧一期结果见[历史验收索引](docs/features/proxy-phase-one/proxy-phase-one-development.md)。
 
 接入或排查悟空 SOCKS5 隧道时，参阅[悟空隧道转发接入](docs/integrations/wukong-socks5-tunnel.md)。
 

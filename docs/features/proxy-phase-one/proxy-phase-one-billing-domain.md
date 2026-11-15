@@ -1,6 +1,6 @@
 # 一期静态 IP 和流量计费领域模型
 
-关联 [Issue #12](https://github.com/DuanJinTaoToday/proxy/issues/12)、[一期 Spec](proxy-phase-one-spec.md)和[产品对齐](../../product/proxy-product-alignment.md)。
+旧一期领域建模记录，对应 [Issue #12](https://github.com/DuanJinTaoToday/proxy/issues/12)。其中待定事项反映当时状态，现行商品、钱包与结算规则见[首版商业交付 Spec](../proxy-first-release/proxy-first-release-spec.md)。
 
 租户是客户侧的归属主体。动态 IP 记录实际用量，静态 IP 记录资源分配及其有效期。后续客户应收以这些事实和平台的计价规则为依据。供应商成本按采购合同及供应商结算资料核算，可以回溯对应资源或用量；能否分摊到具体租户取决于供应商数据和成本分摊规则。
 

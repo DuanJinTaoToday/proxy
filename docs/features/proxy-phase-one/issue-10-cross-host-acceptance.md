@@ -1,5 +1,7 @@
 # #10 跨机器双租户端到端验收准备
 
+旧一期分机验收记录。下文的租户 SID、上下行倍率和额度门槛用于复现当时环境。首版开售验收见[首版商业交付 Spec](../proxy-first-release/proxy-first-release-spec.md#开售验收)。
+
 基线为 `origin/main` 的 `05aee71`，包含 #14 的合并提交 `2746523`。#6、#7、#8 和 #14 已关闭。#14 已交付充值抵欠、网关额度拦截和恢复追平逻辑。分机验收于 2026-11-13 完成。集中关闭和重连压测由 [#11](https://github.com/DuanJinTaoToday/proxy/issues/11) 单独验收。
 
 ## 悟空联调策略

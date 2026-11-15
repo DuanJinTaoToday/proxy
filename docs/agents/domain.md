@@ -5,7 +5,8 @@ The three deployment units share one domain documentation context.
 ## Before exploring, read these
 
 - Read the root `GLOSSARY.md` for shared domain terminology.
-- Read the relevant decisions under the root `docs/adr/`.
+- Read the [First Release Spec](../features/proxy-first-release/proxy-first-release-spec.md) for product behavior and acceptance.
+- Read relevant records under [ADRs](../adr/README.md) for engineering decisions and known differences from the spec.
 
 If either location is missing, continue exploring. Use the `domain-modeling` skill to add entries as terminology and decisions are resolved.
 

@@ -1,8 +1,10 @@
 # 架构决策记录
 
+[首版商业交付 Spec #36](https://github.com/DuanJinTaoToday/proxy/issues/36) 定义目标产品行为。各条 ADR 开头的首版提示列出与现有设计的差异，未受影响的计量、回放和认证故障约定仍可引用。
+
 本目录保存影响多个部署单元、难以撤回或需要说明取舍的架构决策。三个部署单元共用这里的决策，术语见[GLOSSARY](../../GLOSSARY.md)。
 
-一期尚未决定的事项列在[一期技术方案的待定设计](../features/proxy-phase-one/proxy-phase-one-architecture.md#待定设计)。某项决定需要记录理由或备选方案时，在这里新增 ADR，并在技术方案中引用。只影响单个实现细节的结论直接写入对应文档。
+首版待验证项见[用量技术方案](../features/proxy-phase-one/proxy-phase-one-architecture.md#首版待验证)。某项决定需要记录理由或备选方案时，在这里新增 ADR，并在技术方案中引用。只影响单个实现细节的结论直接写入对应文档。
 
 ## 编写约定
 

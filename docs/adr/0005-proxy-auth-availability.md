@@ -2,6 +2,8 @@
 
 状态：已采纳 · 日期：2026-11-12 · 相关任务：[#3](https://github.com/DuanJinTaoToday/proxy/issues/3)、[#5](https://github.com/DuanJinTaoToday/proxy/issues/5)、[#10](https://github.com/DuanJinTaoToday/proxy/issues/10)、[#14](https://github.com/DuanJinTaoToday/proxy/issues/14)
 
+> **首版规则差异**　按可配置额度门槛判断新连接与[首版商业交付 Spec](../features/proxy-first-release/proxy-first-release-spec.md)存在差异。本文保留旧实现决策。首版已确认的替换范围和沿用约束见[模块契约](../features/proxy-first-release/proxy-first-release-module-contracts.md#替换范围adr-与验证)。
+
 ## 背景
 
 控制面一期单实例部署，网关可与控制面分机。短时停机或链路中断会影响新 SOCKS5 连接。已有连接通常持续 2～6 分钟。业务给出的压测输入是每秒 2 万以上新连接，单网关掉线后客户端会在 3 秒内集中重试。

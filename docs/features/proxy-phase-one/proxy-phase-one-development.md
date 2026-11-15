@@ -1,12 +1,10 @@
-# Proxy 一期开发任务与验收顺序
+# Proxy 旧一期验收记录
 
-一期 12 项任务、进度和阻塞关系以 [GitHub Issue #1 的子任务](https://github.com/DuanJinTaoToday/proxy/issues/1)为准。
+此页保留旧一期的环境、复跑入口和结果。首版验收要求见[首版商业交付 Spec](../proxy-first-release/proxy-first-release-spec.md)。
 
-先打通一个测试租户的真实隧道用量，再补足跨机器故障恢复、租户自查和运营追溯。API 提取和流量查询的 Mock 可以并行准备。 [一期 Spec](proxy-phase-one-spec.md) · [一期技术方案](proxy-phase-one-architecture.md)
+[旧一期 GitHub Spec #1](https://github.com/DuanJinTaoToday/proxy/issues/1) · [#10 跨宿主机验收](issue-10-cross-host-acceptance.md) · [#11 容量基线](issue-11-devbox-capacity.md) · [用量技术方案](proxy-phase-one-architecture.md)
 
-联调从一个网关、一个本地采集器和一个批量 HTTP 接口开始。Mock 适配器和样本可并行准备，真实 API 联调按[悟空接口与数据清单](../../product/proxy-product-alignment.md#需要老板推动悟空提供的接口与数据)推进。
-
-验收证据分两类。受控 SOCKS5 上游用于核对字段、Recorder 增量字段、故障恢复和跨日。真实悟空入口用于验证部署后从客户端经网关到用量页面的全链路。直接连接悟空的实测可作为联调起点。[悟空隧道接入记录](../../integrations/wukong-socks5-tunnel.md)
+受控 SOCKS5 上游用于核对 Recorder 字段、故障恢复和跨日。真实悟空入口用于验证部署后的转发和用量全链路。 [悟空隧道接入记录](../../integrations/wukong-socks5-tunnel.md)
 
 ## Issue #5 验收记录
 
@@ -20,7 +18,7 @@
 | Recorder 增量与写入失败 | 重跑 [Recorder 原型](../../integrations/gost-file-recorder.md#复现)。官方二进制的两次中间采样和一次结束采样增量为 `45/44 → 64/64 → 0/0`，累计为 `109/108`。同版本 Recorder 在写失败且未留下字节后，下一条增量为 `80/94`，等于两次成功记录的累计差。部分写入导致粘行、`final` 写失败后无法补写也已复现。 |
 | 分批、确认和记录标识 | `TestCollectorHonorsBatchLimits` 分别验证条数和编码字节上限、按起始偏移顺序提交及无数据时不发批次。`TestCollectorResumesFromDurableAcknowledgement` 验证确认丢失后重放同一前缀、整批确认后按持久化偏移继续、残行补齐 LF 后才上报。默认每秒扫描，每次扫描每代最多确认一批，记录由 `gateway_id`、`boot_id`、`file_id` 和起始偏移定位。 |
 
-心跳、退出事件、确认偏移及扫描参数见[网关采集说明](../../../apps/proxy-gateway/gost/README.md)。确认偏移写入同代次目录的临时文件，经 `Sync` 后替换 `confirmed.offset`。Unix 随后同步目录，Windows 使用 `MoveFileEx` 的 write-through 标志。Recorder 与偏移同盘，磁盘丢失会同时影响源文件和本地确认位置。生产多租户 SID 策略及入口池健康检查仍见[待定设计](proxy-phase-one-architecture.md#待定设计)。
+心跳、退出事件、确认偏移及扫描参数见[网关采集说明](../../../apps/proxy-gateway/gost/README.md)。确认偏移写入同代次目录的临时文件，经 `Sync` 后替换 `confirmed.offset`。Unix 随后同步目录，Windows 使用 `MoveFileEx` 的 write-through 标志。Recorder 与偏移同盘，磁盘丢失会同时影响源文件和本地确认位置。后续完成的租户 SID 和入口池验证见[分机验收](issue-10-cross-host-acceptance.md)。
 
 批次请求当前用 `encoding/json` 编码，记录偏移在请求中为 JSON 数字。控制面的 `protojson` 解码器可接收该表示，本次批次大小测试按网关实际发送的格式验证。[ADR 0003](../../adr/0003-reporting-and-usage-contracts.md#通用约定)约定使用 `protojson`，批次请求编码仍需对齐。
 
@@ -40,7 +38,7 @@
 
 ### 真实悟空分机联调
 
-待验证。将网关和控制面运行在不同宿主机，Recorder 目录只保留在网关机。使用平台凭据经悟空访问目标，核对网关文件、控制面的 HTTPS 上报确认和租户日用量，并在验收记录中补齐拓扑和实测结果。
+旧一期 #5 当时留下的真实悟空分机验证已在 [#10 跨宿主机验收](issue-10-cross-host-acceptance.md)补齐，记录包含拓扑、网关 Recorder 文件、控制面上报确认和租户用量。首版改造后按 Spec 复验。
 
 ## Issue #8 验收记录
 

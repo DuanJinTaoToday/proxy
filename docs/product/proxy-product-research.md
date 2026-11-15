@@ -1,5 +1,7 @@
 # 多供应商代理产品尽调
 
+本文保留早期市场样本与候选方向。首版范围见[首版商业交付 Spec](../features/proxy-first-release/proxy-first-release-spec.md)，后续市场观察见[住宅代理竞品尽调](proxy-competitor-due-diligence.md)。
+
 调研日期为 2026-11-09。以 711Proxy、kookeey 为直接对照，以 Oxylabs、Webshare、Bright Data 验证其他市场形态。以下为公开产品文档和定价页观察，未登录验证下单，也未对供应商做连通性或质量实测。
 
 ## 市场产品形态

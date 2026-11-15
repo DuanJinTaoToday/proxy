@@ -2,6 +2,8 @@
 
 状态：已采纳 · 日期：2026-11-12 · 相关任务：[#4](https://github.com/DuanJinTaoToday/proxy/issues/4)、[#7](https://github.com/DuanJinTaoToday/proxy/issues/7)、[#14](https://github.com/DuanJinTaoToday/proxy/issues/14)
 
+> **首版规则差异**　授予到期冲正、分组倍率版本及对应复核口径与[首版商业交付 Spec](../features/proxy-first-release/proxy-first-release-spec.md)存在差异。本文保留旧实现决策。首版已确认的替换范围和沿用约束见[模块契约](../features/proxy-first-release/proxy-first-release-module-contracts.md#替换范围adr-与验证)。
+
 ## 背景
 
 [ADR 0001](0001-usage-data-model.md) 和 [ADR 0003](0003-reporting-and-usage-contracts.md) 已确定按记录时间计费、以文件水位去重及按聚合复核用量。一期入库还需要明确跨到期补报、分组变更、偏移缺口与来源隔离的处理。运营需要独立的计费写权限，并能按倍率版本核对汇总和定位原始文件。
