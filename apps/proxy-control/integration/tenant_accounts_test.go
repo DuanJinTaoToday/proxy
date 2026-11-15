@@ -9,23 +9,12 @@ import (
 
 	v1 "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/integration/testfixture"
-	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/access"
-	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/usage"
-	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/data/repo"
-	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/server"
-	httpservice "github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/service"
-	kratoshttp "github.com/go-kratos/kratos/v3/transport/http"
 )
 
 func TestPersistentTenantRegistrationAndAccess(t *testing.T) {
 	fixture := setupUsage(t)
-	accessService, err := access.NewPersistent(repo.NewAccountRepository(fixture.db))
-	if err != nil {
-		t.Fatal(err)
-	}
-	handler := server.NewHTTPServer("127.0.0.1:0", httpservice.NewAccess(accessService), kratoshttp.ResponseEncoder(server.UsageResponseEncoder))
-	server.RegisterUsage(handler, httpservice.NewUsage(usage.New(repo.NewUsageRepository(fixture.db), accessService)))
-	const password = "tenant-pass-2026"
+	handler := fixture.http
+	const password = "tenant-pass1"
 	register := func(phone, pwd string) *httptest.ResponseRecorder {
 		return testfixture.Request(handler, "POST", "/v1/access/register", fmt.Sprintf(`{"phone":%q,"password":%q}`, phone, pwd), "")
 	}
@@ -46,6 +35,7 @@ func TestPersistentTenantRegistrationAndAccess(t *testing.T) {
 	count("SELECT count(*) FROM tenants", 0)
 	count("SELECT count(*) FROM tenant_admins", 0)
 	count("SELECT count(*) FROM wallets", 0)
+	count("SELECT count(*) FROM tenant_balances", 0)
 
 	var wg sync.WaitGroup
 	replies := make([]*httptest.ResponseRecorder, 2)
@@ -95,7 +85,10 @@ func TestPersistentTenantRegistrationAndAccess(t *testing.T) {
 	const loginPath = "/v1/access/login"
 	a := token(creds(loginPath, "phone", "+8613800001234", password))
 	b := token(creds(loginPath, "phone", "13800001234", password))
-	testfixture.AssertStatus(t, creds(loginPath, "phone", "fixture-a", password), http.StatusUnauthorized, "INVALID_LOGIN")
+	otherToken := token(creds(loginPath, "phone", "13900001234", password))
+	proxyUsername := tenant.GetPrimaryAccountName() + ".demo"
+	testfixture.AssertStatus(t, creds(loginPath, "phone", proxyUsername, password), http.StatusUnauthorized, "INVALID_LOGIN")
+	testfixture.AssertStatus(t, creds("/v1/operations/access/login", "username", proxyUsername, password), http.StatusUnauthorized, "INVALID_LOGIN")
 	testfixture.AssertStatus(t, creds(loginPath, "phone", "13800001234", "wrong"), http.StatusUnauthorized, "INVALID_LOGIN")
 	account := func(tkn string) *httptest.ResponseRecorder {
 		return testfixture.Request(handler, "GET", "/v1/tenant/account", "", tkn)
@@ -104,6 +97,11 @@ func TestPersistentTenantRegistrationAndAccess(t *testing.T) {
 	readProto(t, account(a), &owned)
 	if owned.GetTenantId() != tenant.GetTenantId() {
 		t.Fatal("session resolved to another tenant")
+	}
+	var selected v1.TenantAccess
+	readProto(t, testfixture.Request(handler, "GET", "/v1/tenant/account?tenant_id="+other.GetTenantId(), "", a), &selected)
+	if selected.GetTenantId() != tenant.GetTenantId() {
+		t.Fatalf("account query selected tenant %q instead of the session tenant", selected.GetTenantId())
 	}
 
 	execSQL(t, fixture.db, `INSERT INTO operators (id,username,password_hash) VALUES
@@ -117,26 +115,31 @@ func TestPersistentTenantRegistrationAndAccess(t *testing.T) {
 	readOnly, billing, support := operator("readonly"), operator("billing"), operator("support")
 	testfixture.AssertStatus(t, account(billing), http.StatusForbidden, "ACCESS_DENIED")
 	testfixture.AssertStatus(t, creds(loginPath, "phone", "readonly", "test-password"), http.StatusUnauthorized, "INVALID_LOGIN")
-	check := func(actor string, perm int) *httptest.ResponseRecorder {
-		return testfixture.Request(handler, "POST", "/v1/access/check", fmt.Sprintf(`{"permission":%d}`, perm), actor)
+	check := func(actor, tenantID string, perm v1.Permission) *httptest.ResponseRecorder {
+		return testfixture.Request(handler, "POST", "/v1/access/check", fmt.Sprintf(`{"permission":%d,"tenant_id":%q}`, perm, tenantID), actor)
 	}
-	testfixture.AssertStatus(t, check(readOnly, 3), http.StatusOK, "")
-	testfixture.AssertStatus(t, check(readOnly, 4), http.StatusForbidden, "ACCESS_DENIED")
-	testfixture.AssertStatus(t, check(billing, 4), http.StatusOK, "")
-	testfixture.AssertStatus(t, check(a, 4), http.StatusForbidden, "ACCESS_DENIED")
+	testfixture.AssertStatus(t, check(a, tenant.GetTenantId(), v1.Permission_PERMISSION_READ_TENANT_USAGE), http.StatusOK, "")
+	testfixture.AssertStatus(t, check(a, other.GetTenantId(), v1.Permission_PERMISSION_READ_TENANT_USAGE), http.StatusForbidden, "ACCESS_DENIED")
+	testfixture.AssertStatus(t, check(otherToken, tenant.GetTenantId(), v1.Permission_PERMISSION_READ_TENANT_USAGE), http.StatusForbidden, "ACCESS_DENIED")
+	testfixture.AssertStatus(t, check(readOnly, "", v1.Permission_PERMISSION_READ_OPERATIONS), http.StatusOK, "")
+	testfixture.AssertStatus(t, check(readOnly, other.GetTenantId(), v1.Permission_PERMISSION_MANAGE_BILLING), http.StatusForbidden, "ACCESS_DENIED")
+	testfixture.AssertStatus(t, check(billing, other.GetTenantId(), v1.Permission_PERMISSION_MANAGE_BILLING), http.StatusOK, "")
+	testfixture.AssertStatus(t, check(a, tenant.GetTenantId(), v1.Permission_PERMISSION_MANAGE_BILLING), http.StatusForbidden, "ACCESS_DENIED")
 
 	reset := func(tkn, pwd string) *httptest.ResponseRecorder {
 		return testfixture.Request(handler, "POST", "/v1/operations/tenants/"+tenant.GetTenantId()+":reset-password", fmt.Sprintf(`{"password":%q}`, pwd), tkn)
 	}
 	testfixture.AssertStatus(t, reset(a, password), http.StatusForbidden, "ACCESS_DENIED")
+	testfixture.AssertStatus(t, reset(otherToken, password), http.StatusForbidden, "ACCESS_DENIED")
 	testfixture.AssertStatus(t, reset(readOnly, password), http.StatusForbidden, "ACCESS_DENIED")
 	testfixture.AssertStatus(t, reset(billing, password), http.StatusForbidden, "ACCESS_DENIED")
 	testfixture.AssertStatus(t, reset(support, "12345678901"), http.StatusBadRequest, "INVALID_PASSWORD")
-	const newPassword = "new-password-2026"
+	const newPassword = "new-pass-123"
 	testfixture.AssertStatus(t, reset(support, newPassword), http.StatusOK, "")
 	count("SELECT count(*) FROM tenant_admins WHERE tenant_id = ? AND session_version = 2 AND password_reset_by = 'support' AND password_reset_at IS NOT NULL", 1, tenant.GetTenantId())
 	testfixture.AssertStatus(t, account(a), http.StatusUnauthorized, "AUTHENTICATION_REQUIRED")
 	testfixture.AssertStatus(t, account(b), http.StatusUnauthorized, "AUTHENTICATION_REQUIRED")
+	testfixture.AssertStatus(t, account(otherToken), http.StatusOK, "")
 	testfixture.AssertStatus(t, creds(loginPath, "phone", "13800001234", password), http.StatusUnauthorized, "INVALID_LOGIN")
 	testfixture.AssertStatus(t, account(token(creds(loginPath, "phone", "13800001234", newPassword))), http.StatusOK, "")
 }
