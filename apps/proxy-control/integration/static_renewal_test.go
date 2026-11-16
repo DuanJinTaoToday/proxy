@@ -6,8 +6,10 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	v1 "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/integration/testfixture"
@@ -20,11 +22,14 @@ func TestStaticRenewalPriceRecheckAndMixedSettlement(t *testing.T) {
 	var renewals atomic.Int32
 	var staleDetail atomic.Bool
 	var lateDetail atomic.Bool
+	var rejectSingle atomic.Bool
 	item := func(id int, stop string) string {
 		return fmt.Sprintf(`{"id":%d,"nid":3,"ip":"192.0.2.%d","port":43000,"p_user":"fixture","p_pass":"fixture","stoptime":%q}`, id, id, stop)
 	}
 	const original = "2099-01-01 12:00:00"
 	const renewed = "2099-01-31 12:00:00"
+	var firstRenewedExpiry atomic.Value
+	firstRenewedExpiry.Store(renewed)
 	supplier := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		switch req.URL.Path {
 		case "/open/api/nodes-and-continents":
@@ -34,7 +39,7 @@ func TestStaticRenewalPriceRecheckAndMixedSettlement(t *testing.T) {
 		case "/open/api/order/detail":
 			expiry := original
 			if renewals.Load() != 0 && !staleDetail.Load() {
-				expiry = renewed
+				expiry = firstRenewedExpiry.Load().(string)
 			}
 			second := original
 			if lateDetail.Load() {
@@ -46,8 +51,19 @@ func TestStaticRenewalPriceRecheckAndMixedSettlement(t *testing.T) {
 				IDs  []int64
 				Time string
 			}
-			if err := json.NewDecoder(req.Body).Decode(&body); err != nil ||
-				len(body.IDs) != 2 || body.IDs[0] != 83 || body.IDs[1] != 84 || body.Time != "yp1" {
+			if err := json.NewDecoder(req.Body).Decode(&body); err != nil {
+				t.Error("invalid supplier renewal request")
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+			if rejectSingle.Load() {
+				if !slices.Equal(body.IDs, []int64{84}) || body.Time != "yp1" {
+					t.Error("unexpected single request at supplier")
+				}
+				_, _ = io.WriteString(w, `{"code":-4,"data":[]}`)
+				return
+			}
+			if !slices.Equal(body.IDs, []int64{83, 84}) || body.Time != "yp1" {
 				t.Error("unexpected batch at supplier")
 			}
 			renewals.Add(1)
@@ -103,6 +119,13 @@ func TestStaticRenewalPriceRecheckAndMixedSettlement(t *testing.T) {
 		t.Fatalf("order did not wait for supplier detail: %v", &order)
 	}
 	testfixture.AssertStatus(t, req("POST", quotePath, spec, token), http.StatusConflict, "STATIC_RENEWAL_PENDING")
+	// Move the first pending allocation past its original expiry, preserving the 30-day extension.
+	expiredAt := time.Now().UTC().Truncate(time.Second).Add(-time.Hour)
+	extendedAt := expiredAt.AddDate(0, 0, 30)
+	firstRenewedExpiry.Store(extendedAt.In(time.FixedZone("CST", 8*60*60)).Format(time.DateTime))
+	execSQL(t, f.db, "UPDATE static_ip_allocations SET expires_at=? WHERE supplier_item_id='83'", expiredAt)
+	execSQL(t, f.db, "UPDATE static_renewal_items SET original_expiry=?, expected_expiry=? WHERE order_id=? AND supplier_item_id='83'", expiredAt, extendedAt, order.GetId())
+	testfixture.AssertStatus(t, req("GET", "/v1/tenant/static-ips/83/proxy-config", "", token), http.StatusNotFound, "WALLET_RECORD_NOT_FOUND")
 	staleDetail.Store(false)
 	path := fmt.Sprintf("%s/%d/recheck", renewPath, order.GetId())
 	readProto(t, req("POST", path, `{}`, token), &order)
@@ -111,9 +134,15 @@ func TestStaticRenewalPriceRecheckAndMixedSettlement(t *testing.T) {
 	}
 	var ips v1.StaticIPs
 	readProto(t, req("GET", "/v1/tenant/static-ips", "", token), &ips)
-	if len(ips.GetAllocations()) != 2 || ips.Allocations[0].GetSupplierItemId() != "83" ||
-		ips.Allocations[0].GetIp() != "192.0.2.83" || ips.Allocations[0].GetExpiresAt().AsTime().Format("2006-01-02") != "2099-01-31" {
+	if len(ips.GetAllocations()) != 2 || !slices.ContainsFunc(ips.GetAllocations(), func(ip *v1.StaticIP) bool {
+		return ip.GetSupplierItemId() == "83" && ip.GetIp() == "192.0.2.83" && ip.GetExpiresAt().AsTime().Equal(extendedAt)
+	}) {
 		t.Fatalf("renewal did not update the original allocation: %v", &ips)
+	}
+	var restored v1.StaticIP
+	readProto(t, req("GET", "/v1/tenant/static-ips/83/proxy-config", "", token), &restored)
+	if restored.GetSupplierItemId() != "83" || !restored.GetExpiresAt().AsTime().Equal(extendedAt) {
+		t.Fatalf("confirmed renewal did not restore the expired allocation")
 	}
 	var replay v1.PurchaseOrder
 	readProto(t, req("POST", renewPath, request, token), &replay)
@@ -140,5 +169,20 @@ func TestStaticRenewalPriceRecheckAndMixedSettlement(t *testing.T) {
 	readProto(t, req("GET", "/v1/tenant/wallet", "", token), &wallet)
 	if wallet.GetAvailableMinor() != 1500 {
 		t.Fatalf("unexpected wallet balance: %d", wallet.GetAvailableMinor())
+	}
+
+	lateDetail.Store(false)
+	rejectSingle.Store(true)
+	const singleSpec = `{"supplier_item_ids":["84"],"term":"yp1"}`
+	readProto(t, req("POST", quotePath, singleSpec, token), &quote)
+	rejectedRequest := fmt.Sprintf(`{"supplier_item_ids":["84"],"term":"yp1","request_key":"renew-rejected","confirmation_token":%q}`, quote.GetConfirmationToken())
+	var rejected v1.PurchaseOrder
+	readProto(t, req("POST", renewPath, rejectedRequest, token), &rejected)
+	if rejected.GetStatus() != "failed" || rejected.GetReleasedMinor() != 1000 || rejected.GetRefundedMinor() != 1000 || rejected.GetSettledMinor() != 0 {
+		t.Fatalf("explicit supplier rejection did not release the hold: %v", &rejected)
+	}
+	readProto(t, req("GET", "/v1/tenant/wallet", "", token), &wallet)
+	if wallet.GetAvailableMinor() != 1500 {
+		t.Fatalf("explicit supplier rejection changed wallet balance: %d", wallet.GetAvailableMinor())
 	}
 }
