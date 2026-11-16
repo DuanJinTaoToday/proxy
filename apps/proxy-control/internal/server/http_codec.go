@@ -20,8 +20,11 @@ func ReportingDecoder(maxBytes int64) http.DecodeRequestFunc {
 		switch body.(type) {
 		case *v1.StickySessionRequest, *v1.CreateSubaccountRequest, *v1.UpdateSubaccountRequest:
 			return decodeLimitedProto(req, message, "SUBACCOUNT_REQUEST", "subaccount request", "invalid subaccount body")
-		case *v1.QuoteWalletRechargeRequest, *v1.RechargeWalletRequest, *v1.PurchaseTrafficPackageRequest, *v1.PurchaseStaticIPRequest, *v1.StaticPurchaseQuoteRequest, *v1.StaticIPExportRequest, *v1.ResolveStaticPurchaseRequest:
+		case *v1.QuoteWalletRechargeRequest, *v1.RechargeWalletRequest, *v1.PurchaseTrafficPackageRequest, *v1.PurchaseStaticIPRequest, *v1.StaticPurchaseQuoteRequest, *v1.ResolveStaticPurchaseRequest:
 			return decodeLimitedProto(req, message, "WALLET_REQUEST", "wallet request", "invalid wallet body")
+		case *v1.StaticIPExportRequest:
+			// Up to 1,000 IDs of 128 bytes even with JSON escaping.
+			return decodeBoundedProto(req, message, 1<<20, "STATIC_IP_EXPORT", "static IP export request", "invalid static IP export body")
 		case *v1.UpdateTrafficPackageRequest, *v1.SetProductSaleRequest:
 			return decodeLimitedProto(req, message, "PRODUCT_REQUEST", "product request", "invalid product configuration body")
 		case *v1.SetLowBalanceThresholdRequest:
@@ -48,12 +51,15 @@ func ReportingDecoder(maxBytes int64) http.DecodeRequestFunc {
 }
 
 func decodeLimitedProto(req *stdhttp.Request, message proto.Message, reason, name, invalidMessage string) error {
-	const maxBody = 8 << 10
+	return decodeBoundedProto(req, message, 8<<10, reason, name, invalidMessage)
+}
+
+func decodeBoundedProto(req *stdhttp.Request, message proto.Message, maxBody int64, reason, name, invalidMessage string) error {
 	if req.ContentLength > maxBody {
 		return errors.New(413, reason+"_TOO_LARGE", name+" exceeds the body limit")
 	}
 	data, err := io.ReadAll(io.LimitReader(req.Body, maxBody+1))
-	if len(data) > maxBody {
+	if int64(len(data)) > maxBody {
 		return errors.New(413, reason+"_TOO_LARGE", name+" exceeds the body limit")
 	}
 	if err != nil || protojson.Unmarshal(data, message) != nil {

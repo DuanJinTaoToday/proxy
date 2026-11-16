@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"math"
 	"strings"
 	"time"
@@ -161,20 +162,24 @@ func (r *WalletRepository) PurchaseStatic(ctx context.Context, tenant string, p 
 			TermDays: selected.TermDays, UnitMinor: p.UnitMinor, Quantity: p.Quantity,
 		}},
 	}
-	created := false
+	var accepted wallet.Order
 	entry, err := r.apply(ctx, command, p, func(tx *gorm.DB, _ *wallet.Command) error {
 		if err := RequireProductSale(ctx, tx, product.Static); err != nil {
 			return err
 		}
 		return r.confirmStaticQuote(tenant, p)
 	}, func(tx *gorm.DB, e wallet.Entry) error {
-		created = true
-		return tx.Exec("INSERT INTO static_purchases (tenant_id, order_id) VALUES (?, ?)", tenant, e.OrderID).Error
+		if err := tx.Exec("INSERT INTO static_purchases (tenant_id, order_id) VALUES (?, ?)", tenant, e.OrderID).Error; err != nil {
+			return err
+		}
+		var err error
+		accepted, err = findPurchaseOrder(tx, tenant, e.OrderID, false)
+		return err
 	})
 	if err != nil {
 		return wallet.Order{}, err
 	}
-	if !created {
+	if accepted.ID == 0 {
 		return r.Order(ctx, tenant, entry.OrderID)
 	}
 
@@ -183,12 +188,20 @@ func (r *WalletRepository) PurchaseStatic(ctx context.Context, tenant string, p 
 	process, cancel := context.WithTimeout(context.WithoutCancel(ctx), 25*time.Second)
 	defer cancel()
 	delivery, err := r.static.Place(process, p)
-	if err == nil {
-		if err := r.recordStaticDelivery(process, tenant, entry.OrderID, delivery, "", "", delivery.Rejected, false); err != nil {
-			return wallet.Order{}, err
-		}
+	if err != nil {
+		slog.WarnContext(process, "static supplier purchase result is unknown", "order_id", accepted.ID)
+		return accepted, nil
 	}
-	return r.Order(process, tenant, entry.OrderID)
+	if err := r.recordStaticDelivery(process, tenant, entry.OrderID, delivery, "", "", delivery.Rejected, false); err != nil {
+		slog.WarnContext(process, "static purchase delivery could not be recorded", "order_id", accepted.ID)
+		return accepted, nil
+	}
+	order, err := r.Order(process, tenant, entry.OrderID)
+	if err != nil {
+		slog.WarnContext(process, "static purchase settlement could not be read", "order_id", accepted.ID)
+		return accepted, nil
+	}
+	return order, nil
 }
 
 func (r *WalletRepository) StaticAllocations(ctx context.Context, tenant string, ids []string, onlyActive bool) ([]wallet.StaticAllocation, error) {
