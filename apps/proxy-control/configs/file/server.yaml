@@ -23,6 +23,12 @@ server:
 #       database_dsn: ""
 
 biz:
+  # 使用独立、持久保存的 32 随机字节，无填充 base64url 编码。
+  # 在 server.local.yaml 填写密钥及客户实际使用的 SOCKS5 网关地址。
+  # subaccounts:
+  #   password_key: ""
+  #   gateway_host: ""
+  #   gateway_port: 1080
   usage:
     # 单次 Recorder 上报允许的最大记录条数。
     max_batch_records: 1000

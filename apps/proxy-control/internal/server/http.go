@@ -13,6 +13,12 @@ func NewHTTPServer(addr string, accessService *service.Access, options ...http.S
 	return srv
 }
 
+func RegisterSubaccounts(srv *http.Server, subaccounts *service.Subaccounts) {
+	v1.RegisterSubaccountServiceHTTPServer(srv, subaccounts)
+	v1.RegisterGatewayAuthServiceHTTPServer(srv, subaccounts)
+	v1.RegisterStickySessionServiceHTTPServer(srv, subaccounts)
+}
+
 func RegisterProduct(srv *http.Server, product *service.Product) {
 	v1.RegisterProductServiceHTTPServer(srv, product)
 }

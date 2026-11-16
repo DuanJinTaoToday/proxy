@@ -127,6 +127,63 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/proxycontrol.v1.RefreshAuthStateResponse'
+    /v1/gateway/sticky-sessions:acquire:
+        post:
+            tags:
+                - StickySessionService
+            summary: 获取共享 SID 或领取首次拨号租约
+            operationId: StickySessionService_AcquireStickySession
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.StickySessionRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.StickySession'
+    /v1/gateway/sticky-sessions:commit:
+        post:
+            tags:
+                - StickySessionService
+            summary: 确认首次成功拨号并开始会话计时
+            operationId: StickySessionService_CommitStickySession
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.StickySessionRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.StickySession'
+    /v1/gateway/sticky-sessions:release:
+        post:
+            tags:
+                - StickySessionService
+            summary: 释放未成功拨号的会话租约
+            operationId: StickySessionService_ReleaseStickySession
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.StickySessionRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.BaseResp'
     /v1/operations/access/login:
         post:
             tags:
@@ -719,6 +776,100 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/proxycontrol.v1.PurchaseOrder'
+    /v1/tenant/subaccounts:
+        get:
+            tags:
+                - SubaccountService
+            summary: 列出当前租户的代理子账号
+            operationId: SubaccountService_ListSubaccounts
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.Subaccounts'
+        post:
+            tags:
+                - SubaccountService
+            summary: 创建代理子账号
+            operationId: SubaccountService_CreateSubaccount
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.CreateSubaccountRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.Subaccount'
+    /v1/tenant/subaccounts/{clientId}:
+        patch:
+            tags:
+                - SubaccountService
+            summary: 按字段更新代理子账号
+            operationId: SubaccountService_UpdateSubaccount
+            parameters:
+                - name: clientId
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.UpdateSubaccountRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.Subaccount'
+    /v1/tenant/subaccounts/{clientId}/password:
+        get:
+            tags:
+                - SubaccountService
+            summary: 查看当前租户子账号的密码
+            operationId: SubaccountService_RevealSubaccountPassword
+            parameters:
+                - name: clientId
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.SubaccountPassword'
+    /v1/tenant/subaccounts/{clientId}/proxy-config:
+        get:
+            tags:
+                - SubaccountService
+            summary: 获取已启用子账号的 SOCKS5 接入配置
+            operationId: SubaccountService_GetProxyConfig
+            parameters:
+                - name: clientId
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.SubaccountProxyConfig'
     /v1/tenant/wallet:
         get:
             tags:
@@ -785,6 +936,9 @@ components:
                     allOf:
                         - $ref: '#/components/schemas/proxycontrol.v1.AuthQuota'
                     description: 有效凭据所属租户的流量准入状态。
+                credentialVersion:
+                    type: string
+                    description: Monotonic credential revision, including password and active status changes.
         proxycontrol.v1.BaseResp:
             type: object
             properties: {}
@@ -815,6 +969,20 @@ components:
                 hasSessionRecords:
                     type: boolean
                     description: 该代次是否存在会话记录，保留字段缺失与显式 false 的区别。
+        proxycontrol.v1.CreateSubaccountRequest:
+            type: object
+            properties:
+                name:
+                    type: string
+                password:
+                    type: string
+                remark:
+                    type: string
+                active:
+                    type: boolean
+                limitBytes:
+                    type: string
+                    description: 累计流量上限，单位为字节。缺省表示不限。
         proxycontrol.v1.ListRecordAnomaliesResponse:
             type: object
             properties:
@@ -1150,6 +1318,77 @@ components:
                 acceptanceEvidence:
                     type: string
                     description: 开售时填写对应验收记录或链接。
+        proxycontrol.v1.StickySession:
+            type: object
+            properties:
+                upstreamSid:
+                    type: string
+                    description: Nine-digit SID for the upstream SOCKS5 credentials.
+                leaseToken:
+                    type: string
+                    description: Empty for an already established session.
+                expiresInMillis:
+                    type: string
+                    description: Confirmed lifetime remaining, in milliseconds. Zero while a lease is pending.
+        proxycontrol.v1.StickySessionRequest:
+            type: object
+            properties:
+                reference:
+                    type: string
+                    description: Reference for the subaccount bound to the authenticated gateway.
+                sessionKey:
+                    type: string
+                    description: Empty is the subaccount's default session.
+                leaseToken:
+                    type: string
+                    description: Returned by acquire when this gateway owns the first dial.
+                requestKey:
+                    type: string
+                    description: Stable across retries of a single acquire operation.
+        proxycontrol.v1.Subaccount:
+            type: object
+            properties:
+                clientId:
+                    type: string
+                name:
+                    type: string
+                remark:
+                    type: string
+                active:
+                    type: boolean
+                limitBytes:
+                    type: string
+                usedBytes:
+                    type: string
+                    description: 历史累计流量，单位为字节。
+        proxycontrol.v1.SubaccountPassword:
+            type: object
+            properties:
+                password:
+                    type: string
+        proxycontrol.v1.SubaccountProxyConfig:
+            type: object
+            properties:
+                host:
+                    type: string
+                port:
+                    type: integer
+                    format: uint32
+                username:
+                    type: string
+                    description: 由主账号名和子账号名组成的基础用户名，不含 SID 后缀。
+                password:
+                    type: string
+                explicitSid:
+                    type: boolean
+                    description: 为 true 时可追加 -sid-<会话标识>；默认会话无需追加。
+        proxycontrol.v1.Subaccounts:
+            type: object
+            properties:
+                accounts:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/proxycontrol.v1.Subaccount'
         proxycontrol.v1.SubmitBatchRequest:
             type: object
             properties:
@@ -1233,6 +1472,23 @@ components:
                     type: string
                     description: 该会话最后一条已记录数据的时间。
                     format: date-time
+        proxycontrol.v1.UpdateSubaccountRequest:
+            type: object
+            properties:
+                clientId:
+                    type: string
+                password:
+                    type: string
+                remark:
+                    type: string
+                active:
+                    type: boolean
+                limitBytes:
+                    type: string
+                updateMask:
+                    type: string
+                    description: 提交 limitBytes 且省略 limit_bytes 时取消上限。
+                    format: field-mask
         proxycontrol.v1.UpdateTrafficPackageRequest:
             type: object
             properties:
@@ -1406,5 +1662,7 @@ tags:
     - name: HealthService
     - name: ProductService
     - name: ReportingService
+    - name: StickySessionService
+    - name: SubaccountService
     - name: UsageService
     - name: WalletService

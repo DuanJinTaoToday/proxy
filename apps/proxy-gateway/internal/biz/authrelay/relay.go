@@ -76,7 +76,7 @@ func (r *Relay) Authenticate(ctx context.Context, username, password, client str
 	return id, reason
 }
 
-func (r *Relay) AuthenticateTenant(ctx context.Context, username, password, _ string) (id, tenant, reason string) {
+func (r *Relay) AuthenticateTenant(ctx context.Context, username, password, _ string) (id, reference, reason string) {
 	if username == "" || password == "" || len(username) > 255 || len(password) > 255 {
 		return "", "", "INVALID_CREDENTIAL"
 	}
@@ -117,7 +117,7 @@ func (r *Relay) AuthenticateTenant(ctx context.Context, username, password, _ st
 		return "", "", "QUOTA_INSUFFICIENT"
 	default:
 		authmetrics.Counters.Add("quota_cache_hit", 1)
-		return c.GetClientId(), c.GetTenantId(), "OK"
+		return c.GetClientId(), c.GetReference(), "OK"
 	}
 }
 
@@ -179,8 +179,9 @@ func (r *Relay) apply(snapshots []*v1.AuthSnapshot, started time.Time, epoch, ge
 	currentGeneration, reportingReady := r.quotaRenewal()
 	renewQuota = renewQuota && reportingReady && currentGeneration == generation
 	for _, s := range snapshots {
-		if existing := r.credentials[s.GetUsername()]; !started.Before(existing.synced) &&
-			(existing.snapshot == nil || existing.snapshot.GetActive() || !s.GetActive()) {
+		existing := r.credentials[s.GetUsername()]
+		oldVersion, newVersion := existing.snapshot.GetCredentialVersion(), s.GetCredentialVersion()
+		if newVersion > oldVersion || newVersion == oldVersion && !started.Before(existing.synced) {
 			r.credentials[s.GetUsername()] = credential{s, started}
 		}
 		if existing := r.quotas[s.GetTenantId()]; renewQuota && s.GetQuota() != nil && !started.Before(existing.synced) {

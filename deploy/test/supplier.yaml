@@ -1,0 +1,15 @@
+authers:
+  - name: mock-auth
+    plugin:
+      type: http
+      addr: http://console:8080/supplier-auth
+      timeout: 500ms
+
+services:
+  - name: supplier
+    addr: ":1081"
+    listener:
+      type: tcp
+    handler:
+      type: socks5
+      auther: mock-auth

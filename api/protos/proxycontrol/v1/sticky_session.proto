@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package proxycontrol.v1;
+
+import "google/api/annotations.proto";
+import "openapiv3/annotations.proto";
+import "validate/validate.proto";
+import "proxycontrol/v1/common.proto";
+
+option go_package = "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1";
+
+service StickySessionService {
+  rpc AcquireStickySession(StickySessionRequest) returns (StickySession) {
+    option (google.api.http) = { post: "/v1/gateway/sticky-sessions:acquire" body: "*" };
+    option (openapi.v3.operation) = { summary: "获取共享 SID 或领取首次拨号租约" };
+  }
+  rpc CommitStickySession(StickySessionRequest) returns (StickySession) {
+    option (google.api.http) = { post: "/v1/gateway/sticky-sessions:commit" body: "*" };
+    option (openapi.v3.operation) = { summary: "确认首次成功拨号并开始会话计时" };
+  }
+  rpc ReleaseStickySession(StickySessionRequest) returns (BaseResp) {
+    option (google.api.http) = { post: "/v1/gateway/sticky-sessions:release" body: "*" };
+    option (openapi.v3.operation) = { summary: "释放未成功拨号的会话租约" };
+  }
+}
+
+message StickySessionRequest {
+  // Reference for the subaccount bound to the authenticated gateway.
+  string reference = 1 [(validate.rules).string.uuid = true];
+  // Empty is the subaccount's default session.
+  string session_key = 2 [(validate.rules).string.pattern = "^[a-z0-9]{0,32}$"];
+  // Returned by acquire when this gateway owns the first dial.
+  string lease_token = 3 [(validate.rules).string = {ignore_empty: true, uuid: true}];
+  // Stable across retries of a single acquire operation.
+  string request_key = 4 [(validate.rules).string = {ignore_empty: true, uuid: true}];
+}
+
+message StickySession {
+  // Nine-digit SID for the upstream SOCKS5 credentials.
+  int64 upstream_sid = 1;
+  // Empty for an already established session.
+  string lease_token = 2;
+  // Confirmed lifetime remaining, in milliseconds. Zero while a lease is pending.
+  int64 expires_in_millis = 3;
+}

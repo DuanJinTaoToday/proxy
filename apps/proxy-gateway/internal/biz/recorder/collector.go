@@ -10,10 +10,12 @@ import (
 	"io"
 	"log/slog"
 	"os"
+	"strings"
 	"time"
 	"unicode/utf8"
 
 	v1 "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/pkg/connectionid"
 )
 
 const (
@@ -40,10 +42,11 @@ type Spool interface {
 }
 
 type Config struct {
-	GatewayID  string
-	MaxRecords int
-	MaxBytes   int
-	Interval   time.Duration
+	GatewayID     string
+	ConnectionKey string
+	MaxRecords    int
+	MaxBytes      int
+	Interval      time.Duration
 }
 
 type retry struct {
@@ -75,6 +78,11 @@ func New(cfg Config, spool Spool, reporter Reporter) *Collector {
 	}
 	return &Collector{cfg: cfg, spool: spool, reporter: reporter, retries: make(map[string]retry), pendingSince: make(map[string]time.Time),
 		now: time.Now, admission: admissionState{blocked: true, pending: make(map[string]pendingFile)}}
+}
+
+// SetConnectionKey supplies the spool's durable key before the collector starts.
+func (c *Collector) SetConnectionKey(key string) {
+	c.cfg.ConnectionKey = key
 }
 
 func (c *Collector) Run(ctx context.Context) {
@@ -263,7 +271,7 @@ func (c *Collector) scanBoot(ctx context.Context, boot string) error {
 			readErr = PermanentError{fmt.Errorf("invalid UTF-8 at offset %d", offset)}
 			break
 		}
-		record := &v1.RecorderLine{FileId: fileID, FileOffset: offset, EndOffset: offset + uint64(len(line)), Line: string(content)}
+		record := &v1.RecorderLine{FileId: fileID, FileOffset: offset, EndOffset: offset + uint64(len(line)), Line: c.stableRecord(content)}
 		encoded, err := json.Marshal(record)
 		if err != nil {
 			return err
@@ -297,6 +305,36 @@ func (c *Collector) scanBoot(ctx context.Context, boot string) error {
 		return err
 	}
 	return readErr
+}
+
+func (c *Collector) stableRecord(content []byte) string {
+	var row map[string]json.RawMessage
+	if c.cfg.ConnectionKey == "" || json.Unmarshal(content, &row) != nil {
+		return string(content)
+	}
+	for field, value := range row {
+		if !strings.EqualFold(field, "clientID") {
+			continue
+		}
+		var id string
+		if json.Unmarshal(value, &id) != nil {
+			continue
+		}
+		stable, ok := connectionid.Stable(c.cfg.ConnectionKey, id)
+		if !ok {
+			return strings.Repeat(" ", len(content)) // Keep physical offsets; quarantine invalid identity.
+		}
+		if stable != id {
+			row[field], _ = json.Marshal(stable)
+			normalized, _ := json.Marshal(row)
+			// The reported line must still match the source byte span.
+			if len(normalized) > len(content) {
+				return strings.Repeat(" ", len(content))
+			}
+			return string(normalized) + strings.Repeat(" ", len(content)-len(normalized))
+		}
+	}
+	return string(content)
 }
 
 func (c *Collector) submit(ctx context.Context, boot string, batch *v1.SubmitBatchRequest) error {

@@ -10,6 +10,7 @@ import (
 
 var ProviderSet = wire.NewSet(
 	ProvideAccounts,
+	ProvideSubaccounts,
 	ProvideWalletRepository,
 	ProvideProductRepository,
 	wire.Bind(new(product.Repository), new(*ProductRepository)),

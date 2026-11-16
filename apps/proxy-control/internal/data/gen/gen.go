@@ -39,7 +39,7 @@ func generateModels(db *gorm.DB) error {
 		"tenants", "tenant_admins", "operators", "operator_permissions", "wallets", "wallet_entries", "purchase_orders", "wallet_recharge_quotes", "order_items",
 		"product_sales", "traffic_packages", "product_change_log",
 		"gateways", "gateway_tokens", "gateway_boots", "ingest_cursors",
-		"tenant_balances",
+		"tenant_balances", "proxy_subaccounts", "gateway_auth_references", "sticky_sessions",
 		"usage_minutely", "usage_daily", "usage_archive_state", "record_anomalies", "usage_gaps",
 	} {
 		g.GenerateModel(name)

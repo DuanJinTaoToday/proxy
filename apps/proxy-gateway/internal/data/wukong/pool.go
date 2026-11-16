@@ -13,6 +13,10 @@ import (
 	"sync"
 
 	"time"
+
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/biz/stickysession"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/data/repo"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/pkg/connectionid"
 )
 
 const (
@@ -27,28 +31,29 @@ type entry struct {
 }
 
 type Pool struct {
+	sessions           *stickysession.Manager
 	probeTLS           *tls.Config
 	probeTimeout       time.Duration
 	poolUnavailable    bool
 	mu                 sync.Mutex
 	entries            []entry
-	preferred          map[string]int
-	clients            map[string]clientTenant
+	clients            map[string]authenticatedSession
 	tickets            map[string]routeTicket
 	username, password string
 	primary, backup    string
-	sids               *sidStore
 	probeSID           int64
 	token              string
+	connectionKey      string
 }
 
-type clientTenant struct {
-	tenant string
-	until  time.Time
+type authenticatedSession struct {
+	identity  stickysession.Identity
+	reference string
+	until     time.Time
 }
 
-func Open(dir, username, password string, entries []string, primary, backup, token string, timeout time.Duration) (*Pool, func(), error) {
-	if len(entries) == 0 || username == "" || len(username)+36 > 255 || password == "" || len(password) > 255 {
+func Open(dir, username, password string, entries []string, primary, backup, token string, timeout time.Duration, control stickysession.Control) (*Pool, func(), error) {
+	if control == nil || len(entries) == 0 || username == "" || len(username)+36 > 255 || password == "" || len(password) > 255 {
 		return nil, nil, errors.New("configure Wukong entries and SOCKS5 credentials")
 	}
 	for _, raw := range []string{primary, backup} {
@@ -66,10 +71,15 @@ func Open(dir, username, password string, entries []string, primary, backup, tok
 	if timeout < 0 || timeout > 15*time.Second {
 		return nil, nil, errors.New("the Wukong probe timeout must be between 1 and 15 seconds")
 	}
+	connectionKey, err := repo.OpenConnectionKey(dir)
+	if err != nil {
+		return nil, nil, err
+	}
 	pool := &Pool{
-		probeTimeout: timeout,
-		username:     username, password: password, primary: primary, backup: backup, token: token,
-		preferred: make(map[string]int), clients: make(map[string]clientTenant), tickets: make(map[string]routeTicket),
+		connectionKey: connectionKey,
+		probeTimeout:  timeout, sessions: stickysession.New(control),
+		username: username, password: password, primary: primary, backup: backup, token: token,
+		clients: make(map[string]authenticatedSession), tickets: make(map[string]routeTicket),
 	}
 	seen := make(map[string]bool)
 	for _, address := range entries {
@@ -85,7 +95,6 @@ func Open(dir, username, password string, entries []string, primary, backup, tok
 	if err != nil {
 		return nil, nil, err
 	}
-	pool.sids = store
 	pool.probeSID, err = store.get("probe")
 	if err != nil {
 		release()
@@ -94,11 +103,15 @@ func Open(dir, username, password string, entries []string, primary, backup, tok
 	return pool, release, nil
 }
 
-func (p *Pool) RememberClient(client, tenant string) {
+func (p *Pool) RememberSession(client, reference, sid string) string {
+	id := connectionid.New(p.connectionKey, client)
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	p.clients[client] = clientTenant{tenant: tenant, until: time.Now().Add(time.Minute)}
+	p.clients[id] = authenticatedSession{identity: stickysession.Identity{Client: client, Key: sid}, reference: reference, until: time.Now().Add(5 * time.Second)}
+	return id
 }
+
+func (p *Pool) ConnectionKey() string { return p.connectionKey }
 
 func (p *Pool) Run(ctx context.Context) {
 	ticker := time.NewTicker(probeInterval)
@@ -133,9 +146,10 @@ func (p *Pool) check(ctx context.Context) {
 		})
 	}
 	probes.Wait()
+	p.sessions.Prune(time.Now())
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	unavailable := p.selectEntry("") < 0
+	unavailable := p.selectEntry(-1) < 0
 	if unavailable && !p.poolUnavailable {
 		slog.Warn("Wukong pool has no healthy entries")
 	}
@@ -183,9 +197,9 @@ func (p *Pool) observe(index int, result probeResult) {
 }
 
 // Caller holds p.mu.
-func (p *Pool) selectEntry(tenant string) int {
-	if index, ok := p.preferred[tenant]; ok && p.entries[index].healthy {
-		return index
+func (p *Pool) selectEntry(preferred int) int {
+	if preferred >= 0 && p.entries[preferred].healthy {
+		return preferred
 	}
 	for index := range p.entries {
 		if p.entries[index].healthy {

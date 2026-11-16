@@ -14,6 +14,7 @@ import (
 
 	v1 "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/biz/authrelay"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/biz/stickysession"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
@@ -53,6 +54,22 @@ func (c *HTTPControl) Refresh(ctx context.Context, refs []string) ([]*v1.AuthSna
 	return result.GetSnapshots(), err
 }
 
+func (c *HTTPControl) AcquireStickySession(ctx context.Context, req *v1.StickySessionRequest) (*v1.StickySession, error) {
+	result := &v1.StickySession{}
+	err := c.post(ctx, "/v1/gateway/sticky-sessions:acquire", req, result)
+	return result, err
+}
+
+func (c *HTTPControl) CommitStickySession(ctx context.Context, req *v1.StickySessionRequest) (*v1.StickySession, error) {
+	result := &v1.StickySession{}
+	err := c.post(ctx, "/v1/gateway/sticky-sessions:commit", req, result)
+	return result, err
+}
+
+func (c *HTTPControl) ReleaseStickySession(ctx context.Context, req *v1.StickySessionRequest) error {
+	return c.post(ctx, "/v1/gateway/sticky-sessions:release", req, &v1.BaseResp{})
+}
+
 func (c *HTTPControl) post(ctx context.Context, path string, input, output proto.Message) error {
 	body, err := protojson.Marshal(input)
 	if err != nil {
@@ -70,6 +87,9 @@ func (c *HTTPControl) post(ctx context.Context, path string, input, output proto
 		return err
 	}
 	defer func() { _ = response.Body.Close() }()
+	if _, sticky := input.(*v1.StickySessionRequest); sticky && response.StatusCode >= 400 && response.StatusCode < 500 {
+		return stickysession.ErrRejected
+	}
 	switch response.StatusCode {
 	case http.StatusUnauthorized, http.StatusForbidden:
 		return authrelay.ErrGatewayDenied

@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"testing"
@@ -11,6 +13,7 @@ import (
 	v1 "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/biz/recorder"
 	recorderdata "github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/data/repo"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/pkg/connectionid"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -208,5 +211,49 @@ func TestCollectorSavesGoodPrefixAndContinuesOtherBoots(t *testing.T) {
 	}
 	if len(offsets) != 2 || offsets[0] != 2 || offsets[1] != 4 || len(out.batches) != 4 {
 		t.Fatalf("valid prefixes and other boot were not independently acknowledged: %v", out.batches)
+	}
+}
+func TestCollectorReportsStableClientIDAfterRestart(t *testing.T) {
+	root := t.TempDir()
+	dir := filepath.Join(root, "boot-a")
+	if err := os.Mkdir(dir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	const key = "recorder-test-signing-key"
+	identity := connectionid.New(key, "stable-client")
+	line := fmt.Sprintf(`{"clientID":%q,"inputBytes":9223372036854775807}`, identity)
+	invalid := fmt.Sprintf(`{"clientID":%q}`, identity+"tampered")
+	path := filepath.Join(dir, "sessions.jsonl")
+	original := line + "\r\n" + invalid + "\n"
+	if err := os.WriteFile(path, []byte(original), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	cfg := recorder.Config{GatewayID: "gateway", ConnectionKey: key}
+	out := &reporting{fail: true}
+	if err := recorder.New(cfg, recorderdata.NewSpool(root), out).Scan(t.Context()); err == nil {
+		t.Fatal("expected lost acknowledgement")
+	}
+	out.fail = false
+	if err := recorder.New(cfg, recorderdata.NewSpool(root), out).Scan(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	for _, batch := range out.batches {
+		lines := batch.GetRecords()
+		if len(lines) != 2 || lines[0].GetEndOffset() != uint64(len(line)+2) ||
+			len(lines[0].GetLine()) != len(line) || lines[1].GetEndOffset() != uint64(len(original)) ||
+			len(lines[1].GetLine()) != len(invalid) || json.Valid([]byte(lines[1].GetLine())) {
+			t.Fatalf("normalization changed source offsets or accepted a tampered identity: %v", batch)
+		}
+		var parsed struct {
+			ClientID   string
+			InputBytes int64
+		}
+		if err := json.Unmarshal([]byte(lines[0].GetLine()), &parsed); err != nil ||
+			parsed.ClientID != "stable-client" || parsed.InputBytes != math.MaxInt64 {
+			t.Fatalf("collector lost stable identity or exact byte counters: %v", parsed)
+		}
+	}
+	if data, err := os.ReadFile(path); err != nil || string(data) != original {
+		t.Fatal("collector changed retained Recorder file")
 	}
 }

@@ -3,12 +3,13 @@ package biz
 import (
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/access"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/product"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/subaccount"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/usage"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/wallet"
 	"github.com/google/wire"
 )
 
-var ProviderSet = wire.NewSet(
+var ProviderSet = wire.NewSet(subaccount.NewService,
 	access.NewPersistent,
 	wallet.NewService,
 	product.NewService,

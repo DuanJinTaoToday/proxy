@@ -76,7 +76,7 @@ services:
       <<: *build
       target: wukong-mock
     platform: linux/amd64
-    command: ["-L", "socks5://:1081"]
+    command: ["-C", "/config/supplier.yaml"]
     healthcheck:
       test: ["CMD-SHELL", "awk '$$2 ~ /:0439$$/ && $$4 == \"0A\" { ready = 1 } END { exit !ready }' /proc/net/tcp /proc/net/tcp6"]
       interval: 2s
@@ -98,6 +98,8 @@ services:
         condition: service_healthy
     ports:
       - "127.0.0.1:1080:1080"
+    environment:
+      SSL_CERT_FILE: /tls/caddy/pki/authorities/local/root.crt
     volumes:
       - caddy:/tls:ro
       - recorder:/spool

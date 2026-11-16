@@ -14,6 +14,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -26,19 +27,64 @@ import (
 	"golang.org/x/net/proxy"
 )
 
-type tenants struct{}
+type tenants struct{ version atomic.Int64 }
 
-func (tenants) Load(_ context.Context, username, password string) (*v1.AuthSnapshot, error) {
-	if password != "pass" || (username != "A" && username != "A2" && username != "B") {
-		return nil, authrelay.ErrCredentialDenied
+func (t *tenants) snapshot(username string) (*v1.AuthSnapshot, string) {
+	if username != "A" && username != "A2" && username != "B" {
+		return nil, ""
+	}
+	version, password := int64(1), "pass"
+	if username == "A" {
+		version = t.version.Load()
+		if version >= 2 {
+			password = "new456"
+		}
 	}
 	hash := sha256.Sum256([]byte(password))
-	return &v1.AuthSnapshot{Reference: username, ClientId: username, Username: username, TenantId: username[:1],
-		Active: true, PasswordHash: hash[:], Quota: &v1.AuthQuota{AvailableBytes: 10}}, nil
+	snapshot := &v1.AuthSnapshot{Reference: username, ClientId: username, Username: username, TenantId: username[:1],
+		Active: version != 3, CredentialVersion: version, PasswordHash: hash[:], Quota: &v1.AuthQuota{AvailableBytes: 10}}
+	if !snapshot.Active {
+		snapshot.PasswordHash, snapshot.Quota = nil, nil
+	}
+	return snapshot, password
 }
 
-func (tenants) Refresh(context.Context, []string) ([]*v1.AuthSnapshot, error) {
-	return nil, authrelay.ErrGatewayDenied
+func (t *tenants) Load(_ context.Context, username, password string) (*v1.AuthSnapshot, error) {
+	snapshot, want := t.snapshot(username)
+	if snapshot == nil || password != want {
+		return nil, authrelay.ErrCredentialDenied
+	}
+	if !snapshot.Active {
+		return nil, authrelay.ErrCredentialDisabled
+	}
+	return snapshot, nil
+}
+
+func (t *tenants) Refresh(_ context.Context, refs []string) ([]*v1.AuthSnapshot, error) {
+	snapshots := make([]*v1.AuthSnapshot, 0, len(refs))
+	for _, name := range refs {
+		snapshot, _ := t.snapshot(name)
+		snapshots = append(snapshots, snapshot)
+	}
+	return snapshots, nil
+}
+
+type testSessions struct {
+	store *sidStore
+}
+
+func (s testSessions) AcquireStickySession(_ context.Context, req *v1.StickySessionRequest) (*v1.StickySession, error) {
+	// Keep the integration fixture on the same customer SID range as the control plane.
+	sid, err := s.store.get("client:" + req.GetReference() + ":" + req.GetSessionKey())
+	return &v1.StickySession{UpstreamSid: sid, ExpiresInMillis: time.Hour.Milliseconds()}, err
+}
+
+func (testSessions) CommitStickySession(context.Context, *v1.StickySessionRequest) (*v1.StickySession, error) {
+	panic("test fixture only returns established sessions")
+}
+
+func (testSessions) ReleaseStickySession(context.Context, *v1.StickySessionRequest) error {
+	panic("test fixture only returns established sessions")
 }
 
 type testEntry struct {
@@ -123,7 +169,12 @@ func TestGOSTWukongPool(t *testing.T) {
 	entries := []string{first.address, second.address}
 	dir := t.TempDir()
 	const token = "local-pool-token"
-	pool, release, err := Open(dir, "supplier", "supplier-pass", entries, target.URL+"/primary", target.URL+"/backup", token, 0)
+	fixture, closeFixture, err := openSIDs(dir, "fixture")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer closeFixture()
+	pool, release, err := Open(dir, "supplier", "supplier-pass", entries, target.URL+"/primary", target.URL+"/backup", token, 0, testSessions{fixture})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -133,8 +184,11 @@ func TestGOSTWukongPool(t *testing.T) {
 	pool.probeTLS = &tls.Config{RootCAs: roots}
 	ctx, cancel := context.WithTimeout(t.Context(), 20*time.Second)
 	defer cancel()
-	auth := service.NewAuthRelay(authrelay.New(tenants{}, nil), token)
-	auth.OnAuthenticated(pool.RememberClient)
+	control := &tenants{}
+	control.version.Store(1)
+	authState := authrelay.New(control, nil)
+	auth := service.NewAuthRelay(authState, token)
+	auth.OnSession(pool.RememberSession)
 	var routeUnavailable atomic.Bool
 	relay := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
@@ -186,19 +240,19 @@ func TestGOSTWukongPool(t *testing.T) {
 		}
 	}
 
-	dial := func(user string) (net.Conn, error) {
+	dial := func(user, password, target string) (net.Conn, error) {
 		t.Helper()
-		dialer, err := proxy.SOCKS5("tcp", socksAddr, &proxy.Auth{User: user, Password: "pass"}, &net.Dialer{})
+		dialer, err := proxy.SOCKS5("tcp", socksAddr, &proxy.Auth{User: user, Password: password}, &net.Dialer{})
 		if err != nil {
 			t.Fatal(err)
 		}
 		attempt, stop := context.WithTimeout(ctx, 2*time.Second)
 		defer stop()
-		return dialer.(proxy.ContextDialer).DialContext(attempt, "tcp", probeAddress)
+		return dialer.(proxy.ContextDialer).DialContext(attempt, "tcp", target)
 	}
 	reject := func() {
 		t.Helper()
-		conn, err := dial("A")
+		conn, err := dial("A", "pass", probeAddress)
 		if err == nil {
 			_ = conn.Close()
 			t.Fatal("unexpected connection to directly reachable target")
@@ -238,8 +292,37 @@ func TestGOSTWukongPool(t *testing.T) {
 	_ = a2.Close()
 	b, sidB := open("B", first)
 	_ = b.Close()
-	if !regexp.MustCompile("^supplier-res-any-sid-[1-9][0-9]{8}-sidtime-3600$").MatchString(sidA) || sidA != sidA2 || sidA == sidB {
+	if !regexp.MustCompile("^supplier-res-any-sid-[1-9][0-9]{8}-sidtime-3600$").MatchString(sidA) || sidA == sidA2 || sidA == sidB {
 		t.Fatal("wrong SID assignment across tenants and credentials")
+	}
+
+	var concurrent sync.WaitGroup
+	for _, user := range []string{"A-sid-first", "A-sid-second"} {
+		concurrent.Go(func() {
+			conn, err := dial(user, "pass", "example.invalid:443")
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			_ = conn.Close()
+		})
+	}
+	concurrent.Wait()
+	concurrentSIDs := map[string]bool{}
+	for range 2 {
+		select {
+		case upstream := <-first.users:
+			concurrentSIDs[upstream] = true
+		case <-ctx.Done():
+			t.Fatal("concurrent SID did not reach supplier")
+		}
+	}
+	s1, sid1 := open("A-sid-first", first)
+	_ = s1.Close()
+	s2, sid2 := open("A-sid-second", first)
+	_ = s2.Close()
+	if sid1 == sid2 || sid1 == sidA || sid2 == sidA || !concurrentSIDs[sid1] || !concurrentSIDs[sid2] {
+		t.Fatal("parallel explicit sessions did not keep separate reusable SIDs")
 	}
 
 	first.down.Store(true)
@@ -281,6 +364,46 @@ func TestGOSTWukongPool(t *testing.T) {
 		t.Fatal("SID changed after recovery")
 	}
 
+	changeCredentials := func(version int64) {
+		t.Helper()
+		control.version.Store(version)
+		if err := authState.Refresh(t.Context()); err != nil {
+			t.Fatal(err)
+		}
+	}
+	dialChanged := func(password string, want bool) {
+		t.Helper()
+		conn, err := dial("A", password, "example.invalid:443")
+		if (err == nil) != want {
+			t.Fatalf("credential change acceptance=%t, want %t", err == nil, want)
+		}
+		if conn != nil {
+			_ = conn.Close()
+			select {
+			case sid := <-first.users:
+				if sid != sidA {
+					t.Fatal("credential change replaced default SID")
+				}
+			case <-ctx.Done():
+				t.Fatal("no upstream connection")
+			}
+		}
+	}
+	changeCredentials(2)
+	dialChanged("pass", false)
+	dialChanged("new456", true)
+	changeCredentials(3)
+	dialChanged("new456", false)
+	_ = live.SetDeadline(time.Now().Add(time.Second))
+	if _, err := live.Write([]byte("alive")); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := io.ReadFull(live, echo); err != nil || string(echo) != "alive" {
+		t.Fatal("disable disconnected established stream")
+	}
+	changeCredentials(4)
+	dialChanged("new456", true)
+
 	probeSID := pool.probeSID
 	release()
 	store, unlock, err := openSIDs(dir, "supplier")
@@ -288,8 +411,11 @@ func TestGOSTWukongPool(t *testing.T) {
 		t.Fatal(err)
 	}
 	release = unlock
-	for tenant, username := range map[string]string{"tenant:A": sidA, "tenant:B": sidB} {
-		sid, err := store.get(tenant)
+	if storedProbe, err := store.get("probe"); err != nil || storedProbe != probeSID {
+		t.Fatal("probe SID changed after restart")
+	}
+	for tenant, username := range map[string]string{"client:A:": sidA, "client:B:": sidB} {
+		sid, err := fixture.get(tenant)
 		if err != nil || sid == probeSID || !strings.Contains(username, "-sid-"+strconv.FormatInt(sid, 10)+"-") {
 			t.Fatal("SID was not retained on reopen or collided with probe")
 		}

@@ -23,7 +23,7 @@ type sidStore struct {
 
 func openSIDs(dir, account string) (*sidStore, func(), error) {
 	name := fmt.Sprintf("wukong-sids-%x.json", sha256.Sum256([]byte(account)))
-	release, err := lockFile(filepath.Join(dir, name+".lock"))
+	release, err := repo.LockStateFile(filepath.Join(dir, name+".lock"))
 	if err != nil {
 		return nil, nil, fmt.Errorf("lock Wukong SID state: %w", err)
 	}
@@ -54,15 +54,19 @@ func openSIDs(dir, account string) (*sidStore, func(), error) {
 func (s *sidStore) get(key string) (int64, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if sid := s.values[key]; sid != 0 {
+	if sid := s.values[key]; sid != 0 && (key != "probe" || sid >= 900000000) {
 		return sid, nil
 	}
-	for len(s.used) < 900000000 {
-		draw, err := rand.Int(rand.Reader, big.NewInt(900000000))
+	width, start := int64(800000000), int64(100000000)
+	if key == "probe" {
+		width, start = 100000000, 900000000
+	}
+	for int64(len(s.used)) < width {
+		draw, err := rand.Int(rand.Reader, big.NewInt(width))
 		if err != nil {
 			return 0, err
 		}
-		sid := draw.Int64() + 100000000
+		sid := draw.Int64() + start
 		if s.used[sid] {
 			continue
 		}

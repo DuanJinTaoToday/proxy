@@ -32,6 +32,7 @@ ENTRYPOINT ["proxy-control", "-conf", "/config/init.yaml"]
 
 FROM alpine:3.23 AS wukong-mock
 COPY --from=gost-download /tmp/gost /usr/local/bin/
+COPY deploy/test/supplier.yaml /config/supplier.yaml
 ENTRYPOINT ["gost"]
 
 FROM wukong-mock AS gateway
