@@ -9,9 +9,9 @@ import (
 )
 
 func (r *UsageRepository) ListRecordAnomalies(ctx context.Context, filter usage.FindingFilter, after *usage.FindingKey, limit int) ([]usage.RecordAnomaly, error) {
-	const source = `SELECT a.id, a.gateway_id, a.boot_id, '' AS tenant_id,
+	const source = `SELECT a.id, a.gateway_id, a.boot_id, COALESCE(s.tenant_id,'') AS tenant_id,
 		a.kind, a.file_id, a.file_offset, a.detected_at, a.resolved_at
-		FROM record_anomalies a`
+		FROM record_anomalies a LEFT JOIN proxy_subaccounts s ON s.client_id=a.detail->>'client_id'`
 	var rows []usage.RecordAnomaly
 	err := queryFindings(r.db.WithContext(ctx), source, filter, after, limit).Scan(&rows).Error
 	return rows, err

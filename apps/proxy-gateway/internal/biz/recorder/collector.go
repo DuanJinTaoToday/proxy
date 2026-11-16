@@ -338,6 +338,8 @@ func (c *Collector) stableRecord(content []byte) string {
 }
 
 func (c *Collector) submit(ctx context.Context, boot string, batch *v1.SubmitBatchRequest) error {
+	c.admission.setSubmitting(true)
+	defer c.admission.setSubmitting(false)
 	for {
 		err := c.reporter.Submit(ctx, batch)
 		if errors.Is(err, ErrBatchTooLarge) && len(batch.Records) > 1 {

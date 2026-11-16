@@ -70,7 +70,7 @@ func (s *Usage) QueryUsage(ctx context.Context, req *v1.QueryUsageRequest) (*v1.
 	start, _ := readTimestamp(req.GetStartTime())
 	end, _ := readTimestamp(req.GetEndTime())
 	query := usage.UsageQuery{
-		TenantID: req.GetTenantId(), GatewayID: req.GetGatewayId(), SplitByGateway: req.GetSplitByGateway(),
+		TenantID: req.GetTenantId(), GatewayID: req.GetGatewayId(), ClientID: req.GetClientId(), SplitByGateway: req.GetSplitByGateway(),
 	}
 	if start != nil && end != nil {
 		query.Start, query.End = *start, *end

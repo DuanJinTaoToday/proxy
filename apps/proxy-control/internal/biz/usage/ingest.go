@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"math"
+	"slices"
 	"strings"
 	"time"
 
@@ -46,6 +47,9 @@ type ingestCursor struct {
 type ingestPlan struct {
 	cursors    map[string]*ingestCursor
 	lastRecord time.Time
+	tenants    map[string]int64
+	clients    map[string]int64
+	buckets    map[meteredKey]MeteredBucket
 }
 
 func validID(id string) bool {
@@ -78,7 +82,7 @@ func (s *Service) SubmitBatch(ctx context.Context, token string, req Batch) (*Ba
 		if err := authorizeGateway(tx, hash, req.GatewayID); err != nil {
 			return err
 		}
-		_, err := tx.LockArchive()
+		beforeDate, err := tx.LockArchive()
 		if err != nil {
 			return err
 		}
@@ -90,6 +94,9 @@ func (s *Service) SubmitBatch(ctx context.Context, token string, req Batch) (*Ba
 		if err != nil {
 			return err
 		}
+		if err := plan.meter(tx, req.GatewayID, beforeDate, now); err != nil {
+			return err
+		}
 		return saveProgress(tx, req, plan)
 	})
 	if err != nil {
@@ -99,7 +106,9 @@ func (s *Service) SubmitBatch(ctx context.Context, token string, req Batch) (*Ba
 }
 
 func planIngest(tx Transaction, req Batch, reply *BatchResult, now time.Time) (ingestPlan, error) {
-	p := ingestPlan{cursors: make(map[string]*ingestCursor)}
+	p := ingestPlan{cursors: make(map[string]*ingestCursor), tenants: make(map[string]int64),
+		clients: make(map[string]int64), buckets: make(map[meteredKey]MeteredBucket)}
+	owners := make(map[string]string)
 	ends := make(map[string]uint64)
 	for _, line := range req.Records {
 		fileID := line.FileID
@@ -126,8 +135,26 @@ func planIngest(tx Transaction, req Batch, reply *BatchResult, now time.Time) (i
 			p.lastRecord = r.Time
 		}
 		if qualified {
-			// Until billing is wired, preserve complete records in the gateway spool.
-			return p, errors.ServiceUnavailable("METERING_UNAVAILABLE", "Recorder metering is unavailable")
+			if !validID(r.ClientID) {
+				kind = "unknown_client"
+			} else {
+				tenant, known := owners[r.ClientID]
+				if !known {
+					tenant, err = tx.ClientTenant(r.ClientID)
+					if err != nil {
+						return p, err
+					}
+					owners[r.ClientID] = tenant
+				}
+				if tenant != "" {
+					if err := p.record(tenant, r); err != nil {
+						return p, err
+					}
+					reply.Billable++
+					continue
+				}
+				kind = "unknown_client"
+			}
 		}
 		if kind == "" {
 			reply.NotBillable++
@@ -139,6 +166,62 @@ func planIngest(tx Transaction, req Batch, reply *BatchResult, now time.Time) (i
 		}
 	}
 	return p, nil
+}
+
+type meteredKey struct {
+	client string
+	minute time.Time
+}
+
+type MeteredBucket struct {
+	TenantID, ClientID, UsageDate                       string
+	MinuteStart                                         time.Time
+	InputBytes, OutputBytes, BillableBytes, RecordCount int64
+}
+
+func (p ingestPlan) record(tenant string, r sample) error {
+	input, output := *r.InputBytesDelta, *r.OutputBytesDelta
+	total := input + output
+	if p.tenants[tenant] > math.MaxInt64-total {
+		return errors.BadRequest("BATCH_BYTE_OVERFLOW", "Recorder batch exceeds the signed byte range")
+	}
+	p.tenants[tenant] += total
+	p.clients[r.ClientID] += total
+	minute := r.Time.UTC().Truncate(time.Minute)
+	key := meteredKey{r.ClientID, minute}
+	bucket := p.buckets[key]
+	bucket.TenantID, bucket.ClientID, bucket.UsageDate, bucket.MinuteStart = tenant, r.ClientID, r.Time.In(shanghai).Format(time.DateOnly), minute
+	bucket.RecordCount++
+	bucket.InputBytes += input
+	bucket.OutputBytes += output
+	bucket.BillableBytes += total
+	p.buckets[key] = bucket
+	return nil
+}
+
+func (p ingestPlan) meter(tx Transaction, gateway, beforeDate string, now time.Time) error {
+	tenants := make([]string, 0, len(p.tenants))
+	for tenant := range p.tenants {
+		tenants = append(tenants, tenant)
+	}
+	slices.Sort(tenants)
+	for _, tenant := range tenants {
+		if err := tx.DebitTenant(tenant, p.tenants[tenant], now); err != nil {
+			return err
+		}
+	}
+	for client, total := range p.clients {
+		if total > 0 {
+			if err := tx.AddClientUsage(client, total); err != nil {
+				return err
+			}
+		}
+	}
+	buckets := make([]MeteredBucket, 0, len(p.buckets))
+	for _, bucket := range p.buckets {
+		buckets = append(buckets, bucket)
+	}
+	return tx.WriteBuckets(gateway, buckets, beforeDate, now)
 }
 
 func quarantine(tx Transaction, req Batch, line RecorderLine, r sample, kind string, now time.Time) error {

@@ -15,6 +15,7 @@ type TenantBalance struct {
 	TenantID       string    `gorm:"column:tenant_id;type:text;primaryKey" json:"tenant_id"`
 	AvailableBytes int64     `gorm:"column:available_bytes;type:bigint;not null" json:"available_bytes"`
 	UpdatedAt      time.Time `gorm:"column:updated_at;type:timestamp with time zone;not null" json:"updated_at"`
+	UsageVersion   *int64    `gorm:"column:usage_version;type:bigint;not null;default:1" json:"usage_version"`
 }
 
 // TableName TenantBalance's table name

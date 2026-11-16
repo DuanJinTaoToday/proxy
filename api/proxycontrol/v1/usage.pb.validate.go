@@ -1055,6 +1055,8 @@ func (m *QueryUsageRequest) validate(all bool) error {
 
 	// no validation rules for PageToken
 
+	// no validation rules for ClientId
+
 	if len(errors) > 0 {
 		return QueryUsageRequestMultiError(errors)
 	}

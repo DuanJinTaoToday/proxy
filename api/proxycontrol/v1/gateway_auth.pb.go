@@ -186,8 +186,12 @@ type AuthSnapshot struct {
 	Quota *AuthQuota `protobuf:"bytes,9,opt,name=quota,proto3" json:"quota,omitempty"`
 	// Monotonic credential revision, including password and active status changes.
 	CredentialVersion int64 `protobuf:"varint,10,opt,name=credential_version,json=credentialVersion,proto3" json:"credential_version,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	// 子账号历史累计流量，单位为字节。
+	UsedBytes int64 `protobuf:"varint,11,opt,name=used_bytes,json=usedBytes,proto3" json:"used_bytes,omitempty"`
+	// 缺省表示不限，0 表示达到准入上限。
+	LimitBytes    *int64 `protobuf:"varint,12,opt,name=limit_bytes,json=limitBytes,proto3,oneof" json:"limit_bytes,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *AuthSnapshot) Reset() {
@@ -276,12 +280,28 @@ func (x *AuthSnapshot) GetCredentialVersion() int64 {
 	return 0
 }
 
+func (x *AuthSnapshot) GetUsedBytes() int64 {
+	if x != nil {
+		return x.UsedBytes
+	}
+	return 0
+}
+
+func (x *AuthSnapshot) GetLimitBytes() int64 {
+	if x != nil && x.LimitBytes != nil {
+		return *x.LimitBytes
+	}
+	return 0
+}
+
 type AuthQuota struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 可用流量余额，单位为字节。
 	AvailableBytes int64 `protobuf:"varint,1,opt,name=available_bytes,json=availableBytes,proto3" json:"available_bytes,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// 该租户余额和子账号计量、上限的共同版本。
+	UsageVersion  int64 `protobuf:"varint,4,opt,name=usage_version,json=usageVersion,proto3" json:"usage_version,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *AuthQuota) Reset() {
@@ -321,6 +341,13 @@ func (x *AuthQuota) GetAvailableBytes() int64 {
 	return 0
 }
 
+func (x *AuthQuota) GetUsageVersion() int64 {
+	if x != nil {
+		return x.UsageVersion
+	}
+	return 0
+}
+
 var File_proxycontrol_v1_gateway_auth_proto protoreflect.FileDescriptor
 
 const file_proxycontrol_v1_gateway_auth_proto_rawDesc = "" +
@@ -336,7 +363,7 @@ const file_proxycontrol_v1_gateway_auth_proto_rawDesc = "" +
 	"references\x18\x01 \x03(\tB\x13\xfaB\x10\x92\x01\r\b\x01\x10d\"\ar\x05 \x01(\x80\x01R\n" +
 	"references\"W\n" +
 	"\x18RefreshAuthStateResponse\x12;\n" +
-	"\tsnapshots\x18\x01 \x03(\v2\x1d.proxycontrol.v1.AuthSnapshotR\tsnapshots\"\xce\x02\n" +
+	"\tsnapshots\x18\x01 \x03(\v2\x1d.proxycontrol.v1.AuthSnapshotR\tsnapshots\"\xa3\x03\n" +
 	"\fAuthSnapshot\x12\x1c\n" +
 	"\treference\x18\x01 \x01(\tR\treference\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x1b\n" +
@@ -346,10 +373,16 @@ const file_proxycontrol_v1_gateway_auth_proto_rawDesc = "" +
 	"\x06active\x18\x06 \x01(\bR\x06active\x120\n" +
 	"\x05quota\x18\t \x01(\v2\x1a.proxycontrol.v1.AuthQuotaR\x05quota\x12-\n" +
 	"\x12credential_version\x18\n" +
-	" \x01(\x03R\x11credentialVersionJ\x04\b\a\x10\bJ\x04\b\b\x10\tR\n" +
-	"expires_atR\x14allowed_source_cidrs\"h\n" +
+	" \x01(\x03R\x11credentialVersion\x12\x1d\n" +
+	"\n" +
+	"used_bytes\x18\v \x01(\x03R\tusedBytes\x12$\n" +
+	"\vlimit_bytes\x18\f \x01(\x03H\x00R\n" +
+	"limitBytes\x88\x01\x01B\x0e\n" +
+	"\f_limit_bytesJ\x04\b\a\x10\bJ\x04\b\b\x10\tR\n" +
+	"expires_atR\x14allowed_source_cidrs\"\x8d\x01\n" +
 	"\tAuthQuota\x12'\n" +
-	"\x0favailable_bytes\x18\x01 \x01(\x03R\x0eavailableBytesJ\x04\b\x02\x10\x03J\x04\b\x03\x10\x04R\x19admission_threshold_bytesR\vvalid_until2\x8a\x03\n" +
+	"\x0favailable_bytes\x18\x01 \x01(\x03R\x0eavailableBytes\x12#\n" +
+	"\rusage_version\x18\x04 \x01(\x03R\fusageVersionJ\x04\b\x02\x10\x03J\x04\b\x03\x10\x04R\x19admission_threshold_bytesR\vvalid_until2\x8a\x03\n" +
 	"\x12GatewayAuthService\x12\xa9\x01\n" +
 	"\rLoadAuthState\x12%.proxycontrol.v1.LoadAuthStateRequest\x1a\x1d.proxycontrol.v1.AuthSnapshot\"R\xbaG)\x12'校验代理凭据并加载认证状态\x82\xd3\xe4\x93\x02 :\x01*\"\x1b/v1/gateway/auth-state/load\x12\xc7\x01\n" +
 	"\x10RefreshAuthState\x12(.proxycontrol.v1.RefreshAuthStateRequest\x1a).proxycontrol.v1.RefreshAuthStateResponse\"^\xbaG2\x120批量刷新网关缓存的凭据和准入状态\x82\xd3\xe4\x93\x02#:\x01*\"\x1e/v1/gateway/auth-state/refreshBEZCgithub.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1b\x06proto3"
@@ -393,6 +426,7 @@ func file_proxycontrol_v1_gateway_auth_proto_init() {
 	if File_proxycontrol_v1_gateway_auth_proto != nil {
 		return
 	}
+	file_proxycontrol_v1_gateway_auth_proto_msgTypes[3].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

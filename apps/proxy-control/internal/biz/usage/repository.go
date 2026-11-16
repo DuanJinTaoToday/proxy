@@ -26,6 +26,10 @@ type Transaction interface {
 	SaveCursor(gatewayID, bootID, fileID string, offset int64, now time.Time) error
 	SaveLastRecord(gatewayID, bootID string, recordedAt time.Time) error
 	Quarantine(gatewayID, bootID, fileID string, offset uint64, kind, detail string, now time.Time) error
+	ClientTenant(clientID string) (string, error)
+	DebitTenant(tenantID string, bytes int64, now time.Time) error
+	AddClientUsage(clientID string, bytes int64) error
+	WriteBuckets(gatewayID string, buckets []MeteredBucket, beforeDate string, now time.Time) error
 	DatesBefore(cutoff string) ([]string, error)
 	ArchiveDay(date string) error
 	SetArchiveCutoff(cutoff string) error

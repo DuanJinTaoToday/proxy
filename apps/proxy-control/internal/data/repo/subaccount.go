@@ -74,6 +74,17 @@ func (r *SubaccountRepository) Create(ctx context.Context, a subaccount.Account)
 func (r *SubaccountRepository) Update(ctx context.Context, tenant, id string, u subaccount.Update, encrypted []byte) (subaccount.Account, error) {
 	var row model.ProxySubaccount
 	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if u.UpdateLimit {
+			// Match the metering lock order before changing the shared version.
+			var lockedTenant string
+			result := tx.Raw("SELECT tenant_id FROM tenant_balances WHERE tenant_id=? FOR UPDATE", tenant).Scan(&lockedTenant)
+			if result.Error != nil {
+				return result.Error
+			}
+			if lockedTenant == "" {
+				return gorm.ErrRecordNotFound
+			}
+		}
 		if err := tx.Raw(`SELECT client_id,name,remark,active,limit_bytes,used_bytes FROM proxy_subaccounts
             WHERE tenant_id=? AND client_id=? FOR UPDATE`, tenant, id).Scan(&row).Error; err != nil || row.ClientID == "" {
 			return err
@@ -81,10 +92,17 @@ func (r *SubaccountRepository) Update(ctx context.Context, tenant, id string, u 
 		if u.UpdateLimit && u.LimitBytes != nil && row.LimitBytes != nil && *u.LimitBytes < *row.LimitBytes {
 			return subaccount.ErrLimitDecrease
 		}
-		return tx.Raw(`UPDATE proxy_subaccounts SET password_ciphertext=CASE WHEN ? THEN ?::bytea ELSE password_ciphertext END,
+		result := tx.Raw(`UPDATE proxy_subaccounts SET password_ciphertext=CASE WHEN ? THEN ?::bytea ELSE password_ciphertext END,
             credential_version=credential_version+1,remark=COALESCE(?,remark),active=COALESCE(?,active),limit_bytes=CASE WHEN ? THEN CAST(? AS bigint) ELSE limit_bytes END
             WHERE tenant_id=? AND client_id=? RETURNING client_id,name,remark,active,limit_bytes,used_bytes`,
-			encrypted != nil, encrypted, u.Remark, u.Active, u.UpdateLimit, u.LimitBytes, tenant, id).Scan(&row).Error
+			encrypted != nil, encrypted, u.Remark, u.Active, u.UpdateLimit, u.LimitBytes, tenant, id).Scan(&row)
+		if result.Error != nil {
+			return result.Error
+		}
+		if u.UpdateLimit {
+			return tx.Exec("UPDATE tenant_balances SET usage_version=usage_version+1 WHERE tenant_id=?", tenant).Error
+		}
+		return nil
 	})
 	return proxyAccount(row), err
 }
@@ -107,18 +125,19 @@ type proxyAuthRow struct {
 	model.ProxySubaccount `gorm:"embedded"`
 	Reference, Username   string
 	AvailableBytes        int64
+	UsageVersion          int64
 }
 
 func (row proxyAuthRow) authState() subaccount.AuthState {
 	state := subaccount.AuthState{Account: proxyAccount(row.ProxySubaccount), Reference: row.Reference,
-		Username: row.Username, AvailableBytes: row.AvailableBytes}
+		Username: row.Username, AvailableBytes: row.AvailableBytes, UsageVersion: row.UsageVersion}
 	if row.CredentialVersion != nil {
 		state.CredentialVersion = *row.CredentialVersion
 	}
 	return state
 }
 
-const authProjection = `SELECT s.*,t.primary_account_name || '.' || s.name AS username,b.available_bytes`
+const authProjection = `SELECT s.*,t.primary_account_name || '.' || s.name AS username,b.available_bytes,b.usage_version`
 const authJoins = ` FROM proxy_subaccounts s JOIN tenants t ON t.id=s.tenant_id JOIN tenant_balances b ON b.tenant_id=s.tenant_id`
 
 func (r *SubaccountRepository) Load(ctx context.Context, username string) (subaccount.AuthState, error) {

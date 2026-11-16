@@ -21,6 +21,7 @@ type UsageMinutely struct {
 	RecordCount    int64     `gorm:"column:record_count;type:bigint;not null" json:"record_count"`
 	LastReceivedAt time.Time `gorm:"column:last_received_at;type:timestamp with time zone;not null" json:"last_received_at"`
 	MinuteStart    time.Time `gorm:"column:minute_start;type:timestamp with time zone;primaryKey" json:"minute_start"`
+	ClientID       string    `gorm:"column:client_id;type:text;primaryKey" json:"client_id"`
 }
 
 // TableName UsageMinutely's table name

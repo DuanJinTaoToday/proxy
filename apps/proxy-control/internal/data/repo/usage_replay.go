@@ -14,10 +14,10 @@ func (t usageTx) LockReplay(gatewayID, bootID string) (bool, bool, error) {
 }
 
 func (t usageTx) SaveSessionGap(gatewayID, bootID string, session usage.UnfinishedSession, now time.Time) error {
-	return t.db.Exec(`INSERT INTO usage_gaps (gateway_id, boot_id, session_id, client_id, from_at, detected_at)
-		VALUES (?, ?, ?, ?, ?, ?)
+	return t.db.Exec(`INSERT INTO usage_gaps (gateway_id, boot_id, session_id, client_id, from_at, detected_at, tenant_id)
+		VALUES (?, ?, ?, ?, ?, ?, (SELECT tenant_id FROM proxy_subaccounts WHERE client_id=?))
 		ON CONFLICT (gateway_id, boot_id, session_id) DO NOTHING`,
-		gatewayID, bootID, session.SessionID, session.ClientID, session.LastRecordedAt, now).Error
+		gatewayID, bootID, session.SessionID, session.ClientID, session.LastRecordedAt, now, session.ClientID).Error
 }
 
 func (t usageTx) CountSessionGaps(gatewayID, bootID string) (int64, error) {

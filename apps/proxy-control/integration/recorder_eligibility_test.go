@@ -5,11 +5,13 @@ import (
 	"testing"
 
 	v1 "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1"
-	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/integration/testfixture"
 )
 
-func TestRecorderPreservesUnmeteredEstablishedSOCKSConnections(t *testing.T) {
+func TestRecorderMetersEstablishedSOCKSConnectionsOnce(t *testing.T) {
 	f := setupUsage(t)
+	execSQL(t, f.db, "INSERT INTO tenants(id,name,primary_account_name) VALUES ('alpha','Alpha','primary')")
+	execSQL(t, f.db, "INSERT INTO tenant_balances(tenant_id,available_bytes,updated_at) VALUES ('alpha',1,now())")
+	execSQL(t, f.db, "INSERT INTO proxy_subaccounts(client_id,tenant_id,name,password_ciphertext,active) VALUES ('client-a','alpha','acct',decode('00','hex'),false)")
 	var offset uint64
 	var batch []*v1.RecorderLine
 	for _, sample := range []struct {
@@ -33,17 +35,14 @@ func TestRecorderPreservesUnmeteredEstablishedSOCKSConnections(t *testing.T) {
 		batch = append(batch, &v1.RecorderLine{FileId: "sessions", FileOffset: offset, EndOffset: end, Line: string(raw)})
 		offset = end
 	}
-	reply := submitResponse(t, f, "gateway-a", reportToken, batch...)
-	testfixture.AssertStatus(t, reply, 503, "METERING_UNAVAILABLE")
-	var cursors int64
-	if err := f.db.Table("ingest_cursors").Count(&cursors).Error; err != nil || cursors != 0 {
-		t.Fatalf("unmetered batch advanced the cursor: %d, %v", cursors, err)
+	if ack := submit(t, f, "gateway-a", reportToken, batch...); ack.GetBillable() != 2 || ack.GetNotBillable() != 3 {
+		t.Fatalf("unexpected dispositions: %v", ack)
 	}
-	// The failed connections can still be confirmed and replayed independently.
-	if ack := submit(t, f, "gateway-a", reportToken, batch[:3]...); ack.GetNotBillable() != 3 {
-		t.Fatalf("unexpected failed-connection dispositions: %v", ack)
+	if ack := submit(t, f, "gateway-a", reportToken, batch...); ack.GetDuplicates() != 5 || ack.GetBillable() != 0 {
+		t.Fatalf("repeat charged again: %v", ack)
 	}
-	if ack := submit(t, f, "gateway-a", reportToken, batch[:3]...); ack.GetDuplicates() != 3 {
-		t.Fatalf("retry failed to deduplicate confirmed records: %v", ack)
+	var measured struct{ AvailableBytes, UsedBytes int64 }
+	if err := f.db.Raw("SELECT available_bytes,used_bytes FROM tenant_balances JOIN proxy_subaccounts USING(tenant_id) WHERE client_id='client-a'").Scan(&measured).Error; err != nil || measured.AvailableBytes != -29 || measured.UsedBytes != 30 {
+		t.Fatalf("expected disabled account to accrue 30 bytes and tenant to owe 29: %+v, %v", measured, err)
 	}
 }

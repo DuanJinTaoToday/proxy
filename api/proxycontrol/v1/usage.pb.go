@@ -643,7 +643,9 @@ type QueryUsageRequest struct {
 	// 每页条数，取值为 1–500。省略或传 0 时使用 100。
 	PageSize int32 `protobuf:"varint,8,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	// 上一页返回的游标。查询条件应与上一页一致，首屏留空。
-	PageToken     string `protobuf:"bytes,9,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	PageToken string `protobuf:"bytes,9,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	// 指定稳定子账号 ID。留空时统计租户全部子账号。
+	ClientId      string `protobuf:"bytes,10,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -730,6 +732,13 @@ func (x *QueryUsageRequest) GetPageSize() int32 {
 func (x *QueryUsageRequest) GetPageToken() string {
 	if x != nil {
 		return x.PageToken
+	}
+	return ""
+}
+
+func (x *QueryUsageRequest) GetClientId() string {
+	if x != nil {
+		return x.ClientId
 	}
 	return ""
 }
@@ -859,7 +868,7 @@ type UsageAmount struct {
 	OutputBytes uint64 `protobuf:"varint,2,opt,name=output_bytes,json=outputBytes,proto3" json:"output_bytes,omitempty"`
 	// 原始输入和输出字节数之和。
 	TotalBytes uint64 `protobuf:"varint,3,opt,name=total_bytes,json=totalBytes,proto3" json:"total_bytes,omitempty"`
-	// 按计费规则折算后扣减的字节数。
+	// 实际扣减的字节数，首版按合格会话总字节 1:1 计量。
 	BillableBytes uint64 `protobuf:"varint,4,opt,name=billable_bytes,json=billableBytes,proto3" json:"billable_bytes,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -986,7 +995,7 @@ const file_proxycontrol_v1_usage_proto_rawDesc = "" +
 	"\texited_at\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\bexitedAt\"n\n" +
 	"\x15ListUsageGapsResponse\x12-\n" +
 	"\x04gaps\x18\x01 \x03(\v2\x19.proxycontrol.v1.UsageGapR\x04gaps\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\xa1\x03\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\xbe\x03\n" +
 	"\x11QueryUsageRequest\x12$\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\a\xfaB\x04r\x02 \x01R\btenantId\x12\x1d\n" +
 	"\n" +
@@ -1000,7 +1009,9 @@ const file_proxycontrol_v1_usage_proto_rawDesc = "" +
 	"\tpage_size\x18\b \x01(\x05B\n" +
 	"\xfaB\a\x1a\x05\x18\xf4\x03(\x00R\bpageSize\x12\x1d\n" +
 	"\n" +
-	"page_token\x18\t \x01(\tR\tpageToken\"\x9d\x01\n" +
+	"page_token\x18\t \x01(\tR\tpageToken\x12\x1b\n" +
+	"\tclient_id\x18\n" +
+	" \x01(\tR\bclientId\"\x9d\x01\n" +
 	"\vUsageBucket\x129\n" +
 	"\n" +
 	"start_time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\tstartTime\x12\x1d\n" +

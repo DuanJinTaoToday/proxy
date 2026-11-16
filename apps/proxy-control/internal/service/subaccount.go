@@ -81,9 +81,9 @@ func (s *Subaccounts) GetProxyConfig(ctx context.Context, req *v1.SubaccountRequ
 }
 
 func authSnapshot(state subaccount.AuthState, hash []byte) *v1.AuthSnapshot {
-	snapshot := &v1.AuthSnapshot{ClientId: state.ClientID, CredentialVersion: state.CredentialVersion, TenantId: state.TenantID, Username: state.Username, Reference: state.Reference, Active: state.Active, PasswordHash: hash}
+	snapshot := &v1.AuthSnapshot{ClientId: state.ClientID, CredentialVersion: state.CredentialVersion, TenantId: state.TenantID, Username: state.Username, Reference: state.Reference, Active: state.Active, PasswordHash: hash, UsedBytes: state.UsedBytes, LimitBytes: state.LimitBytes}
 	if state.Active {
-		snapshot.Quota = &v1.AuthQuota{AvailableBytes: state.AvailableBytes}
+		snapshot.Quota = &v1.AuthQuota{AvailableBytes: state.AvailableBytes, UsageVersion: state.UsageVersion}
 	}
 	return snapshot
 }

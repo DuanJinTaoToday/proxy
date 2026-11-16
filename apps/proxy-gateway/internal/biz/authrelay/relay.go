@@ -28,8 +28,10 @@ type Control interface {
 }
 
 type credential struct {
-	snapshot *v1.AuthSnapshot
-	synced   time.Time
+	snapshot    *v1.AuthSnapshot
+	synced      time.Time
+	usage       *v1.AuthSnapshot
+	usageSynced time.Time
 }
 
 type quota struct {
@@ -110,11 +112,15 @@ func (r *Relay) AuthenticateTenant(ctx context.Context, username, password, _ st
 		return "", "", "CREDENTIAL_DISABLED"
 	case subtle.ConstantTimeCompare(c.GetPasswordHash(), digest[:]) != 1:
 		return "", "", "INVALID_CREDENTIAL"
-	case !validQuota(balance, now):
+	case !validQuota(balance, now) || entry.usage == nil ||
+		!now.Before(entry.usageSynced.Add(stateLifetime)) ||
+		entry.usage.GetQuota().GetUsageVersion() != balance.snapshot.GetUsageVersion():
 		authmetrics.Counters.Add("quota_cache_miss", 1)
 		return "", "", "AUTH_STATE_UNAVAILABLE"
 	case balance.snapshot.GetAvailableBytes() <= 0:
 		return "", "", "QUOTA_INSUFFICIENT"
+	case entry.usage.LimitBytes != nil && entry.usage.GetUsedBytes() >= entry.usage.GetLimitBytes():
+		return "", "", "SUBACCOUNT_LIMIT_REACHED"
 	default:
 		authmetrics.Counters.Add("quota_cache_hit", 1)
 		return c.GetClientId(), c.GetReference(), "OK"
@@ -167,7 +173,8 @@ func (r *Relay) coldLoad(ctx context.Context, username, password string, digest 
 
 func validSnapshot(s *v1.AuthSnapshot) bool {
 	return s != nil && s.GetUsername() != "" && s.GetReference() != "" && s.GetClientId() != "" &&
-		s.GetTenantId() != "" && (!s.GetActive() || len(s.GetPasswordHash()) == sha256.Size && s.GetQuota() != nil)
+		s.GetTenantId() != "" && (!s.GetActive() || len(s.GetPasswordHash()) == sha256.Size && s.GetQuota() != nil &&
+		s.GetQuota().GetUsageVersion() >= 0 && s.GetUsedBytes() >= 0 && s.GetLimitBytes() >= 0)
 }
 
 func (r *Relay) apply(snapshots []*v1.AuthSnapshot, started time.Time, epoch, generation uint64, renewQuota bool) {
@@ -182,11 +189,20 @@ func (r *Relay) apply(snapshots []*v1.AuthSnapshot, started time.Time, epoch, ge
 		existing := r.credentials[s.GetUsername()]
 		oldVersion, newVersion := existing.snapshot.GetCredentialVersion(), s.GetCredentialVersion()
 		if newVersion > oldVersion || newVersion == oldVersion && !started.Before(existing.synced) {
-			r.credentials[s.GetUsername()] = credential{s, started}
+			existing.snapshot, existing.synced = s, started
 		}
-		if existing := r.quotas[s.GetTenantId()]; renewQuota && s.GetQuota() != nil && !started.Before(existing.synced) {
-			r.quotas[s.GetTenantId()] = quota{s.GetQuota(), started}
+		if renewQuota && s.GetQuota() != nil {
+			balance := r.quotas[s.GetTenantId()]
+			version := s.GetQuota().GetUsageVersion()
+			if version >= balance.snapshot.GetUsageVersion() &&
+				(version > existing.usage.GetQuota().GetUsageVersion() || version == existing.usage.GetQuota().GetUsageVersion() && !started.Before(existing.usageSynced)) {
+				existing.usage, existing.usageSynced = s, started
+			}
+			if version > balance.snapshot.GetUsageVersion() || version == balance.snapshot.GetUsageVersion() && !started.Before(balance.synced) {
+				r.quotas[s.GetTenantId()] = quota{s.GetQuota(), started}
+			}
 		}
+		r.credentials[s.GetUsername()] = existing
 	}
 }
 

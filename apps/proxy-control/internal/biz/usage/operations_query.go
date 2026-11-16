@@ -17,10 +17,10 @@ const (
 )
 
 type UsageQuery struct {
-	TenantID, GatewayID string
-	Start, End          time.Time
-	Granularity         Granularity
-	SplitByGateway      bool
+	TenantID, GatewayID, ClientID string
+	Start, End                    time.Time
+	Granularity                   Granularity
+	SplitByGateway                bool
 }
 
 type UsageKey struct {

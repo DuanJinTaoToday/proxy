@@ -28,7 +28,7 @@
 
 生成模型时，数据库账号需能通过 PostgreSQL 的 `information_schema` 读取主键约束，例如表所有者通过 `default_transaction_read_only=on` 建立只读连接。 [数据库、迁移与 DAO](../../../../docs/standards/proxy-development-conventions.md#数据库迁移与-dao)
 
-运营预置 `gateways` 与 `gateway_tokens`，令牌原文为至少 32 字节随机值的无填充 base64url 编码。同一网关同一范围最多保留两个有效令牌。数据库只写编码后令牌的 SHA-256 二进制摘要，采集器通过 HTTPS 将令牌放在 `Authorization: Bearer …` 中。可计量批次当前返回 503，网关保留文件和未确认偏移。
+运营预置 `gateways` 与 `gateway_tokens`，令牌原文为至少 32 字节随机值的无填充 base64url 编码。同一网关同一范围最多保留两个有效令牌。数据库只写编码后令牌的 SHA-256 二进制摘要，采集器通过 HTTPS 将令牌放在 `Authorization: Bearer …` 中。合格记录按输入和输出增量总字节扣减，余额、子账号累计、用量汇总和连续水位一同提交。批次写入失败时，网关保留文件和未确认偏移供后续重放。
 
 PostgreSQL 集成用例在独立临时 schema 中应用迁移，通过真实 HTTP 路由验证开户、上报、生命周期和回放。 [集成用例配置](../../../../docs/standards/proxy-development-conventions.md#pr-检查与业务回归)
 

@@ -59,6 +59,10 @@ message AuthSnapshot {
   AuthQuota quota = 9;
   // Monotonic credential revision, including password and active status changes.
   int64 credential_version = 10;
+  // 子账号历史累计流量，单位为字节。
+  int64 used_bytes = 11;
+  // 缺省表示不限，0 表示达到准入上限。
+  optional int64 limit_bytes = 12;
 }
 
 message AuthQuota {
@@ -66,4 +70,6 @@ message AuthQuota {
   reserved "admission_threshold_bytes", "valid_until";
   // 可用流量余额，单位为字节。
   int64 available_bytes = 1;
+  // 该租户余额和子账号计量、上限的共同版本。
+  int64 usage_version = 4;
 }
