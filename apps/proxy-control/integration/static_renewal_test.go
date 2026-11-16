@@ -22,6 +22,7 @@ func TestStaticRenewalPriceRecheckAndMixedSettlement(t *testing.T) {
 	var renewals atomic.Int32
 	var staleDetail atomic.Bool
 	var lateDetail atomic.Bool
+	var rejectSingle atomic.Bool
 	item := func(id int, stop string) string {
 		return fmt.Sprintf(`{"id":%d,"nid":3,"ip":"192.0.2.%d","port":43000,"p_user":"fixture","p_pass":"fixture","stoptime":%q}`, id, id, stop)
 	}
@@ -50,8 +51,19 @@ func TestStaticRenewalPriceRecheckAndMixedSettlement(t *testing.T) {
 				IDs  []int64
 				Time string
 			}
-			if err := json.NewDecoder(req.Body).Decode(&body); err != nil ||
-				len(body.IDs) != 2 || body.IDs[0] != 83 || body.IDs[1] != 84 || body.Time != "yp1" {
+			if err := json.NewDecoder(req.Body).Decode(&body); err != nil {
+				t.Error("invalid supplier renewal request")
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+			if rejectSingle.Load() {
+				if !slices.Equal(body.IDs, []int64{84}) || body.Time != "yp1" {
+					t.Error("unexpected single request at supplier")
+				}
+				_, _ = io.WriteString(w, `{"code":-4,"data":[]}`)
+				return
+			}
+			if !slices.Equal(body.IDs, []int64{83, 84}) || body.Time != "yp1" {
 				t.Error("unexpected batch at supplier")
 			}
 			renewals.Add(1)
@@ -157,5 +169,20 @@ func TestStaticRenewalPriceRecheckAndMixedSettlement(t *testing.T) {
 	readProto(t, req("GET", "/v1/tenant/wallet", "", token), &wallet)
 	if wallet.GetAvailableMinor() != 1500 {
 		t.Fatalf("unexpected wallet balance: %d", wallet.GetAvailableMinor())
+	}
+
+	lateDetail.Store(false)
+	rejectSingle.Store(true)
+	const singleSpec = `{"supplier_item_ids":["84"],"term":"yp1"}`
+	readProto(t, req("POST", quotePath, singleSpec, token), &quote)
+	rejectedRequest := fmt.Sprintf(`{"supplier_item_ids":["84"],"term":"yp1","request_key":"renew-rejected","confirmation_token":%q}`, quote.GetConfirmationToken())
+	var rejected v1.PurchaseOrder
+	readProto(t, req("POST", renewPath, rejectedRequest, token), &rejected)
+	if rejected.GetStatus() != "failed" || rejected.GetReleasedMinor() != 1000 || rejected.GetRefundedMinor() != 1000 || rejected.GetSettledMinor() != 0 {
+		t.Fatalf("explicit supplier rejection did not release the hold: %v", &rejected)
+	}
+	readProto(t, req("GET", "/v1/tenant/wallet", "", token), &wallet)
+	if wallet.GetAvailableMinor() != 1500 {
+		t.Fatalf("explicit supplier rejection changed wallet balance: %d", wallet.GetAvailableMinor())
 	}
 }

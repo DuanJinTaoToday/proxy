@@ -9,6 +9,7 @@ import type { Order, WalletTenant } from './api/wallet'
 import { money } from './wallet-format'
 import { Button } from './ui/button'
 import Input from './ui/input/Input.vue'
+import NativeSelect from './ui/native-select/NativeSelect.vue'
 
 const { token, tenantId } = defineProps<{ token?: string; tenantId?: string }>()
 const emit = defineEmits<{ expired: []; wallet: [WalletTenant] }>()
@@ -18,11 +19,12 @@ const offers = ref<StaticOffer[]>([])
 const selected = ref('')
 const region = ref('')
 const ipType = ref('')
-const termDays = ref<number | ''>('')
+const termDays = ref('')
 const inStock = ref(false)
 const rawQuantity = ref<number | string>(Math.max(1, Math.min(2147483647, Number(route.query.quantity) || 1)))
 const quantity = computed(() => Number(rawQuantity.value))
 const loading = ref(true)
+let catalogLoaded = false
 const closed = ref(false)
 const error = ref('')
 const sending = ref(false)
@@ -51,15 +53,18 @@ const terms = computed(() => [...new Set(offers.value.map(item => item.term_days
 const filteredOffers = computed(() => offers.value.filter(item =>
   (!region.value || item.region === region.value) &&
   (!ipType.value || item.ip_type === ipType.value) &&
-  (!termDays.value || item.term_days === termDays.value) &&
+  (!termDays.value || String(item.term_days) === termDays.value) &&
   (!inStock.value || (item.available ?? 0) > 0),
 ))
 const offer = computed(() => filteredOffers.value.find(item => offerKey(item) === selected.value))
-watch([region, ipType, termDays, inStock], () => {
-  if (filteredOffers.value.some(item => offerKey(item) === selected.value)) return
-  const first = filteredOffers.value[0]
-  selected.value = first ? offerKey(first) : ''
-}, { flush: 'sync' })
+function selectOffer(preferred?: string) {
+  if (offer.value) return
+  const candidate = preferred === undefined
+    ? filteredOffers.value[0]
+    : filteredOffers.value.find(item => offerKey(item) === preferred)
+  selected.value = candidate ? offerKey(candidate) : ''
+}
+watch([region, ipType, termDays, inStock], () => selectOffer(), { flush: 'sync' })
 const total = computed(() => offer.value && Number.isInteger(quantity.value) ? BigInt(offer.value.unit_minor) * BigInt(quantity.value) : 0n)
 const canSubmit = computed(() => offer.value && Number.isInteger(quantity.value) && quantity.value >= 1 && quantity.value <= (offer.value.available ?? 0))
 const checkoutQuery = computed(() => ({ view: 'static', offer: selected.value, quantity: String(quantity.value) }))
@@ -77,15 +82,13 @@ async function load() {
     const result = await staticOffers(controller.signal)
     offers.value = result.offers ?? []
     closed.value = !result.open
-    if (!offer.value && offers.value.length) {
-      const requested = route.query.offer
-      selected.value = typeof requested === 'string' ? requested : offerKey(offers.value[0]!)
-      if (!offer.value) {
-        selected.value = ''
-        error.value = '原规格已失效，请重新选择。'
-      }
+    if (offers.value.length) {
+      const requested = !catalogLoaded && typeof route.query.offer === 'string' ? route.query.offer : undefined
+      selectOffer(requested)
+      if (requested && !offer.value) error.value = '原规格已失效，请重新选择。'
+      catalogLoaded = true
     }
-      } catch (failure) {
+  } catch (failure) {
     if (controller.signal.aborted) return
     if (failure instanceof ApiError && failure.reason === 'PRODUCT_SALE_CLOSED') { closed.value = true; offers.value = [] }
     else error.value = '暂时无法查询静态 IP 报价。'
@@ -203,33 +206,33 @@ onUnmounted(() => controller.abort())
       <fieldset v-if="!closed" class="offer-filters" :disabled="sending">
         <legend>筛选规格</legend>
         <label>地区
-          <select v-model="region">
+          <NativeSelect aria-label="地区" v-model="region">
             <option value="">全部地区</option>
             <option v-for="value in regions" :key="value" :value="value">{{ value }}</option>
-          </select>
+          </NativeSelect>
         </label>
         <label>类型
-          <select v-model="ipType">
+          <NativeSelect aria-label="类型" v-model="ipType">
             <option value="">全部类型</option>
             <option v-for="value in ipTypes" :key="value" :value="value">{{ value }}</option>
-          </select>
+          </NativeSelect>
         </label>
         <label>租期
-          <select v-model="termDays">
+          <NativeSelect aria-label="租期" v-model="termDays">
             <option value="">全部租期</option>
-            <option v-for="days in terms" :key="days" :value="days">{{ days }} 天</option>
-          </select>
+            <option v-for="days in terms" :key="days" :value="String(days)">{{ days }} 天</option>
+          </NativeSelect>
         </label>
         <label class="stock-filter"><input v-model="inStock" type="checkbox"> 仅显示有库存</label>
       </fieldset>
       <p v-if="!closed && !filteredOffers.length" role="status">没有符合筛选条件的规格。</p>
       <label v-if="!closed && filteredOffers.length">规格
-        <select v-model="selected" :disabled="sending">
+        <NativeSelect aria-label="规格" v-model="selected" class="truncate" :disabled="sending">
           <option value="" disabled>请选择规格</option>
           <option v-for="item in filteredOffers" :key="offerKey(item)" :value="offerKey(item)">
             {{ item.region }} {{ item.ip_type }} · {{ item.term_days }} 天 · {{ money(item.unit_minor) }}/个 · 可购 {{ item.available ?? 0 }} 个
           </option>
-        </select>
+        </NativeSelect>
       </label>
       <label v-if="offer && !closed">数量
         <Input v-model="rawQuantity" type="number" min="1" :max="offer?.available ?? 0" :disabled="sending" />
@@ -254,7 +257,7 @@ onUnmounted(() => controller.abort())
 <style scoped>
 .checkout { display: grid; gap: 12px; justify-items: start; }
 .checkout label { display: grid; gap: 4px; }
-.checkout select, .checkout input { max-width: 100%; }
+.checkout label, .checkout :deep([data-slot="native-select-wrapper"]), .checkout input { max-width: 100%; min-width: 0; }
 .offer-filters { display: flex; flex-wrap: wrap; align-items: end; gap: 8px 12px; min-width: 0; }
 .offer-filters .stock-filter { display: flex; align-items: center; }
 </style>
