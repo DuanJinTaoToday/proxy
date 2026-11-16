@@ -9,11 +9,13 @@ export function money(value: string | bigint = '0') {
   return `${cents < 0n ? '−' : ''}¥${integer.format(abs / 100n)}.${String(abs % 100n).padStart(2, '0')}`
 }
 
-export function flowAmount(bytes = '0') {
+export function flowAmount(bytes = '0', forInput = false) {
   const amount = BigInt(bytes)
   const abs = amount < 0n ? -amount : amount
   const fraction = String(abs % 1_000_000_000n).padStart(9, '0').replace(/0+$/, '')
-  return (amount < 0n ? '−' : '') + integer.format(abs / 1_000_000_000n) + (fraction ? '.' + fraction : '') + ' GB'
+  const whole = abs / 1_000_000_000n
+  const value = (amount < 0n ? '−' : '') + (forInput ? String(whole) : integer.format(whole)) + (fraction ? '.' + fraction : '')
+  return forInput ? value : value + ' GB'
 }
 
 export function dateTime(value: string) {

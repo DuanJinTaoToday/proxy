@@ -24,6 +24,8 @@ func ReportingDecoder(maxBytes int64) http.DecodeRequestFunc {
 			return decodeLimitedProto(req, message, "WALLET_REQUEST", "wallet request", "invalid wallet body")
 		case *v1.UpdateTrafficPackageRequest, *v1.SetProductSaleRequest:
 			return decodeLimitedProto(req, message, "PRODUCT_REQUEST", "product request", "invalid product configuration body")
+		case *v1.SetLowBalanceThresholdRequest:
+			return decodeLimitedProto(req, message, "TRAFFIC_ALERT_REQUEST", "traffic alert request", "invalid traffic alert body")
 		case *v1.SubmitBatchRequest, *v1.ReportLifecycleRequest, *v1.ReportUnfinishedSessionsRequest, *v1.CompleteReplayRequest:
 		default:
 			return DecodeProxyAuthRequest(req, body)
@@ -65,8 +67,10 @@ func ControlResponseEncoder(w stdhttp.ResponseWriter, req *stdhttp.Request, resp
 	case *v1.StickySession, *v1.Subaccounts, *v1.Subaccount, *v1.SubaccountPassword, *v1.SubaccountProxyConfig,
 		*v1.AuthSnapshot, *v1.RefreshAuthStateResponse, *v1.Products, *v1.Product, *v1.TrafficPackage, *v1.TrafficPackages,
 		*v1.WalletTenant, *v1.WalletRechargeQuote, *v1.WalletEntry, *v1.WalletEntries, *v1.PurchaseOrder, *v1.PurchaseOrders,
-		*v1.SubmitBatchResponse, *v1.QueryUsageResponse, *v1.ListRecordAnomaliesResponse, *v1.ListUsageGapsResponse:
-		data, err := (protojson.MarshalOptions{UseProtoNames: true}).Marshal(response.(proto.Message))
+		*v1.SubmitBatchResponse, *v1.QueryUsageResponse, *v1.ListRecordAnomaliesResponse, *v1.ListUsageGapsResponse,
+		*v1.DailyUsageResponse, *v1.TrafficAlert:
+		_, dailyUsage := response.(*v1.DailyUsageResponse)
+		data, err := (protojson.MarshalOptions{UseProtoNames: true, EmitDefaultValues: dailyUsage}).Marshal(response.(proto.Message))
 		if err != nil {
 			return err
 		}

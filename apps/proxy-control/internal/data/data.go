@@ -52,6 +52,10 @@ func NewData(settings *conf.Data) (*Data, func(), error) {
 			cleanup()
 			return nil, nil, fmt.Errorf("proxy auth requires migration 00011: %w", err)
 		}
+		if err := checkTrafficAlerts(client); err != nil {
+			cleanup()
+			return nil, nil, err
+		}
 		data.repo.proxyAuthDB = client
 	}
 	if usageSettings := repoSettings.GetUsage(); usageSettings != nil {
@@ -70,6 +74,10 @@ func NewData(settings *conf.Data) (*Data, func(), error) {
 				return nil, nil, errors.New("could not connect to the control plane PostgreSQL database")
 			}
 			cleanups = append(cleanups, closeDB)
+			if err := checkTrafficAlerts(client); err != nil {
+				cleanup()
+				return nil, nil, err
+			}
 		}
 		if err := client.Exec("SELECT gateway_id, boot_id, session_id FROM usage_gaps LIMIT 0").Error; err != nil {
 			cleanup()
@@ -83,6 +91,14 @@ func NewData(settings *conf.Data) (*Data, func(), error) {
 		data.repo.usageDB = client
 	}
 	return data, cleanup, nil
+}
+
+func checkTrafficAlerts(client *gorm.DB) error {
+	if err := client.Exec(`SELECT b.low_balance_threshold_bytes, b.low_balance_cycle, n.resolved_at
+		FROM tenant_balances b CROSS JOIN tenant_notifications n LIMIT 0`).Error; err != nil {
+		return fmt.Errorf("traffic alerts require migration 00012: %w", err)
+	}
+	return nil
 }
 
 func (d *Data) ProxyAuthDB() *gorm.DB { return d.repo.proxyAuthDB }

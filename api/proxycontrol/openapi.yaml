@@ -894,6 +894,96 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/proxycontrol.v1.SubaccountProxyConfig'
+    /v1/tenant/traffic-alert:
+        get:
+            tags:
+                - UsageService
+            summary: 查看动态流量余额和当前低余额提醒
+            operationId: UsageService_GetTrafficAlert
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.TrafficAlert'
+        put:
+            tags:
+                - UsageService
+            summary: 设置或清除动态流量低余额提醒阈值
+            operationId: UsageService_SetLowBalanceThreshold
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.SetLowBalanceThresholdRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.TrafficAlert'
+    /v1/tenant/usage/daily:
+        get:
+            tags:
+                - UsageService
+            summary: 查询租户日实扣用量
+            operationId: UsageService_ListDailyUsage
+            parameters:
+                - name: startDate
+                  in: query
+                  description: 上海自然日（含），格式 YYYY-MM-DD。仅填一端时查询该日，两端均省略时查询上海当天。
+                  schema:
+                    type: string
+                - name: endDate
+                  in: query
+                  description: 上海自然日（含），格式 YYYY-MM-DD。
+                  schema:
+                    type: string
+                - name: clientId
+                  in: query
+                  description: 可选代理子账号 ID，留空时汇总租户全部子账号。
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.DailyUsageResponse'
+    /v1/tenant/usage/daily.csv:
+        get:
+            tags:
+                - UsageService
+            summary: 导出租户日实扣用量
+            operationId: UsageService_ExportDailyUsage
+            parameters:
+                - name: startDate
+                  in: query
+                  description: 上海自然日起点（含），格式 YYYY-MM-DD
+                  schema:
+                    type: string
+                - name: endDate
+                  in: query
+                  description: 上海自然日终点（含），格式 YYYY-MM-DD
+                  schema:
+                    type: string
+                - name: clientId
+                  in: query
+                  description: 可选代理子账号 ID
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: 完整筛选结果的 CSV 下载，流量单位为十进制 GB
+                    content:
+                        text/csv:
+                            schema:
+                                type: string
+                                format: binary
     /v1/tenant/wallet:
         get:
             tags:
@@ -1016,6 +1106,27 @@ components:
                 limitBytes:
                     type: string
                     description: 累计流量上限，单位为字节。缺省表示不限。
+        proxycontrol.v1.DailyUsage:
+            type: object
+            properties:
+                date:
+                    type: string
+                    description: 上海自然日，格式 YYYY-MM-DD。
+                billableBytes:
+                    type: string
+                    description: 上下行合计实扣字节数。
+                updatedAt:
+                    type: string
+                    description: 对应筛选范围内，该日用量最近一次入库时间。
+                    format: date-time
+        proxycontrol.v1.DailyUsageResponse:
+            type: object
+            properties:
+                days:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/proxycontrol.v1.DailyUsage'
+                    description: 按日期升序返回有实扣量的天，查询区间无实扣时为空列表。
         proxycontrol.v1.ListRecordAnomaliesResponse:
             type: object
             properties:
@@ -1357,6 +1468,12 @@ components:
                 password:
                     type: string
                     description: 新密码，至少 12 个字符。
+        proxycontrol.v1.SetLowBalanceThresholdRequest:
+            type: object
+            properties:
+                thresholdBytes:
+                    type: string
+                    description: 非负字节数，传 null 或省略时停用提醒。
         proxycontrol.v1.SetProductSaleRequest:
             type: object
             properties:
@@ -1493,6 +1610,22 @@ components:
                 primaryAccountName:
                     type: string
                     description: 平台分配的全局唯一主账号名。
+        proxycontrol.v1.TrafficAlert:
+            type: object
+            properties:
+                availableBytes:
+                    type: string
+                    description: 保留负值以表示欠费。
+                thresholdBytes:
+                    type: string
+                    description: 阈值字节数，未设置时省略。
+                occurrence:
+                    type: string
+                    description: 当前提醒周期。当前无需提醒时省略。
+                triggeredAt:
+                    type: string
+                    description: 当前周期第一次触发的时间，当前无需提醒时省略。
+                    format: date-time
         proxycontrol.v1.TrafficPackage:
             type: object
             properties:

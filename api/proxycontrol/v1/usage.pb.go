@@ -77,6 +77,294 @@ func (UsageGranularity) EnumDescriptor() ([]byte, []int) {
 	return file_proxycontrol_v1_usage_proto_rawDescGZIP(), []int{0}
 }
 
+type DailyUsageRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 上海自然日（含），格式 YYYY-MM-DD。仅填一端时查询该日，两端均省略时查询上海当天。
+	StartDate string `protobuf:"bytes,1,opt,name=start_date,json=startDate,proto3" json:"start_date,omitempty"`
+	// 上海自然日（含），格式 YYYY-MM-DD。
+	EndDate string `protobuf:"bytes,2,opt,name=end_date,json=endDate,proto3" json:"end_date,omitempty"`
+	// 可选代理子账号 ID，留空时汇总租户全部子账号。
+	ClientId      string `protobuf:"bytes,3,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DailyUsageRequest) Reset() {
+	*x = DailyUsageRequest{}
+	mi := &file_proxycontrol_v1_usage_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DailyUsageRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DailyUsageRequest) ProtoMessage() {}
+
+func (x *DailyUsageRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proxycontrol_v1_usage_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DailyUsageRequest.ProtoReflect.Descriptor instead.
+func (*DailyUsageRequest) Descriptor() ([]byte, []int) {
+	return file_proxycontrol_v1_usage_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *DailyUsageRequest) GetStartDate() string {
+	if x != nil {
+		return x.StartDate
+	}
+	return ""
+}
+
+func (x *DailyUsageRequest) GetEndDate() string {
+	if x != nil {
+		return x.EndDate
+	}
+	return ""
+}
+
+func (x *DailyUsageRequest) GetClientId() string {
+	if x != nil {
+		return x.ClientId
+	}
+	return ""
+}
+
+type DailyUsage struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 上海自然日，格式 YYYY-MM-DD。
+	Date string `protobuf:"bytes,1,opt,name=date,proto3" json:"date,omitempty"`
+	// 上下行合计实扣字节数。
+	BillableBytes int64 `protobuf:"varint,2,opt,name=billable_bytes,json=billableBytes,proto3" json:"billable_bytes,omitempty"`
+	// 对应筛选范围内，该日用量最近一次入库时间。
+	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DailyUsage) Reset() {
+	*x = DailyUsage{}
+	mi := &file_proxycontrol_v1_usage_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DailyUsage) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DailyUsage) ProtoMessage() {}
+
+func (x *DailyUsage) ProtoReflect() protoreflect.Message {
+	mi := &file_proxycontrol_v1_usage_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DailyUsage.ProtoReflect.Descriptor instead.
+func (*DailyUsage) Descriptor() ([]byte, []int) {
+	return file_proxycontrol_v1_usage_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *DailyUsage) GetDate() string {
+	if x != nil {
+		return x.Date
+	}
+	return ""
+}
+
+func (x *DailyUsage) GetBillableBytes() int64 {
+	if x != nil {
+		return x.BillableBytes
+	}
+	return 0
+}
+
+func (x *DailyUsage) GetUpdatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.UpdatedAt
+	}
+	return nil
+}
+
+type DailyUsageResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 按日期升序返回有实扣量的天，查询区间无实扣时为空列表。
+	Days          []*DailyUsage `protobuf:"bytes,1,rep,name=days,proto3" json:"days,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DailyUsageResponse) Reset() {
+	*x = DailyUsageResponse{}
+	mi := &file_proxycontrol_v1_usage_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DailyUsageResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DailyUsageResponse) ProtoMessage() {}
+
+func (x *DailyUsageResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proxycontrol_v1_usage_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DailyUsageResponse.ProtoReflect.Descriptor instead.
+func (*DailyUsageResponse) Descriptor() ([]byte, []int) {
+	return file_proxycontrol_v1_usage_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *DailyUsageResponse) GetDays() []*DailyUsage {
+	if x != nil {
+		return x.Days
+	}
+	return nil
+}
+
+type SetLowBalanceThresholdRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 非负字节数，传 null 或省略时停用提醒。
+	ThresholdBytes *int64 `protobuf:"varint,1,opt,name=threshold_bytes,json=thresholdBytes,proto3,oneof" json:"threshold_bytes,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *SetLowBalanceThresholdRequest) Reset() {
+	*x = SetLowBalanceThresholdRequest{}
+	mi := &file_proxycontrol_v1_usage_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetLowBalanceThresholdRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetLowBalanceThresholdRequest) ProtoMessage() {}
+
+func (x *SetLowBalanceThresholdRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proxycontrol_v1_usage_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetLowBalanceThresholdRequest.ProtoReflect.Descriptor instead.
+func (*SetLowBalanceThresholdRequest) Descriptor() ([]byte, []int) {
+	return file_proxycontrol_v1_usage_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *SetLowBalanceThresholdRequest) GetThresholdBytes() int64 {
+	if x != nil && x.ThresholdBytes != nil {
+		return *x.ThresholdBytes
+	}
+	return 0
+}
+
+type TrafficAlert struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 保留负值以表示欠费。
+	AvailableBytes int64 `protobuf:"varint,1,opt,name=available_bytes,json=availableBytes,proto3" json:"available_bytes,omitempty"`
+	// 阈值字节数，未设置时省略。
+	ThresholdBytes *int64 `protobuf:"varint,2,opt,name=threshold_bytes,json=thresholdBytes,proto3,oneof" json:"threshold_bytes,omitempty"`
+	// 当前提醒周期。当前无需提醒时省略。
+	Occurrence int64 `protobuf:"varint,3,opt,name=occurrence,proto3" json:"occurrence,omitempty"`
+	// 当前周期第一次触发的时间，当前无需提醒时省略。
+	TriggeredAt   *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=triggered_at,json=triggeredAt,proto3" json:"triggered_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TrafficAlert) Reset() {
+	*x = TrafficAlert{}
+	mi := &file_proxycontrol_v1_usage_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TrafficAlert) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TrafficAlert) ProtoMessage() {}
+
+func (x *TrafficAlert) ProtoReflect() protoreflect.Message {
+	mi := &file_proxycontrol_v1_usage_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TrafficAlert.ProtoReflect.Descriptor instead.
+func (*TrafficAlert) Descriptor() ([]byte, []int) {
+	return file_proxycontrol_v1_usage_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *TrafficAlert) GetAvailableBytes() int64 {
+	if x != nil {
+		return x.AvailableBytes
+	}
+	return 0
+}
+
+func (x *TrafficAlert) GetThresholdBytes() int64 {
+	if x != nil && x.ThresholdBytes != nil {
+		return *x.ThresholdBytes
+	}
+	return 0
+}
+
+func (x *TrafficAlert) GetOccurrence() int64 {
+	if x != nil {
+		return x.Occurrence
+	}
+	return 0
+}
+
+func (x *TrafficAlert) GetTriggeredAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.TriggeredAt
+	}
+	return nil
+}
+
 type ListRecordAnomaliesRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 网关 ID。
@@ -97,7 +385,7 @@ type ListRecordAnomaliesRequest struct {
 
 func (x *ListRecordAnomaliesRequest) Reset() {
 	*x = ListRecordAnomaliesRequest{}
-	mi := &file_proxycontrol_v1_usage_proto_msgTypes[0]
+	mi := &file_proxycontrol_v1_usage_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -109,7 +397,7 @@ func (x *ListRecordAnomaliesRequest) String() string {
 func (*ListRecordAnomaliesRequest) ProtoMessage() {}
 
 func (x *ListRecordAnomaliesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_usage_proto_msgTypes[0]
+	mi := &file_proxycontrol_v1_usage_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -122,7 +410,7 @@ func (x *ListRecordAnomaliesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListRecordAnomaliesRequest.ProtoReflect.Descriptor instead.
 func (*ListRecordAnomaliesRequest) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_usage_proto_rawDescGZIP(), []int{0}
+	return file_proxycontrol_v1_usage_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *ListRecordAnomaliesRequest) GetGatewayId() string {
@@ -193,7 +481,7 @@ type RecordAnomaly struct {
 
 func (x *RecordAnomaly) Reset() {
 	*x = RecordAnomaly{}
-	mi := &file_proxycontrol_v1_usage_proto_msgTypes[1]
+	mi := &file_proxycontrol_v1_usage_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -205,7 +493,7 @@ func (x *RecordAnomaly) String() string {
 func (*RecordAnomaly) ProtoMessage() {}
 
 func (x *RecordAnomaly) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_usage_proto_msgTypes[1]
+	mi := &file_proxycontrol_v1_usage_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -218,7 +506,7 @@ func (x *RecordAnomaly) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RecordAnomaly.ProtoReflect.Descriptor instead.
 func (*RecordAnomaly) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_usage_proto_rawDescGZIP(), []int{1}
+	return file_proxycontrol_v1_usage_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *RecordAnomaly) GetAnomalyId() string {
@@ -296,7 +584,7 @@ type ListRecordAnomaliesResponse struct {
 
 func (x *ListRecordAnomaliesResponse) Reset() {
 	*x = ListRecordAnomaliesResponse{}
-	mi := &file_proxycontrol_v1_usage_proto_msgTypes[2]
+	mi := &file_proxycontrol_v1_usage_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -308,7 +596,7 @@ func (x *ListRecordAnomaliesResponse) String() string {
 func (*ListRecordAnomaliesResponse) ProtoMessage() {}
 
 func (x *ListRecordAnomaliesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_usage_proto_msgTypes[2]
+	mi := &file_proxycontrol_v1_usage_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -321,7 +609,7 @@ func (x *ListRecordAnomaliesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListRecordAnomaliesResponse.ProtoReflect.Descriptor instead.
 func (*ListRecordAnomaliesResponse) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_usage_proto_rawDescGZIP(), []int{2}
+	return file_proxycontrol_v1_usage_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ListRecordAnomaliesResponse) GetAnomalies() []*RecordAnomaly {
@@ -360,7 +648,7 @@ type ListUsageGapsRequest struct {
 
 func (x *ListUsageGapsRequest) Reset() {
 	*x = ListUsageGapsRequest{}
-	mi := &file_proxycontrol_v1_usage_proto_msgTypes[3]
+	mi := &file_proxycontrol_v1_usage_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -372,7 +660,7 @@ func (x *ListUsageGapsRequest) String() string {
 func (*ListUsageGapsRequest) ProtoMessage() {}
 
 func (x *ListUsageGapsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_usage_proto_msgTypes[3]
+	mi := &file_proxycontrol_v1_usage_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -385,7 +673,7 @@ func (x *ListUsageGapsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListUsageGapsRequest.ProtoReflect.Descriptor instead.
 func (*ListUsageGapsRequest) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_usage_proto_rawDescGZIP(), []int{3}
+	return file_proxycontrol_v1_usage_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *ListUsageGapsRequest) GetGatewayId() string {
@@ -467,7 +755,7 @@ type UsageGap struct {
 
 func (x *UsageGap) Reset() {
 	*x = UsageGap{}
-	mi := &file_proxycontrol_v1_usage_proto_msgTypes[4]
+	mi := &file_proxycontrol_v1_usage_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -479,7 +767,7 @@ func (x *UsageGap) String() string {
 func (*UsageGap) ProtoMessage() {}
 
 func (x *UsageGap) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_usage_proto_msgTypes[4]
+	mi := &file_proxycontrol_v1_usage_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -492,7 +780,7 @@ func (x *UsageGap) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UsageGap.ProtoReflect.Descriptor instead.
 func (*UsageGap) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_usage_proto_rawDescGZIP(), []int{4}
+	return file_proxycontrol_v1_usage_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *UsageGap) GetGapId() string {
@@ -584,7 +872,7 @@ type ListUsageGapsResponse struct {
 
 func (x *ListUsageGapsResponse) Reset() {
 	*x = ListUsageGapsResponse{}
-	mi := &file_proxycontrol_v1_usage_proto_msgTypes[5]
+	mi := &file_proxycontrol_v1_usage_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -596,7 +884,7 @@ func (x *ListUsageGapsResponse) String() string {
 func (*ListUsageGapsResponse) ProtoMessage() {}
 
 func (x *ListUsageGapsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_usage_proto_msgTypes[5]
+	mi := &file_proxycontrol_v1_usage_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -609,7 +897,7 @@ func (x *ListUsageGapsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListUsageGapsResponse.ProtoReflect.Descriptor instead.
 func (*ListUsageGapsResponse) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_usage_proto_rawDescGZIP(), []int{5}
+	return file_proxycontrol_v1_usage_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *ListUsageGapsResponse) GetGaps() []*UsageGap {
@@ -652,7 +940,7 @@ type QueryUsageRequest struct {
 
 func (x *QueryUsageRequest) Reset() {
 	*x = QueryUsageRequest{}
-	mi := &file_proxycontrol_v1_usage_proto_msgTypes[6]
+	mi := &file_proxycontrol_v1_usage_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -664,7 +952,7 @@ func (x *QueryUsageRequest) String() string {
 func (*QueryUsageRequest) ProtoMessage() {}
 
 func (x *QueryUsageRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_usage_proto_msgTypes[6]
+	mi := &file_proxycontrol_v1_usage_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -677,7 +965,7 @@ func (x *QueryUsageRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryUsageRequest.ProtoReflect.Descriptor instead.
 func (*QueryUsageRequest) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_usage_proto_rawDescGZIP(), []int{6}
+	return file_proxycontrol_v1_usage_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *QueryUsageRequest) GetTenantId() string {
@@ -757,7 +1045,7 @@ type UsageBucket struct {
 
 func (x *UsageBucket) Reset() {
 	*x = UsageBucket{}
-	mi := &file_proxycontrol_v1_usage_proto_msgTypes[7]
+	mi := &file_proxycontrol_v1_usage_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -769,7 +1057,7 @@ func (x *UsageBucket) String() string {
 func (*UsageBucket) ProtoMessage() {}
 
 func (x *UsageBucket) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_usage_proto_msgTypes[7]
+	mi := &file_proxycontrol_v1_usage_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -782,7 +1070,7 @@ func (x *UsageBucket) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UsageBucket.ProtoReflect.Descriptor instead.
 func (*UsageBucket) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_usage_proto_rawDescGZIP(), []int{7}
+	return file_proxycontrol_v1_usage_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *UsageBucket) GetStartTime() *timestamppb.Timestamp {
@@ -818,7 +1106,7 @@ type QueryUsageResponse struct {
 
 func (x *QueryUsageResponse) Reset() {
 	*x = QueryUsageResponse{}
-	mi := &file_proxycontrol_v1_usage_proto_msgTypes[8]
+	mi := &file_proxycontrol_v1_usage_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -830,7 +1118,7 @@ func (x *QueryUsageResponse) String() string {
 func (*QueryUsageResponse) ProtoMessage() {}
 
 func (x *QueryUsageResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_usage_proto_msgTypes[8]
+	mi := &file_proxycontrol_v1_usage_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -843,7 +1131,7 @@ func (x *QueryUsageResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryUsageResponse.ProtoReflect.Descriptor instead.
 func (*QueryUsageResponse) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_usage_proto_rawDescGZIP(), []int{8}
+	return file_proxycontrol_v1_usage_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *QueryUsageResponse) GetBuckets() []*UsageBucket {
@@ -876,7 +1164,7 @@ type UsageAmount struct {
 
 func (x *UsageAmount) Reset() {
 	*x = UsageAmount{}
-	mi := &file_proxycontrol_v1_usage_proto_msgTypes[9]
+	mi := &file_proxycontrol_v1_usage_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -888,7 +1176,7 @@ func (x *UsageAmount) String() string {
 func (*UsageAmount) ProtoMessage() {}
 
 func (x *UsageAmount) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_usage_proto_msgTypes[9]
+	mi := &file_proxycontrol_v1_usage_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -901,7 +1189,7 @@ func (x *UsageAmount) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UsageAmount.ProtoReflect.Descriptor instead.
 func (*UsageAmount) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_usage_proto_rawDescGZIP(), []int{9}
+	return file_proxycontrol_v1_usage_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *UsageAmount) GetInputBytes() uint64 {
@@ -936,7 +1224,31 @@ var File_proxycontrol_v1_usage_proto protoreflect.FileDescriptor
 
 const file_proxycontrol_v1_usage_proto_rawDesc = "" +
 	"\n" +
-	"\x1bproxycontrol/v1/usage.proto\x12\x0fproxycontrol.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1bopenapiv3/annotations.proto\x1a\x17validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xcd\x01\n" +
+	"\x1bproxycontrol/v1/usage.proto\x12\x0fproxycontrol.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1bopenapiv3/annotations.proto\x1a\x17validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1cproxycontrol/v1/common.proto\"\xc7\x01\n" +
+	"\x11DailyUsageRequest\x12E\n" +
+	"\n" +
+	"start_date\x18\x01 \x01(\tB&\xfaB#r!2\x1c^[0-9]{4}-[0-9]{2}-[0-9]{2}$\xd0\x01\x01R\tstartDate\x12A\n" +
+	"\bend_date\x18\x02 \x01(\tB&\xfaB#r!2\x1c^[0-9]{4}-[0-9]{2}-[0-9]{2}$\xd0\x01\x01R\aendDate\x12(\n" +
+	"\tclient_id\x18\x03 \x01(\tB\v\xfaB\br\x06\xd0\x01\x01\xb0\x01\x01R\bclientId\"\x82\x01\n" +
+	"\n" +
+	"DailyUsage\x12\x12\n" +
+	"\x04date\x18\x01 \x01(\tR\x04date\x12%\n" +
+	"\x0ebillable_bytes\x18\x02 \x01(\x03R\rbillableBytes\x129\n" +
+	"\n" +
+	"updated_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"E\n" +
+	"\x12DailyUsageResponse\x12/\n" +
+	"\x04days\x18\x01 \x03(\v2\x1b.proxycontrol.v1.DailyUsageR\x04days\"j\n" +
+	"\x1dSetLowBalanceThresholdRequest\x125\n" +
+	"\x0fthreshold_bytes\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02(\x00H\x00R\x0ethresholdBytes\x88\x01\x01B\x12\n" +
+	"\x10_threshold_bytes\"\xd8\x01\n" +
+	"\fTrafficAlert\x12'\n" +
+	"\x0favailable_bytes\x18\x01 \x01(\x03R\x0eavailableBytes\x12,\n" +
+	"\x0fthreshold_bytes\x18\x02 \x01(\x03H\x00R\x0ethresholdBytes\x88\x01\x01\x12\x1e\n" +
+	"\n" +
+	"occurrence\x18\x03 \x01(\x03R\n" +
+	"occurrence\x12=\n" +
+	"\ftriggered_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\vtriggeredAtB\x12\n" +
+	"\x10_threshold_bytes\"\xcd\x01\n" +
 	"\x1aListRecordAnomaliesRequest\x12\x1d\n" +
 	"\n" +
 	"gateway_id\x18\x01 \x01(\tR\tgatewayId\x12\x17\n" +
@@ -1032,12 +1344,34 @@ const file_proxycontrol_v1_usage_proto_rawDesc = "" +
 	"\x1dUSAGE_GRANULARITY_UNSPECIFIED\x10\x00\x12\x1c\n" +
 	"\x18USAGE_GRANULARITY_MINUTE\x10\x01\x12\x1a\n" +
 	"\x16USAGE_GRANULARITY_HOUR\x10\x02\x12\x19\n" +
-	"\x15USAGE_GRANULARITY_DAY\x10\x032\x99\x04\n" +
-	"\fUsageService\x12\x9c\x01\n" +
+	"\x15USAGE_GRANULARITY_DAY\x10\x032\xa1\b\n" +
+	"\fUsageService\x12\x99\x01\n" +
+	"\x0eListDailyUsage\x12\".proxycontrol.v1.DailyUsageRequest\x1a#.proxycontrol.v1.DailyUsageResponse\">\xbaG\x1d\x12\x1b查询租户日实扣用量\x82\xd3\xe4\x93\x02\x18\x12\x16/v1/tenant/usage/daily\x12\xa5\x01\n" +
+	"\x0fGetTrafficAlert\x12\x1c.proxycontrol.v1.BaseRequest\x1a\x1d.proxycontrol.v1.TrafficAlert\"U\xbaG2\x120查看动态流量余额和当前低余额提醒\x82\xd3\xe4\x93\x02\x1a\x12\x18/v1/tenant/traffic-alert\x12\xc1\x01\n" +
+	"\x16SetLowBalanceThreshold\x12..proxycontrol.v1.SetLowBalanceThresholdRequest\x1a\x1d.proxycontrol.v1.TrafficAlert\"X\xbaG2\x120设置或清除动态流量低余额提醒阈值\x82\xd3\xe4\x93\x02\x1d:\x01*\x1a\x18/v1/tenant/traffic-alert\x12\x9c\x01\n" +
 	"\n" +
 	"QueryUsage\x12\".proxycontrol.v1.QueryUsageRequest\x1a#.proxycontrol.v1.QueryUsageResponse\"E\xbaG&\x12$按时间和维度查询运营用量\x82\xd3\xe4\x93\x02\x16\x12\x14/v1/operations/usage\x12\xb9\x01\n" +
 	"\x13ListRecordAnomalies\x12+.proxycontrol.v1.ListRecordAnomaliesRequest\x1a,.proxycontrol.v1.ListRecordAnomaliesResponse\"G\xbaG$\x12\"分页查询 Recorder 记录异常\x82\xd3\xe4\x93\x02\x1a\x12\x18/v1/operations/anomalies\x12\xad\x01\n" +
-	"\rListUsageGaps\x12%.proxycontrol.v1.ListUsageGapsRequest\x1a&.proxycontrol.v1.ListUsageGapsResponse\"M\xbaG/\x12-分页查询待回放或可能缺失的用量\x82\xd3\xe4\x93\x02\x15\x12\x13/v1/operations/gapsBEZCgithub.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1b\x06proto3"
+	"\rListUsageGaps\x12%.proxycontrol.v1.ListUsageGapsRequest\x1a&.proxycontrol.v1.ListUsageGapsResponse\"M\xbaG/\x12-分页查询待回放或可能缺失的用量\x82\xd3\xe4\x93\x02\x15\x12\x13/v1/operations/gapsB\x96\x04\xbaG\xcd\x03\"\xca\x03\n" +
+	"\xc7\x03\n" +
+	"\x1a/v1/tenant/usage/daily.csv\x12\xa8\x03\"\xa5\x03\n" +
+	"\fUsageService\x12\x1b导出租户日实扣用量*\x1dUsageService_ExportDailyUsage2U\n" +
+	"S\n" +
+	"\tstartDate\x12\x05query\x1a2上海自然日起点（含），格式 YYYY-MM-DDR\v\n" +
+	"\t\xca\x01\x06string2S\n" +
+	"Q\n" +
+	"\aendDate\x12\x05query\x1a2上海自然日终点（含），格式 YYYY-MM-DDR\v\n" +
+	"\t\xca\x01\x06string2:\n" +
+	"8\n" +
+	"\bclientId\x12\x05query\x1a\x18可选代理子账号 IDR\v\n" +
+	"\t\xca\x01\x06stringBq\x12o\n" +
+	"\x03200\x12h\n" +
+	"f\n" +
+	">完整筛选结果的 CSV 下载，流量单位为十进制 GB\x1a$\n" +
+	"\"\n" +
+	"\btext/csv\x12\x16\n" +
+	"\x14\n" +
+	"\x12\xca\x01\x06string\x9a\x02\x06binaryZCgithub.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1b\x06proto3"
 
 var (
 	file_proxycontrol_v1_usage_proto_rawDescOnce sync.Once
@@ -1052,47 +1386,62 @@ func file_proxycontrol_v1_usage_proto_rawDescGZIP() []byte {
 }
 
 var file_proxycontrol_v1_usage_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_proxycontrol_v1_usage_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_proxycontrol_v1_usage_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_proxycontrol_v1_usage_proto_goTypes = []any{
-	(UsageGranularity)(0),               // 0: proxycontrol.v1.UsageGranularity
-	(*ListRecordAnomaliesRequest)(nil),  // 1: proxycontrol.v1.ListRecordAnomaliesRequest
-	(*RecordAnomaly)(nil),               // 2: proxycontrol.v1.RecordAnomaly
-	(*ListRecordAnomaliesResponse)(nil), // 3: proxycontrol.v1.ListRecordAnomaliesResponse
-	(*ListUsageGapsRequest)(nil),        // 4: proxycontrol.v1.ListUsageGapsRequest
-	(*UsageGap)(nil),                    // 5: proxycontrol.v1.UsageGap
-	(*ListUsageGapsResponse)(nil),       // 6: proxycontrol.v1.ListUsageGapsResponse
-	(*QueryUsageRequest)(nil),           // 7: proxycontrol.v1.QueryUsageRequest
-	(*UsageBucket)(nil),                 // 8: proxycontrol.v1.UsageBucket
-	(*QueryUsageResponse)(nil),          // 9: proxycontrol.v1.QueryUsageResponse
-	(*UsageAmount)(nil),                 // 10: proxycontrol.v1.UsageAmount
-	(*timestamppb.Timestamp)(nil),       // 11: google.protobuf.Timestamp
+	(UsageGranularity)(0),                 // 0: proxycontrol.v1.UsageGranularity
+	(*DailyUsageRequest)(nil),             // 1: proxycontrol.v1.DailyUsageRequest
+	(*DailyUsage)(nil),                    // 2: proxycontrol.v1.DailyUsage
+	(*DailyUsageResponse)(nil),            // 3: proxycontrol.v1.DailyUsageResponse
+	(*SetLowBalanceThresholdRequest)(nil), // 4: proxycontrol.v1.SetLowBalanceThresholdRequest
+	(*TrafficAlert)(nil),                  // 5: proxycontrol.v1.TrafficAlert
+	(*ListRecordAnomaliesRequest)(nil),    // 6: proxycontrol.v1.ListRecordAnomaliesRequest
+	(*RecordAnomaly)(nil),                 // 7: proxycontrol.v1.RecordAnomaly
+	(*ListRecordAnomaliesResponse)(nil),   // 8: proxycontrol.v1.ListRecordAnomaliesResponse
+	(*ListUsageGapsRequest)(nil),          // 9: proxycontrol.v1.ListUsageGapsRequest
+	(*UsageGap)(nil),                      // 10: proxycontrol.v1.UsageGap
+	(*ListUsageGapsResponse)(nil),         // 11: proxycontrol.v1.ListUsageGapsResponse
+	(*QueryUsageRequest)(nil),             // 12: proxycontrol.v1.QueryUsageRequest
+	(*UsageBucket)(nil),                   // 13: proxycontrol.v1.UsageBucket
+	(*QueryUsageResponse)(nil),            // 14: proxycontrol.v1.QueryUsageResponse
+	(*UsageAmount)(nil),                   // 15: proxycontrol.v1.UsageAmount
+	(*timestamppb.Timestamp)(nil),         // 16: google.protobuf.Timestamp
+	(*BaseRequest)(nil),                   // 17: proxycontrol.v1.BaseRequest
 }
 var file_proxycontrol_v1_usage_proto_depIdxs = []int32{
-	11, // 0: proxycontrol.v1.RecordAnomaly.detected_at:type_name -> google.protobuf.Timestamp
-	11, // 1: proxycontrol.v1.RecordAnomaly.resolved_at:type_name -> google.protobuf.Timestamp
-	2,  // 2: proxycontrol.v1.ListRecordAnomaliesResponse.anomalies:type_name -> proxycontrol.v1.RecordAnomaly
-	11, // 3: proxycontrol.v1.UsageGap.from_at:type_name -> google.protobuf.Timestamp
-	11, // 4: proxycontrol.v1.UsageGap.detected_at:type_name -> google.protobuf.Timestamp
-	11, // 5: proxycontrol.v1.UsageGap.resolved_at:type_name -> google.protobuf.Timestamp
-	11, // 6: proxycontrol.v1.UsageGap.exited_at:type_name -> google.protobuf.Timestamp
-	5,  // 7: proxycontrol.v1.ListUsageGapsResponse.gaps:type_name -> proxycontrol.v1.UsageGap
-	11, // 8: proxycontrol.v1.QueryUsageRequest.start_time:type_name -> google.protobuf.Timestamp
-	11, // 9: proxycontrol.v1.QueryUsageRequest.end_time:type_name -> google.protobuf.Timestamp
-	0,  // 10: proxycontrol.v1.QueryUsageRequest.granularity:type_name -> proxycontrol.v1.UsageGranularity
-	11, // 11: proxycontrol.v1.UsageBucket.start_time:type_name -> google.protobuf.Timestamp
-	10, // 12: proxycontrol.v1.UsageBucket.amount:type_name -> proxycontrol.v1.UsageAmount
-	8,  // 13: proxycontrol.v1.QueryUsageResponse.buckets:type_name -> proxycontrol.v1.UsageBucket
-	7,  // 14: proxycontrol.v1.UsageService.QueryUsage:input_type -> proxycontrol.v1.QueryUsageRequest
-	1,  // 15: proxycontrol.v1.UsageService.ListRecordAnomalies:input_type -> proxycontrol.v1.ListRecordAnomaliesRequest
-	4,  // 16: proxycontrol.v1.UsageService.ListUsageGaps:input_type -> proxycontrol.v1.ListUsageGapsRequest
-	9,  // 17: proxycontrol.v1.UsageService.QueryUsage:output_type -> proxycontrol.v1.QueryUsageResponse
-	3,  // 18: proxycontrol.v1.UsageService.ListRecordAnomalies:output_type -> proxycontrol.v1.ListRecordAnomaliesResponse
-	6,  // 19: proxycontrol.v1.UsageService.ListUsageGaps:output_type -> proxycontrol.v1.ListUsageGapsResponse
-	17, // [17:20] is the sub-list for method output_type
-	14, // [14:17] is the sub-list for method input_type
-	14, // [14:14] is the sub-list for extension type_name
-	14, // [14:14] is the sub-list for extension extendee
-	0,  // [0:14] is the sub-list for field type_name
+	16, // 0: proxycontrol.v1.DailyUsage.updated_at:type_name -> google.protobuf.Timestamp
+	2,  // 1: proxycontrol.v1.DailyUsageResponse.days:type_name -> proxycontrol.v1.DailyUsage
+	16, // 2: proxycontrol.v1.TrafficAlert.triggered_at:type_name -> google.protobuf.Timestamp
+	16, // 3: proxycontrol.v1.RecordAnomaly.detected_at:type_name -> google.protobuf.Timestamp
+	16, // 4: proxycontrol.v1.RecordAnomaly.resolved_at:type_name -> google.protobuf.Timestamp
+	7,  // 5: proxycontrol.v1.ListRecordAnomaliesResponse.anomalies:type_name -> proxycontrol.v1.RecordAnomaly
+	16, // 6: proxycontrol.v1.UsageGap.from_at:type_name -> google.protobuf.Timestamp
+	16, // 7: proxycontrol.v1.UsageGap.detected_at:type_name -> google.protobuf.Timestamp
+	16, // 8: proxycontrol.v1.UsageGap.resolved_at:type_name -> google.protobuf.Timestamp
+	16, // 9: proxycontrol.v1.UsageGap.exited_at:type_name -> google.protobuf.Timestamp
+	10, // 10: proxycontrol.v1.ListUsageGapsResponse.gaps:type_name -> proxycontrol.v1.UsageGap
+	16, // 11: proxycontrol.v1.QueryUsageRequest.start_time:type_name -> google.protobuf.Timestamp
+	16, // 12: proxycontrol.v1.QueryUsageRequest.end_time:type_name -> google.protobuf.Timestamp
+	0,  // 13: proxycontrol.v1.QueryUsageRequest.granularity:type_name -> proxycontrol.v1.UsageGranularity
+	16, // 14: proxycontrol.v1.UsageBucket.start_time:type_name -> google.protobuf.Timestamp
+	15, // 15: proxycontrol.v1.UsageBucket.amount:type_name -> proxycontrol.v1.UsageAmount
+	13, // 16: proxycontrol.v1.QueryUsageResponse.buckets:type_name -> proxycontrol.v1.UsageBucket
+	1,  // 17: proxycontrol.v1.UsageService.ListDailyUsage:input_type -> proxycontrol.v1.DailyUsageRequest
+	17, // 18: proxycontrol.v1.UsageService.GetTrafficAlert:input_type -> proxycontrol.v1.BaseRequest
+	4,  // 19: proxycontrol.v1.UsageService.SetLowBalanceThreshold:input_type -> proxycontrol.v1.SetLowBalanceThresholdRequest
+	12, // 20: proxycontrol.v1.UsageService.QueryUsage:input_type -> proxycontrol.v1.QueryUsageRequest
+	6,  // 21: proxycontrol.v1.UsageService.ListRecordAnomalies:input_type -> proxycontrol.v1.ListRecordAnomaliesRequest
+	9,  // 22: proxycontrol.v1.UsageService.ListUsageGaps:input_type -> proxycontrol.v1.ListUsageGapsRequest
+	3,  // 23: proxycontrol.v1.UsageService.ListDailyUsage:output_type -> proxycontrol.v1.DailyUsageResponse
+	5,  // 24: proxycontrol.v1.UsageService.GetTrafficAlert:output_type -> proxycontrol.v1.TrafficAlert
+	5,  // 25: proxycontrol.v1.UsageService.SetLowBalanceThreshold:output_type -> proxycontrol.v1.TrafficAlert
+	14, // 26: proxycontrol.v1.UsageService.QueryUsage:output_type -> proxycontrol.v1.QueryUsageResponse
+	8,  // 27: proxycontrol.v1.UsageService.ListRecordAnomalies:output_type -> proxycontrol.v1.ListRecordAnomaliesResponse
+	11, // 28: proxycontrol.v1.UsageService.ListUsageGaps:output_type -> proxycontrol.v1.ListUsageGapsResponse
+	23, // [23:29] is the sub-list for method output_type
+	17, // [17:23] is the sub-list for method input_type
+	17, // [17:17] is the sub-list for extension type_name
+	17, // [17:17] is the sub-list for extension extendee
+	0,  // [0:17] is the sub-list for field type_name
 }
 
 func init() { file_proxycontrol_v1_usage_proto_init() }
@@ -1100,13 +1449,16 @@ func file_proxycontrol_v1_usage_proto_init() {
 	if File_proxycontrol_v1_usage_proto != nil {
 		return
 	}
+	file_proxycontrol_v1_common_proto_init()
+	file_proxycontrol_v1_usage_proto_msgTypes[3].OneofWrappers = []any{}
+	file_proxycontrol_v1_usage_proto_msgTypes[4].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proxycontrol_v1_usage_proto_rawDesc), len(file_proxycontrol_v1_usage_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   10,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

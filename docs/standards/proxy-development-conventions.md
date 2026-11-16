@@ -39,6 +39,7 @@
 - 跨应用通过协议交互。平台自有的服务间接口以 Protobuf 为契约，源文件按接口提供方和版本放入 `api/protos/<服务名>/<版本>/`。
 - `proxy-control` 的接口源文件位于 `api/protos/proxycontrol/v1/`，PB 包名为 `proxycontrol.v1`。网关上报和控制台查询分别在 `reporting.proto` 和 `usage.proto` 定义，可分别声明服务并绑定对应的身份与权限规则。
 - 一期只启用 HTTP 服务。采集器通过 HTTP 批量上报，平台自有接口用 `google.api.http` 声明路由并生成 HTTP/JSON 绑定。
+- 租户日用量 CSV 按首版模块契约使用 Go HTTP 下载路由，在 `usage.proto` 的 `openapi.v3.document` 声明 `text/csv`。下载与 JSON 查询共用筛选和聚合。
 - 在 `apps/proxy-control/` 运行 `make api`，用固定版本的 `protoc` 和插件生成 `api/proxycontrol/v1/` 下的 Go 绑定，以及 `api/proxycontrol/openapi.yaml`。源文件与受影响的生成物同 PR 提交。
 - 每个 RPC 用 `openapi.v3.operation` 声明摘要，字段注释说明用途、单位、默认值和空值语义。无参数的 RPC 使用 `BaseRequest`，无业务数据的成功响应使用 `BaseResp`。
 - 请求字段的静态约束用 `validate.rules` 声明，并生成 Go 校验方法。控制面在业务层执行校验，以保留鉴权顺序和现有 HTTP 错误。跨字段及依赖服务端状态的约束在业务层维护。

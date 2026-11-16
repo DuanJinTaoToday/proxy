@@ -38,6 +38,688 @@ var (
 // define the regex for a UUID once up-front
 var _usage_uuidPattern = regexp.MustCompile("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
 
+// Validate checks the field values on DailyUsageRequest with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *DailyUsageRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on DailyUsageRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// DailyUsageRequestMultiError, or nil if none found.
+func (m *DailyUsageRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *DailyUsageRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetStartDate() != "" {
+
+		if !_DailyUsageRequest_StartDate_Pattern.MatchString(m.GetStartDate()) {
+			err := DailyUsageRequestValidationError{
+				field:  "StartDate",
+				reason: "value does not match regex pattern \"^[0-9]{4}-[0-9]{2}-[0-9]{2}$\"",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if m.GetEndDate() != "" {
+
+		if !_DailyUsageRequest_EndDate_Pattern.MatchString(m.GetEndDate()) {
+			err := DailyUsageRequestValidationError{
+				field:  "EndDate",
+				reason: "value does not match regex pattern \"^[0-9]{4}-[0-9]{2}-[0-9]{2}$\"",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if m.GetClientId() != "" {
+
+		if err := m._validateUuid(m.GetClientId()); err != nil {
+			err = DailyUsageRequestValidationError{
+				field:  "ClientId",
+				reason: "value must be a valid UUID",
+				cause:  err,
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return DailyUsageRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+func (m *DailyUsageRequest) _validateUuid(uuid string) error {
+	if matched := _usage_uuidPattern.MatchString(uuid); !matched {
+		return errors.New("invalid uuid format")
+	}
+
+	return nil
+}
+
+// DailyUsageRequestMultiError is an error wrapping multiple validation errors
+// returned by DailyUsageRequest.ValidateAll() if the designated constraints
+// aren't met.
+type DailyUsageRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m DailyUsageRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m DailyUsageRequestMultiError) AllErrors() []error { return m }
+
+// DailyUsageRequestValidationError is the validation error returned by
+// DailyUsageRequest.Validate if the designated constraints aren't met.
+type DailyUsageRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e DailyUsageRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e DailyUsageRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e DailyUsageRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e DailyUsageRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e DailyUsageRequestValidationError) ErrorName() string {
+	return "DailyUsageRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e DailyUsageRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDailyUsageRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = DailyUsageRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = DailyUsageRequestValidationError{}
+
+var _DailyUsageRequest_StartDate_Pattern = regexp.MustCompile("^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
+
+var _DailyUsageRequest_EndDate_Pattern = regexp.MustCompile("^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
+
+// Validate checks the field values on DailyUsage with the rules defined in the
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *DailyUsage) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on DailyUsage with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in DailyUsageMultiError, or
+// nil if none found.
+func (m *DailyUsage) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *DailyUsage) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Date
+
+	// no validation rules for BillableBytes
+
+	if all {
+		switch v := interface{}(m.GetUpdatedAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, DailyUsageValidationError{
+					field:  "UpdatedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, DailyUsageValidationError{
+					field:  "UpdatedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetUpdatedAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return DailyUsageValidationError{
+				field:  "UpdatedAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return DailyUsageMultiError(errors)
+	}
+
+	return nil
+}
+
+// DailyUsageMultiError is an error wrapping multiple validation errors
+// returned by DailyUsage.ValidateAll() if the designated constraints aren't met.
+type DailyUsageMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m DailyUsageMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m DailyUsageMultiError) AllErrors() []error { return m }
+
+// DailyUsageValidationError is the validation error returned by
+// DailyUsage.Validate if the designated constraints aren't met.
+type DailyUsageValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e DailyUsageValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e DailyUsageValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e DailyUsageValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e DailyUsageValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e DailyUsageValidationError) ErrorName() string { return "DailyUsageValidationError" }
+
+// Error satisfies the builtin error interface
+func (e DailyUsageValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDailyUsage.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = DailyUsageValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = DailyUsageValidationError{}
+
+// Validate checks the field values on DailyUsageResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *DailyUsageResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on DailyUsageResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// DailyUsageResponseMultiError, or nil if none found.
+func (m *DailyUsageResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *DailyUsageResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetDays() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, DailyUsageResponseValidationError{
+						field:  fmt.Sprintf("Days[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, DailyUsageResponseValidationError{
+						field:  fmt.Sprintf("Days[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return DailyUsageResponseValidationError{
+					field:  fmt.Sprintf("Days[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return DailyUsageResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// DailyUsageResponseMultiError is an error wrapping multiple validation errors
+// returned by DailyUsageResponse.ValidateAll() if the designated constraints
+// aren't met.
+type DailyUsageResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m DailyUsageResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m DailyUsageResponseMultiError) AllErrors() []error { return m }
+
+// DailyUsageResponseValidationError is the validation error returned by
+// DailyUsageResponse.Validate if the designated constraints aren't met.
+type DailyUsageResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e DailyUsageResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e DailyUsageResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e DailyUsageResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e DailyUsageResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e DailyUsageResponseValidationError) ErrorName() string {
+	return "DailyUsageResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e DailyUsageResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDailyUsageResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = DailyUsageResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = DailyUsageResponseValidationError{}
+
+// Validate checks the field values on SetLowBalanceThresholdRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *SetLowBalanceThresholdRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on SetLowBalanceThresholdRequest with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// SetLowBalanceThresholdRequestMultiError, or nil if none found.
+func (m *SetLowBalanceThresholdRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *SetLowBalanceThresholdRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.ThresholdBytes != nil {
+
+		if m.GetThresholdBytes() < 0 {
+			err := SetLowBalanceThresholdRequestValidationError{
+				field:  "ThresholdBytes",
+				reason: "value must be greater than or equal to 0",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return SetLowBalanceThresholdRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// SetLowBalanceThresholdRequestMultiError is an error wrapping multiple
+// validation errors returned by SetLowBalanceThresholdRequest.ValidateAll()
+// if the designated constraints aren't met.
+type SetLowBalanceThresholdRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m SetLowBalanceThresholdRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m SetLowBalanceThresholdRequestMultiError) AllErrors() []error { return m }
+
+// SetLowBalanceThresholdRequestValidationError is the validation error
+// returned by SetLowBalanceThresholdRequest.Validate if the designated
+// constraints aren't met.
+type SetLowBalanceThresholdRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e SetLowBalanceThresholdRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e SetLowBalanceThresholdRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e SetLowBalanceThresholdRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e SetLowBalanceThresholdRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e SetLowBalanceThresholdRequestValidationError) ErrorName() string {
+	return "SetLowBalanceThresholdRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e SetLowBalanceThresholdRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sSetLowBalanceThresholdRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = SetLowBalanceThresholdRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = SetLowBalanceThresholdRequestValidationError{}
+
+// Validate checks the field values on TrafficAlert with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *TrafficAlert) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on TrafficAlert with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in TrafficAlertMultiError, or
+// nil if none found.
+func (m *TrafficAlert) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *TrafficAlert) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for AvailableBytes
+
+	// no validation rules for Occurrence
+
+	if all {
+		switch v := interface{}(m.GetTriggeredAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, TrafficAlertValidationError{
+					field:  "TriggeredAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, TrafficAlertValidationError{
+					field:  "TriggeredAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTriggeredAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return TrafficAlertValidationError{
+				field:  "TriggeredAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.ThresholdBytes != nil {
+		// no validation rules for ThresholdBytes
+	}
+
+	if len(errors) > 0 {
+		return TrafficAlertMultiError(errors)
+	}
+
+	return nil
+}
+
+// TrafficAlertMultiError is an error wrapping multiple validation errors
+// returned by TrafficAlert.ValidateAll() if the designated constraints aren't met.
+type TrafficAlertMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m TrafficAlertMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m TrafficAlertMultiError) AllErrors() []error { return m }
+
+// TrafficAlertValidationError is the validation error returned by
+// TrafficAlert.Validate if the designated constraints aren't met.
+type TrafficAlertValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e TrafficAlertValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e TrafficAlertValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e TrafficAlertValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e TrafficAlertValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e TrafficAlertValidationError) ErrorName() string { return "TrafficAlertValidationError" }
+
+// Error satisfies the builtin error interface
+func (e TrafficAlertValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sTrafficAlert.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = TrafficAlertValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = TrafficAlertValidationError{}
+
 // Validate checks the field values on ListRecordAnomaliesRequest with the
 // rules defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
