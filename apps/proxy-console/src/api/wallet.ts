@@ -5,6 +5,7 @@ export interface WalletTenant {
   name: string
   primary_account_name: string
   available_minor?: string
+  available_traffic_bytes?: string
 }
 
 export interface Entry {
@@ -67,6 +68,10 @@ export function findWalletTenant(token: string, query: string, signal: AbortSign
 
 export function getWallet(token: string, signal: AbortSignal, tenantID = '') {
   return request<WalletTenant>(tenantID ? operatorPath(tenantID) : '/v1/tenant/wallet', { token, signal })
+}
+
+export function purchaseTrafficPackage(token: string, body: { package_id: string; package_version: string; request_key: string }) {
+  return request<Order>('/v1/tenant/orders/traffic-packages', { token, body })
 }
 
 export function canManageBilling(token: string, signal: AbortSignal) {

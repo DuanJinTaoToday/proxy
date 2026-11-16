@@ -11,8 +11,9 @@ export function money(value: string | bigint = '0') {
 
 export function flowAmount(bytes = '0') {
   const amount = BigInt(bytes)
-  const fraction = String(amount % 1_000_000_000n).padStart(9, '0').replace(/0+$/, '')
-  return integer.format(amount / 1_000_000_000n) + (fraction ? '.' + fraction : '') + ' GB'
+  const abs = amount < 0n ? -amount : amount
+  const fraction = String(abs % 1_000_000_000n).padStart(9, '0').replace(/0+$/, '')
+  return (amount < 0n ? '−' : '') + integer.format(abs / 1_000_000_000n) + (fraction ? '.' + fraction : '') + ' GB'
 }
 
 export function dateTime(value: string) {

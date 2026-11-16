@@ -25,6 +25,69 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type PurchaseTrafficPackageRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 已确认的公开报价套餐 ID。
+	PackageId string `protobuf:"bytes,1,opt,name=package_id,json=packageId,proto3" json:"package_id,omitempty"`
+	// 已确认的套餐版本。变更后须重新确认。
+	PackageVersion int64 `protobuf:"varint,2,opt,name=package_version,json=packageVersion,proto3" json:"package_version,omitempty"`
+	// 单次购买的幂等键。结果未知时使用原请求重试。
+	RequestKey    string `protobuf:"bytes,3,opt,name=request_key,json=requestKey,proto3" json:"request_key,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PurchaseTrafficPackageRequest) Reset() {
+	*x = PurchaseTrafficPackageRequest{}
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PurchaseTrafficPackageRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PurchaseTrafficPackageRequest) ProtoMessage() {}
+
+func (x *PurchaseTrafficPackageRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PurchaseTrafficPackageRequest.ProtoReflect.Descriptor instead.
+func (*PurchaseTrafficPackageRequest) Descriptor() ([]byte, []int) {
+	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *PurchaseTrafficPackageRequest) GetPackageId() string {
+	if x != nil {
+		return x.PackageId
+	}
+	return ""
+}
+
+func (x *PurchaseTrafficPackageRequest) GetPackageVersion() int64 {
+	if x != nil {
+		return x.PackageVersion
+	}
+	return 0
+}
+
+func (x *PurchaseTrafficPackageRequest) GetRequestKey() string {
+	if x != nil {
+		return x.RequestKey
+	}
+	return ""
+}
+
 type FindWalletTenantRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 精确匹配主账号名，或手机号（可省略 +86）。
@@ -35,7 +98,7 @@ type FindWalletTenantRequest struct {
 
 func (x *FindWalletTenantRequest) Reset() {
 	*x = FindWalletTenantRequest{}
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[0]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -47,7 +110,7 @@ func (x *FindWalletTenantRequest) String() string {
 func (*FindWalletTenantRequest) ProtoMessage() {}
 
 func (x *FindWalletTenantRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[0]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -60,7 +123,7 @@ func (x *FindWalletTenantRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FindWalletTenantRequest.ProtoReflect.Descriptor instead.
 func (*FindWalletTenantRequest) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{0}
+	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *FindWalletTenantRequest) GetQuery() string {
@@ -80,7 +143,7 @@ type WalletTenantRequest struct {
 
 func (x *WalletTenantRequest) Reset() {
 	*x = WalletTenantRequest{}
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[1]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -92,7 +155,7 @@ func (x *WalletTenantRequest) String() string {
 func (*WalletTenantRequest) ProtoMessage() {}
 
 func (x *WalletTenantRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[1]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -105,7 +168,7 @@ func (x *WalletTenantRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WalletTenantRequest.ProtoReflect.Descriptor instead.
 func (*WalletTenantRequest) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{1}
+	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *WalletTenantRequest) GetTenantId() string {
@@ -131,7 +194,7 @@ type QuoteWalletRechargeRequest struct {
 
 func (x *QuoteWalletRechargeRequest) Reset() {
 	*x = QuoteWalletRechargeRequest{}
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[2]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -143,7 +206,7 @@ func (x *QuoteWalletRechargeRequest) String() string {
 func (*QuoteWalletRechargeRequest) ProtoMessage() {}
 
 func (x *QuoteWalletRechargeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[2]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -156,7 +219,7 @@ func (x *QuoteWalletRechargeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QuoteWalletRechargeRequest.ProtoReflect.Descriptor instead.
 func (*QuoteWalletRechargeRequest) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{2}
+	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *QuoteWalletRechargeRequest) GetTenantId() string {
@@ -207,7 +270,7 @@ type WalletRechargeQuote struct {
 
 func (x *WalletRechargeQuote) Reset() {
 	*x = WalletRechargeQuote{}
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[3]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -219,7 +282,7 @@ func (x *WalletRechargeQuote) String() string {
 func (*WalletRechargeQuote) ProtoMessage() {}
 
 func (x *WalletRechargeQuote) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[3]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -232,7 +295,7 @@ func (x *WalletRechargeQuote) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WalletRechargeQuote.ProtoReflect.Descriptor instead.
 func (*WalletRechargeQuote) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{3}
+	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *WalletRechargeQuote) GetTenant() *WalletTenant {
@@ -291,7 +354,7 @@ type RechargeWalletRequest struct {
 
 func (x *RechargeWalletRequest) Reset() {
 	*x = RechargeWalletRequest{}
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[4]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -303,7 +366,7 @@ func (x *RechargeWalletRequest) String() string {
 func (*RechargeWalletRequest) ProtoMessage() {}
 
 func (x *RechargeWalletRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[4]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -316,7 +379,7 @@ func (x *RechargeWalletRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RechargeWalletRequest.ProtoReflect.Descriptor instead.
 func (*RechargeWalletRequest) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{4}
+	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *RechargeWalletRequest) GetTenantId() string {
@@ -350,13 +413,15 @@ type WalletTenant struct {
 	PrimaryAccountName string `protobuf:"bytes,3,opt,name=primary_account_name,json=primaryAccountName,proto3" json:"primary_account_name,omitempty"`
 	// 可用余额，人民币分。
 	AvailableMinor int64 `protobuf:"varint,4,opt,name=available_minor,json=availableMinor,proto3" json:"available_minor,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// 可用流量字节数。负值为待抵扣的用量。
+	AvailableTrafficBytes int64 `protobuf:"varint,5,opt,name=available_traffic_bytes,json=availableTrafficBytes,proto3" json:"available_traffic_bytes,omitempty"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
 }
 
 func (x *WalletTenant) Reset() {
 	*x = WalletTenant{}
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[5]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -368,7 +433,7 @@ func (x *WalletTenant) String() string {
 func (*WalletTenant) ProtoMessage() {}
 
 func (x *WalletTenant) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[5]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -381,7 +446,7 @@ func (x *WalletTenant) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WalletTenant.ProtoReflect.Descriptor instead.
 func (*WalletTenant) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{5}
+	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *WalletTenant) GetTenantId() string {
@@ -412,6 +477,13 @@ func (x *WalletTenant) GetAvailableMinor() int64 {
 	return 0
 }
 
+func (x *WalletTenant) GetAvailableTrafficBytes() int64 {
+	if x != nil {
+		return x.AvailableTrafficBytes
+	}
+	return 0
+}
+
 type WalletEntry struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 流水编号。
@@ -438,7 +510,7 @@ type WalletEntry struct {
 
 func (x *WalletEntry) Reset() {
 	*x = WalletEntry{}
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[6]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -450,7 +522,7 @@ func (x *WalletEntry) String() string {
 func (*WalletEntry) ProtoMessage() {}
 
 func (x *WalletEntry) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[6]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -463,7 +535,7 @@ func (x *WalletEntry) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WalletEntry.ProtoReflect.Descriptor instead.
 func (*WalletEntry) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{6}
+	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *WalletEntry) GetId() int64 {
@@ -541,7 +613,7 @@ type WalletEntries struct {
 
 func (x *WalletEntries) Reset() {
 	*x = WalletEntries{}
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[7]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -553,7 +625,7 @@ func (x *WalletEntries) String() string {
 func (*WalletEntries) ProtoMessage() {}
 
 func (x *WalletEntries) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[7]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -566,7 +638,7 @@ func (x *WalletEntries) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WalletEntries.ProtoReflect.Descriptor instead.
 func (*WalletEntries) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{7}
+	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *WalletEntries) GetEntries() []*WalletEntry {
@@ -595,7 +667,7 @@ type PurchaseOrders struct {
 
 func (x *PurchaseOrders) Reset() {
 	*x = PurchaseOrders{}
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[8]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -607,7 +679,7 @@ func (x *PurchaseOrders) String() string {
 func (*PurchaseOrders) ProtoMessage() {}
 
 func (x *PurchaseOrders) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[8]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -620,7 +692,7 @@ func (x *PurchaseOrders) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PurchaseOrders.ProtoReflect.Descriptor instead.
 func (*PurchaseOrders) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{8}
+	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *PurchaseOrders) GetOrders() []*PurchaseOrder {
@@ -673,7 +745,7 @@ type PurchaseOrder struct {
 
 func (x *PurchaseOrder) Reset() {
 	*x = PurchaseOrder{}
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[9]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -685,7 +757,7 @@ func (x *PurchaseOrder) String() string {
 func (*PurchaseOrder) ProtoMessage() {}
 
 func (x *PurchaseOrder) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[9]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -698,7 +770,7 @@ func (x *PurchaseOrder) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PurchaseOrder.ProtoReflect.Descriptor instead.
 func (*PurchaseOrder) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{9}
+	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *PurchaseOrder) GetId() int64 {
@@ -821,7 +893,7 @@ type PurchaseOrderItem struct {
 
 func (x *PurchaseOrderItem) Reset() {
 	*x = PurchaseOrderItem{}
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[10]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -833,7 +905,7 @@ func (x *PurchaseOrderItem) String() string {
 func (*PurchaseOrderItem) ProtoMessage() {}
 
 func (x *PurchaseOrderItem) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[10]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -846,7 +918,7 @@ func (x *PurchaseOrderItem) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PurchaseOrderItem.ProtoReflect.Descriptor instead.
 func (*PurchaseOrderItem) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{10}
+	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *PurchaseOrderItem) GetPosition() int32 {
@@ -908,7 +980,7 @@ type CustomerWalletEntriesRequest struct {
 
 func (x *CustomerWalletEntriesRequest) Reset() {
 	*x = CustomerWalletEntriesRequest{}
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[11]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -920,7 +992,7 @@ func (x *CustomerWalletEntriesRequest) String() string {
 func (*CustomerWalletEntriesRequest) ProtoMessage() {}
 
 func (x *CustomerWalletEntriesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[11]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -933,7 +1005,7 @@ func (x *CustomerWalletEntriesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CustomerWalletEntriesRequest.ProtoReflect.Descriptor instead.
 func (*CustomerWalletEntriesRequest) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{11}
+	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *CustomerWalletEntriesRequest) GetBeforeId() int64 {
@@ -955,7 +1027,7 @@ type OperatorWalletEntriesRequest struct {
 
 func (x *OperatorWalletEntriesRequest) Reset() {
 	*x = OperatorWalletEntriesRequest{}
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[12]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -967,7 +1039,7 @@ func (x *OperatorWalletEntriesRequest) String() string {
 func (*OperatorWalletEntriesRequest) ProtoMessage() {}
 
 func (x *OperatorWalletEntriesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[12]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -980,7 +1052,7 @@ func (x *OperatorWalletEntriesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OperatorWalletEntriesRequest.ProtoReflect.Descriptor instead.
 func (*OperatorWalletEntriesRequest) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{12}
+	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *OperatorWalletEntriesRequest) GetTenantId() string {
@@ -1011,7 +1083,7 @@ type CustomerPurchaseOrdersRequest struct {
 
 func (x *CustomerPurchaseOrdersRequest) Reset() {
 	*x = CustomerPurchaseOrdersRequest{}
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[13]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1023,7 +1095,7 @@ func (x *CustomerPurchaseOrdersRequest) String() string {
 func (*CustomerPurchaseOrdersRequest) ProtoMessage() {}
 
 func (x *CustomerPurchaseOrdersRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[13]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1036,7 +1108,7 @@ func (x *CustomerPurchaseOrdersRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CustomerPurchaseOrdersRequest.ProtoReflect.Descriptor instead.
 func (*CustomerPurchaseOrdersRequest) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{13}
+	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *CustomerPurchaseOrdersRequest) GetBeforeId() int64 {
@@ -1076,7 +1148,7 @@ type OperatorPurchaseOrdersRequest struct {
 
 func (x *OperatorPurchaseOrdersRequest) Reset() {
 	*x = OperatorPurchaseOrdersRequest{}
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[14]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1088,7 +1160,7 @@ func (x *OperatorPurchaseOrdersRequest) String() string {
 func (*OperatorPurchaseOrdersRequest) ProtoMessage() {}
 
 func (x *OperatorPurchaseOrdersRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[14]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1101,7 +1173,7 @@ func (x *OperatorPurchaseOrdersRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OperatorPurchaseOrdersRequest.ProtoReflect.Descriptor instead.
 func (*OperatorPurchaseOrdersRequest) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{14}
+	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *OperatorPurchaseOrdersRequest) GetTenantId() string {
@@ -1142,7 +1214,7 @@ type CustomerPurchaseOrderRequest struct {
 
 func (x *CustomerPurchaseOrderRequest) Reset() {
 	*x = CustomerPurchaseOrderRequest{}
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[15]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1154,7 +1226,7 @@ func (x *CustomerPurchaseOrderRequest) String() string {
 func (*CustomerPurchaseOrderRequest) ProtoMessage() {}
 
 func (x *CustomerPurchaseOrderRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[15]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1167,7 +1239,7 @@ func (x *CustomerPurchaseOrderRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CustomerPurchaseOrderRequest.ProtoReflect.Descriptor instead.
 func (*CustomerPurchaseOrderRequest) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{15}
+	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *CustomerPurchaseOrderRequest) GetOrderId() int64 {
@@ -1189,7 +1261,7 @@ type OperatorPurchaseOrderRequest struct {
 
 func (x *OperatorPurchaseOrderRequest) Reset() {
 	*x = OperatorPurchaseOrderRequest{}
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[16]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1201,7 +1273,7 @@ func (x *OperatorPurchaseOrderRequest) String() string {
 func (*OperatorPurchaseOrderRequest) ProtoMessage() {}
 
 func (x *OperatorPurchaseOrderRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[16]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1214,7 +1286,7 @@ func (x *OperatorPurchaseOrderRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OperatorPurchaseOrderRequest.ProtoReflect.Descriptor instead.
 func (*OperatorPurchaseOrderRequest) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{16}
+	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *OperatorPurchaseOrderRequest) GetTenantId() string {
@@ -1235,7 +1307,15 @@ var File_proxycontrol_v1_wallet_proto protoreflect.FileDescriptor
 
 const file_proxycontrol_v1_wallet_proto_rawDesc = "" +
 	"\n" +
-	"\x1cproxycontrol/v1/wallet.proto\x12\x0fproxycontrol.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bopenapiv3/annotations.proto\x1a\x1cproxycontrol/v1/common.proto\x1a\x17validate/validate.proto\";\n" +
+	"\x1cproxycontrol/v1/wallet.proto\x12\x0fproxycontrol.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bopenapiv3/annotations.proto\x1a\x1cproxycontrol/v1/common.proto\x1a\x17validate/validate.proto\"\xa9\x01\n" +
+	"\x1dPurchaseTrafficPackageRequest\x12)\n" +
+	"\n" +
+	"package_id\x18\x01 \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\x01(\x80\x01R\tpackageId\x120\n" +
+	"\x0fpackage_version\x18\x02 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\x0epackageVersion\x12+\n" +
+	"\vrequest_key\x18\x03 \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\x01(\x80\x01R\n" +
+	"requestKey\";\n" +
 	"\x17FindWalletTenantRequest\x12 \n" +
 	"\x05query\x18\x01 \x01(\tB\n" +
 	"\xfaB\ar\x05\x10\x01(\x80\x01R\x05query\"=\n" +
@@ -1262,12 +1342,13 @@ const file_proxycontrol_v1_wallet_proto_rawDesc = "" +
 	"\vrequest_key\x18\x02 \x01(\tB\n" +
 	"\xfaB\ar\x05\x10\x01(\x80\x01R\n" +
 	"requestKey\x127\n" +
-	"\x12confirmation_token\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x98\x01$R\x11confirmationToken\"\x9a\x01\n" +
+	"\x12confirmation_token\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x98\x01$R\x11confirmationToken\"\xd2\x01\n" +
 	"\fWalletTenant\x12\x1b\n" +
 	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x120\n" +
 	"\x14primary_account_name\x18\x03 \x01(\tR\x12primaryAccountName\x12'\n" +
-	"\x0favailable_minor\x18\x04 \x01(\x03R\x0eavailableMinor\"\xa9\x02\n" +
+	"\x0favailable_minor\x18\x04 \x01(\x03R\x0eavailableMinor\x126\n" +
+	"\x17available_traffic_bytes\x18\x05 \x01(\x03R\x15availableTrafficBytes\"\xa9\x02\n" +
 	"\vWalletEntry\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x19\n" +
 	"\border_id\x18\x02 \x01(\x03R\aorderId\x12\x12\n" +
@@ -1331,7 +1412,7 @@ const file_proxycontrol_v1_wallet_proto_rawDesc = "" +
 	"\border_id\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\aorderId\"j\n" +
 	"\x1cOperatorPurchaseOrderRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01(@R\btenantId\x12\"\n" +
-	"\border_id\x18\x02 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\aorderId2\xbf\x0f\n" +
+	"\border_id\x18\x02 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\aorderId2\x97\x11\n" +
 	"\rWalletService\x12\xa2\x01\n" +
 	"\vFindTenants\x12(.proxycontrol.v1.FindWalletTenantRequest\x1a\x1d.proxycontrol.v1.WalletTenant\"J\xbaG)\x12'按主账号名或手机号查找租户\x82\xd3\xe4\x93\x02\x18\x12\x16/v1/operations/tenants\x12\x99\x01\n" +
 	"\tGetTenant\x12$.proxycontrol.v1.WalletTenantRequest\x1a\x1d.proxycontrol.v1.WalletTenant\"G\xbaG\x1a\x12\x18查看运营租户钱包\x82\xd3\xe4\x93\x02$\x12\"/v1/operations/tenants/{tenant_id}\x12\xd7\x01\n" +
@@ -1339,7 +1420,8 @@ const file_proxycontrol_v1_wallet_proto_rawDesc = "" +
 	"\x0eRechargeWallet\x12&.proxycontrol.v1.RechargeWalletRequest\x1a\x1c.proxycontrol.v1.WalletEntry\"[\xbaG\x1a\x12\x18确认运营钱包充值\x82\xd3\xe4\x93\x028:\x01*\"3/v1/operations/tenants/{tenant_id}/wallet/recharges\x12\xc1\x01\n" +
 	"\x19ListOperatorWalletEntries\x12-.proxycontrol.v1.OperatorWalletEntriesRequest\x1a\x1e.proxycontrol.v1.WalletEntries\"U\xbaG\x1a\x12\x18查看租户钱包流水\x82\xd3\xe4\x93\x022\x120/v1/operations/tenants/{tenant_id}/wallet/ledger\x12\xaf\x01\n" +
 	"\x19ListCustomerWalletEntries\x12-.proxycontrol.v1.CustomerWalletEntriesRequest\x1a\x1e.proxycontrol.v1.WalletEntries\"C\xbaG \x12\x1e查看当前租户钱包流水\x82\xd3\xe4\x93\x02\x1a\x12\x18/v1/tenant/wallet/ledger\x12\x88\x01\n" +
-	"\x11GetCustomerWallet\x12\x1c.proxycontrol.v1.BaseRequest\x1a\x1d.proxycontrol.v1.WalletTenant\"6\xbaG\x1a\x12\x18查看当前租户钱包\x82\xd3\xe4\x93\x02\x13\x12\x11/v1/tenant/wallet\x12\xb7\x01\n" +
+	"\x11GetCustomerWallet\x12\x1c.proxycontrol.v1.BaseRequest\x1a\x1d.proxycontrol.v1.WalletTenant\"6\xbaG\x1a\x12\x18查看当前租户钱包\x82\xd3\xe4\x93\x02\x13\x12\x11/v1/tenant/wallet\x12\xd5\x01\n" +
+	"\x16PurchaseTrafficPackage\x12..proxycontrol.v1.PurchaseTrafficPackageRequest\x1a\x1e.proxycontrol.v1.PurchaseOrder\"k\xbaG;\x129确认购买一份固定流量套餐并使用钱包结算\x82\xd3\xe4\x93\x02':\x01*\"\"/v1/tenant/orders/traffic-packages\x12\xb7\x01\n" +
 	"\x1aListOperatorPurchaseOrders\x12..proxycontrol.v1.OperatorPurchaseOrdersRequest\x1a\x1f.proxycontrol.v1.PurchaseOrders\"H\xbaG\x14\x12\x12筛选租户订单\x82\xd3\xe4\x93\x02+\x12)/v1/operations/tenants/{tenant_id}/orders\x12\xa5\x01\n" +
 	"\x1aListCustomerPurchaseOrders\x12..proxycontrol.v1.CustomerPurchaseOrdersRequest\x1a\x1f.proxycontrol.v1.PurchaseOrders\"6\xbaG\x1a\x12\x18筛选当前租户订单\x82\xd3\xe4\x93\x02\x13\x12\x11/v1/tenant/orders\x12\xc4\x01\n" +
 	"\x18GetOperatorPurchaseOrder\x12-.proxycontrol.v1.OperatorPurchaseOrderRequest\x1a\x1e.proxycontrol.v1.PurchaseOrder\"Y\xbaG\x1a\x12\x18查看租户订单详情\x82\xd3\xe4\x93\x026\x124/v1/operations/tenants/{tenant_id}/orders/{order_id}\x12\xb2\x01\n" +
@@ -1357,60 +1439,63 @@ func file_proxycontrol_v1_wallet_proto_rawDescGZIP() []byte {
 	return file_proxycontrol_v1_wallet_proto_rawDescData
 }
 
-var file_proxycontrol_v1_wallet_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
+var file_proxycontrol_v1_wallet_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_proxycontrol_v1_wallet_proto_goTypes = []any{
-	(*FindWalletTenantRequest)(nil),       // 0: proxycontrol.v1.FindWalletTenantRequest
-	(*WalletTenantRequest)(nil),           // 1: proxycontrol.v1.WalletTenantRequest
-	(*QuoteWalletRechargeRequest)(nil),    // 2: proxycontrol.v1.QuoteWalletRechargeRequest
-	(*WalletRechargeQuote)(nil),           // 3: proxycontrol.v1.WalletRechargeQuote
-	(*RechargeWalletRequest)(nil),         // 4: proxycontrol.v1.RechargeWalletRequest
-	(*WalletTenant)(nil),                  // 5: proxycontrol.v1.WalletTenant
-	(*WalletEntry)(nil),                   // 6: proxycontrol.v1.WalletEntry
-	(*WalletEntries)(nil),                 // 7: proxycontrol.v1.WalletEntries
-	(*PurchaseOrders)(nil),                // 8: proxycontrol.v1.PurchaseOrders
-	(*PurchaseOrder)(nil),                 // 9: proxycontrol.v1.PurchaseOrder
-	(*PurchaseOrderItem)(nil),             // 10: proxycontrol.v1.PurchaseOrderItem
-	(*CustomerWalletEntriesRequest)(nil),  // 11: proxycontrol.v1.CustomerWalletEntriesRequest
-	(*OperatorWalletEntriesRequest)(nil),  // 12: proxycontrol.v1.OperatorWalletEntriesRequest
-	(*CustomerPurchaseOrdersRequest)(nil), // 13: proxycontrol.v1.CustomerPurchaseOrdersRequest
-	(*OperatorPurchaseOrdersRequest)(nil), // 14: proxycontrol.v1.OperatorPurchaseOrdersRequest
-	(*CustomerPurchaseOrderRequest)(nil),  // 15: proxycontrol.v1.CustomerPurchaseOrderRequest
-	(*OperatorPurchaseOrderRequest)(nil),  // 16: proxycontrol.v1.OperatorPurchaseOrderRequest
-	(*timestamppb.Timestamp)(nil),         // 17: google.protobuf.Timestamp
-	(*BaseRequest)(nil),                   // 18: proxycontrol.v1.BaseRequest
+	(*PurchaseTrafficPackageRequest)(nil), // 0: proxycontrol.v1.PurchaseTrafficPackageRequest
+	(*FindWalletTenantRequest)(nil),       // 1: proxycontrol.v1.FindWalletTenantRequest
+	(*WalletTenantRequest)(nil),           // 2: proxycontrol.v1.WalletTenantRequest
+	(*QuoteWalletRechargeRequest)(nil),    // 3: proxycontrol.v1.QuoteWalletRechargeRequest
+	(*WalletRechargeQuote)(nil),           // 4: proxycontrol.v1.WalletRechargeQuote
+	(*RechargeWalletRequest)(nil),         // 5: proxycontrol.v1.RechargeWalletRequest
+	(*WalletTenant)(nil),                  // 6: proxycontrol.v1.WalletTenant
+	(*WalletEntry)(nil),                   // 7: proxycontrol.v1.WalletEntry
+	(*WalletEntries)(nil),                 // 8: proxycontrol.v1.WalletEntries
+	(*PurchaseOrders)(nil),                // 9: proxycontrol.v1.PurchaseOrders
+	(*PurchaseOrder)(nil),                 // 10: proxycontrol.v1.PurchaseOrder
+	(*PurchaseOrderItem)(nil),             // 11: proxycontrol.v1.PurchaseOrderItem
+	(*CustomerWalletEntriesRequest)(nil),  // 12: proxycontrol.v1.CustomerWalletEntriesRequest
+	(*OperatorWalletEntriesRequest)(nil),  // 13: proxycontrol.v1.OperatorWalletEntriesRequest
+	(*CustomerPurchaseOrdersRequest)(nil), // 14: proxycontrol.v1.CustomerPurchaseOrdersRequest
+	(*OperatorPurchaseOrdersRequest)(nil), // 15: proxycontrol.v1.OperatorPurchaseOrdersRequest
+	(*CustomerPurchaseOrderRequest)(nil),  // 16: proxycontrol.v1.CustomerPurchaseOrderRequest
+	(*OperatorPurchaseOrderRequest)(nil),  // 17: proxycontrol.v1.OperatorPurchaseOrderRequest
+	(*timestamppb.Timestamp)(nil),         // 18: google.protobuf.Timestamp
+	(*BaseRequest)(nil),                   // 19: proxycontrol.v1.BaseRequest
 }
 var file_proxycontrol_v1_wallet_proto_depIdxs = []int32{
-	5,  // 0: proxycontrol.v1.WalletRechargeQuote.tenant:type_name -> proxycontrol.v1.WalletTenant
-	17, // 1: proxycontrol.v1.WalletRechargeQuote.expires_at:type_name -> google.protobuf.Timestamp
-	17, // 2: proxycontrol.v1.WalletEntry.created_at:type_name -> google.protobuf.Timestamp
-	6,  // 3: proxycontrol.v1.WalletEntries.entries:type_name -> proxycontrol.v1.WalletEntry
-	9,  // 4: proxycontrol.v1.PurchaseOrders.orders:type_name -> proxycontrol.v1.PurchaseOrder
-	17, // 5: proxycontrol.v1.PurchaseOrder.created_at:type_name -> google.protobuf.Timestamp
-	10, // 6: proxycontrol.v1.PurchaseOrder.items:type_name -> proxycontrol.v1.PurchaseOrderItem
-	0,  // 7: proxycontrol.v1.WalletService.FindTenants:input_type -> proxycontrol.v1.FindWalletTenantRequest
-	1,  // 8: proxycontrol.v1.WalletService.GetTenant:input_type -> proxycontrol.v1.WalletTenantRequest
-	2,  // 9: proxycontrol.v1.WalletService.QuoteWalletRecharge:input_type -> proxycontrol.v1.QuoteWalletRechargeRequest
-	4,  // 10: proxycontrol.v1.WalletService.RechargeWallet:input_type -> proxycontrol.v1.RechargeWalletRequest
-	12, // 11: proxycontrol.v1.WalletService.ListOperatorWalletEntries:input_type -> proxycontrol.v1.OperatorWalletEntriesRequest
-	11, // 12: proxycontrol.v1.WalletService.ListCustomerWalletEntries:input_type -> proxycontrol.v1.CustomerWalletEntriesRequest
-	18, // 13: proxycontrol.v1.WalletService.GetCustomerWallet:input_type -> proxycontrol.v1.BaseRequest
-	14, // 14: proxycontrol.v1.WalletService.ListOperatorPurchaseOrders:input_type -> proxycontrol.v1.OperatorPurchaseOrdersRequest
-	13, // 15: proxycontrol.v1.WalletService.ListCustomerPurchaseOrders:input_type -> proxycontrol.v1.CustomerPurchaseOrdersRequest
-	16, // 16: proxycontrol.v1.WalletService.GetOperatorPurchaseOrder:input_type -> proxycontrol.v1.OperatorPurchaseOrderRequest
-	15, // 17: proxycontrol.v1.WalletService.GetCustomerPurchaseOrder:input_type -> proxycontrol.v1.CustomerPurchaseOrderRequest
-	5,  // 18: proxycontrol.v1.WalletService.FindTenants:output_type -> proxycontrol.v1.WalletTenant
-	5,  // 19: proxycontrol.v1.WalletService.GetTenant:output_type -> proxycontrol.v1.WalletTenant
-	3,  // 20: proxycontrol.v1.WalletService.QuoteWalletRecharge:output_type -> proxycontrol.v1.WalletRechargeQuote
-	6,  // 21: proxycontrol.v1.WalletService.RechargeWallet:output_type -> proxycontrol.v1.WalletEntry
-	7,  // 22: proxycontrol.v1.WalletService.ListOperatorWalletEntries:output_type -> proxycontrol.v1.WalletEntries
-	7,  // 23: proxycontrol.v1.WalletService.ListCustomerWalletEntries:output_type -> proxycontrol.v1.WalletEntries
-	5,  // 24: proxycontrol.v1.WalletService.GetCustomerWallet:output_type -> proxycontrol.v1.WalletTenant
-	8,  // 25: proxycontrol.v1.WalletService.ListOperatorPurchaseOrders:output_type -> proxycontrol.v1.PurchaseOrders
-	8,  // 26: proxycontrol.v1.WalletService.ListCustomerPurchaseOrders:output_type -> proxycontrol.v1.PurchaseOrders
-	9,  // 27: proxycontrol.v1.WalletService.GetOperatorPurchaseOrder:output_type -> proxycontrol.v1.PurchaseOrder
-	9,  // 28: proxycontrol.v1.WalletService.GetCustomerPurchaseOrder:output_type -> proxycontrol.v1.PurchaseOrder
-	18, // [18:29] is the sub-list for method output_type
-	7,  // [7:18] is the sub-list for method input_type
+	6,  // 0: proxycontrol.v1.WalletRechargeQuote.tenant:type_name -> proxycontrol.v1.WalletTenant
+	18, // 1: proxycontrol.v1.WalletRechargeQuote.expires_at:type_name -> google.protobuf.Timestamp
+	18, // 2: proxycontrol.v1.WalletEntry.created_at:type_name -> google.protobuf.Timestamp
+	7,  // 3: proxycontrol.v1.WalletEntries.entries:type_name -> proxycontrol.v1.WalletEntry
+	10, // 4: proxycontrol.v1.PurchaseOrders.orders:type_name -> proxycontrol.v1.PurchaseOrder
+	18, // 5: proxycontrol.v1.PurchaseOrder.created_at:type_name -> google.protobuf.Timestamp
+	11, // 6: proxycontrol.v1.PurchaseOrder.items:type_name -> proxycontrol.v1.PurchaseOrderItem
+	1,  // 7: proxycontrol.v1.WalletService.FindTenants:input_type -> proxycontrol.v1.FindWalletTenantRequest
+	2,  // 8: proxycontrol.v1.WalletService.GetTenant:input_type -> proxycontrol.v1.WalletTenantRequest
+	3,  // 9: proxycontrol.v1.WalletService.QuoteWalletRecharge:input_type -> proxycontrol.v1.QuoteWalletRechargeRequest
+	5,  // 10: proxycontrol.v1.WalletService.RechargeWallet:input_type -> proxycontrol.v1.RechargeWalletRequest
+	13, // 11: proxycontrol.v1.WalletService.ListOperatorWalletEntries:input_type -> proxycontrol.v1.OperatorWalletEntriesRequest
+	12, // 12: proxycontrol.v1.WalletService.ListCustomerWalletEntries:input_type -> proxycontrol.v1.CustomerWalletEntriesRequest
+	19, // 13: proxycontrol.v1.WalletService.GetCustomerWallet:input_type -> proxycontrol.v1.BaseRequest
+	0,  // 14: proxycontrol.v1.WalletService.PurchaseTrafficPackage:input_type -> proxycontrol.v1.PurchaseTrafficPackageRequest
+	15, // 15: proxycontrol.v1.WalletService.ListOperatorPurchaseOrders:input_type -> proxycontrol.v1.OperatorPurchaseOrdersRequest
+	14, // 16: proxycontrol.v1.WalletService.ListCustomerPurchaseOrders:input_type -> proxycontrol.v1.CustomerPurchaseOrdersRequest
+	17, // 17: proxycontrol.v1.WalletService.GetOperatorPurchaseOrder:input_type -> proxycontrol.v1.OperatorPurchaseOrderRequest
+	16, // 18: proxycontrol.v1.WalletService.GetCustomerPurchaseOrder:input_type -> proxycontrol.v1.CustomerPurchaseOrderRequest
+	6,  // 19: proxycontrol.v1.WalletService.FindTenants:output_type -> proxycontrol.v1.WalletTenant
+	6,  // 20: proxycontrol.v1.WalletService.GetTenant:output_type -> proxycontrol.v1.WalletTenant
+	4,  // 21: proxycontrol.v1.WalletService.QuoteWalletRecharge:output_type -> proxycontrol.v1.WalletRechargeQuote
+	7,  // 22: proxycontrol.v1.WalletService.RechargeWallet:output_type -> proxycontrol.v1.WalletEntry
+	8,  // 23: proxycontrol.v1.WalletService.ListOperatorWalletEntries:output_type -> proxycontrol.v1.WalletEntries
+	8,  // 24: proxycontrol.v1.WalletService.ListCustomerWalletEntries:output_type -> proxycontrol.v1.WalletEntries
+	6,  // 25: proxycontrol.v1.WalletService.GetCustomerWallet:output_type -> proxycontrol.v1.WalletTenant
+	10, // 26: proxycontrol.v1.WalletService.PurchaseTrafficPackage:output_type -> proxycontrol.v1.PurchaseOrder
+	9,  // 27: proxycontrol.v1.WalletService.ListOperatorPurchaseOrders:output_type -> proxycontrol.v1.PurchaseOrders
+	9,  // 28: proxycontrol.v1.WalletService.ListCustomerPurchaseOrders:output_type -> proxycontrol.v1.PurchaseOrders
+	10, // 29: proxycontrol.v1.WalletService.GetOperatorPurchaseOrder:output_type -> proxycontrol.v1.PurchaseOrder
+	10, // 30: proxycontrol.v1.WalletService.GetCustomerPurchaseOrder:output_type -> proxycontrol.v1.PurchaseOrder
+	19, // [19:31] is the sub-list for method output_type
+	7,  // [7:19] is the sub-list for method input_type
 	7,  // [7:7] is the sub-list for extension type_name
 	7,  // [7:7] is the sub-list for extension extendee
 	0,  // [0:7] is the sub-list for field type_name
@@ -1428,7 +1513,7 @@ func file_proxycontrol_v1_wallet_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proxycontrol_v1_wallet_proto_rawDesc), len(file_proxycontrol_v1_wallet_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   17,
+			NumMessages:   18,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

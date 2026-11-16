@@ -96,7 +96,7 @@ function switchMode() {
   <OperatorWallet v-if="operations && token" :token="token" :operator-name="operatorName"
     @logout="endSession()" @expired="endSession(true)" />
   <TenantWallet v-else-if="!operations && token && account" :token="token" :account="account"
-    @logout="endSession()" @expired="endSession(true)" />
+    @logout="endSession()" @expired="endSession(true)" @wallet="account = $event" />
   <main v-else id="console-auth-main" tabindex="-1"
     class="login-block bg-muted text-foreground flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
     <a class="skip-link" href="#console-auth-main">跳到主要内容</a>

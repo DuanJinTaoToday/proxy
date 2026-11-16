@@ -28,6 +28,14 @@ func (s *Wallet) GetCustomerWallet(ctx context.Context, _ *v1.BaseRequest) (*v1.
 	return s.getTenant(ctx, "", false)
 }
 
+func (s *Wallet) PurchaseTrafficPackage(ctx context.Context, req *v1.PurchaseTrafficPackageRequest) (*v1.PurchaseOrder, error) {
+	noStore(ctx)
+	order, err := s.biz.PurchasePackage(ctx, bearerToken(ctx), wallet.PackagePurchase{
+		PackageID: req.GetPackageId(), Version: req.GetPackageVersion(), Key: req.GetRequestKey(),
+	})
+	return orderMessage(order), wallet.PublicError(err)
+}
+
 func (s *Wallet) getTenant(ctx context.Context, id string, operations bool) (*v1.WalletTenant, error) {
 	noStore(ctx)
 	tenant, err := s.biz.Tenant(ctx, bearerToken(ctx), id, operations)
@@ -115,7 +123,8 @@ func (s *Wallet) getOrder(ctx context.Context, id string, operations bool, order
 }
 
 func tenantMessage(tenant wallet.Tenant) *v1.WalletTenant {
-	return &v1.WalletTenant{TenantId: tenant.ID, Name: tenant.Name, PrimaryAccountName: tenant.PrimaryAccountName, AvailableMinor: tenant.AvailableMinor}
+	return &v1.WalletTenant{TenantId: tenant.ID, Name: tenant.Name, PrimaryAccountName: tenant.PrimaryAccountName,
+		AvailableMinor: tenant.AvailableMinor, AvailableTrafficBytes: tenant.AvailableTrafficBytes}
 }
 
 func entryMessage(entry wallet.Entry, operations bool) *v1.WalletEntry {

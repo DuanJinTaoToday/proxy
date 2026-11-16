@@ -46,6 +46,7 @@ onUnmounted(() => controller.abort())
       <ul v-else-if="product.kind === 'dynamic'">
         <li v-for="pkg in product.packages" :key="pkg.id">
           {{ flowAmount(pkg.capacity_bytes) }} · {{ money(pkg.price_minor) }}
+          <RouterLink :to="{ path: '/', query: { view: 'packages', package: pkg.id } }">购买</RouterLink>
         </li>
       </ul>
     </section>

@@ -1,5 +1,5 @@
 export class ApiError extends Error {
-  constructor(readonly status: number, readonly reason = '') {
+  constructor(readonly status: number, readonly reason = '', readonly metadata: Record<string, string> = {}) {
     super(`Control API returned HTTP ${status}`)
   }
 }
@@ -21,8 +21,8 @@ export async function request<T>(path: string, options: {
     cache: 'no-store',
   })
   if (!response.ok) {
-    const error = await response.json().catch(() => ({})) as { reason?: string }
-    throw new ApiError(response.status, error?.reason)
+    const error = await response.json().catch(() => ({})) as { reason?: string; metadata?: Record<string, string> }
+    throw new ApiError(response.status, error?.reason, error?.metadata)
   }
   return response.json()
 }

@@ -46,6 +46,11 @@ service WalletService {
     option (openapi.v3.operation) = {summary: "查看当前租户钱包"};
   }
 
+  rpc PurchaseTrafficPackage(PurchaseTrafficPackageRequest) returns (PurchaseOrder) {
+    option (google.api.http) = {post: "/v1/tenant/orders/traffic-packages", body: "*"};
+    option (openapi.v3.operation) = {summary: "确认购买一份固定流量套餐并使用钱包结算"};
+  }
+
   rpc ListOperatorPurchaseOrders(OperatorPurchaseOrdersRequest) returns (PurchaseOrders) {
     option (google.api.http) = {get: "/v1/operations/tenants/{tenant_id}/orders"};
     option (openapi.v3.operation) = {summary: "筛选租户订单"};
@@ -65,6 +70,15 @@ service WalletService {
     option (google.api.http) = {get: "/v1/tenant/orders/{order_id}"};
     option (openapi.v3.operation) = {summary: "查看当前租户订单详情"};
   }
+}
+
+message PurchaseTrafficPackageRequest {
+  // 已确认的公开报价套餐 ID。
+  string package_id = 1 [(validate.rules).string = {min_len: 1, max_bytes: 128}];
+  // 已确认的套餐版本。变更后须重新确认。
+  int64 package_version = 2 [(validate.rules).int64.gt = 0];
+  // 单次购买的幂等键。结果未知时使用原请求重试。
+  string request_key = 3 [(validate.rules).string = {min_len: 1, max_bytes: 128}];
 }
 
 message FindWalletTenantRequest {
@@ -121,6 +135,8 @@ message WalletTenant {
   string primary_account_name = 3;
   // 可用余额，人民币分。
   int64 available_minor = 4;
+  // 可用流量字节数。负值为待抵扣的用量。
+  int64 available_traffic_bytes = 5;
 }
 
 message WalletEntry {

@@ -105,6 +105,18 @@ func (s *Service) Entries(ctx context.Context, token, tenantID string, operation
 	return s.store.Entries(ctx, id, filter)
 }
 
+func (s *Service) PurchasePackage(ctx context.Context, token string, purchase PackagePurchase) (Order, error) {
+	id, err := s.scope(ctx, token, "", false)
+	if err != nil {
+		return Order{}, err
+	}
+	if purchase.PackageID == "" || len(purchase.PackageID) > 128 || purchase.Version <= 0 ||
+		purchase.Key == "" || len(purchase.Key) > 128 || strings.ContainsRune(purchase.PackageID+purchase.Key, 0) {
+		return Order{}, ErrInvalid
+	}
+	return s.store.PurchasePackage(ctx, id, purchase)
+}
+
 func (s *Service) Orders(ctx context.Context, token, tenantID string, operations bool, filter Filter) ([]Order, error) {
 	id, err := s.scope(ctx, token, tenantID, operations)
 	if err != nil {

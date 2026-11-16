@@ -761,6 +761,25 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/proxycontrol.v1.PurchaseOrders'
+    /v1/tenant/orders/traffic-packages:
+        post:
+            tags:
+                - WalletService
+            summary: 确认购买一份固定流量套餐并使用钱包结算
+            operationId: WalletService_PurchaseTrafficPackage
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.PurchaseTrafficPackageRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.PurchaseOrder'
     /v1/tenant/orders/{orderId}:
         get:
             tags:
@@ -1170,6 +1189,18 @@ components:
                 nextBeforeId:
                     type: string
                     description: 下一页的 before_id，0 表示已到末页。
+        proxycontrol.v1.PurchaseTrafficPackageRequest:
+            type: object
+            properties:
+                packageId:
+                    type: string
+                    description: 已确认的公开报价套餐 ID。
+                packageVersion:
+                    type: string
+                    description: 已确认的套餐版本。变更后须重新确认。
+                requestKey:
+                    type: string
+                    description: 单次购买的幂等键。结果未知时使用原请求重试。
         proxycontrol.v1.QueryUsageResponse:
             type: object
             properties:
@@ -1684,6 +1715,9 @@ components:
                 availableMinor:
                     type: string
                     description: 可用余额，人民币分。
+                availableTrafficBytes:
+                    type: string
+                    description: 可用流量字节数。负值为待抵扣的用量。
 tags:
     - name: AccessService
     - name: GatewayAuthService

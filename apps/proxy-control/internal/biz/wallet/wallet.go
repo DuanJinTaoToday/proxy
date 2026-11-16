@@ -44,6 +44,7 @@ var (
 type Tenant struct {
 	ID, Name, PrimaryAccountName string
 	AvailableMinor               int64
+	AvailableTrafficBytes        int64
 }
 
 type RechargeQuote struct {
@@ -106,6 +107,18 @@ type Filter struct {
 	Kind, Status string
 }
 
+type PackagePurchase struct {
+	PackageID string
+	Version   int64
+	Key       string
+}
+
+// PurchasedTrafficDebtOffset applies at most the purchased amount to existing debt.
+func PurchasedTrafficDebtOffset(before, capacity int64) int64 {
+	// Clamp before negating so even the minimum signed balance is safe.
+	return -max(min(before, 0), -capacity)
+}
+
 type Repository interface {
 	FindTenant(context.Context, string, string) (Tenant, error)
 	Tenant(context.Context, string) (Tenant, error)
@@ -115,6 +128,7 @@ type Repository interface {
 	CreateRechargeQuote(context.Context, RechargeQuote) error
 	RechargeQuote(context.Context, string, string, string, string) (RechargeQuote, error)
 	ApplyRecharge(context.Context, Command) (Entry, error)
+	PurchasePackage(context.Context, string, PackagePurchase) (Order, error)
 }
 
 func IsKind(kind string) bool {

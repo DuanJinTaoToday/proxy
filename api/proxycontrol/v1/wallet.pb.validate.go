@@ -35,6 +35,164 @@ var (
 	_ = sort.Sort
 )
 
+// Validate checks the field values on PurchaseTrafficPackageRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *PurchaseTrafficPackageRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on PurchaseTrafficPackageRequest with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// PurchaseTrafficPackageRequestMultiError, or nil if none found.
+func (m *PurchaseTrafficPackageRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *PurchaseTrafficPackageRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if utf8.RuneCountInString(m.GetPackageId()) < 1 {
+		err := PurchaseTrafficPackageRequestValidationError{
+			field:  "PackageId",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(m.GetPackageId()) > 128 {
+		err := PurchaseTrafficPackageRequestValidationError{
+			field:  "PackageId",
+			reason: "value length must be at most 128 bytes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetPackageVersion() <= 0 {
+		err := PurchaseTrafficPackageRequestValidationError{
+			field:  "PackageVersion",
+			reason: "value must be greater than 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetRequestKey()) < 1 {
+		err := PurchaseTrafficPackageRequestValidationError{
+			field:  "RequestKey",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(m.GetRequestKey()) > 128 {
+		err := PurchaseTrafficPackageRequestValidationError{
+			field:  "RequestKey",
+			reason: "value length must be at most 128 bytes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return PurchaseTrafficPackageRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// PurchaseTrafficPackageRequestMultiError is an error wrapping multiple
+// validation errors returned by PurchaseTrafficPackageRequest.ValidateAll()
+// if the designated constraints aren't met.
+type PurchaseTrafficPackageRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m PurchaseTrafficPackageRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m PurchaseTrafficPackageRequestMultiError) AllErrors() []error { return m }
+
+// PurchaseTrafficPackageRequestValidationError is the validation error
+// returned by PurchaseTrafficPackageRequest.Validate if the designated
+// constraints aren't met.
+type PurchaseTrafficPackageRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e PurchaseTrafficPackageRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e PurchaseTrafficPackageRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e PurchaseTrafficPackageRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e PurchaseTrafficPackageRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e PurchaseTrafficPackageRequestValidationError) ErrorName() string {
+	return "PurchaseTrafficPackageRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e PurchaseTrafficPackageRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPurchaseTrafficPackageRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = PurchaseTrafficPackageRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = PurchaseTrafficPackageRequestValidationError{}
+
 // Validate checks the field values on FindWalletTenantRequest with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
@@ -817,6 +975,8 @@ func (m *WalletTenant) validate(all bool) error {
 	// no validation rules for PrimaryAccountName
 
 	// no validation rules for AvailableMinor
+
+	// no validation rules for AvailableTrafficBytes
 
 	if len(errors) > 0 {
 		return WalletTenantMultiError(errors)

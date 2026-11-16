@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
+	"strings"
+	"sync"
 	"testing"
 
 	v1 "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1"
@@ -11,6 +14,7 @@ import (
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/product"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/wallet"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/data/repo"
+	"google.golang.org/protobuf/proto"
 	"gorm.io/gorm"
 )
 
@@ -70,12 +74,85 @@ func TestProductCatalogAndSales(t *testing.T) {
 	readProto(t, testfixture.Request(f.http, "POST", "/v1/access/register", customerCredentials, ""), &customer)
 	var session v1.LoginResponse
 	readProto(t, testfixture.Request(f.http, "POST", "/v1/access/login", customerCredentials, ""), &session)
-	orderID := settleCatalogOrder(t, f.db, customer.TenantId)
+	const checkout = "/v1/tenant/orders/traffic-packages"
+	const purchase = `{"package_id":"50gb","package_version":"2","request_key":"product-order"}`
+	tryPurchase := func(body string) *httptest.ResponseRecorder {
+		return testfixture.Request(f.http, "POST", checkout, body, session.AccessToken)
+	}
+	shortfall := tryPurchase(purchase)
+	testfixture.AssertStatus(t, shortfall, http.StatusConflict, "WALLET_INSUFFICIENT_FUNDS")
+	if !strings.Contains(shortfall.Body.String(), `"shortfall_minor":"4500"`) {
+		t.Fatalf("missing exact shortfall: %s", shortfall.Body)
+	}
+	var orders v1.PurchaseOrders
+	readProto(t, testfixture.Request(f.http, "GET", "/v1/tenant/orders", "", session.AccessToken), &orders)
+	if len(orders.GetOrders()) != 0 {
+		t.Fatal("insufficient funds created an order")
+	}
+	fundCatalogWallet(t, f.db, customer.TenantId)
+	testfixture.AssertStatus(t, tryPurchase(`{"package_id":"50gb","package_version":"1","request_key":"product-order"}`),
+		http.StatusConflict, "PACKAGE_CHANGED")
+	// Force the grant write to fail after the wallet settlement has executed.
+	execSQL(t, f.db, "ALTER TABLE traffic_grants ADD CONSTRAINT reject_test_grant CHECK (purchased_bytes <> 50000000000)")
+	testfixture.AssertStatus(t, tryPurchase(purchase), http.StatusServiceUnavailable, "WALLET_UNAVAILABLE")
+	var currentWallet v1.WalletTenant
+	readProto(t, testfixture.Request(f.http, "GET", "/v1/tenant/wallet", "", session.AccessToken), &currentWallet)
+	readProto(t, testfixture.Request(f.http, "GET", "/v1/tenant/orders", "", session.AccessToken), &orders)
+	if currentWallet.GetAvailableMinor() != 4500 || currentWallet.GetAvailableTrafficBytes() != 0 || len(orders.GetOrders()) != 0 {
+		t.Fatalf("failed grant left a partial settlement: %v %v", &currentWallet, &orders)
+	}
+	execSQL(t, f.db, "ALTER TABLE traffic_grants DROP CONSTRAINT reject_test_grant")
+	execSQL(t, f.db, "UPDATE tenant_balances SET available_bytes=-2000000000 WHERE tenant_id=?", customer.TenantId)
+	var proxyUser v1.Subaccount
+	readProto(t, testfixture.Request(f.http, "POST", "/v1/tenant/subaccounts",
+		`{"name":"test","password":"Secret456","active":true}`, session.AccessToken), &proxyUser)
+	var initialAuth v1.AuthSnapshot
+	authBody := fmt.Sprintf(`{"username":%q,"password":"Secret456"}`, customer.GetPrimaryAccountName()+".test")
+	readProto(t, testfixture.Request(f.http, "POST", "/v1/gateway/auth-state/load", authBody, authToken), &initialAuth)
+	if initialAuth.GetQuota().GetAvailableBytes() != -2_000_000_000 {
+		t.Fatalf("expected debt before purchase: %v", &initialAuth)
+	}
+
+	var replies [2]*httptest.ResponseRecorder
+	var group sync.WaitGroup
+	for i := range replies {
+		group.Go(func() { replies[i] = tryPurchase(purchase) })
+	}
+	group.Wait()
+	var purchased v1.PurchaseOrder
+	readProto(t, replies[0], &purchased)
+	orderID := purchased.GetId()
+	var concurrent v1.PurchaseOrder
+	readProto(t, replies[1], &concurrent)
+	items := purchased.GetItems()
+	if orderID == 0 || !proto.Equal(&purchased, &concurrent) || purchased.GetStatus() != "succeeded" ||
+		purchased.GetDebitedMinor() != 4500 || len(items) != 1 || items[0].GetQuantity() != 1 ||
+		items[0].GetCapacityBytes() != 50_000_000_000 {
+		t.Fatalf("concurrent submissions did not settle exactly one package: %v %v", &purchased, &concurrent)
+	}
+	testfixture.AssertStatus(t, tryPurchase(`{"package_id":"5gb","package_version":"2","request_key":"product-order"}`),
+		http.StatusConflict, "WALLET_REQUEST_CONFLICT")
+	var states v1.RefreshAuthStateResponse
+	refreshBody := fmt.Sprintf(`{"references":[%q]}`, initialAuth.GetReference())
+	readProto(t, testfixture.Request(f.http, "POST", "/v1/gateway/auth-state/refresh", refreshBody, authToken), &states)
+	snapshots := states.GetSnapshots()
+	if len(snapshots) != 1 || !snapshots[0].GetActive() || snapshots[0].GetQuota().GetAvailableBytes() != 48_000_000_000 ||
+		snapshots[0].GetQuota().GetUsageVersion() <= initialAuth.GetQuota().GetUsageVersion() {
+		t.Fatalf("gateway sync did not observe the newer positive balance: %v", &states)
+	}
+	var grants []struct{ PurchasedBytes, DebtOffsetBytes, RemainingBytes int64 }
+	if err := f.db.Table("traffic_grants").Where("tenant_id = ?", customer.TenantId).Find(&grants).Error; err != nil ||
+		len(grants) != 1 || grants[0].PurchasedBytes != 50_000_000_000 || grants[0].DebtOffsetBytes != 2_000_000_000 ||
+		grants[0].RemainingBytes != 48_000_000_000 {
+		t.Fatalf("incorrect permanent grant: %+v, %v", grants, err)
+	}
 
 	readProto(t, testfixture.Request(f.http, "PATCH", packages+"/50gb", `{"version":"2","capacity_bytes":"50000000000","price_minor":"4500","listed":false}`, cashier), &configured)
 	if len(list().GetProducts()[0].GetPackages()) != 2 {
 		t.Fatal("delisted package still visible")
 	}
+	testfixture.AssertStatus(t, tryPurchase(`{"package_id":"50gb","package_version":"2","request_key":"delisted"}`),
+		http.StatusConflict, "PACKAGE_UNAVAILABLE")
 	readProto(t, testfixture.Request(f.http, "PUT", sales+"static", open, cashier), &opened)
 	if err := f.db.Transaction(func(tx *gorm.DB) error {
 		if err := repo.RequireProductSale(ctx, tx, product.Static); err != nil {
@@ -88,6 +165,8 @@ func TestProductCatalogAndSales(t *testing.T) {
 	}
 
 	readProto(t, testfixture.Request(f.http, "PUT", sales+"dynamic", `{"open":false}`, cashier), &opened)
+	testfixture.AssertStatus(t, tryPurchase(`{"package_id":"5gb","package_version":"2","request_key":"closed-sale"}`),
+		http.StatusConflict, "PRODUCT_SALE_CLOSED")
 	products = list().GetProducts()
 	if products[0].GetOpen() || len(products[0].GetPackages()) != 0 || !products[1].GetOpen() {
 		t.Fatalf("unexpected product switches after closing dynamic: %v", products)
@@ -103,18 +182,23 @@ func TestProductCatalogAndSales(t *testing.T) {
 		t.Fatalf("audit entries: %d, %v", changes, err)
 	}
 	var order v1.PurchaseOrder
+	var replay v1.PurchaseOrder
+	readProto(t, tryPurchase(purchase), &replay)
+	if !proto.Equal(&purchased, &replay) {
+		t.Fatalf("replay did not return the original order: %v", &replay)
+	}
 	readProto(t, testfixture.Request(f.http, "GET", fmt.Sprintf("/v1/tenant/orders/%d", orderID), "", session.AccessToken), &order)
 	if order.GetLockedMinor() != 4500 || order.GetDeliveredBytes() != 50_000_000_000 {
 		t.Fatalf("historical order changed after delisting: %v", &order)
 	}
 	var balance int64
 	err := f.db.Table("tenant_balances").Select("available_bytes").Where("tenant_id = ?", customer.TenantId).Scan(&balance).Error
-	if err != nil || balance != 50_000_000_000 {
+	if err != nil || balance != 48_000_000_000 {
 		t.Fatalf("delisting changed delivered traffic: %d, %v", balance, err)
 	}
 }
 
-func settleCatalogOrder(t *testing.T, db *gorm.DB, tenantID string) int64 {
+func fundCatalogWallet(t *testing.T, db *gorm.DB, tenantID string) {
 	t.Helper()
 	ctx := context.Background()
 	store := repo.NewWalletRepository(db)
@@ -126,19 +210,4 @@ func settleCatalogOrder(t *testing.T, db *gorm.DB, tenantID string) int64 {
 	if err != nil {
 		t.Fatal(err)
 	}
-	entry, err := store.Apply(ctx, wallet.Command{
-		TenantID: tenantID, Key: "product-order", Action: wallet.Debit,
-		Amount: 4500, Kind: wallet.TrafficPackage,
-		Items: []wallet.OrderItem{{Specification: "50gb", CapacityBytes: 50_000_000_000, UnitMinor: 4500, Quantity: 1}},
-	}, func(tx *gorm.DB, _ wallet.Entry) error {
-		pkg, err := repo.LockTrafficPackage(ctx, tx, "50gb", 2)
-		if err != nil {
-			return err
-		}
-		return tx.Exec("UPDATE tenant_balances SET available_bytes = available_bytes + ? WHERE tenant_id = ?", pkg.CapacityBytes, tenantID).Error
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	return entry.OrderID
 }

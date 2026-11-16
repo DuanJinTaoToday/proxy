@@ -50,8 +50,9 @@ func (r *WalletRepository) walletTenant(ctx context.Context, match func(*gorm.DB
 		return tenant, errWalletUnavailable
 	}
 	db := r.db.WithContext(ctx).Table("wallets w").
-		Select("t.id, t.name, t.primary_account_name, w.available_minor").
-		Joins("JOIN tenants t ON t.id=w.tenant_id")
+		Select("t.id, t.name, t.primary_account_name, w.available_minor, b.available_bytes AS available_traffic_bytes").
+		Joins("JOIN tenants t ON t.id=w.tenant_id").
+		Joins("JOIN tenant_balances b ON b.tenant_id=w.tenant_id")
 	err := scanWalletRecord(match(db), &tenant)
 	return tenant, err
 }

@@ -29,10 +29,16 @@ func (r *WalletRepository) Apply(ctx context.Context, command wallet.Command, fu
 	if command.Action == wallet.Debit && command.Kind == wallet.TrafficPackage && fulfill == nil {
 		return wallet.Entry{}, wallet.ErrInvalid
 	}
+	return r.apply(ctx, command, command, nil, fulfill)
+}
+
+func (r *WalletRepository) apply(ctx context.Context, command wallet.Command, request any,
+	prepare func(*gorm.DB, *wallet.Command) error, fulfill func(*gorm.DB, wallet.Entry) error,
+) (wallet.Entry, error) {
 	if r.db == nil {
 		return wallet.Entry{}, errWalletUnavailable
 	}
-	body, err := json.Marshal(command)
+	body, err := json.Marshal(request)
 	if err != nil {
 		return wallet.Entry{}, err
 	}
@@ -67,6 +73,14 @@ func (r *WalletRepository) Apply(ctx context.Context, command wallet.Command, fu
 			}
 			receipt = previous.Entry
 			return nil
+		}
+		if prepare != nil {
+			if err := prepare(tx, &command); err != nil {
+				return err
+			}
+			if err := command.Validate(); err != nil {
+				return err
+			}
 		}
 		receipt, err = applyWalletCommand(tx, command, order, before, fingerprint)
 		if err != nil {

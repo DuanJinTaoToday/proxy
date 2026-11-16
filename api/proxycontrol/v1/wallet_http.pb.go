@@ -26,6 +26,7 @@ const OperationWalletServiceListCustomerPurchaseOrders = "/proxycontrol.v1.Walle
 const OperationWalletServiceListCustomerWalletEntries = "/proxycontrol.v1.WalletService/ListCustomerWalletEntries"
 const OperationWalletServiceListOperatorPurchaseOrders = "/proxycontrol.v1.WalletService/ListOperatorPurchaseOrders"
 const OperationWalletServiceListOperatorWalletEntries = "/proxycontrol.v1.WalletService/ListOperatorWalletEntries"
+const OperationWalletServicePurchaseTrafficPackage = "/proxycontrol.v1.WalletService/PurchaseTrafficPackage"
 const OperationWalletServiceQuoteWalletRecharge = "/proxycontrol.v1.WalletService/QuoteWalletRecharge"
 const OperationWalletServiceRechargeWallet = "/proxycontrol.v1.WalletService/RechargeWallet"
 
@@ -39,6 +40,7 @@ type WalletServiceHTTPServer interface {
 	ListCustomerWalletEntries(context.Context, *CustomerWalletEntriesRequest) (*WalletEntries, error)
 	ListOperatorPurchaseOrders(context.Context, *OperatorPurchaseOrdersRequest) (*PurchaseOrders, error)
 	ListOperatorWalletEntries(context.Context, *OperatorWalletEntriesRequest) (*WalletEntries, error)
+	PurchaseTrafficPackage(context.Context, *PurchaseTrafficPackageRequest) (*PurchaseOrder, error)
 	QuoteWalletRecharge(context.Context, *QuoteWalletRechargeRequest) (*WalletRechargeQuote, error)
 	RechargeWallet(context.Context, *RechargeWalletRequest) (*WalletEntry, error)
 }
@@ -52,6 +54,7 @@ func RegisterWalletServiceHTTPServer(s *http.Server, srv WalletServiceHTTPServer
 	r.Handle("GET", "/v1/operations/tenants/{tenant_id}/wallet/ledger", _WalletService_ListOperatorWalletEntries0_HTTP_Handler(srv))
 	r.Handle("GET", "/v1/tenant/wallet/ledger", _WalletService_ListCustomerWalletEntries0_HTTP_Handler(srv))
 	r.Handle("GET", "/v1/tenant/wallet", _WalletService_GetCustomerWallet0_HTTP_Handler(srv))
+	r.Handle("POST", "/v1/tenant/orders/traffic-packages", _WalletService_PurchaseTrafficPackage0_HTTP_Handler(srv))
 	r.Handle("GET", "/v1/operations/tenants/{tenant_id}/orders", _WalletService_ListOperatorPurchaseOrders0_HTTP_Handler(srv))
 	r.Handle("GET", "/v1/tenant/orders", _WalletService_ListCustomerPurchaseOrders0_HTTP_Handler(srv))
 	r.Handle("GET", "/v1/operations/tenants/{tenant_id}/orders/{order_id}", _WalletService_GetOperatorPurchaseOrder0_HTTP_Handler(srv))
@@ -203,6 +206,25 @@ func _WalletService_GetCustomerWallet0_HTTP_Handler(srv WalletServiceHTTPServer)
 	}
 }
 
+func _WalletService_PurchaseTrafficPackage0_HTTP_Handler(srv WalletServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in PurchaseTrafficPackageRequest
+		if err := ctx.Bind(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationWalletServicePurchaseTrafficPackage)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.PurchaseTrafficPackage(ctx, req.(*PurchaseTrafficPackageRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*PurchaseOrder)
+		return ctx.Result(200, reply)
+	}
+}
+
 func _WalletService_ListOperatorPurchaseOrders0_HTTP_Handler(srv WalletServiceHTTPServer) func(ctx http.Context) error {
 	return func(ctx http.Context) error {
 		var in OperatorPurchaseOrdersRequest
@@ -298,6 +320,7 @@ type WalletServiceHTTPClient interface {
 	ListCustomerWalletEntries(ctx context.Context, req *CustomerWalletEntriesRequest, opts ...http.CallOption) (rsp *WalletEntries, err error)
 	ListOperatorPurchaseOrders(ctx context.Context, req *OperatorPurchaseOrdersRequest, opts ...http.CallOption) (rsp *PurchaseOrders, err error)
 	ListOperatorWalletEntries(ctx context.Context, req *OperatorWalletEntriesRequest, opts ...http.CallOption) (rsp *WalletEntries, err error)
+	PurchaseTrafficPackage(ctx context.Context, req *PurchaseTrafficPackageRequest, opts ...http.CallOption) (rsp *PurchaseOrder, err error)
 	QuoteWalletRecharge(ctx context.Context, req *QuoteWalletRechargeRequest, opts ...http.CallOption) (rsp *WalletRechargeQuote, err error)
 	RechargeWallet(ctx context.Context, req *RechargeWalletRequest, opts ...http.CallOption) (rsp *WalletEntry, err error)
 }
@@ -448,6 +471,23 @@ func (c *WalletServiceHTTPClientImpl) ListOperatorWalletEntries(ctx context.Cont
 		http.PathTemplate(pattern),
 	}, opts...)
 	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (c *WalletServiceHTTPClientImpl) PurchaseTrafficPackage(ctx context.Context, in *PurchaseTrafficPackageRequest, opts ...http.CallOption) (*PurchaseOrder, error) {
+	var out PurchaseOrder
+	pattern := "/v1/tenant/orders/traffic-packages"
+	path := http.BuildPath(pattern, in)
+	opts = append([]http.CallOption{
+		http.Accept("application/protojson"),
+		http.ContentType("application/protojson"),
+		http.Operation(OperationWalletServicePurchaseTrafficPackage),
+		http.PathTemplate(pattern),
+	}, opts...)
+	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
 	if err != nil {
 		return nil, err
 	}
