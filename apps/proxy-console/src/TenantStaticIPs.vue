@@ -13,7 +13,7 @@ import TableRow from './ui/table/TableRow.vue'
 import TableHead from './ui/table/TableHead.vue'
 import TableCell from './ui/table/TableCell.vue'
 
-const { token, tenantId, summary } = defineProps<{ token: string; tenantId: string; summary?: boolean }>()
+const { token, tenantId } = defineProps<{ token: string; tenantId: string }>()
 const emit = defineEmits<{ expired: []; wallet: [WalletTenant] }>()
 const controller = new AbortController()
 const allocations = ref<StaticIP[]>([])
@@ -91,8 +91,7 @@ onUnmounted(() => { controller.abort(); window.clearInterval(timer) })
     <template v-else>
       <p v-if="expiryNotice" role="status">{{ expiryNotice }} 个静态 IP 将在 5 天内到期。</p>
       <p>可用静态 IP {{ activeCount }} 个<span v-if="expiringCount">，5 天内到期 {{ expiringCount }} 个</span>。</p>
-      <RouterLink v-if="summary" :to="{ path: '/', query: { view: 'ips' } }">查看我的 IP</RouterLink>
-      <p v-else-if="!allocations.length">暂无交付记录。</p>
+      <p v-if="!allocations.length">暂无交付记录。</p>
       <template v-else>
         <Button type="button" variant="outline" :disabled="!selected.length" @click="exportTXT">导出所选 IP 的 TXT</Button>
         <p v-if="feedback" role="status">{{ feedback }}</p>
@@ -112,7 +111,7 @@ onUnmounted(() => { controller.abort(); window.clearInterval(timer) })
         </div>
       </template>
     </template>
-    <StaticRenewal v-if="!summary" :token="token" :tenant-id="tenantId" :selected="selected.map(ip => ip.supplier_item_id)"
+    <StaticRenewal :token="token" :tenant-id="tenantId" :selected="selected.map(ip => ip.supplier_item_id)"
       @updated="load" @expired="emit('expired')" @wallet="emit('wallet', $event)" />
   </section>
 </template>

@@ -41,7 +41,7 @@ func (s *Service) Get(ctx context.Context, token string) (Summary, error) {
 	if err != nil {
 		return Summary{}, wallet.PublicError(err)
 	}
-	accounts, err := s.subaccounts.List(ctx, token)
+	canCreate, err := s.subaccounts.CanCreate(ctx, token)
 	if err != nil {
 		return Summary{}, err
 	}
@@ -52,6 +52,6 @@ func (s *Service) Get(ctx context.Context, token string) (Summary, error) {
 	return Summary{
 		WalletMinor: account.AvailableMinor, TrafficBytes: traffic.AvailableBytes,
 		Static: static, LowTraffic: traffic.TriggeredAt != nil, Products: products,
-		CanCreateSubaccount: len(accounts) < subaccount.MaxAccounts,
+		CanCreateSubaccount: canCreate,
 	}, nil
 }

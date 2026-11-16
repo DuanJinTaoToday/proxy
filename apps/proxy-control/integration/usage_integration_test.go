@@ -39,6 +39,11 @@ type usageFixture struct {
 
 func setupUsage(t *testing.T, suppliers ...wallet.StaticSupplier) usageFixture {
 	t.Helper()
+	return setupUsageWithSubaccounts(t, true, suppliers...)
+}
+
+func setupUsageWithSubaccounts(t *testing.T, enableSubaccounts bool, suppliers ...wallet.StaticSupplier) usageFixture {
+	t.Helper()
 	dsn := os.Getenv("PROXY_CONTROL_TEST_DSN")
 	if dsn == "" {
 		t.Skip("set PROXY_CONTROL_TEST_DSN to a local PostgreSQL URL with schema creation permission")
@@ -90,9 +95,13 @@ func setupUsage(t *testing.T, suppliers ...wallet.StaticSupplier) usageFixture {
 	productService := product.NewService(repo.NewProductRepository(db), accessService)
 	server.RegisterWallet(handler, httpservice.NewWallet(walletService))
 	server.RegisterProduct(handler, httpservice.NewProduct(productService))
-	subs, err := subaccount.NewService(repo.NewSubaccountRepository(db), accessService, &conf.Biz{
-		Subaccounts: &conf.Subaccounts{PasswordKey: base64.RawURLEncoding.EncodeToString(make([]byte, 32)), GatewayHost: "gateway.example.test", GatewayPort: 1080},
-	})
+	settings := &conf.Biz{}
+	if enableSubaccounts {
+		settings.Subaccounts = &conf.Subaccounts{
+			PasswordKey: base64.RawURLEncoding.EncodeToString(make([]byte, 32)), GatewayHost: "gateway.example.test", GatewayPort: 1080,
+		}
+	}
+	subs, err := subaccount.NewService(repo.NewSubaccountRepository(db), accessService, settings)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -373,6 +373,8 @@ func (r *WalletRepository) PendingStaticPurchases(ctx context.Context, afterID i
 	return purchases, err
 }
 
+const expiringStaticIP = "expires_at > statement_timestamp() AND expires_at <= statement_timestamp() + interval '120 hours'"
+
 func (r *WalletRepository) StaticSummary(ctx context.Context, tenant string) (wallet.StaticSummary, error) {
 	if r.db == nil {
 		return wallet.StaticSummary{}, errWalletUnavailable
@@ -380,7 +382,7 @@ func (r *WalletRepository) StaticSummary(ctx context.Context, tenant string) (wa
 	var summary wallet.StaticSummary
 	err := r.db.WithContext(ctx).Raw(`
 		SELECT COUNT(*) AS active,
-			COUNT(*) FILTER (WHERE expires_at <= statement_timestamp() + interval '120 hours') AS expiring
+			COUNT(*) FILTER (WHERE `+expiringStaticIP+`) AS expiring
 		FROM static_ip_allocations
 		WHERE tenant_id = ? AND expires_at > statement_timestamp()`, tenant).Scan(&summary).Error
 	return summary, err
@@ -394,8 +396,7 @@ func (r *WalletRepository) ClaimStaticIPExpiryNotices(ctx context.Context, tenan
 	err := scanWalletRecord(r.db.WithContext(ctx).Raw(`
         WITH received AS (
             UPDATE static_ip_allocations SET reminded_expiry = expires_at
-            WHERE tenant_id = ? AND expires_at > statement_timestamp()
-            AND expires_at <= statement_timestamp() + interval '120 hours'
+            WHERE tenant_id = ? AND `+expiringStaticIP+`
             AND reminded_expiry IS DISTINCT FROM expires_at
             RETURNING 1
         ) SELECT COUNT(*) FROM received`, tenant), &count)

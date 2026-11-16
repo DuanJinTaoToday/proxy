@@ -2,6 +2,7 @@
 import { onMounted, onUnmounted, ref } from 'vue'
 import { ApiError } from './api/control'
 import { getOverview, type Overview } from './api/overview'
+import { claimStaticIPExpiryNotices } from './api/static-ip'
 import { flowAmount, money } from './wallet-format'
 import { Button } from './ui/button'
 import Card from './ui/card/Card.vue'
@@ -13,6 +14,7 @@ const emit = defineEmits<{ expired: []; loaded: [Overview] }>()
 const controller = new AbortController()
 const overview = ref<Overview>()
 const failed = ref(false)
+const claimedExpiry = ref(0)
 
 async function load() {
   failed.value = false
@@ -21,6 +23,10 @@ async function load() {
     if (controller.signal.aborted) return
     overview.value = result
     emit('loaded', result)
+    if (result.notices.some(notice => notice.kind === 'static_ip_expiry')) {
+      const claimed = await claimStaticIPExpiryNotices(props.token, controller.signal).catch(() => undefined)
+      if (!controller.signal.aborted) claimedExpiry.value = claimed?.count ?? 0
+    }
   } catch (error) {
     if (controller.signal.aborted) return
     if (error instanceof ApiError && error.status === 401) emit('expired')
@@ -68,7 +74,7 @@ onUnmounted(() => controller.abort())
           <Button v-if="overview.products.some(p => p.kind === 'static' && p.can_purchase)" as-child variant="outline">
             <RouterLink :to="{ path: '/', query: { view: 'static' } }">购买静态 IP</RouterLink>
           </Button>
-          <p v-if="!overview.can_create_subaccount" class="text-sm text-muted-foreground">已达到子账号数量上限。</p>
+          <p v-if="!overview.can_create_subaccount" class="text-sm text-muted-foreground">暂时无法创建子账号。</p>
         </CardContent>
       </Card>
       <Card>
@@ -82,6 +88,7 @@ onUnmounted(() => controller.abort())
                 <RouterLink class="underline" :to="{ path: '/', query: { view: 'usage' } }">查看日用量</RouterLink>
               </template>
               <template v-else-if="notice.kind === 'static_ip_expiry'">
+                <span role="status"><strong v-if="claimedExpiry">新提醒 · </strong></span>
                 {{ notice.count }} 个静态 IP 将在 5 天内到期。
                 <RouterLink class="underline" :to="{ path: '/', query: { view: 'ips' } }">查看我的 IP</RouterLink>
               </template>

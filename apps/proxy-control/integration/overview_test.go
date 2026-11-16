@@ -5,8 +5,20 @@ import (
 	"net/http"
 	"testing"
 
+	v1 "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1"
+
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/integration/testfixture"
 )
+
+func TestOverviewWhenSubaccountsAreDisabled(t *testing.T) {
+	f := setupUsageWithSubaccounts(t, false)
+	_, token := usageTenant(t, f, "13800005003")
+	var overview v1.Overview
+	readProto(t, testfixture.Request(f.http, "GET", "/v1/tenant/overview", "", token), &overview)
+	if overview.GetCanCreateSubaccount() || len(overview.GetProducts()) != 2 {
+		t.Fatalf("unexpected overview with subaccounts disabled: %v", &overview)
+	}
+}
 
 func TestTenantOverview(t *testing.T) {
 	f := setupUsage(t)

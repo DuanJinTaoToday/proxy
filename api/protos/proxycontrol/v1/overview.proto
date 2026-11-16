@@ -3,32 +3,45 @@ syntax = "proto3";
 package proxycontrol.v1;
 
 import "google/api/annotations.proto";
+import "openapiv3/annotations.proto";
 import "proxycontrol/v1/common.proto";
 
 option go_package = "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1";
 
 service OverviewService {
   rpc GetOverview(BaseRequest) returns (Overview) {
-    option (google.api.http) = { get: "/v1/tenant/overview" };
+    option (google.api.http) = {get: "/v1/tenant/overview"};
+    option (openapi.v3.operation) = {summary: "查看当前租户的余额、可用静态 IP、提醒和快捷入口状态"};
   }
 }
 
 message Overview {
-  int64 wallet_minor = 1;
-  int64 traffic_bytes = 2;
-  int32 active_static_ip_count = 3;
+  // 钱包可用余额，单位为人民币分。
+  int64 wallet_minor = 1 [json_name = "wallet_minor"];
+  // 动态流量余额，单位为字节，可为负数。
+  int64 traffic_bytes = 2 [json_name = "traffic_bytes"];
+  // 尚未到期的静态 IP 分配数量。
+  int32 active_static_ip_count = 3 [json_name = "active_static_ip_count"];
+  // 当前提醒，无提醒时为空列表。
   repeated OverviewNotice notices = 4;
+  // 动态和静态商品各自的当前开售状态。
   repeated OverviewProduct products = 5;
-  bool can_create_subaccount = 6;
+  // 当前允许创建代理子账号。禁用的子账号也占用额度。
+  bool can_create_subaccount = 6 [json_name = "can_create_subaccount"];
 }
 
 message OverviewNotice {
+  // low_traffic_balance 表示流量低余额，static_ip_expiry 表示静态 IP 即将到期。
   string kind = 1;
+  // 低余额提醒固定为 1，静态到期提醒为涉及的 IP 数量。
   int32 count = 2;
 }
 
 message OverviewProduct {
+  // dynamic 或 static。
   string kind = 1;
+  // 运营设置的开售状态。
   bool open = 2;
-  bool can_purchase = 3;
+  // 购买入口可用。动态商品还需有在售套餐。
+  bool can_purchase = 3 [json_name = "can_purchase"];
 }

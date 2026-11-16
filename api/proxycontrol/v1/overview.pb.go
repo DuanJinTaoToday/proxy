@@ -7,6 +7,7 @@
 package proxycontrolv1
 
 import (
+	_ "github.com/google/gnostic/openapiv3"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -23,13 +24,19 @@ const (
 )
 
 type Overview struct {
-	state               protoimpl.MessageState `protogen:"open.v1"`
-	WalletMinor         int64                  `protobuf:"varint,1,opt,name=wallet_minor,json=walletMinor,proto3" json:"wallet_minor,omitempty"`
-	TrafficBytes        int64                  `protobuf:"varint,2,opt,name=traffic_bytes,json=trafficBytes,proto3" json:"traffic_bytes,omitempty"`
-	ActiveStaticIpCount int32                  `protobuf:"varint,3,opt,name=active_static_ip_count,json=activeStaticIpCount,proto3" json:"active_static_ip_count,omitempty"`
-	Notices             []*OverviewNotice      `protobuf:"bytes,4,rep,name=notices,proto3" json:"notices,omitempty"`
-	Products            []*OverviewProduct     `protobuf:"bytes,5,rep,name=products,proto3" json:"products,omitempty"`
-	CanCreateSubaccount bool                   `protobuf:"varint,6,opt,name=can_create_subaccount,json=canCreateSubaccount,proto3" json:"can_create_subaccount,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 钱包可用余额，单位为人民币分。
+	WalletMinor int64 `protobuf:"varint,1,opt,name=wallet_minor,proto3" json:"wallet_minor,omitempty"`
+	// 动态流量余额，单位为字节，可为负数。
+	TrafficBytes int64 `protobuf:"varint,2,opt,name=traffic_bytes,proto3" json:"traffic_bytes,omitempty"`
+	// 尚未到期的静态 IP 分配数量。
+	ActiveStaticIpCount int32 `protobuf:"varint,3,opt,name=active_static_ip_count,proto3" json:"active_static_ip_count,omitempty"`
+	// 当前提醒，无提醒时为空列表。
+	Notices []*OverviewNotice `protobuf:"bytes,4,rep,name=notices,proto3" json:"notices,omitempty"`
+	// 动态和静态商品各自的当前开售状态。
+	Products []*OverviewProduct `protobuf:"bytes,5,rep,name=products,proto3" json:"products,omitempty"`
+	// 当前允许创建代理子账号。禁用的子账号也占用额度。
+	CanCreateSubaccount bool `protobuf:"varint,6,opt,name=can_create_subaccount,proto3" json:"can_create_subaccount,omitempty"`
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache
 }
@@ -107,9 +114,11 @@ func (x *Overview) GetCanCreateSubaccount() bool {
 }
 
 type OverviewNotice struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Kind          string                 `protobuf:"bytes,1,opt,name=kind,proto3" json:"kind,omitempty"`
-	Count         int32                  `protobuf:"varint,2,opt,name=count,proto3" json:"count,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// low_traffic_balance 表示流量低余额，static_ip_expiry 表示静态 IP 即将到期。
+	Kind string `protobuf:"bytes,1,opt,name=kind,proto3" json:"kind,omitempty"`
+	// 低余额提醒固定为 1，静态到期提醒为涉及的 IP 数量。
+	Count         int32 `protobuf:"varint,2,opt,name=count,proto3" json:"count,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -159,10 +168,13 @@ func (x *OverviewNotice) GetCount() int32 {
 }
 
 type OverviewProduct struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Kind          string                 `protobuf:"bytes,1,opt,name=kind,proto3" json:"kind,omitempty"`
-	Open          bool                   `protobuf:"varint,2,opt,name=open,proto3" json:"open,omitempty"`
-	CanPurchase   bool                   `protobuf:"varint,3,opt,name=can_purchase,json=canPurchase,proto3" json:"can_purchase,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// dynamic 或 static。
+	Kind string `protobuf:"bytes,1,opt,name=kind,proto3" json:"kind,omitempty"`
+	// 运营设置的开售状态。
+	Open bool `protobuf:"varint,2,opt,name=open,proto3" json:"open,omitempty"`
+	// 购买入口可用。动态商品还需有在售套餐。
+	CanPurchase   bool `protobuf:"varint,3,opt,name=can_purchase,proto3" json:"can_purchase,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -222,23 +234,23 @@ var File_proxycontrol_v1_overview_proto protoreflect.FileDescriptor
 
 const file_proxycontrol_v1_overview_proto_rawDesc = "" +
 	"\n" +
-	"\x1eproxycontrol/v1/overview.proto\x12\x0fproxycontrol.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1cproxycontrol/v1/common.proto\"\xb4\x02\n" +
-	"\bOverview\x12!\n" +
-	"\fwallet_minor\x18\x01 \x01(\x03R\vwalletMinor\x12#\n" +
-	"\rtraffic_bytes\x18\x02 \x01(\x03R\ftrafficBytes\x123\n" +
-	"\x16active_static_ip_count\x18\x03 \x01(\x05R\x13activeStaticIpCount\x129\n" +
+	"\x1eproxycontrol/v1/overview.proto\x12\x0fproxycontrol.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1bopenapiv3/annotations.proto\x1a\x1cproxycontrol/v1/common.proto\"\xbb\x02\n" +
+	"\bOverview\x12\"\n" +
+	"\fwallet_minor\x18\x01 \x01(\x03R\fwallet_minor\x12$\n" +
+	"\rtraffic_bytes\x18\x02 \x01(\x03R\rtraffic_bytes\x126\n" +
+	"\x16active_static_ip_count\x18\x03 \x01(\x05R\x16active_static_ip_count\x129\n" +
 	"\anotices\x18\x04 \x03(\v2\x1f.proxycontrol.v1.OverviewNoticeR\anotices\x12<\n" +
-	"\bproducts\x18\x05 \x03(\v2 .proxycontrol.v1.OverviewProductR\bproducts\x122\n" +
-	"\x15can_create_subaccount\x18\x06 \x01(\bR\x13canCreateSubaccount\":\n" +
+	"\bproducts\x18\x05 \x03(\v2 .proxycontrol.v1.OverviewProductR\bproducts\x124\n" +
+	"\x15can_create_subaccount\x18\x06 \x01(\bR\x15can_create_subaccount\":\n" +
 	"\x0eOverviewNotice\x12\x12\n" +
 	"\x04kind\x18\x01 \x01(\tR\x04kind\x12\x14\n" +
-	"\x05count\x18\x02 \x01(\x05R\x05count\"\\\n" +
+	"\x05count\x18\x02 \x01(\x05R\x05count\"]\n" +
 	"\x0fOverviewProduct\x12\x12\n" +
 	"\x04kind\x18\x01 \x01(\tR\x04kind\x12\x12\n" +
-	"\x04open\x18\x02 \x01(\bR\x04open\x12!\n" +
-	"\fcan_purchase\x18\x03 \x01(\bR\vcanPurchase2v\n" +
-	"\x0fOverviewService\x12c\n" +
-	"\vGetOverview\x12\x1c.proxycontrol.v1.BaseRequest\x1a\x19.proxycontrol.v1.Overview\"\x1b\x82\xd3\xe4\x93\x02\x15\x12\x13/v1/tenant/overviewBEZCgithub.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1b\x06proto3"
+	"\x04open\x18\x02 \x01(\bR\x04open\x12\"\n" +
+	"\fcan_purchase\x18\x03 \x01(\bR\fcan_purchase2\xc7\x01\n" +
+	"\x0fOverviewService\x12\xb3\x01\n" +
+	"\vGetOverview\x12\x1c.proxycontrol.v1.BaseRequest\x1a\x19.proxycontrol.v1.Overview\"k\xbaGM\x12K查看当前租户的余额、可用静态 IP、提醒和快捷入口状态\x82\xd3\xe4\x93\x02\x15\x12\x13/v1/tenant/overviewBEZCgithub.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1b\x06proto3"
 
 var (
 	file_proxycontrol_v1_overview_proto_rawDescOnce sync.Once

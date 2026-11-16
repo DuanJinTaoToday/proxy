@@ -212,6 +212,10 @@ func TestStaticPurchaseAndIndependentSales(t *testing.T) {
 			t.Fatalf("expiry notice count %d, want %d", notice.GetCount(), expected)
 		}
 	}
+	readProto(t, req("GET", overviewPath, "", session.GetAccessToken()), &overview)
+	if len(overview.GetNotices()) != 1 || overview.Notices[0].GetKind() != "static_ip_expiry" {
+		t.Fatalf("claiming the reminder removed the current expiry status: %v", &overview)
+	}
 	execSQL(t, f.db, "UPDATE static_ip_allocations SET expires_at=now()-interval '1 hour' WHERE supplier_item_id='23'")
 	readProto(t, req("GET", overviewPath, "", session.GetAccessToken()), &overview)
 	if overview.GetActiveStaticIpCount() != 0 || len(overview.GetNotices()) != 0 {

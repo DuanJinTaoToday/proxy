@@ -20,5 +20,9 @@ var ProviderSet = wire.NewSet(
 )
 
 func ProvideUsageRepository(resources *data.Data) *UsageRepository {
-	return NewUsageRepository(resources.UsageDB())
+	db := resources.UsageDB()
+	if db == nil {
+		db = resources.ProxyAuthDB()
+	}
+	return NewUsageRepository(db)
 }
