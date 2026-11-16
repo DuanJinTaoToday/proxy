@@ -34,7 +34,11 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
 }
 
 export async function requestCSV(path: string, options: RequestOptions) {
-  return (await fetchControl(path, options, 'text/csv')).blob()
+  return requestDownload(path, options, 'text/csv')
+}
+
+export async function requestDownload(path: string, options: RequestOptions, contentType: string): Promise<Blob> {
+  return (await fetchControl(path, options, contentType)).blob()
 }
 
 export async function login(phone: string, password: string) {

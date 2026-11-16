@@ -10,7 +10,80 @@ import "validate/validate.proto";
 
 option go_package = "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1";
 
+// The TXT response is streamed by a Go HTTP route.
+option (openapi.v3.document) = {
+  paths: { path: {
+    name: "/v1/tenant/static-ips:export"
+    value: { post: {
+      tags: "WalletService"
+      summary: "导出所选可用静态 IP 的 TXT"
+      operation_id: "WalletService_ExportStaticIPs"
+      request_body: { request_body: {
+        required: true
+        content: { additional_properties: {
+          name: "application/json"
+          value: { schema: { schema: {
+            type: "object"
+            required: "supplier_item_ids"
+            properties: { additional_properties: {
+              name: "supplier_item_ids"
+              value: { schema: { type: "array" min_items: 1 max_items: 1000 unique_items: true items: { schema_or_reference: { schema: { type: "string" } } } } }
+            } }
+          } } }
+        } }
+      } }
+      responses: { response_or_reference: {
+        name: "200"
+        value: { response: {
+          description: "每行 IP:端口:用户名:密码"
+          content: { additional_properties: { name: "text/plain" value: { schema: { schema: { type: "string" format: "binary" } } } } }
+        } }
+      } }
+    } }
+  } }
+};
+
 service WalletService {
+  rpc ListStaticOffers(BaseRequest) returns (StaticOffers) {
+    option (google.api.http) = {get: "/v1/public/static-offers"};
+    option (openapi.v3.operation) = {summary: "查询公开静态 IP 报价及开售状态"};
+  }
+
+  rpc QuoteStaticPurchase(StaticPurchaseQuoteRequest) returns (StaticPurchaseQuote) {
+    option (google.api.http) = {post: "/v1/tenant/static-purchase-quotes", body: "*"};
+    option (openapi.v3.operation) = {summary: "生成当前租户的静态 IP 报价确认凭证"};
+  }
+
+  rpc PurchaseStaticIP(PurchaseStaticIPRequest) returns (PurchaseOrder) {
+    option (google.api.http) = {post: "/v1/tenant/static-orders", body: "*"};
+    option (openapi.v3.operation) = {summary: "按确认报价购买静态 IP"};
+  }
+
+  rpc ListStaticIPs(BaseRequest) returns (StaticIPs) {
+    option (google.api.http) = {get: "/v1/tenant/static-ips"};
+    option (openapi.v3.operation) = {summary: "查看当前租户的静态 IP 分配及到期记录"};
+  }
+
+  rpc ClaimStaticIPExpiryNotices(BaseRequest) returns (StaticIPExpiryNotices) {
+    option (google.api.http) = {post: "/v1/tenant/static-ip-expiry-notices", body: "*"};
+    option (openapi.v3.operation) = {summary: "领取当前租户尚未提示的静态 IP 到期提醒"};
+  }
+
+  rpc GetStaticIPConfig(StaticIPConfigRequest) returns (StaticIP) {
+    option (google.api.http) = {get: "/v1/tenant/static-ips/{supplier_item_id}/proxy-config"};
+    option (openapi.v3.operation) = {summary: "查看当前租户的单个静态 IP 接入信息"};
+  }
+
+  rpc ListPendingStaticPurchases(PendingStaticPurchasesRequest) returns (PendingStaticPurchases) {
+    option (google.api.http) = {get: "/v1/operations/orders/static-pending"};
+    option (openapi.v3.operation) = {summary: "查看超过 24 小时未确认的静态采购订单"};
+  }
+
+  rpc ResolveStaticPurchase(ResolveStaticPurchaseRequest) returns (PurchaseOrder) {
+    option (google.api.http) = {post: "/v1/operations/tenants/{tenant_id}/orders/{order_id}/static-resolution", body: "*"};
+    option (openapi.v3.operation) = {summary: "核实并处理静态采购的剩余交付"};
+  }
+
   rpc FindTenants(FindWalletTenantRequest) returns (WalletTenant) {
     option (google.api.http) = {get: "/v1/operations/tenants"};
     option (openapi.v3.operation) = {summary: "按主账号名或手机号查找租户"};
@@ -264,4 +337,144 @@ message OperatorPurchaseOrderRequest {
   string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_bytes: 64}];
   // 该租户的订单编号。
   int64 order_id = 2 [(validate.rules).int64.gt = 0];
+}
+
+message StaticOffer {
+  // 皇冠节点 ID，与租期代码共同标识报价。
+  int64 node_id = 1;
+  // 节点地域显示名。
+  string region = 2;
+  // 皇冠返回的类型描述，空值表示未提供。
+  string ip_type = 3;
+  // 皇冠租期代码。
+  string term = 4;
+  // 租期长度，单位天。
+  int32 term_days = 5;
+  // 每个 IP 所选租期总价，单位人民币分。
+  int64 unit_minor = 6;
+  // 当前可购 IP 数量，缺省为零。
+  int32 available = 7;
+}
+
+message StaticOffers {
+  // 目录当次查回的报价。未开售返回空列表。
+  repeated StaticOffer offers = 1;
+  // 商品开售状态。
+  bool open = 2;
+  // 报价查询完成时间。未开售时省略。
+  google.protobuf.Timestamp quoted_at = 3;
+}
+
+message StaticPurchaseQuoteRequest {
+  // 客户选中的皇冠节点 ID。
+  int64 node_id = 1 [(validate.rules).int64.gt = 0];
+  // 客户选中的租期代码。
+  string term = 2 [(validate.rules).string = {min_len: 1, max_bytes: 16}];
+  // 请求购买的 IP 数量。
+  int32 quantity = 3 [(validate.rules).int32.gt = 0];
+}
+
+message StaticPurchaseQuote {
+  // 当前供应商报价和可购量。
+  StaticOffer offer = 1;
+  // 客户待确认的 IP 数量。
+  int32 quantity = 2;
+  // 绑定租户、规格、数量、价格和有效期的凭证。
+  string confirmation_token = 3;
+  // 新订单可使用该凭证的截止时间。
+  google.protobuf.Timestamp expires_at = 4;
+}
+
+message PurchaseStaticIPRequest {
+  // 已确认的皇冠节点 ID。
+  int64 node_id = 1 [(validate.rules).int64.gt = 0];
+  // 已确认的租期代码。
+  string term = 2 [(validate.rules).string = {min_len: 1, max_bytes: 16}];
+  // 已确认的 IP 数量。
+  int32 quantity = 3 [(validate.rules).int32.gt = 0];
+  // 已确认的租期单价，人民币分。
+  int64 unit_minor = 4 [(validate.rules).int64.gt = 0];
+  // 单次购买的幂等键。结果未知时保留原凭证并用同键重试。
+  string request_key = 5 [(validate.rules).string = {min_len: 1, max_bytes: 128}];
+  // 报价确认凭证。
+  string confirmation_token = 6 [(validate.rules).string = {min_len: 1, max_bytes: 1024}];
+}
+
+message StaticIP {
+  // 当前分配的皇冠明细 ID。
+  string supplier_item_id = 1;
+  // 对应平台购买订单号。
+  int64 order_id = 2;
+  // 代理 IP。
+  string ip = 3;
+  // 代理端口。
+  int32 port = 4;
+  // 代理用户名。只在接入配置返回。
+  string username = 5;
+  // 代理密码。只在接入配置返回。
+  string password = 6;
+  // 皇冠返回的逐 IP 到期时间。
+  google.protobuf.Timestamp expires_at = 7;
+}
+
+message StaticIPs {
+  // 当前租户的全部分配，含到期历史。
+  repeated StaticIP allocations = 1;
+}
+
+message StaticIPConfigRequest {
+  // 需要查看接入信息的分配 ID。
+  string supplier_item_id = 1 [(validate.rules).string = {min_len: 1, max_bytes: 128}];
+}
+
+message StaticIPExportRequest {
+  // 选中且仍可用的分配 ID。一次最多 1000 项。
+  repeated string supplier_item_ids = 1 [(validate.rules).repeated = {min_items: 1, max_items: 1000, unique: true, items: {string: {min_len: 1, max_bytes: 128}}}];
+}
+
+message ResolveStaticPurchaseRequest {
+  // 待核实订单所属租户。
+  string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_bytes: 64}];
+  // 待核实的平台订单编号。
+  int64 order_id = 2 [(validate.rules).int64.gt = 0];
+  // 经运营确认关联的皇冠主订单号。空值沿用平台已有编号。
+  string supplier_order_id = 3 [(validate.rules).string.max_bytes = 128];
+  // 运营确认的订单关联和处理依据。
+  string evidence = 4 [(validate.rules).string = {min_len: 1, max_bytes: 500}];
+  // 关闭剩余并退回预扣。默认只同步已知交付。
+  bool close_remaining = 5;
+  // 有明确失败证据时允许在 72 小时前释放。只能配合 close_remaining。
+  bool confirmed_undeliverable = 6;
+}
+
+message PendingStaticPurchasesRequest {
+  // 上页最后一项平台订单号。缺省为零并从第一页查询。
+  int64 after_id = 1 [(validate.rules).int64.gte = 0];
+}
+
+message PendingStaticPurchase {
+  // 待核实的平台订单号。
+  int64 order_id = 1;
+  // 订单所属租户。
+  string tenant_id = 2;
+  // 已关联的皇冠主订单号。空值表示待确认。
+  string supplier_order_id = 3;
+  // 平台受理时间。
+  google.protobuf.Timestamp created_at = 4;
+  // 已确认交付的 IP 数量。
+  int64 delivered_count = 5;
+  // 超过 72 小时且可释放未知结果的剩余预扣。
+  bool can_close = 6;
+}
+
+message PendingStaticPurchases {
+  // 本页待核实订单。
+  repeated PendingStaticPurchase purchases = 1;
+  // 下一页游标。零表示无更多结果。
+  int64 next_after_id = 2;
+}
+
+message StaticIPExpiryNotices {
+  // 即将到期且本次首次提示的分配数量。缺省为零。
+  int32 count = 1;
 }

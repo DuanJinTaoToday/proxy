@@ -63,7 +63,7 @@ type Order struct {
 	ID                                                      int64
 	Kind, Status                                            string
 	LockedMinor, DebitedMinor, ReleasedMinor, RefundedMinor int64
-	DeliveredBytes, DeliveredCount                          int64
+	DeliveredBytes, DeliveredCount, ConfirmedMinor          int64
 	CreatedAt                                               time.Time
 	Items                                                   []OrderItem `gorm:"-"`
 }
@@ -76,7 +76,7 @@ type OrderItem struct {
 
 func (o Order) UnsettledMinor() int64 {
 	if o.Status == Pending {
-		return o.DebitedMinor
+		return o.DebitedMinor - o.ConfirmedMinor
 	}
 	return 0
 }
@@ -120,6 +120,7 @@ func PurchasedTrafficDebtOffset(before, capacity int64) int64 {
 }
 
 type Repository interface {
+	StaticRepository
 	FindTenant(context.Context, string, string) (Tenant, error)
 	Tenant(context.Context, string) (Tenant, error)
 	Entries(context.Context, string, Filter) ([]Entry, error)
@@ -250,6 +251,7 @@ func (c Command) Settle(before int64, order Order) (Settlement, error) {
 			return Settlement{}, ErrState
 		}
 		var retained int64
+		order.DeliveredCount = 0
 		for i, count := range c.ItemDeliveries {
 			item := &order.Items[i]
 			if count < 0 || count > item.Quantity {

@@ -38,12 +38,10 @@ func (r *WalletRepository) apply(ctx context.Context, command wallet.Command, re
 	if r.db == nil {
 		return wallet.Entry{}, errWalletUnavailable
 	}
-	body, err := json.Marshal(request)
+	fingerprint, err := walletFingerprint(request)
 	if err != nil {
 		return wallet.Entry{}, err
 	}
-	hash := sha256.Sum256(body)
-	fingerprint := hex.EncodeToString(hash[:])
 	var receipt wallet.Entry
 	err = r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var order wallet.Order
@@ -58,20 +56,12 @@ func (r *WalletRepository) apply(ctx context.Context, command wallet.Command, re
 		if err := scanWalletRecord(tx.Raw("SELECT available_minor FROM wallets WHERE tenant_id = ? FOR UPDATE", command.TenantID), &before); err != nil {
 			return err
 		}
-		var previous struct {
-			wallet.Entry
-			RequestHash string
+		previous, exists, err := walletReplay(tx, command.TenantID, command.Key, fingerprint)
+		if err != nil {
+			return err
 		}
-		result := tx.Raw(`SELECT e.*, o.username AS operator_name FROM wallet_entries e
-			LEFT JOIN operators o ON o.id=e.actor WHERE e.tenant_id = ? AND e.request_key = ?`, command.TenantID, command.Key).Scan(&previous)
-		if result.Error != nil {
-			return result.Error
-		}
-		if result.RowsAffected != 0 {
-			if previous.RequestHash != fingerprint {
-				return wallet.ErrReplay
-			}
-			receipt = previous.Entry
+		if exists {
+			receipt = previous
 			return nil
 		}
 		if prepare != nil {
@@ -161,4 +151,29 @@ func saveSettlementOrder(tx *gorm.DB, tenantID string, order wallet.Order) (int6
 		}
 	}
 	return id, nil
+}
+
+func walletFingerprint(request any) (string, error) {
+	body, err := json.Marshal(request)
+	if err != nil {
+		return "", err
+	}
+	hash := sha256.Sum256(body)
+	return hex.EncodeToString(hash[:]), nil
+}
+
+func walletReplay(db *gorm.DB, tenant, key, fingerprint string) (wallet.Entry, bool, error) {
+	var previous struct {
+		wallet.Entry
+		RequestHash string
+	}
+	result := db.Raw(`SELECT e.*, o.username AS operator_name FROM wallet_entries e
+        LEFT JOIN operators o ON o.id=e.actor WHERE e.tenant_id = ? AND e.request_key = ?`, tenant, key).Scan(&previous)
+	if result.Error != nil || result.RowsAffected == 0 {
+		return wallet.Entry{}, false, result.Error
+	}
+	if previous.RequestHash != fingerprint {
+		return wallet.Entry{}, false, wallet.ErrReplay
+	}
+	return previous.Entry, true, nil
 }

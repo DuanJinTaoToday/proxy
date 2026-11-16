@@ -9,6 +9,7 @@ message Biz {
   reserved "access";
   Usage usage = 2;
   Subaccounts subaccounts = 3;
+  IPCrown ipcrown = 4;
 }
 
 message Usage {
@@ -20,4 +21,11 @@ message Subaccounts {
   string password_key = 1;
   string gateway_host = 2;
   uint32 gateway_port = 3;
+}
+
+message IPCrown {
+  string base_url = 1;
+  string partner_id = 2;
+  string api_secret = 3;
+  string password_key = 4;
 }

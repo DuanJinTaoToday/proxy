@@ -298,6 +298,25 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/proxycontrol.v1.ListUsageGapsResponse'
+    /v1/operations/orders/static-pending:
+        get:
+            tags:
+                - WalletService
+            summary: 查看超过 24 小时未确认的静态采购订单
+            operationId: WalletService_ListPendingStaticPurchases
+            parameters:
+                - name: afterId
+                  in: query
+                  description: 上页最后一项平台订单号。缺省为零并从第一页查询。
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.PendingStaticPurchases'
     /v1/operations/product-sales/{kind}:
         put:
             tags:
@@ -417,6 +436,38 @@ paths:
                   required: true
                   schema:
                     type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.PurchaseOrder'
+    /v1/operations/tenants/{tenantId}/orders/{orderId}/static-resolution:
+        post:
+            tags:
+                - WalletService
+            summary: 核实并处理静态采购的剩余交付
+            operationId: WalletService_ResolveStaticPurchase
+            parameters:
+                - name: tenantId
+                  in: path
+                  description: 待核实订单所属租户。
+                  required: true
+                  schema:
+                    type: string
+                - name: orderId
+                  in: path
+                  description: 待核实的平台订单编号。
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.ResolveStaticPurchaseRequest'
+                required: true
             responses:
                 "200":
                     description: OK
@@ -629,6 +680,19 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/proxycontrol.v1.QueryUsageResponse'
+    /v1/public/static-offers:
+        get:
+            tags:
+                - WalletService
+            summary: 查询公开静态 IP 报价及开售状态
+            operationId: WalletService_ListStaticOffers
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.StaticOffers'
     /v1/reporting/batches:
         post:
             tags:
@@ -800,6 +864,126 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/proxycontrol.v1.PurchaseOrder'
+    /v1/tenant/static-ip-expiry-notices:
+        post:
+            tags:
+                - WalletService
+            summary: 领取当前租户尚未提示的静态 IP 到期提醒
+            operationId: WalletService_ClaimStaticIPExpiryNotices
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.BaseRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.StaticIPExpiryNotices'
+    /v1/tenant/static-ips:
+        get:
+            tags:
+                - WalletService
+            summary: 查看当前租户的静态 IP 分配及到期记录
+            operationId: WalletService_ListStaticIPs
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.StaticIPs'
+    /v1/tenant/static-ips/{supplierItemId}/proxy-config:
+        get:
+            tags:
+                - WalletService
+            summary: 查看当前租户的单个静态 IP 接入信息
+            operationId: WalletService_GetStaticIPConfig
+            parameters:
+                - name: supplierItemId
+                  in: path
+                  description: 需要查看接入信息的分配 ID。
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.StaticIP'
+    /v1/tenant/static-ips:export:
+        post:
+            tags:
+                - WalletService
+            summary: 导出所选可用静态 IP 的 TXT
+            operationId: WalletService_ExportStaticIPs
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            required:
+                                - supplier_item_ids
+                            type: object
+                            properties:
+                                supplier_item_ids:
+                                    maxItems: 1000
+                                    minItems: 1
+                                    uniqueItems: true
+                                    type: array
+                                    items:
+                                        type: string
+                required: true
+            responses:
+                "200":
+                    description: 每行 IP:端口:用户名:密码
+                    content:
+                        text/plain:
+                            schema:
+                                type: string
+                                format: binary
+    /v1/tenant/static-orders:
+        post:
+            tags:
+                - WalletService
+            summary: 按确认报价购买静态 IP
+            operationId: WalletService_PurchaseStaticIP
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.PurchaseStaticIPRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.PurchaseOrder'
+    /v1/tenant/static-purchase-quotes:
+        post:
+            tags:
+                - WalletService
+            summary: 生成当前租户的静态 IP 报价确认凭证
+            operationId: WalletService_QuoteStaticPurchase
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.StaticPurchaseQuoteRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.StaticPurchaseQuote'
     /v1/tenant/subaccounts:
         get:
             tags:
@@ -1062,6 +1246,10 @@ components:
                 limitBytes:
                     type: string
                     description: 缺省表示不限，0 表示达到准入上限。
+        proxycontrol.v1.BaseRequest:
+            type: object
+            properties: {}
+            description: 无请求参数的接口使用 BaseRequest。
         proxycontrol.v1.BaseResp:
             type: object
             properties: {}
@@ -1186,6 +1374,39 @@ components:
                     type: integer
                     description: 令牌从签发起的有效时长，单位为秒。
                     format: int32
+        proxycontrol.v1.PendingStaticPurchase:
+            type: object
+            properties:
+                orderId:
+                    type: string
+                    description: 待核实的平台订单号。
+                tenantId:
+                    type: string
+                    description: 订单所属租户。
+                supplierOrderId:
+                    type: string
+                    description: 已关联的皇冠主订单号。空值表示待确认。
+                createdAt:
+                    type: string
+                    description: 平台受理时间。
+                    format: date-time
+                deliveredCount:
+                    type: string
+                    description: 已确认交付的 IP 数量。
+                canClose:
+                    type: boolean
+                    description: 超过 72 小时且可释放未知结果的剩余预扣。
+        proxycontrol.v1.PendingStaticPurchases:
+            type: object
+            properties:
+                purchases:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/proxycontrol.v1.PendingStaticPurchase'
+                    description: 本页待核实订单。
+                nextAfterId:
+                    type: string
+                    description: 下一页游标。零表示无更多结果。
         proxycontrol.v1.Product:
             type: object
             properties:
@@ -1300,6 +1521,28 @@ components:
                 nextBeforeId:
                     type: string
                     description: 下一页的 before_id，0 表示已到末页。
+        proxycontrol.v1.PurchaseStaticIPRequest:
+            type: object
+            properties:
+                nodeId:
+                    type: string
+                    description: 已确认的皇冠节点 ID。
+                term:
+                    type: string
+                    description: 已确认的租期代码。
+                quantity:
+                    type: integer
+                    description: 已确认的 IP 数量。
+                    format: int32
+                unitMinor:
+                    type: string
+                    description: 已确认的租期单价，人民币分。
+                requestKey:
+                    type: string
+                    description: 单次购买的幂等键。结果未知时保留原凭证并用同键重试。
+                confirmationToken:
+                    type: string
+                    description: 报价确认凭证。
         proxycontrol.v1.PurchaseTrafficPackageRequest:
             type: object
             properties:
@@ -1468,6 +1711,27 @@ components:
                 password:
                     type: string
                     description: 新密码，至少 12 个字符。
+        proxycontrol.v1.ResolveStaticPurchaseRequest:
+            type: object
+            properties:
+                tenantId:
+                    type: string
+                    description: 待核实订单所属租户。
+                orderId:
+                    type: string
+                    description: 待核实的平台订单编号。
+                supplierOrderId:
+                    type: string
+                    description: 经运营确认关联的皇冠主订单号。空值沿用平台已有编号。
+                evidence:
+                    type: string
+                    description: 运营确认的订单关联和处理依据。
+                closeRemaining:
+                    type: boolean
+                    description: 关闭剩余并退回预扣。默认只同步已知交付。
+                confirmedUndeliverable:
+                    type: boolean
+                    description: 有明确失败证据时允许在 72 小时前释放。只能配合 close_remaining。
         proxycontrol.v1.SetLowBalanceThresholdRequest:
             type: object
             properties:
@@ -1489,6 +1753,119 @@ components:
                 acceptanceEvidence:
                     type: string
                     description: 开售时填写对应验收记录或链接。
+        proxycontrol.v1.StaticIP:
+            type: object
+            properties:
+                supplierItemId:
+                    type: string
+                    description: 当前分配的皇冠明细 ID。
+                orderId:
+                    type: string
+                    description: 对应平台购买订单号。
+                ip:
+                    type: string
+                    description: 代理 IP。
+                port:
+                    type: integer
+                    description: 代理端口。
+                    format: int32
+                username:
+                    type: string
+                    description: 代理用户名。只在接入配置返回。
+                password:
+                    type: string
+                    description: 代理密码。只在接入配置返回。
+                expiresAt:
+                    type: string
+                    description: 皇冠返回的逐 IP 到期时间。
+                    format: date-time
+        proxycontrol.v1.StaticIPExpiryNotices:
+            type: object
+            properties:
+                count:
+                    type: integer
+                    description: 即将到期且本次首次提示的分配数量。缺省为零。
+                    format: int32
+        proxycontrol.v1.StaticIPs:
+            type: object
+            properties:
+                allocations:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/proxycontrol.v1.StaticIP'
+                    description: 当前租户的全部分配，含到期历史。
+        proxycontrol.v1.StaticOffer:
+            type: object
+            properties:
+                nodeId:
+                    type: string
+                    description: 皇冠节点 ID，与租期代码共同标识报价。
+                region:
+                    type: string
+                    description: 节点地域显示名。
+                ipType:
+                    type: string
+                    description: 皇冠返回的类型描述，空值表示未提供。
+                term:
+                    type: string
+                    description: 皇冠租期代码。
+                termDays:
+                    type: integer
+                    description: 租期长度，单位天。
+                    format: int32
+                unitMinor:
+                    type: string
+                    description: 每个 IP 所选租期总价，单位人民币分。
+                available:
+                    type: integer
+                    description: 当前可购 IP 数量，缺省为零。
+                    format: int32
+        proxycontrol.v1.StaticOffers:
+            type: object
+            properties:
+                offers:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/proxycontrol.v1.StaticOffer'
+                    description: 目录当次查回的报价。未开售返回空列表。
+                open:
+                    type: boolean
+                    description: 商品开售状态。
+                quotedAt:
+                    type: string
+                    description: 报价查询完成时间。未开售时省略。
+                    format: date-time
+        proxycontrol.v1.StaticPurchaseQuote:
+            type: object
+            properties:
+                offer:
+                    allOf:
+                        - $ref: '#/components/schemas/proxycontrol.v1.StaticOffer'
+                    description: 当前供应商报价和可购量。
+                quantity:
+                    type: integer
+                    description: 客户待确认的 IP 数量。
+                    format: int32
+                confirmationToken:
+                    type: string
+                    description: 绑定租户、规格、数量、价格和有效期的凭证。
+                expiresAt:
+                    type: string
+                    description: 新订单可使用该凭证的截止时间。
+                    format: date-time
+        proxycontrol.v1.StaticPurchaseQuoteRequest:
+            type: object
+            properties:
+                nodeId:
+                    type: string
+                    description: 客户选中的皇冠节点 ID。
+                term:
+                    type: string
+                    description: 客户选中的租期代码。
+                quantity:
+                    type: integer
+                    description: 请求购买的 IP 数量。
+                    format: int32
         proxycontrol.v1.StickySession:
             type: object
             properties:
