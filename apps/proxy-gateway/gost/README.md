@@ -9,6 +9,8 @@
 - `data.acl.control.url` 指向控制面的 HTTPS 地址。使用私有 CA 时填写 `data.acl.control.ca_file`。`data.acl.control.auth_token` 用于加载和刷新认证状态，`data.acl.control.report_token` 用于批次和生命周期上报。
 - `data.gost.local_auth_token` 用于 GOST 到本机中继，对应模板的 `${LOCAL_AUTH_TOKEN}`。网关生成的临时 GOST 配置含凭据，进程退出时清理。
 - 使用悟空入口池时，将 `data.gost.config` 指向 `wukong-pool.example.yaml`。填写 `data.gost.wukong.entries`（按优先级排列的 `host:port` 列表）、`username`、`password`、`probe_url` 和 `backup_probe_url`。两个探测地址应是独立、可直接访问、稳定返回 HTTPS 2xx 的受控目标。探测单次默认 2 秒，可用 `probe_timeout_seconds` 配置为 1–15 秒。修改中继端口时，同步修改模板中的认证地址。
+- 客户自定义时长默认关闭。验收通过后，在网关设置 `data.gost.wukong.explicit_sidtime: true`，并在控制面设置 `biz.subaccounts.explicit_sidtime: true`，再重启相应服务。用户名按 `<基础用户名>[-sid-<标识>][-sidtime-<时长>]` 追加。时长字段接受 1–9 位正整数字符串且首位非零，缺省时省略悟空用户名的时长后缀。显式时长不参与 SID 映射键和入口选择。实际时长、到期处理及出口 IP 由悟空决定，重连可能更换出口。
+- 新连接优先使用该会话最近一次成功的健康入口。入口连接失败时尝试其他健康入口，沿用同一上游 SID 和本次请求的时长参数。入口恢复后，已切换的会话继续优先使用最近成功入口。没有健康入口时拒绝新连接。已有连接继续用原入口，直到连接结束或原链路实际断开。
 - 网关在持久 Recorder spool 根目录保存按悟空账号划分的 `wukong-sids-*.json`。同一账号使用一个运行中的网关实例和同一持久 spool。迁移时先停止旧网关，再转移 spool。当前文件锁覆盖同一 spool，分机联调采用一台控制面和一台网关。多个网关各用独立 spool 时需先接入共享 SID 分配。
 - 新连接经本机认证和选路后，GOST 通过固定的本机 CONNECT 中继转发。全池不可用或无法取得有效路由时连接失败。入口池支持 TCP CONNECT。现有 `wukong.example.yaml` 用于静态单入口测试。
 

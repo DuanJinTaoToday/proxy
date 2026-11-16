@@ -916,6 +916,8 @@ func (m *SubaccountProxyConfig) validate(all bool) error {
 
 	// no validation rules for ExplicitSid
 
+	// no validation rules for ExplicitSidtime
+
 	if len(errors) > 0 {
 		return SubaccountProxyConfigMultiError(errors)
 	}

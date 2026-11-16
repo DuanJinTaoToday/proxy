@@ -64,7 +64,7 @@ func (a *App) Run() error {
 		defer release()
 		a.collector.SetConnectionKey(pool.ConnectionKey())
 		auth := service.NewAuthRelay(a.relay, a.localToken)
-		auth.OnSession(pool.RememberSession)
+		auth.OnSession(pool.RememberSession, a.wukong.ExplicitSIDTime)
 		a.httpServer.Handler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			switch {
 			case req.Method == http.MethodConnect:

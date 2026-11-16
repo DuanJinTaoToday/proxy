@@ -20,7 +20,7 @@ const (
 	stageHTTPS   probeStage = "HTTPS"
 )
 
-func (p *Pool) dial(ctx context.Context, entry string, sid int64, target string) (*net.TCPConn, probeStage, error) {
+func (p *Pool) dial(ctx context.Context, entry string, sid int64, sidtime, target string) (*net.TCPConn, probeStage, error) {
 	var addr gosocks5.Addr
 	if err := addr.ParseFrom(target); err != nil {
 		return nil, stageConnect, err
@@ -34,7 +34,7 @@ func (p *Pool) dial(ctx context.Context, entry string, sid int64, target string)
 		_ = conn.SetDeadline(deadline)
 	}
 	stop := context.AfterFunc(ctx, func() { _ = conn.Close() })
-	stage, err := p.negotiate(conn, sid, &addr)
+	stage, err := p.negotiate(conn, sid, sidtime, &addr)
 	if !stop() || err != nil {
 		_ = conn.Close()
 		if err == nil {
@@ -46,7 +46,7 @@ func (p *Pool) dial(ctx context.Context, entry string, sid int64, target string)
 	return conn, stage, nil
 }
 
-func (p *Pool) negotiate(conn net.Conn, sid int64, addr *gosocks5.Addr) (probeStage, error) {
+func (p *Pool) negotiate(conn net.Conn, sid int64, sidtime string, addr *gosocks5.Addr) (probeStage, error) {
 	if _, err := conn.Write([]byte{5, 1, gosocks5.MethodUserPass}); err != nil {
 		return stageSOCKS, err
 	}
@@ -57,7 +57,10 @@ func (p *Pool) negotiate(conn net.Conn, sid int64, addr *gosocks5.Addr) (probeSt
 	if method != [2]byte{5, gosocks5.MethodUserPass} {
 		return stageSOCKS, errors.New("the Wukong server did not select SOCKS5 username/password")
 	}
-	username := fmt.Sprintf("%s-res-any-sid-%09d-sidtime-3600", p.username, sid)
+	username := fmt.Sprintf("%s-res-any-sid-%09d", p.username, sid)
+	if sidtime != "" {
+		username += "-sidtime-" + sidtime
+	}
 	if err := gosocks5.NewUserPassRequest(gosocks5.UserPassVer, username, p.password).Write(conn); err != nil {
 		return stageSOCKS, err
 	}

@@ -25,6 +25,7 @@ type Process struct {
 }
 
 type WukongConfig struct {
+	ExplicitSIDTime          bool
 	Address                  string `yaml:"address"`
 	Username                 string `yaml:"username"`
 	Password                 string `yaml:"password"`

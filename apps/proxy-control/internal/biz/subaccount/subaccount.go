@@ -67,16 +67,17 @@ var (
 )
 
 type Service struct {
-	repo   Repository
-	access *access.Service
-	cipher cipher.AEAD
-	Host   string
-	Port   uint32
+	repo            Repository
+	access          *access.Service
+	cipher          cipher.AEAD
+	Host            string
+	Port            uint32
+	ExplicitSIDTime bool
 }
 
 func NewService(repo Repository, accessService *access.Service, cfg *conf.Biz) (*Service, error) {
 	settings := cfg.GetSubaccounts()
-	s := &Service{repo: repo, access: accessService, Host: settings.GetGatewayHost(), Port: settings.GetGatewayPort()}
+	s := &Service{repo: repo, access: accessService, Host: settings.GetGatewayHost(), Port: settings.GetGatewayPort(), ExplicitSIDTime: settings.GetExplicitSidtime()}
 	if settings == nil {
 		return s, nil
 	}

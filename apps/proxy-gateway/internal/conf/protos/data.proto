@@ -28,6 +28,7 @@ message Data {
     string probe_url = 5;
     string backup_probe_url = 6;
     uint32 probe_timeout_seconds = 7;
+    bool explicit_sidtime = 8;
   }
   message Repo {
     message Recorder {
