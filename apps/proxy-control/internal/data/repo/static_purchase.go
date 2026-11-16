@@ -363,9 +363,12 @@ func (r *WalletRepository) PendingStaticPurchases(ctx context.Context, afterID i
 	var purchases []wallet.PendingStaticPurchase
 	err := r.db.WithContext(ctx).Raw(`
         SELECT o.id AS order_id, o.tenant_id, COALESCE(s.supplier_order_id, '') AS supplier_order_id,
-            o.created_at, o.delivered_count, o.created_at <= clock_timestamp() - interval '72 hours' AS can_close
-        FROM purchase_orders o JOIN static_purchases s ON s.tenant_id = o.tenant_id AND s.order_id = o.id
-        WHERE o.status = 'pending' AND o.created_at <= clock_timestamp() - interval '24 hours' AND o.id > ?
+            o.created_at, o.delivered_count, o.created_at <= clock_timestamp() - interval '72 hours' AS can_close,
+            COALESCE((SELECT string_agg(r.supplier_item_id, ',' ORDER BY r.position)
+                FROM static_renewal_items r WHERE r.order_id=o.id AND r.outcome='pending'), '') AS pending_renewal_items
+        FROM purchase_orders o LEFT JOIN static_purchases s ON s.tenant_id=o.tenant_id AND s.order_id=o.id
+        WHERE (s.order_id IS NOT NULL OR o.kind='static_renewal') AND o.status='pending'
+            AND o.created_at <= clock_timestamp() - interval '24 hours' AND o.id > ?
         ORDER BY o.id LIMIT ?`, afterID, wallet.PageSize+1).Scan(&purchases).Error
 	return purchases, err
 }

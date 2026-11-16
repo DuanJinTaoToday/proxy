@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue'
 import { ApiError } from './api/control'
-import { pendingStaticPurchases, resolveStaticPurchase } from './api/static-ip'
+import { pendingStaticPurchases, resolveStaticPurchase, resolveStaticRenewal } from './api/static-ip'
 import type { PendingStaticPurchase } from './api/static-ip'
 import { dateTime } from './wallet-format'
 import { Button } from './ui/button'
@@ -14,6 +14,7 @@ const next = ref('')
 const active = ref<PendingStaticPurchase>()
 const evidence = ref('')
 const supplierID = ref('')
+const renewalItem = ref('')
 const loading = ref(false)
 const submitting = ref(false)
 const error = ref('')
@@ -42,6 +43,7 @@ async function load(after = '') {
 function select(order: PendingStaticPurchase) {
   active.value = order
   supplierID.value = order.supplier_order_id ?? ''
+  renewalItem.value = order.pending_renewal_items?.[0] ?? ''
   evidence.value = ''
   result.value = ''
   error.value = ''
@@ -50,12 +52,17 @@ function select(order: PendingStaticPurchase) {
 async function resolve(closeRemaining: boolean, confirmedUndeliverable = false) {
   const order = active.value
   if (!order || submitting.value || !evidence.value.trim() ||
-      (closeRemaining ? !order.can_close && !confirmedUndeliverable : !supplierID.value.trim())) return
+      (closeRemaining ? !order.can_close && !confirmedUndeliverable : !renewalItem.value && !supplierID.value.trim())) return
   submitting.value = true
   error.value = ''
   result.value = ''
   try {
-    const updated = await resolveStaticPurchase(token, order.tenant_id, order.order_id, {
+    const updated = renewalItem.value
+      ? await resolveStaticRenewal(token, order, {
+          supplier_item_id: renewalItem.value, evidence: evidence.value.trim(),
+          close_unknown: closeRemaining && !confirmedUndeliverable, confirmed_failure: confirmedUndeliverable,
+        })
+      : await resolveStaticPurchase(token, order.tenant_id, order.order_id, {
       supplier_order_id: supplierID.value.trim(), evidence: evidence.value.trim(), close_remaining: closeRemaining, confirmed_undeliverable: confirmedUndeliverable,
     })
     result.value = updated.status === 'pending' ? '已同步交付，剩余部分继续核实。' : '订单已结算。'
@@ -82,7 +89,7 @@ onUnmounted(() => controller.abort())
     <p v-if="!loading && !error && !pending.length">暂无超过 24 小时的待核实订单。</p>
     <ul v-if="!loading">
       <li v-for="order in pending" :key="order.order_id">
-        <Button v-if="canResolve" type="button" variant="link" :disabled="submitting" @click="select(order)">核实订单 #{{ order.order_id }}</Button>
+        <Button v-if="canResolve" type="button" variant="link" :disabled="submitting" @click="select(order)">核实{{ order.pending_renewal_items?.length ? '续费' : '购买' }} #{{ order.order_id }}</Button>
         <span v-else>订单 #{{ order.order_id }} ·</span>
         {{ dateTime(order.created_at) }} · 已交付 {{ order.delivered_count ?? 0 }} 个
       </li>
@@ -90,10 +97,13 @@ onUnmounted(() => controller.abort())
     <Button v-if="next" type="button" variant="outline" :disabled="loading || submitting" @click="load(next)">下一页</Button>
     <form v-if="active" class="resolution" @submit.prevent="resolve(false)">
       <h3>订单 #{{ active.order_id }}</h3>
-      <label>皇冠订单号 <input v-model="supplierID" maxlength="128" :readonly="!!active.supplier_order_id" :disabled="submitting" /></label>
+      <label v-if="active.pending_renewal_items?.length">续费明细
+        <select v-model="renewalItem"><option v-for="item in active.pending_renewal_items" :key="item">{{ item }}</option></select>
+      </label>
+      <label v-else>皇冠订单号 <input v-model="supplierID" maxlength="128" :readonly="!!active.supplier_order_id" :disabled="submitting" /></label>
       <label>核实依据 <textarea v-model="evidence" required maxlength="500" :disabled="submitting" /></label>
-      <Button type="submit" :disabled="submitting || !supplierID.trim() || !evidence.trim()">查询皇冠并同步交付</Button>
-      <Button type="button" variant="outline" :disabled="submitting || !evidence.trim()" @click="resolve(true, true)">已确认无法交付，退回剩余预扣</Button>
+      <Button type="submit" :disabled="submitting || (!renewalItem && !supplierID.trim()) || !evidence.trim()">查询皇冠并同步交付</Button>
+      <Button type="button" variant="outline" :disabled="submitting || !evidence.trim()" @click="resolve(true, true)">已确认{{ renewalItem ? '续费失败' : '无法交付' }}，退回预扣</Button>
       <template v-if="active.can_close">
         <p>提交后会关闭剩余交付并退回对应预扣款。随后补发的 IP 由运营处理。</p>
         <Button type="button" variant="outline" :disabled="submitting || !evidence.trim()" @click="resolve(true)">关闭剩余交付并退款</Button>

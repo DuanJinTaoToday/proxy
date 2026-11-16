@@ -443,6 +443,38 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/proxycontrol.v1.PurchaseOrder'
+    /v1/operations/tenants/{tenantId}/orders/{orderId}/renewal-resolution:
+        post:
+            tags:
+                - WalletService
+            summary: 核实并处理静态 IP 续费明细
+            operationId: WalletService_ResolveStaticRenewal
+            parameters:
+                - name: tenantId
+                  in: path
+                  description: 待核实订单所属租户。
+                  required: true
+                  schema:
+                    type: string
+                - name: orderId
+                  in: path
+                  description: 平台续费订单 ID。
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.StaticRenewalResolutionRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.PurchaseOrder'
     /v1/operations/tenants/{tenantId}/orders/{orderId}/static-resolution:
         post:
             tags:
@@ -984,6 +1016,70 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/proxycontrol.v1.StaticPurchaseQuote'
+    /v1/tenant/static-renewal-orders:
+        post:
+            tags:
+                - WalletService
+            summary: 提交单个或批量保号续费
+            operationId: WalletService_RenewStatic
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.StaticRenewalRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.PurchaseOrder'
+    /v1/tenant/static-renewal-orders/{orderId}/recheck:
+        post:
+            tags:
+                - WalletService
+            summary: 用原皇冠订单核对续费结果
+            operationId: WalletService_RecheckStaticRenewal
+            parameters:
+                - name: orderId
+                  in: path
+                  description: 当前租户的订单编号。
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.CustomerPurchaseOrderRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.PurchaseOrder'
+    /v1/tenant/static-renewal-quotes:
+        post:
+            tags:
+                - WalletService
+            summary: 逐项确认静态 IP 保号续费报价
+            operationId: WalletService_QuoteStaticRenewal
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.StaticRenewalQuoteRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.StaticRenewalQuote'
     /v1/tenant/subaccounts:
         get:
             tags:
@@ -1294,6 +1390,12 @@ components:
                 limitBytes:
                     type: string
                     description: 累计流量上限，单位为字节。缺省表示不限。
+        proxycontrol.v1.CustomerPurchaseOrderRequest:
+            type: object
+            properties:
+                orderId:
+                    type: string
+                    description: 当前租户的订单编号。
         proxycontrol.v1.DailyUsage:
             type: object
             properties:
@@ -1396,6 +1498,11 @@ components:
                 canClose:
                     type: boolean
                     description: 超过 72 小时且可释放未知结果的剩余预扣。
+                pendingRenewalItems:
+                    type: array
+                    items:
+                        type: string
+                    description: 续费订单返回仍待核实的皇冠明细 ID。购买订单为空。
         proxycontrol.v1.PendingStaticPurchases:
             type: object
             properties:
@@ -1866,6 +1973,90 @@ components:
                     type: integer
                     description: 请求购买的 IP 数量。
                     format: int32
+        proxycontrol.v1.StaticRenewalQuote:
+            type: object
+            properties:
+                lines:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/proxycontrol.v1.StaticRenewalQuoteLine'
+                    description: 本次续费的全部明细。
+                confirmationToken:
+                    type: string
+                    description: 绑定租户、明细、租期、价格、到期时间的确认凭证。
+                expiresAt:
+                    type: string
+                    description: 新提交可使用凭证的截止时间。
+                    format: date-time
+        proxycontrol.v1.StaticRenewalQuoteLine:
+            type: object
+            properties:
+                supplierItemId:
+                    type: string
+                    description: 报价对应的皇冠明细 ID。
+                ip:
+                    type: string
+                    description: 保留的原 IP。
+                unitMinor:
+                    type: string
+                    description: 该 IP 的续费价，人民币分。
+                termDays:
+                    type: integer
+                    description: 从原到期时间顺延的天数。
+                    format: int32
+                originalExpiry:
+                    type: string
+                    description: 报价时的原到期时间。
+                    format: date-time
+        proxycontrol.v1.StaticRenewalQuoteRequest:
+            type: object
+            properties:
+                supplierItemIds:
+                    type: array
+                    items:
+                        type: string
+                    description: 属于当前租户且未到期的皇冠明细 ID，单个为长度 1。
+                term:
+                    type: string
+                    description: 统一的皇冠租期代码。
+        proxycontrol.v1.StaticRenewalRequest:
+            type: object
+            properties:
+                supplierItemIds:
+                    type: array
+                    items:
+                        type: string
+                    description: 已确认的全部分配 ID。
+                term:
+                    type: string
+                    description: 已确认的统一租期代码。
+                requestKey:
+                    type: string
+                    description: 单次续费的幂等键。结果未知时沿用原值。
+                confirmationToken:
+                    type: string
+                    description: 原报价凭证。
+        proxycontrol.v1.StaticRenewalResolutionRequest:
+            type: object
+            properties:
+                tenantId:
+                    type: string
+                    description: 待核实订单所属租户。
+                orderId:
+                    type: string
+                    description: 平台续费订单 ID。
+                supplierItemId:
+                    type: string
+                    description: 需要核实的皇冠明细 ID。
+                evidence:
+                    type: string
+                    description: 运营核实依据。
+                closeUnknown:
+                    type: boolean
+                    description: 满 72 小时后关闭结果未知的明细，默认仅查单。
+                confirmedFailure:
+                    type: boolean
+                    description: 有明确失败证据时释放预扣，默认仅查单。
         proxycontrol.v1.StickySession:
             type: object
             properties:

@@ -4,6 +4,8 @@ import { ApiError } from './api/control'
 import { claimStaticIPExpiryNotices, staticIPConfig, staticIPExport, staticIPs } from './api/static-ip'
 import type { StaticIP } from './api/static-ip'
 import { Button } from './ui/button'
+import StaticRenewal from './StaticRenewal.vue'
+import type { WalletTenant } from './api/wallet'
 import Table from './ui/table/Table.vue'
 import TableHeader from './ui/table/TableHeader.vue'
 import TableBody from './ui/table/TableBody.vue'
@@ -11,8 +13,8 @@ import TableRow from './ui/table/TableRow.vue'
 import TableHead from './ui/table/TableHead.vue'
 import TableCell from './ui/table/TableCell.vue'
 
-const { token, summary } = defineProps<{ token: string; summary?: boolean }>()
-const emit = defineEmits<{ expired: [] }>()
+const { token, tenantId, summary } = defineProps<{ token: string; tenantId: string; summary?: boolean }>()
+const emit = defineEmits<{ expired: []; wallet: [WalletTenant] }>()
 const controller = new AbortController()
 const allocations = ref<StaticIP[]>([])
 const checked = ref<string[]>([])
@@ -110,5 +112,7 @@ onUnmounted(() => { controller.abort(); window.clearInterval(timer) })
         </div>
       </template>
     </template>
+    <StaticRenewal v-if="!summary" :token="token" :tenant-id="tenantId" :selected="selected.map(ip => ip.supplier_item_id)"
+      @updated="load" @expired="emit('expired')" @wallet="emit('wallet', $event)" />
   </section>
 </template>

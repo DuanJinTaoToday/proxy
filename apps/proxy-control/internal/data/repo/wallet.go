@@ -139,7 +139,7 @@ func (r *WalletRepository) Order(ctx context.Context, tenantID string, id int64)
 	return order, err
 }
 
-const orderColumns = `purchase_orders.*, CASE WHEN kind = 'static_purchase' AND status = 'pending'
+const orderColumns = `purchase_orders.*, CASE WHEN kind IN ('static_purchase', 'static_renewal') AND status = 'pending'
     THEN COALESCE((SELECT SUM(unit_minor * delivered_count)::bigint FROM order_items WHERE order_id = purchase_orders.id), 0)
     ELSE 0 END AS confirmed_minor`
 

@@ -76,7 +76,7 @@ type OrderItem struct {
 
 func (o Order) UnsettledMinor() int64 {
 	if o.Status == Pending {
-		return o.DebitedMinor - o.ConfirmedMinor
+		return o.DebitedMinor - o.ConfirmedMinor - o.ReleasedMinor
 	}
 	return 0
 }
@@ -120,6 +120,7 @@ func PurchasedTrafficDebtOffset(before, capacity int64) int64 {
 }
 
 type Repository interface {
+	StaticRenewalRepository
 	StaticRepository
 	FindTenant(context.Context, string, string) (Tenant, error)
 	Tenant(context.Context, string) (Tenant, error)

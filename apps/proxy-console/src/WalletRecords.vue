@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { recheckStaticRenewal } from './api/static-ip'
 import { nextTick, ref, watch } from 'vue'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
@@ -39,6 +40,7 @@ const reload = ref(0)
 const loading = ref(false)
 const error = ref('')
 const orderError = ref('')
+const recheckingOrder = ref(false)
 const orderHeading = ref<HTMLHeadingElement | null>(null)
 const orderTrigger = ref<HTMLElement | null>(null)
 
@@ -111,6 +113,21 @@ watch([view, kind, status, cursor, reload], async (_, __, onCleanup) => {
   }
 }, { immediate: true })
 
+async function recheckRenewal() {
+  const current = order.value
+  if (!current || recheckingOrder.value) return
+  recheckingOrder.value = true
+  orderError.value = ''
+  try {
+    const result = await recheckStaticRenewal(props.token, current.id)
+    if (orderID.value === current.id) order.value = result
+  } catch (err) {
+    if (orderID.value === current.id) orderError.value = report(err, '暂时无法核对续费。')
+  } finally {
+    recheckingOrder.value = false
+  }
+}
+
 watch(orderID, async (id, _, onCleanup) => {
   order.value = null
   orderError.value = ''
@@ -162,6 +179,8 @@ watch(orderID, async (id, _, onCleanup) => {
           <div><dt>实际到账或交付</dt><dd>{{ order.kind === 'traffic_package' ? flowAmount(order.delivered_bytes) : (order.delivered_count ?? '0') + ' 个 IP' }}</dd></div>
           <div><dt>下单时间（北京时间）</dt><dd>{{ dateTime(order.created_at) }}</dd></div>
         </dl>
+        <Button v-if="!tenantId && order?.kind === 'static_renewal' && order.status === 'pending'"
+          type="button" variant="outline" :disabled="recheckingOrder" @click="recheckRenewal">查单确认续费结果</Button>
         <Table v-if="order?.items?.length" class="order-items-table">
             <TableCaption>商品明细</TableCaption>
             <TableHeader>

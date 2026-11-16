@@ -113,9 +113,13 @@ func (s *Wallet) ListPendingStaticPurchases(ctx context.Context, req *v1.Pending
 		result.NextAfterId = pending[len(pending)-1].OrderID
 	}
 	for _, item := range pending {
+		var renewals []string
+		if item.PendingRenewalItems != "" {
+			renewals = strings.Split(item.PendingRenewalItems, ",")
+		}
 		result.Purchases = append(result.Purchases, &v1.PendingStaticPurchase{OrderId: item.OrderID,
 			TenantId: item.TenantID, SupplierOrderId: item.SupplierOrderID, DeliveredCount: item.DeliveredCount,
-			CreatedAt: timestamppb.New(item.CreatedAt), CanClose: item.CanClose})
+			CreatedAt: timestamppb.New(item.CreatedAt), CanClose: item.CanClose, PendingRenewalItems: renewals})
 	}
 	return result, nil
 }

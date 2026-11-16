@@ -53,6 +53,7 @@ type StaticDelivery struct {
 }
 
 type StaticSupplier interface {
+	Renew(context.Context, []string, string) (SupplierRenewal, error)
 	Offers(context.Context) ([]StaticOffer, error)
 	Place(context.Context, StaticPurchaseRequest) (StaticDelivery, error)
 	Detail(context.Context, string) (StaticDelivery, error)
@@ -61,6 +62,7 @@ type StaticSupplier interface {
 type PendingStaticPurchase struct {
 	OrderID, DeliveredCount   int64
 	TenantID, SupplierOrderID string
+	PendingRenewalItems       string
 	CreatedAt                 time.Time
 	CanClose                  bool
 }

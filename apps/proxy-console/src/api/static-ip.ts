@@ -71,6 +71,7 @@ export interface PendingStaticPurchase {
   created_at: string
   delivered_count?: string
   can_close?: boolean
+  pending_renewal_items?: string[]
 }
 
 export function pendingStaticPurchases(token: string, after: string, signal: AbortSignal) {
@@ -81,4 +82,34 @@ export function pendingStaticPurchases(token: string, after: string, signal: Abo
 
 export function claimStaticIPExpiryNotices(token: string, signal: AbortSignal) {
   return request<{ count?: number }>('/v1/tenant/static-ip-expiry-notices', { token, signal, body: {} })
+}
+
+export interface StaticRenewalSpec {
+  supplier_item_ids: string[]
+  term: string
+}
+
+export interface StaticRenewalQuote {
+  lines: { supplier_item_id: string; ip: string; unit_minor: string; term_days: number; original_expiry: string }[]
+  confirmation_token: string
+  expires_at: string
+}
+
+export function quoteStaticRenewal(token: string, body: StaticRenewalSpec) {
+  return request<StaticRenewalQuote>('/v1/tenant/static-renewal-quotes', { token, body })
+}
+
+export function renewStatic(token: string, body: StaticRenewalSpec & {request_key: string; confirmation_token: string}) {
+  return request<Order>('/v1/tenant/static-renewal-orders', { token, body })
+}
+
+export function recheckStaticRenewal(token: string, orderID: string) {
+  return request<Order>('/v1/tenant/static-renewal-orders/' + encodeURIComponent(orderID) + '/recheck', { token, body: {} })
+}
+
+export function resolveStaticRenewal(token: string, order: PendingStaticPurchase, body: {
+  supplier_item_id: string; evidence: string; close_unknown: boolean; confirmed_failure: boolean
+}) {
+  return request<Order>('/v1/operations/tenants/' + encodeURIComponent(order.tenant_id) +
+    '/orders/' + encodeURIComponent(order.order_id) + '/renewal-resolution', { token, body })
 }
