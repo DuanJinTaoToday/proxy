@@ -1255,6 +1255,15 @@ components:
                 endOffset:
                     type: string
                     description: 记录结束后的字节偏移，可作为下一条记录的起点。
+        proxycontrol.v1.RecorderWatermark:
+            type: object
+            properties:
+                fileId:
+                    type: string
+                    description: 与请求一致的 Recorder 文件标识。
+                confirmedOffset:
+                    type: string
+                    description: 已确认前缀的结束字节偏移。
         proxycontrol.v1.RefreshAuthStateRequest:
             type: object
             properties:
@@ -1436,6 +1445,11 @@ components:
                     type: integer
                     description: 本批中此前已处理的重复记录数。
                     format: uint32
+                watermarks:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/proxycontrol.v1.RecorderWatermark'
+                    description: 各文件当前已提交的连续水位，包含本批中只出现重复记录的文件。
         proxycontrol.v1.TenantAccess:
             type: object
             properties:

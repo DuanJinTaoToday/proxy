@@ -97,7 +97,14 @@ func (s *Service) SubmitBatch(ctx context.Context, token string, req Batch) (*Ba
 		if err := plan.meter(tx, req.GatewayID, beforeDate, now); err != nil {
 			return err
 		}
-		return saveProgress(tx, req, plan)
+		if err := saveProgress(tx, req, plan); err != nil {
+			return err
+		}
+		reply.ConfirmedOffsets = make(map[string]uint64, len(plan.cursors))
+		for file, cursor := range plan.cursors {
+			reply.ConfirmedOffsets[file] = uint64(cursor.offset)
+		}
+		return nil
 	})
 	if err != nil {
 		return nil, err

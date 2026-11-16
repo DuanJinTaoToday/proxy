@@ -63,6 +63,7 @@ type Collector struct {
 	pendingSince   map[string]time.Time
 	lastBacklogLog time.Time
 	admission      admissionState
+	refreshQuota   chan struct{}
 	now            func() time.Time
 }
 
@@ -77,8 +78,11 @@ func New(cfg Config, spool Spool, reporter Reporter) *Collector {
 		cfg.Interval = time.Second
 	}
 	return &Collector{cfg: cfg, spool: spool, reporter: reporter, retries: make(map[string]retry), pendingSince: make(map[string]time.Time),
-		now: time.Now, admission: admissionState{blocked: true, pending: make(map[string]pendingFile)}}
+		now: time.Now, refreshQuota: make(chan struct{}, 1), admission: admissionState{blocked: true, pending: make(map[string]pendingFile)}}
 }
+
+// QuotaRefreshes signals a committed batch or completed reporting recovery.
+func (c *Collector) QuotaRefreshes() <-chan struct{} { return c.refreshQuota }
 
 // SetConnectionKey supplies the spool's durable key before the collector starts.
 func (c *Collector) SetConnectionKey(key string) {
@@ -103,6 +107,15 @@ func (c *Collector) Run(ctx context.Context) {
 // Scan advances each boot by at most one accepted batch. A failed boot does
 // not prevent other boots from submitting their own contiguous records.
 func (c *Collector) Scan(ctx context.Context) error {
+	before, _ := c.QuotaRenewal()
+	defer func() {
+		if after, ready := c.QuotaRenewal(); ready && before != after {
+			select {
+			case c.refreshQuota <- struct{}{}:
+			default:
+			}
+		}
+	}()
 	boots, err := c.spool.Boots()
 	if err != nil {
 		c.admission.block()

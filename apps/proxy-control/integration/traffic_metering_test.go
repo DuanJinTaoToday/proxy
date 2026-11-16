@@ -125,3 +125,43 @@ func TestMeteringCommitsDebitsAndArchivedBucketsWithWatermark(t *testing.T) {
 		t.Fatal("late usage was not charged against the current tenant balance")
 	}
 }
+func TestMeteringSeparatesTenantsInMixedRecorderBatch(t *testing.T) {
+	f := setupUsage(t)
+	for _, tenant := range []string{"alpha", "beta"} {
+		execSQL(t, f.db, "INSERT INTO tenants(id,name,primary_account_name) VALUES (?,?,?)", tenant, tenant, tenant)
+		execSQL(t, f.db, "INSERT INTO tenant_balances(tenant_id,available_bytes,updated_at) VALUES (?,5000000000,now())", tenant)
+	}
+	const first = "00000000-0000-4000-8000-000000000001"
+	const second = "00000000-0000-4000-8000-000000000002"
+	for tenant, client := range map[string]string{"alpha": first, "beta": second} {
+		execSQL(t, f.db, "INSERT INTO proxy_subaccounts(client_id,tenant_id,name,password_ciphertext,active) VALUES (?,?,'acct',decode('00','hex'),true)", client, tenant)
+	}
+	a := recorder(0, first, beforeMidnight, 3000000000, 0, 3000000000, 0)
+	b := recorder(a.GetEndOffset(), second, beforeMidnight, 4, 9, 4, 9)
+	unknown := recorder(b.GetEndOffset(), "unknown", beforeMidnight, 1, 1, 1, 1)
+	ack := submit(t, f, "gateway-a", reportToken, a, b, unknown)
+	if ack.GetBillable() != 2 || ack.GetQuarantined() != 1 || len(ack.GetWatermarks()) != 1 ||
+		ack.GetWatermarks()[0].GetConfirmedOffset() != unknown.GetEndOffset() {
+		t.Fatalf("unexpected dispositions or watermark: %v", ack)
+	}
+	duplicate := submit(t, f, "gateway-a", reportToken, a)
+	if duplicate.GetDuplicates() != 1 || len(duplicate.GetWatermarks()) != 1 ||
+		duplicate.GetWatermarks()[0].GetConfirmedOffset() != unknown.GetEndOffset() {
+		t.Fatalf("earlier duplicate did not return unchanged watermark: %v", duplicate)
+	}
+	var balances []int64
+	if err := f.db.Raw("SELECT available_bytes FROM tenant_balances ORDER BY tenant_id").Scan(&balances).Error; err != nil ||
+		len(balances) != 2 || balances[0] != 2000000000 || balances[1] != 4999999987 {
+		t.Fatalf("incorrect attribution of balances: %v, %v", balances, err)
+	}
+	q := url.Values{"tenant_id": {"alpha"}, "start_time": {"2020-11-10T00:00:00+08:00"}, "end_time": {"2020-11-11T00:00:00+08:00"},
+		"granularity": {"3"}, "client_id": {second}}
+	var reply v1.QueryUsageResponse
+	operator := testfixture.Login(t, f.http, "operator")
+	readProto(t, testfixture.Request(f.http, "GET", "/v1/operations/usage?"+q.Encode(), "", operator), &reply)
+	if len(reply.GetBuckets()) != 0 {
+		t.Fatal("tenant filter returned another tenant's usage")
+	}
+	q.Set("client_id", "malformed")
+	testfixture.AssertStatus(t, testfixture.Request(f.http, "GET", "/v1/operations/usage?"+q.Encode(), "", operator), 400, "INVALID_CLIENT_ID")
+}

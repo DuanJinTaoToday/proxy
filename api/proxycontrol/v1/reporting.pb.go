@@ -367,7 +367,9 @@ type SubmitBatchResponse struct {
 	// 本批中隔离待查的记录数。
 	Quarantined uint32 `protobuf:"varint,3,opt,name=quarantined,proto3" json:"quarantined,omitempty"`
 	// 本批中此前已处理的重复记录数。
-	Duplicates    uint32 `protobuf:"varint,4,opt,name=duplicates,proto3" json:"duplicates,omitempty"`
+	Duplicates uint32 `protobuf:"varint,4,opt,name=duplicates,proto3" json:"duplicates,omitempty"`
+	// 各文件当前已提交的连续水位，包含本批中只出现重复记录的文件。
+	Watermarks    []*RecorderWatermark `protobuf:"bytes,5,rep,name=watermarks,proto3" json:"watermarks,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -430,6 +432,67 @@ func (x *SubmitBatchResponse) GetDuplicates() uint32 {
 	return 0
 }
 
+func (x *SubmitBatchResponse) GetWatermarks() []*RecorderWatermark {
+	if x != nil {
+		return x.Watermarks
+	}
+	return nil
+}
+
+type RecorderWatermark struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 与请求一致的 Recorder 文件标识。
+	FileId string `protobuf:"bytes,1,opt,name=file_id,json=fileId,proto3" json:"file_id,omitempty"`
+	// 已确认前缀的结束字节偏移。
+	ConfirmedOffset uint64 `protobuf:"varint,2,opt,name=confirmed_offset,json=confirmedOffset,proto3" json:"confirmed_offset,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *RecorderWatermark) Reset() {
+	*x = RecorderWatermark{}
+	mi := &file_proxycontrol_v1_reporting_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RecorderWatermark) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RecorderWatermark) ProtoMessage() {}
+
+func (x *RecorderWatermark) ProtoReflect() protoreflect.Message {
+	mi := &file_proxycontrol_v1_reporting_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RecorderWatermark.ProtoReflect.Descriptor instead.
+func (*RecorderWatermark) Descriptor() ([]byte, []int) {
+	return file_proxycontrol_v1_reporting_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *RecorderWatermark) GetFileId() string {
+	if x != nil {
+		return x.FileId
+	}
+	return ""
+}
+
+func (x *RecorderWatermark) GetConfirmedOffset() uint64 {
+	if x != nil {
+		return x.ConfirmedOffset
+	}
+	return 0
+}
+
 // A missing exit timestamp reports a heartbeat for the running boot.
 type ReportLifecycleRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -445,7 +508,7 @@ type ReportLifecycleRequest struct {
 
 func (x *ReportLifecycleRequest) Reset() {
 	*x = ReportLifecycleRequest{}
-	mi := &file_proxycontrol_v1_reporting_proto_msgTypes[6]
+	mi := &file_proxycontrol_v1_reporting_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -457,7 +520,7 @@ func (x *ReportLifecycleRequest) String() string {
 func (*ReportLifecycleRequest) ProtoMessage() {}
 
 func (x *ReportLifecycleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_reporting_proto_msgTypes[6]
+	mi := &file_proxycontrol_v1_reporting_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -470,7 +533,7 @@ func (x *ReportLifecycleRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReportLifecycleRequest.ProtoReflect.Descriptor instead.
 func (*ReportLifecycleRequest) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_reporting_proto_rawDescGZIP(), []int{6}
+	return file_proxycontrol_v1_reporting_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ReportLifecycleRequest) GetGatewayId() string {
@@ -536,14 +599,20 @@ const file_proxycontrol_v1_reporting_proto_rawDesc = "" +
 	"fileOffset\x12\x12\n" +
 	"\x04line\x18\x03 \x01(\tR\x04line\x120\n" +
 	"\n" +
-	"end_offset\x18\x04 \x01(\x04B\x11\xfaB\x0e2\f\x18\xff\xff\xff\xff\xff\xff\xff\xff\x7f(\x01R\tendOffset\"\x96\x01\n" +
+	"end_offset\x18\x04 \x01(\x04B\x11\xfaB\x0e2\f\x18\xff\xff\xff\xff\xff\xff\xff\xff\x7f(\x01R\tendOffset\"\xda\x01\n" +
 	"\x13SubmitBatchResponse\x12\x1a\n" +
 	"\bbillable\x18\x01 \x01(\rR\bbillable\x12!\n" +
 	"\fnot_billable\x18\x02 \x01(\rR\vnotBillable\x12 \n" +
 	"\vquarantined\x18\x03 \x01(\rR\vquarantined\x12\x1e\n" +
 	"\n" +
 	"duplicates\x18\x04 \x01(\rR\n" +
-	"duplicates\"\xa1\x01\n" +
+	"duplicates\x12B\n" +
+	"\n" +
+	"watermarks\x18\x05 \x03(\v2\".proxycontrol.v1.RecorderWatermarkR\n" +
+	"watermarks\"W\n" +
+	"\x11RecorderWatermark\x12\x17\n" +
+	"\afile_id\x18\x01 \x01(\tR\x06fileId\x12)\n" +
+	"\x10confirmed_offset\x18\x02 \x01(\x04R\x0fconfirmedOffset\"\xa1\x01\n" +
 	"\x16ReportLifecycleRequest\x12)\n" +
 	"\n" +
 	"gateway_id\x18\x01 \x01(\tB\n" +
@@ -569,7 +638,7 @@ func file_proxycontrol_v1_reporting_proto_rawDescGZIP() []byte {
 	return file_proxycontrol_v1_reporting_proto_rawDescData
 }
 
-var file_proxycontrol_v1_reporting_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_proxycontrol_v1_reporting_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_proxycontrol_v1_reporting_proto_goTypes = []any{
 	(*ReportUnfinishedSessionsRequest)(nil), // 0: proxycontrol.v1.ReportUnfinishedSessionsRequest
 	(*UnfinishedSession)(nil),               // 1: proxycontrol.v1.UnfinishedSession
@@ -577,28 +646,30 @@ var file_proxycontrol_v1_reporting_proto_goTypes = []any{
 	(*SubmitBatchRequest)(nil),              // 3: proxycontrol.v1.SubmitBatchRequest
 	(*RecorderLine)(nil),                    // 4: proxycontrol.v1.RecorderLine
 	(*SubmitBatchResponse)(nil),             // 5: proxycontrol.v1.SubmitBatchResponse
-	(*ReportLifecycleRequest)(nil),          // 6: proxycontrol.v1.ReportLifecycleRequest
-	(*timestamppb.Timestamp)(nil),           // 7: google.protobuf.Timestamp
-	(*BaseResp)(nil),                        // 8: proxycontrol.v1.BaseResp
+	(*RecorderWatermark)(nil),               // 6: proxycontrol.v1.RecorderWatermark
+	(*ReportLifecycleRequest)(nil),          // 7: proxycontrol.v1.ReportLifecycleRequest
+	(*timestamppb.Timestamp)(nil),           // 8: google.protobuf.Timestamp
+	(*BaseResp)(nil),                        // 9: proxycontrol.v1.BaseResp
 }
 var file_proxycontrol_v1_reporting_proto_depIdxs = []int32{
 	1, // 0: proxycontrol.v1.ReportUnfinishedSessionsRequest.sessions:type_name -> proxycontrol.v1.UnfinishedSession
-	7, // 1: proxycontrol.v1.UnfinishedSession.last_recorded_at:type_name -> google.protobuf.Timestamp
+	8, // 1: proxycontrol.v1.UnfinishedSession.last_recorded_at:type_name -> google.protobuf.Timestamp
 	4, // 2: proxycontrol.v1.SubmitBatchRequest.records:type_name -> proxycontrol.v1.RecorderLine
-	7, // 3: proxycontrol.v1.ReportLifecycleRequest.exited_at:type_name -> google.protobuf.Timestamp
-	6, // 4: proxycontrol.v1.ReportingService.ReportLifecycle:input_type -> proxycontrol.v1.ReportLifecycleRequest
-	3, // 5: proxycontrol.v1.ReportingService.SubmitBatch:input_type -> proxycontrol.v1.SubmitBatchRequest
-	0, // 6: proxycontrol.v1.ReportingService.ReportUnfinishedSessions:input_type -> proxycontrol.v1.ReportUnfinishedSessionsRequest
-	2, // 7: proxycontrol.v1.ReportingService.CompleteReplay:input_type -> proxycontrol.v1.CompleteReplayRequest
-	8, // 8: proxycontrol.v1.ReportingService.ReportLifecycle:output_type -> proxycontrol.v1.BaseResp
-	5, // 9: proxycontrol.v1.ReportingService.SubmitBatch:output_type -> proxycontrol.v1.SubmitBatchResponse
-	8, // 10: proxycontrol.v1.ReportingService.ReportUnfinishedSessions:output_type -> proxycontrol.v1.BaseResp
-	8, // 11: proxycontrol.v1.ReportingService.CompleteReplay:output_type -> proxycontrol.v1.BaseResp
-	8, // [8:12] is the sub-list for method output_type
-	4, // [4:8] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	6, // 3: proxycontrol.v1.SubmitBatchResponse.watermarks:type_name -> proxycontrol.v1.RecorderWatermark
+	8, // 4: proxycontrol.v1.ReportLifecycleRequest.exited_at:type_name -> google.protobuf.Timestamp
+	7, // 5: proxycontrol.v1.ReportingService.ReportLifecycle:input_type -> proxycontrol.v1.ReportLifecycleRequest
+	3, // 6: proxycontrol.v1.ReportingService.SubmitBatch:input_type -> proxycontrol.v1.SubmitBatchRequest
+	0, // 7: proxycontrol.v1.ReportingService.ReportUnfinishedSessions:input_type -> proxycontrol.v1.ReportUnfinishedSessionsRequest
+	2, // 8: proxycontrol.v1.ReportingService.CompleteReplay:input_type -> proxycontrol.v1.CompleteReplayRequest
+	9, // 9: proxycontrol.v1.ReportingService.ReportLifecycle:output_type -> proxycontrol.v1.BaseResp
+	5, // 10: proxycontrol.v1.ReportingService.SubmitBatch:output_type -> proxycontrol.v1.SubmitBatchResponse
+	9, // 11: proxycontrol.v1.ReportingService.ReportUnfinishedSessions:output_type -> proxycontrol.v1.BaseResp
+	9, // 12: proxycontrol.v1.ReportingService.CompleteReplay:output_type -> proxycontrol.v1.BaseResp
+	9, // [9:13] is the sub-list for method output_type
+	5, // [5:9] is the sub-list for method input_type
+	5, // [5:5] is the sub-list for extension type_name
+	5, // [5:5] is the sub-list for extension extendee
+	0, // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_proxycontrol_v1_reporting_proto_init() }
@@ -614,7 +685,7 @@ func file_proxycontrol_v1_reporting_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proxycontrol_v1_reporting_proto_rawDesc), len(file_proxycontrol_v1_reporting_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -47,5 +47,6 @@ type Batch struct {
 }
 
 type BatchResult struct {
+	ConfirmedOffsets                               map[string]uint64
 	Billable, NotBillable, Quarantined, Duplicates uint32
 }

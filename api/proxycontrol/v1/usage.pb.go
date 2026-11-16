@@ -995,7 +995,7 @@ const file_proxycontrol_v1_usage_proto_rawDesc = "" +
 	"\texited_at\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\bexitedAt\"n\n" +
 	"\x15ListUsageGapsResponse\x12-\n" +
 	"\x04gaps\x18\x01 \x03(\v2\x19.proxycontrol.v1.UsageGapR\x04gaps\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\xbe\x03\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\xcb\x03\n" +
 	"\x11QueryUsageRequest\x12$\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\a\xfaB\x04r\x02 \x01R\btenantId\x12\x1d\n" +
 	"\n" +
@@ -1009,9 +1009,9 @@ const file_proxycontrol_v1_usage_proto_rawDesc = "" +
 	"\tpage_size\x18\b \x01(\x05B\n" +
 	"\xfaB\a\x1a\x05\x18\xf4\x03(\x00R\bpageSize\x12\x1d\n" +
 	"\n" +
-	"page_token\x18\t \x01(\tR\tpageToken\x12\x1b\n" +
+	"page_token\x18\t \x01(\tR\tpageToken\x12(\n" +
 	"\tclient_id\x18\n" +
-	" \x01(\tR\bclientId\"\x9d\x01\n" +
+	" \x01(\tB\v\xfaB\br\x06\xd0\x01\x01\xb0\x01\x01R\bclientId\"\x9d\x01\n" +
 	"\vUsageBucket\x129\n" +
 	"\n" +
 	"start_time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\tstartTime\x12\x1d\n" +

@@ -74,7 +74,7 @@ func (r *Relay) refreshBatch(ctx context.Context, references []string, epoch uin
 	return nil
 }
 
-func (r *Relay) RunRefresh(ctx context.Context) {
+func (r *Relay) RunRefresh(ctx context.Context, committed <-chan struct{}) {
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
 	for {
@@ -82,9 +82,10 @@ func (r *Relay) RunRefresh(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			if err := r.Refresh(ctx); err != nil && ctx.Err() == nil {
-				slog.Warn("proxy auth refresh failed")
-			}
+		case <-committed:
+		}
+		if err := r.Refresh(ctx); err != nil && ctx.Err() == nil {
+			slog.Warn("proxy auth refresh failed")
 		}
 	}
 }

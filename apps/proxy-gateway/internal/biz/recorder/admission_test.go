@@ -181,6 +181,11 @@ func TestQuotaCannotRenewWhileSuccessfulSubmissionIsInFlight(t *testing.T) {
 	if !ok {
 		t.Fatal("fresh empty spool did not allow renewal")
 	}
+	select {
+	case <-collector.QuotaRefreshes():
+	default:
+		t.Fatal("initial recovery did not request an immediate refresh")
+	}
 	if err := os.WriteFile(filepath.Join(spool.root, "a"), []byte("{}\n"), 0600); err != nil {
 		t.Fatal(err)
 	}
@@ -190,6 +195,11 @@ func TestQuotaCannotRenewWhileSuccessfulSubmissionIsInFlight(t *testing.T) {
 	after, ok := collector.QuotaRenewal()
 	if !ok || after == before {
 		t.Fatal("acknowledged submission did not invalidate earlier reads and restore renewal")
+	}
+	select {
+	case <-collector.QuotaRefreshes():
+	default:
+		t.Fatal("commit did not request a fresh read after the overlapping read")
 	}
 }
 

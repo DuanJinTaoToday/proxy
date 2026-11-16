@@ -50,8 +50,23 @@ func (r *HTTPReporter) Submit(ctx context.Context, batch *v1.SubmitBatchRequest)
 		return err
 	}
 	var ack v1.SubmitBatchResponse
-	if json.Unmarshal(data, &ack) != nil || uint64(ack.Billable)+uint64(ack.NotBillable)+uint64(ack.Quarantined)+uint64(ack.Duplicates) != uint64(len(batch.GetRecords())) {
+	if protojson.Unmarshal(data, &ack) != nil || uint64(ack.Billable)+uint64(ack.NotBillable)+uint64(ack.Quarantined)+uint64(ack.Duplicates) != uint64(len(batch.GetRecords())) {
 		return errors.New("invalid Recorder batch acknowledgement")
+	}
+	required := make(map[string]uint64)
+	for _, record := range batch.GetRecords() {
+		file := record.GetFileId()
+		required[file] = max(required[file], record.GetEndOffset())
+	}
+	for _, watermark := range ack.GetWatermarks() {
+		end, expected := required[watermark.GetFileId()]
+		if !expected || watermark.GetConfirmedOffset() < end {
+			return errors.New("invalid Recorder file watermark")
+		}
+		delete(required, watermark.GetFileId())
+	}
+	if len(required) != 0 {
+		return errors.New("missing Recorder file watermark")
 	}
 	return nil
 }
