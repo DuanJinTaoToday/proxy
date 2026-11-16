@@ -134,12 +134,13 @@ func (x *Usage) GetMaxBatchBodyBytes() uint32 {
 }
 
 type Subaccounts struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	PasswordKey   string                 `protobuf:"bytes,1,opt,name=password_key,json=passwordKey,proto3" json:"password_key,omitempty"`
-	GatewayHost   string                 `protobuf:"bytes,2,opt,name=gateway_host,json=gatewayHost,proto3" json:"gateway_host,omitempty"`
-	GatewayPort   uint32                 `protobuf:"varint,3,opt,name=gateway_port,json=gatewayPort,proto3" json:"gateway_port,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	PasswordKey     string                 `protobuf:"bytes,1,opt,name=password_key,json=passwordKey,proto3" json:"password_key,omitempty"`
+	GatewayHost     string                 `protobuf:"bytes,2,opt,name=gateway_host,json=gatewayHost,proto3" json:"gateway_host,omitempty"`
+	GatewayPort     uint32                 `protobuf:"varint,3,opt,name=gateway_port,json=gatewayPort,proto3" json:"gateway_port,omitempty"`
+	ExplicitSidtime bool                   `protobuf:"varint,4,opt,name=explicit_sidtime,json=explicitSidtime,proto3" json:"explicit_sidtime,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *Subaccounts) Reset() {
@@ -191,6 +192,13 @@ func (x *Subaccounts) GetGatewayPort() uint32 {
 		return x.GatewayPort
 	}
 	return 0
+}
+
+func (x *Subaccounts) GetExplicitSidtime() bool {
+	if x != nil {
+		return x.ExplicitSidtime
+	}
+	return false
 }
 
 type IPCrown struct {
@@ -272,11 +280,12 @@ const file_biz_proto_rawDesc = "" +
 	"\aipcrown\x18\x04 \x01(\v2\x1f.proxycontrol.config.v1.IPCrownR\aipcrownJ\x04\b\x01\x10\x02R\x06access\"d\n" +
 	"\x05Usage\x12*\n" +
 	"\x11max_batch_records\x18\x01 \x01(\rR\x0fmaxBatchRecords\x12/\n" +
-	"\x14max_batch_body_bytes\x18\x02 \x01(\rR\x11maxBatchBodyBytes\"v\n" +
+	"\x14max_batch_body_bytes\x18\x02 \x01(\rR\x11maxBatchBodyBytes\"\xa1\x01\n" +
 	"\vSubaccounts\x12!\n" +
 	"\fpassword_key\x18\x01 \x01(\tR\vpasswordKey\x12!\n" +
 	"\fgateway_host\x18\x02 \x01(\tR\vgatewayHost\x12!\n" +
-	"\fgateway_port\x18\x03 \x01(\rR\vgatewayPort\"\x85\x01\n" +
+	"\fgateway_port\x18\x03 \x01(\rR\vgatewayPort\x12)\n" +
+	"\x10explicit_sidtime\x18\x04 \x01(\bR\x0fexplicitSidtime\"\x85\x01\n" +
 	"\aIPCrown\x12\x19\n" +
 	"\bbase_url\x18\x01 \x01(\tR\abaseUrl\x12\x1d\n" +
 	"\n" +

@@ -47,13 +47,13 @@ type Pool struct {
 }
 
 type authenticatedSession struct {
-	identity  stickysession.Identity
-	reference string
-	until     time.Time
+	identity           stickysession.Identity
+	reference, sidtime string
+	until              time.Time
 }
 
 func Open(dir, username, password string, entries []string, primary, backup, token string, timeout time.Duration, control stickysession.Control) (*Pool, func(), error) {
-	if control == nil || len(entries) == 0 || username == "" || len(username)+36 > 255 || password == "" || len(password) > 255 {
+	if control == nil || len(entries) == 0 || username == "" || len(username)+len("-res-any-sid-000000000-sidtime-000000000") > 255 || password == "" || len(password) > 255 {
 		return nil, nil, errors.New("configure Wukong entries and SOCKS5 credentials")
 	}
 	for _, raw := range []string{primary, backup} {
@@ -103,11 +103,11 @@ func Open(dir, username, password string, entries []string, primary, backup, tok
 	return pool, release, nil
 }
 
-func (p *Pool) RememberSession(client, reference, sid string) string {
+func (p *Pool) RememberSession(client, reference, sid, sidtime string) string {
 	id := connectionid.New(p.connectionKey, client)
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	p.clients[id] = authenticatedSession{identity: stickysession.Identity{Client: client, Key: sid}, reference: reference, until: time.Now().Add(5 * time.Second)}
+	p.clients[id] = authenticatedSession{identity: stickysession.Identity{Client: client, Key: sid}, reference: reference, sidtime: sidtime, until: time.Now().Add(5 * time.Second)}
 	return id
 }
 
@@ -244,7 +244,7 @@ func (p *Pool) probeThroughEntry(ctx context.Context, entry, target string) (pro
 	if port == "" {
 		port = "443"
 	}
-	conn, stage, err := p.dial(ctx, entry, p.probeSID, net.JoinHostPort(url.Hostname(), port))
+	conn, stage, err := p.dial(ctx, entry, p.probeSID, "", net.JoinHostPort(url.Hostname(), port))
 	if err != nil {
 		return stage, false
 	}

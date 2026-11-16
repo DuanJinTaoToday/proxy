@@ -188,7 +188,7 @@ func TestGOSTWukongPool(t *testing.T) {
 	control.version.Store(1)
 	authState := authrelay.New(control, nil)
 	auth := service.NewAuthRelay(authState, token)
-	auth.OnSession(pool.RememberSession)
+	auth.OnSession(pool.RememberSession, true)
 	var routeUnavailable atomic.Bool
 	relay := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
@@ -292,7 +292,7 @@ func TestGOSTWukongPool(t *testing.T) {
 	_ = a2.Close()
 	b, sidB := open("B", first)
 	_ = b.Close()
-	if !regexp.MustCompile("^supplier-res-any-sid-[1-9][0-9]{8}-sidtime-3600$").MatchString(sidA) || sidA == sidA2 || sidA == sidB {
+	if !regexp.MustCompile("^supplier-res-any-sid-[1-9][0-9]{8}$").MatchString(sidA) || sidA == sidA2 || sidA == sidB {
 		t.Fatal("wrong SID assignment across tenants and credentials")
 	}
 
@@ -325,9 +325,30 @@ func TestGOSTWukongPool(t *testing.T) {
 		t.Fatal("parallel explicit sessions did not keep separate reusable SIDs")
 	}
 
+	custom, explicitTime := open("A-sid-first-sidtime-10", first)
+	_ = custom.Close()
+	if explicitTime != sid1+"-sidtime-10" {
+		t.Fatal("explicit time changed the session SID or was not forwarded verbatim")
+	}
+	custom, explicitTime = open("A-sidtime-999999999", first)
+	_ = custom.Close()
+	if explicitTime != sidA+"-sidtime-999999999" {
+		t.Fatal("time-only configuration did not use the default SID")
+	}
+	custom, explicitTime = open("A2-sid-first-sidtime-10", first)
+	_ = custom.Close()
+	if explicitTime == sid1+"-sidtime-10" {
+		t.Fatal("explicit session was shared across subaccounts")
+	}
+
 	first.down.Store(true)
 	for range 3 {
 		check()
+	}
+	custom, switchedTime := open("A-sid-first-sidtime-10", second)
+	_ = custom.Close()
+	if switchedTime != sid1+"-sidtime-10" {
+		t.Fatal("failover changed the explicit session or its time")
 	}
 	a, switched := open("A", second)
 	_ = a.Close()
@@ -416,7 +437,7 @@ func TestGOSTWukongPool(t *testing.T) {
 	}
 	for tenant, username := range map[string]string{"client:A:": sidA, "client:B:": sidB} {
 		sid, err := fixture.get(tenant)
-		if err != nil || sid == probeSID || !strings.Contains(username, "-sid-"+strconv.FormatInt(sid, 10)+"-") {
+		if err != nil || sid == probeSID || !strings.HasSuffix(username, "-sid-"+strconv.FormatInt(sid, 10)) {
 			t.Fatal("SID was not retained on reopen or collided with probe")
 		}
 	}

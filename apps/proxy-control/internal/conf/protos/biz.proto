@@ -21,6 +21,7 @@ message Subaccounts {
   string password_key = 1;
   string gateway_host = 2;
   uint32 gateway_port = 3;
+  bool explicit_sidtime = 4;
 }
 
 message IPCrown {

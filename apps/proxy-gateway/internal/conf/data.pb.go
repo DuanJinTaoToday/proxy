@@ -202,6 +202,7 @@ type Data_Wukong struct {
 	ProbeUrl            string                 `protobuf:"bytes,5,opt,name=probe_url,json=probeUrl,proto3" json:"probe_url,omitempty"`
 	BackupProbeUrl      string                 `protobuf:"bytes,6,opt,name=backup_probe_url,json=backupProbeUrl,proto3" json:"backup_probe_url,omitempty"`
 	ProbeTimeoutSeconds uint32                 `protobuf:"varint,7,opt,name=probe_timeout_seconds,json=probeTimeoutSeconds,proto3" json:"probe_timeout_seconds,omitempty"`
+	ExplicitSidtime     bool                   `protobuf:"varint,8,opt,name=explicit_sidtime,json=explicitSidtime,proto3" json:"explicit_sidtime,omitempty"`
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache
 }
@@ -283,6 +284,13 @@ func (x *Data_Wukong) GetProbeTimeoutSeconds() uint32 {
 		return x.ProbeTimeoutSeconds
 	}
 	return 0
+}
+
+func (x *Data_Wukong) GetExplicitSidtime() bool {
+	if x != nil {
+		return x.ExplicitSidtime
+	}
+	return false
 }
 
 type Data_Repo struct {
@@ -446,7 +454,7 @@ var File_data_proto protoreflect.FileDescriptor
 const file_data_proto_rawDesc = "" +
 	"\n" +
 	"\n" +
-	"data.proto\x12\x16proxygateway.config.v1\"\x8f\a\n" +
+	"data.proto\x12\x16proxygateway.config.v1\"\xba\a\n" +
 	"\x04Data\x125\n" +
 	"\x04gost\x18\x02 \x01(\v2!.proxygateway.config.v1.Data.GOSTR\x04gost\x122\n" +
 	"\x03acl\x18\x04 \x01(\v2 .proxygateway.config.v1.Data.ACLR\x03acl\x125\n" +
@@ -463,7 +471,7 @@ const file_data_proto_rawDesc = "" +
 	"\x06binary\x18\x01 \x01(\tR\x06binary\x12\x16\n" +
 	"\x06config\x18\x02 \x01(\tR\x06config\x12(\n" +
 	"\x10local_auth_token\x18\x03 \x01(\tR\x0elocalAuthToken\x12;\n" +
-	"\x06wukong\x18\x04 \x01(\v2#.proxygateway.config.v1.Data.WukongR\x06wukong\x1a\xef\x01\n" +
+	"\x06wukong\x18\x04 \x01(\v2#.proxygateway.config.v1.Data.WukongR\x06wukong\x1a\x9a\x02\n" +
 	"\x06Wukong\x12\x18\n" +
 	"\aaddress\x18\x01 \x01(\tR\aaddress\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x1a\n" +
@@ -471,7 +479,8 @@ const file_data_proto_rawDesc = "" +
 	"\aentries\x18\x04 \x03(\tR\aentries\x12\x1b\n" +
 	"\tprobe_url\x18\x05 \x01(\tR\bprobeUrl\x12(\n" +
 	"\x10backup_probe_url\x18\x06 \x01(\tR\x0ebackupProbeUrl\x122\n" +
-	"\x15probe_timeout_seconds\x18\a \x01(\rR\x13probeTimeoutSeconds\x1ap\n" +
+	"\x15probe_timeout_seconds\x18\a \x01(\rR\x13probeTimeoutSeconds\x12)\n" +
+	"\x10explicit_sidtime\x18\b \x01(\bR\x0fexplicitSidtime\x1ap\n" +
 	"\x04Repo\x12F\n" +
 	"\brecorder\x18\x01 \x01(\v2*.proxygateway.config.v1.Data.Repo.RecorderR\brecorder\x1a \n" +
 	"\bRecorder\x12\x14\n" +

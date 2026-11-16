@@ -15,9 +15,9 @@ import (
 )
 
 type routeTicket struct {
-	identity          stickysession.Identity
-	reference, target string
-	until             time.Time
+	identity                   stickysession.Identity
+	reference, target, sidtime string
+	until                      time.Time
 }
 
 func (p *Pool) Route(w http.ResponseWriter, req *http.Request) {
@@ -44,7 +44,7 @@ func (p *Pool) Route(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	key := strings.ToLower(rand.Text()) + ".route.invalid:1"
-	p.tickets[key] = routeTicket{identity: client.identity, reference: client.reference, target: input.Addr, until: now.Add(5 * time.Second)}
+	p.tickets[key] = routeTicket{identity: client.identity, reference: client.reference, target: input.Addr, sidtime: client.sidtime, until: now.Add(5 * time.Second)}
 	p.mu.Unlock()
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Cache-Control", "no-store")
@@ -101,7 +101,7 @@ func (p *Pool) Connect(ctx context.Context, w http.ResponseWriter, req *http.Req
 	var index int
 	for _, candidate := range candidates {
 		dialAttempt, stop := context.WithTimeout(dialCtx, 6*time.Second)
-		upstream, _, err = p.dial(dialAttempt, p.entries[candidate].address, attempt.SID, ticket.target)
+		upstream, _, err = p.dial(dialAttempt, p.entries[candidate].address, attempt.SID, ticket.sidtime, ticket.target)
 		stop()
 		if err == nil {
 			index = candidate

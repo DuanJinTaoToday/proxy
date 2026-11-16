@@ -2182,6 +2182,9 @@ components:
                 explicitSid:
                     type: boolean
                     description: 为 true 时可追加 -sid-<会话标识>；默认会话无需追加。
+                explicitSidtime:
+                    type: boolean
+                    description: 为 true 时可追加 -sidtime-<时长>，省略时使用悟空默认行为。
         proxycontrol.v1.Subaccounts:
             type: object
             properties:

@@ -412,9 +412,11 @@ type SubaccountProxyConfig struct {
 	Username string `protobuf:"bytes,3,opt,name=username,proto3" json:"username,omitempty"`
 	Password string `protobuf:"bytes,4,opt,name=password,proto3" json:"password,omitempty"`
 	// 为 true 时可追加 -sid-<会话标识>；默认会话无需追加。
-	ExplicitSid   bool `protobuf:"varint,5,opt,name=explicit_sid,json=explicitSid,proto3" json:"explicit_sid,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	ExplicitSid bool `protobuf:"varint,5,opt,name=explicit_sid,json=explicitSid,proto3" json:"explicit_sid,omitempty"`
+	// 为 true 时可追加 -sidtime-<时长>，省略时使用悟空默认行为。
+	ExplicitSidtime bool `protobuf:"varint,6,opt,name=explicit_sidtime,json=explicitSidtime,proto3" json:"explicit_sidtime,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *SubaccountProxyConfig) Reset() {
@@ -482,6 +484,13 @@ func (x *SubaccountProxyConfig) GetExplicitSid() bool {
 	return false
 }
 
+func (x *SubaccountProxyConfig) GetExplicitSidtime() bool {
+	if x != nil {
+		return x.ExplicitSidtime
+	}
+	return false
+}
+
 var File_proxycontrol_v1_subaccount_proto protoreflect.FileDescriptor
 
 const file_proxycontrol_v1_subaccount_proto_rawDesc = "" +
@@ -521,13 +530,14 @@ const file_proxycontrol_v1_subaccount_proto_rawDesc = "" +
 	"\vSubaccounts\x127\n" +
 	"\baccounts\x18\x01 \x03(\v2\x1b.proxycontrol.v1.SubaccountR\baccounts\"0\n" +
 	"\x12SubaccountPassword\x12\x1a\n" +
-	"\bpassword\x18\x01 \x01(\tR\bpassword\"\x9a\x01\n" +
+	"\bpassword\x18\x01 \x01(\tR\bpassword\"\xc5\x01\n" +
 	"\x15SubaccountProxyConfig\x12\x12\n" +
 	"\x04host\x18\x01 \x01(\tR\x04host\x12\x12\n" +
 	"\x04port\x18\x02 \x01(\rR\x04port\x12\x1a\n" +
 	"\busername\x18\x03 \x01(\tR\busername\x12\x1a\n" +
 	"\bpassword\x18\x04 \x01(\tR\bpassword\x12!\n" +
-	"\fexplicit_sid\x18\x05 \x01(\bR\vexplicitSid2\x83\a\n" +
+	"\fexplicit_sid\x18\x05 \x01(\bR\vexplicitSid\x12)\n" +
+	"\x10explicit_sidtime\x18\x06 \x01(\bR\x0fexplicitSidtime2\x83\a\n" +
 	"\x11SubaccountService\x12\x96\x01\n" +
 	"\x0fListSubaccounts\x12\x1c.proxycontrol.v1.BaseRequest\x1a\x1c.proxycontrol.v1.Subaccounts\"G\xbaG&\x12$列出当前租户的代理子账号\x82\xd3\xe4\x93\x02\x18\x12\x16/v1/tenant/subaccounts\x12\x96\x01\n" +
 	"\x10CreateSubaccount\x12(.proxycontrol.v1.CreateSubaccountRequest\x1a\x1b.proxycontrol.v1.Subaccount\";\xbaG\x17\x12\x15创建代理子账号\x82\xd3\xe4\x93\x02\x1b:\x01*\"\x16/v1/tenant/subaccounts\x12\xab\x01\n" +

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { ApiError } from './api/control'
 import { createSubaccount, getSubaccountConfig, listSubaccounts, revealSubaccountPassword, updateSubaccount } from './api/subaccounts'
 import type { ProxyConfig, Subaccount } from './api/subaccounts'
@@ -45,6 +45,17 @@ function asBytes(gb: string) {
 }
 
 const credential = ref<{ username: string; password: string; config?: ProxyConfig } | null>(null)
+const sessionID = ref('')
+const sessionTime = ref('')
+const invalidSessionID = computed(() => sessionID.value !== '' && !/^[a-z0-9]{1,32}$/.test(sessionID.value))
+const invalidSessionTime = computed(() => sessionTime.value !== '' && !/^[1-9][0-9]{0,8}$/.test(sessionTime.value))
+const connectionUsername = computed(() => {
+  const config = credential.value?.config
+  if (!config?.explicit_sidtime || invalidSessionID.value || invalidSessionTime.value) return credential.value?.username ?? ''
+  return config.username + (sessionID.value ? '-sid-' + sessionID.value : '') +
+    (sessionTime.value ? '-sidtime-' + sessionTime.value : '')
+})
+
 
 function showError(cause: unknown) {
   if (controller.signal.aborted) return
@@ -137,6 +148,8 @@ async function reveal(account: Subaccount, config: boolean) {
   try {
     if (config) {
       const result = await getSubaccountConfig(props.token, account.client_id, controller.signal)
+      sessionID.value = ''
+      sessionTime.value = ''
       credential.value = { username: result.username, password: result.password, config: result }
     } else {
       const result = await revealSubaccountPassword(props.token, account.client_id, controller.signal)
@@ -150,9 +163,10 @@ async function reveal(account: Subaccount, config: boolean) {
 }
 
 async function copyConfig(config: ProxyConfig) {
+  if (invalidSessionID.value || invalidSessionTime.value) return
   try {
     const host = config.host.includes(':') ? '[' + config.host + ']' : config.host
-    await navigator.clipboard.writeText('socks5://' + config.username + ':' + config.password + '@' + host + ':' + config.port)
+    await navigator.clipboard.writeText('socks5://' + connectionUsername.value + ':' + config.password + '@' + host + ':' + config.port)
     notice.value = '已复制接入配置。'
   } catch {
     error.value = '无法访问剪贴板，请手动复制。'
@@ -239,10 +253,23 @@ onBeforeUnmount(() => {
       </CardHeader>
       <CardContent class="grid gap-3 break-all text-sm">
         <p v-if="credential.config">网关地址 {{ credential.config.host }}，端口 {{ credential.config.port }}</p>
-        <p>用户名 <code>{{ credential.username }}</code></p>
+        <p>用户名 <code>{{ connectionUsername }}</code></p>
         <p>密码 <code>{{ credential.password }}</code></p>
-        <p v-if="credential.config?.explicit_sid">可在用户名后追加 <code>-sid-</code> 和 1–32 位小写字母或数字。</p>
-        <Button v-if="credential.config" type="button" variant="outline" class="w-fit" @click="copyConfig(credential.config)">复制接入配置</Button>
+        <template v-if="credential.config?.explicit_sidtime">
+          <div v-if="credential.config.explicit_sid" class="grid gap-1">
+            <FieldLabel for="connection-sid">会话标识 SID（可选）</FieldLabel>
+            <Input id="connection-sid" v-model="sessionID" maxlength="32" :aria-invalid="invalidSessionID" />
+            <p v-if="invalidSessionID" role="alert">请输入 1–32 位小写字母或数字。</p>
+          </div>
+          <div class="grid gap-1">
+            <FieldLabel for="connection-sidtime">会话时长 sidtime（可选）</FieldLabel>
+            <Input id="connection-sidtime" v-model="sessionTime" inputmode="numeric" maxlength="9" :aria-invalid="invalidSessionTime" />
+            <p v-if="invalidSessionTime" role="alert">请输入 1–9 位正整数，首位不能为 0。</p>
+          </div>
+          <p>留空使用悟空默认行为。实际时长、到期处理和出口 IP 由悟空决定，重连可能更换出口 IP。</p>
+        </template>
+        <p v-else-if="credential.config?.explicit_sid">可在用户名后追加 <code>-sid-</code> 和 1–32 位小写字母或数字。</p>
+        <Button v-if="credential.config" type="button" variant="outline" class="w-fit" :disabled="invalidSessionID || invalidSessionTime" @click="copyConfig(credential.config)">复制接入配置</Button>
       </CardContent>
     </Card>
   </section>

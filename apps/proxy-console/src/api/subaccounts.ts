@@ -17,6 +17,7 @@ export interface ProxyConfig {
   username: string
   password: string
   explicit_sid?: boolean
+  explicit_sidtime?: boolean
 }
 
 export function listSubaccounts(token: string, signal: AbortSignal) {

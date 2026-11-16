@@ -77,7 +77,7 @@ func (s *Subaccounts) GetProxyConfig(ctx context.Context, req *v1.SubaccountRequ
 	if err != nil {
 		return nil, err
 	}
-	return &v1.SubaccountProxyConfig{Username: username, Password: password, Host: s.biz.Host, Port: s.biz.Port, ExplicitSid: true}, nil
+	return &v1.SubaccountProxyConfig{Username: username, Password: password, Host: s.biz.Host, Port: s.biz.Port, ExplicitSid: true, ExplicitSidtime: s.biz.ExplicitSIDTime}, nil
 }
 
 func authSnapshot(state subaccount.AuthState, hash []byte) *v1.AuthSnapshot {
