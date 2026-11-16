@@ -138,9 +138,9 @@ func (c *Client) Detail(ctx context.Context, orderID string) (wallet.StaticDeliv
 func parseDelivery(id supplierID, items []allocation, nodeID int64) wallet.StaticDelivery {
 	result := wallet.StaticDelivery{SupplierOrderID: string(id)}
 	// The supplier returns a wall-clock timestamp without an offset.
-	location := time.FixedZone("CST", 8*60*60)
+
 	for _, ip := range items {
-		expires, err := time.ParseInLocation(time.DateTime, ip.Expires, location)
+		expires, err := parseSupplierExpiry(ip.Expires)
 		_, addressErr := netip.ParseAddr(ip.IP)
 		if err != nil || addressErr != nil || ip.ID == "" || ip.Port <= 0 || ip.Port > 65535 ||
 			ip.Username == "" || ip.Password == "" || ip.Status == 2 || (nodeID != 0 && ip.NodeID != nodeID) ||
@@ -210,4 +210,8 @@ func (c *Client) call(ctx context.Context, path string, params map[string]any, r
 		return 0, wallet.ErrStaticUnavailable
 	}
 	return 0, nil
+}
+
+func parseSupplierExpiry(value string) (time.Time, error) {
+	return time.ParseInLocation(time.DateTime, value, time.FixedZone("CST", 8*60*60))
 }

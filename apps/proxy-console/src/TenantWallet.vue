@@ -61,12 +61,12 @@ function show(view: 'packages' | 'usage' | 'static' | 'ips' | 'subaccounts' | 'e
 
     <TrafficCheckout v-if="showPackages" :token="token" :account="account" @expired="emit('expired')" @wallet="emit('wallet', $event)" />
     <StaticCheckout v-else-if="showStatic" :token="token" :tenant-id="account.tenant_id" @expired="emit('expired')" @wallet="emit('wallet', $event)" />
-    <TenantStaticIPs v-else-if="showIPs" :token="token" @expired="emit('expired')" />
+    <TenantStaticIPs v-else-if="showIPs" :token="token" :tenant-id="account.tenant_id" @expired="emit('expired')" @wallet="emit('wallet', $event)" />
     <TenantDailyUsage v-else-if="showUsage" :token="token" @expired="emit('expired')" />
     <TenantSubaccounts v-else-if="showSubaccounts" :token="token" :primary-account="account.primary_account_name" @expired="emit('expired')" />
     <WalletRecords v-else v-model:view="tab" :token="token" @expired="emit('expired')">
       <template #overview="{ recentEntries }">
-        <TenantStaticIPs :token="token" summary @expired="emit('expired')" />
+        <TenantStaticIPs :token="token" :tenant-id="account.tenant_id" summary @expired="emit('expired')" />
         <TenantTrafficAlert :token="token" @expired="emit('expired')" />
         <WalletOverview :balance="account.available_minor" :entries="recentEntries" />
       </template>

@@ -22,6 +22,10 @@ func ReportingDecoder(maxBytes int64) http.DecodeRequestFunc {
 			return decodeLimitedProto(req, message, "SUBACCOUNT_REQUEST", "subaccount request", "invalid subaccount body")
 		case *v1.QuoteWalletRechargeRequest, *v1.RechargeWalletRequest, *v1.PurchaseTrafficPackageRequest, *v1.PurchaseStaticIPRequest, *v1.StaticPurchaseQuoteRequest, *v1.ResolveStaticPurchaseRequest:
 			return decodeLimitedProto(req, message, "WALLET_REQUEST", "wallet request", "invalid wallet body")
+		case *v1.StaticRenewalRequest:
+			return decodeBoundedProto(req, message, 48<<10, "STATIC_RENEWAL", "static renewal request", "invalid static renewal body")
+		case *v1.StaticRenewalQuoteRequest, *v1.StaticRenewalResolutionRequest, *v1.CustomerPurchaseOrderRequest:
+			return decodeLimitedProto(req, message, "STATIC_RENEWAL", "static renewal request", "invalid static renewal body")
 		case *v1.StaticIPExportRequest:
 			// Up to 1,000 IDs of 128 bytes even with JSON escaping.
 			return decodeBoundedProto(req, message, 1<<20, "STATIC_IP_EXPORT", "static IP export request", "invalid static IP export body")
@@ -74,7 +78,7 @@ func ControlResponseEncoder(w stdhttp.ResponseWriter, req *stdhttp.Request, resp
 		*v1.AuthSnapshot, *v1.RefreshAuthStateResponse, *v1.Products, *v1.Product, *v1.TrafficPackage, *v1.TrafficPackages,
 		*v1.WalletTenant, *v1.WalletRechargeQuote, *v1.WalletEntry, *v1.WalletEntries, *v1.PurchaseOrder, *v1.PurchaseOrders,
 		*v1.SubmitBatchResponse, *v1.QueryUsageResponse, *v1.ListRecordAnomaliesResponse, *v1.ListUsageGapsResponse,
-		*v1.DailyUsageResponse, *v1.TrafficAlert, *v1.StaticOffers, *v1.StaticIPs, *v1.PendingStaticPurchases, *v1.StaticPurchaseQuote, *v1.StaticIP, *v1.StaticIPExpiryNotices:
+		*v1.DailyUsageResponse, *v1.TrafficAlert, *v1.StaticOffers, *v1.StaticIPs, *v1.PendingStaticPurchases, *v1.StaticPurchaseQuote, *v1.StaticIP, *v1.StaticIPExpiryNotices, *v1.StaticRenewalQuote:
 		_, dailyUsage := response.(*v1.DailyUsageResponse)
 		_, staticOffers := response.(*v1.StaticOffers)
 		data, err := (protojson.MarshalOptions{UseProtoNames: true, EmitDefaultValues: dailyUsage || staticOffers}).Marshal(response.(proto.Message))

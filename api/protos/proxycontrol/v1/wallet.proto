@@ -44,6 +44,25 @@ option (openapi.v3.document) = {
 };
 
 service WalletService {
+  rpc QuoteStaticRenewal(StaticRenewalQuoteRequest) returns (StaticRenewalQuote) {
+    option (google.api.http) = {post: "/v1/tenant/static-renewal-quotes", body: "*"};
+    option (openapi.v3.operation) = {summary: "逐项确认静态 IP 保号续费报价"};
+  }
+
+  rpc RenewStatic(StaticRenewalRequest) returns (PurchaseOrder) {
+    option (google.api.http) = {post: "/v1/tenant/static-renewal-orders", body: "*"};
+    option (openapi.v3.operation) = {summary: "提交单个或批量保号续费"};
+  }
+
+  rpc RecheckStaticRenewal(CustomerPurchaseOrderRequest) returns (PurchaseOrder) {
+    option (google.api.http) = {post: "/v1/tenant/static-renewal-orders/{order_id}/recheck", body: "*"};
+    option (openapi.v3.operation) = {summary: "用原皇冠订单核对续费结果"};
+  }
+
+  rpc ResolveStaticRenewal(StaticRenewalResolutionRequest) returns (PurchaseOrder) {
+    option (google.api.http) = {post: "/v1/operations/tenants/{tenant_id}/orders/{order_id}/renewal-resolution", body: "*"};
+    option (openapi.v3.operation) = {summary: "核实并处理静态 IP 续费明细"};
+  }
   rpc ListStaticOffers(BaseRequest) returns (StaticOffers) {
     option (google.api.http) = {get: "/v1/public/static-offers"};
     option (openapi.v3.operation) = {summary: "查询公开静态 IP 报价及开售状态"};
@@ -465,6 +484,8 @@ message PendingStaticPurchase {
   int64 delivered_count = 5;
   // 超过 72 小时且可释放未知结果的剩余预扣。
   bool can_close = 6;
+  // 续费订单返回仍待核实的皇冠明细 ID。购买订单为空。
+  repeated string pending_renewal_items = 7;
 }
 
 message PendingStaticPurchases {
@@ -477,4 +498,59 @@ message PendingStaticPurchases {
 message StaticIPExpiryNotices {
   // 即将到期且本次首次提示的分配数量。缺省为零。
   int32 count = 1;
+}
+
+message StaticRenewalQuoteRequest {
+  // 属于当前租户且未到期的皇冠明细 ID，单个为长度 1。
+  repeated string supplier_item_ids = 1 [(validate.rules).repeated = {min_items: 1, max_items: 25, unique: true, items: {string: {min_len: 1, max_bytes: 128}}}];
+  // 统一的皇冠租期代码。
+  string term = 2 [(validate.rules).string = {min_len: 1, max_bytes: 16}];
+}
+
+message StaticRenewalQuoteLine {
+  // 报价对应的皇冠明细 ID。
+  string supplier_item_id = 1;
+  // 保留的原 IP。
+  string ip = 2;
+  // 该 IP 的续费价，人民币分。
+  int64 unit_minor = 3;
+  // 从原到期时间顺延的天数。
+  int32 term_days = 4;
+  // 报价时的原到期时间。
+  google.protobuf.Timestamp original_expiry = 5;
+}
+
+message StaticRenewalQuote {
+  // 本次续费的全部明细。
+  repeated StaticRenewalQuoteLine lines = 1;
+  // 绑定租户、明细、租期、价格、到期时间的确认凭证。
+  string confirmation_token = 2;
+  // 新提交可使用凭证的截止时间。
+  google.protobuf.Timestamp expires_at = 3;
+}
+
+message StaticRenewalRequest {
+  // 已确认的全部分配 ID。
+  repeated string supplier_item_ids = 1 [(validate.rules).repeated = {min_items: 1, max_items: 25, unique: true, items: {string: {min_len: 1, max_bytes: 128}}}];
+  // 已确认的统一租期代码。
+  string term = 2 [(validate.rules).string = {min_len: 1, max_bytes: 16}];
+  // 单次续费的幂等键。结果未知时沿用原值。
+  string request_key = 3 [(validate.rules).string = {min_len: 1, max_bytes: 128}];
+  // 原报价凭证。
+  string confirmation_token = 4 [(validate.rules).string = {min_len: 1, max_bytes: 16384}];
+}
+
+message StaticRenewalResolutionRequest {
+  // 待核实订单所属租户。
+  string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_bytes: 64}];
+  // 平台续费订单 ID。
+  int64 order_id = 2 [(validate.rules).int64.gt = 0];
+  // 需要核实的皇冠明细 ID。
+  string supplier_item_id = 3 [(validate.rules).string = {min_len: 1, max_bytes: 128}];
+  // 运营核实依据。
+  string evidence = 4 [(validate.rules).string = {min_len: 1, max_bytes: 500}];
+  // 满 72 小时后关闭结果未知的明细，默认仅查单。
+  bool close_unknown = 5;
+  // 有明确失败证据时释放预扣，默认仅查单。
+  bool confirmed_failure = 6;
 }

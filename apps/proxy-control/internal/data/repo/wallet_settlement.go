@@ -96,14 +96,17 @@ func applyWalletCommand(tx *gorm.DB, c wallet.Command, order wallet.Order, befor
 	if err != nil {
 		return wallet.Entry{}, err
 	}
-	after := settlement.AfterMinor
+	return saveWalletEntry(tx, c, orderID, before, settlement.AfterMinor, fingerprint)
+}
+
+func saveWalletEntry(tx *gorm.DB, c wallet.Command, orderID, before, after int64, fingerprint string) (wallet.Entry, error) {
 	if before != after {
 		if err := tx.Exec("UPDATE wallets SET available_minor = ? WHERE tenant_id = ?", after, c.TenantID).Error; err != nil {
 			return wallet.Entry{}, err
 		}
 	}
 	var receipt wallet.Entry
-	err = scanWalletRecord(tx.Raw(`WITH entry AS (
+	err := scanWalletRecord(tx.Raw(`WITH entry AS (
 		INSERT INTO wallet_entries (tenant_id, request_key, request_hash, order_id, kind, actor, reason, before_minor, after_minor)
 		VALUES (?, ?, ?, NULLIF(?::bigint, 0), ?, NULLIF(?, ''), ?, ?, ?) RETURNING *
 	) SELECT entry.*, o.username AS operator_name FROM entry LEFT JOIN operators o ON o.id=entry.actor`,
