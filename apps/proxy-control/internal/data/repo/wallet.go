@@ -2,24 +2,39 @@ package repo
 
 import (
 	"context"
+	"crypto/cipher"
 	"database/sql"
 	"fmt"
 
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/wallet"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/conf"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/data"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/data/ipcrown"
 	"github.com/go-kratos/kratos/v3/errors"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
 
-type WalletRepository struct{ db *gorm.DB }
+type WalletRepository struct {
+	db           *gorm.DB
+	static       wallet.StaticSupplier
+	staticCipher cipher.AEAD
+}
 
-func ProvideWalletRepository(resources *data.Data) *WalletRepository {
+func ProvideWalletRepository(resources *data.Data, biz *conf.Biz) (*WalletRepository, error) {
 	db := resources.UsageDB()
 	if db == nil {
 		db = resources.ProxyAuthDB()
 	}
-	return NewWalletRepository(db)
+	configuration := biz.GetIpcrown()
+	if configuration == nil {
+		return NewWalletRepository(db), nil
+	}
+	supplier := ipcrown.New(configuration.GetBaseUrl(), configuration.GetPartnerId(), configuration.GetApiSecret())
+	if supplier == nil && (configuration.GetBaseUrl() != "" || configuration.GetPartnerId() != "" || configuration.GetApiSecret() != "") {
+		return nil, fmt.Errorf("invalid IPCrown base_url, partner_id or api_secret")
+	}
+	return NewWalletRepositoryWithStatic(db, supplier, configuration.GetPasswordKey())
 }
 
 func NewWalletRepository(db *gorm.DB) *WalletRepository {
@@ -97,7 +112,7 @@ func (r *WalletRepository) Orders(ctx context.Context, tenantID string, f wallet
 	if r.db == nil {
 		return nil, errWalletUnavailable
 	}
-	db := r.db.WithContext(ctx).Table("purchase_orders").Where("tenant_id = ?", tenantID)
+	db := r.db.WithContext(ctx).Table("purchase_orders").Select(orderColumns).Where("tenant_id = ?", tenantID)
 	if f.Kind != "" {
 		db = db.Where("kind = ?", f.Kind)
 	}
@@ -124,9 +139,13 @@ func (r *WalletRepository) Order(ctx context.Context, tenantID string, id int64)
 	return order, err
 }
 
+const orderColumns = `purchase_orders.*, CASE WHEN kind = 'static_purchase' AND status = 'pending'
+    THEN COALESCE((SELECT SUM(unit_minor * delivered_count)::bigint FROM order_items WHERE order_id = purchase_orders.id), 0)
+    ELSE 0 END AS confirmed_minor`
+
 func findPurchaseOrder(db *gorm.DB, tenantID string, id int64, lock bool) (wallet.Order, error) {
 	var order wallet.Order
-	query := "SELECT * FROM purchase_orders WHERE tenant_id = ? AND id = ?"
+	query := "SELECT " + orderColumns + " FROM purchase_orders WHERE tenant_id = ? AND id = ?"
 	if lock {
 		query += " FOR UPDATE"
 	}

@@ -6,6 +6,7 @@ import { canManageBilling, findWalletTenant, getWallet, quoteRecharge, rechargeW
 import type { Recharge, RechargeQuote, WalletTenant } from './api/wallet'
 import WalletRecords from './WalletRecords.vue'
 import OperatorProducts from './OperatorProducts.vue'
+import OperatorStaticPurchases from './OperatorStaticPurchases.vue'
 import DashboardShell from './DashboardShell.vue'
 import { Button } from './ui/button'
 import Card from './ui/card/Card.vue'
@@ -41,6 +42,13 @@ async function focusLookup(closeSidebar: () => void) {
   closeSidebar()
   await nextTick()
   queryInput.value?.$el.focus()
+}
+
+async function refreshResolvedWallet(tenantID: string) {
+  if (tenant.value?.tenant_id !== tenantID) return
+  const refreshed = await getWallet(props.token, AbortSignal.timeout(5000), tenantID).catch(() => undefined)
+  if (refreshed && tenant.value?.tenant_id === tenantID) tenant.value = refreshed
+  revision.value++
 }
 
 function readPending(): Confirmation | null {
@@ -258,5 +266,6 @@ async function submitRecharge() {
       </Card>
       <WalletRecords :key="tenant.tenant_id" :token="token" :tenant-id="tenant.tenant_id" :revision="revision" @expired="emit('expired')" />
     </template>
+    <OperatorStaticPurchases v-if="permitted" :token="token" @expired="emit('expired')" @resolved="refreshResolvedWallet" />
   </DashboardShell>
 </template>

@@ -25,6 +25,7 @@ type Biz struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Usage         *Usage                 `protobuf:"bytes,2,opt,name=usage,proto3" json:"usage,omitempty"`
 	Subaccounts   *Subaccounts           `protobuf:"bytes,3,opt,name=subaccounts,proto3" json:"subaccounts,omitempty"`
+	Ipcrown       *IPCrown               `protobuf:"bytes,4,opt,name=ipcrown,proto3" json:"ipcrown,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -69,6 +70,13 @@ func (x *Biz) GetUsage() *Usage {
 func (x *Biz) GetSubaccounts() *Subaccounts {
 	if x != nil {
 		return x.Subaccounts
+	}
+	return nil
+}
+
+func (x *Biz) GetIpcrown() *IPCrown {
+	if x != nil {
+		return x.Ipcrown
 	}
 	return nil
 }
@@ -185,21 +193,97 @@ func (x *Subaccounts) GetGatewayPort() uint32 {
 	return 0
 }
 
+type IPCrown struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	BaseUrl       string                 `protobuf:"bytes,1,opt,name=base_url,json=baseUrl,proto3" json:"base_url,omitempty"`
+	PartnerId     string                 `protobuf:"bytes,2,opt,name=partner_id,json=partnerId,proto3" json:"partner_id,omitempty"`
+	ApiSecret     string                 `protobuf:"bytes,3,opt,name=api_secret,json=apiSecret,proto3" json:"api_secret,omitempty"`
+	PasswordKey   string                 `protobuf:"bytes,4,opt,name=password_key,json=passwordKey,proto3" json:"password_key,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *IPCrown) Reset() {
+	*x = IPCrown{}
+	mi := &file_biz_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IPCrown) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IPCrown) ProtoMessage() {}
+
+func (x *IPCrown) ProtoReflect() protoreflect.Message {
+	mi := &file_biz_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IPCrown.ProtoReflect.Descriptor instead.
+func (*IPCrown) Descriptor() ([]byte, []int) {
+	return file_biz_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *IPCrown) GetBaseUrl() string {
+	if x != nil {
+		return x.BaseUrl
+	}
+	return ""
+}
+
+func (x *IPCrown) GetPartnerId() string {
+	if x != nil {
+		return x.PartnerId
+	}
+	return ""
+}
+
+func (x *IPCrown) GetApiSecret() string {
+	if x != nil {
+		return x.ApiSecret
+	}
+	return ""
+}
+
+func (x *IPCrown) GetPasswordKey() string {
+	if x != nil {
+		return x.PasswordKey
+	}
+	return ""
+}
+
 var File_biz_proto protoreflect.FileDescriptor
 
 const file_biz_proto_rawDesc = "" +
 	"\n" +
-	"\tbiz.proto\x12\x16proxycontrol.config.v1\"\x8f\x01\n" +
+	"\tbiz.proto\x12\x16proxycontrol.config.v1\"\xca\x01\n" +
 	"\x03Biz\x123\n" +
 	"\x05usage\x18\x02 \x01(\v2\x1d.proxycontrol.config.v1.UsageR\x05usage\x12E\n" +
-	"\vsubaccounts\x18\x03 \x01(\v2#.proxycontrol.config.v1.SubaccountsR\vsubaccountsJ\x04\b\x01\x10\x02R\x06access\"d\n" +
+	"\vsubaccounts\x18\x03 \x01(\v2#.proxycontrol.config.v1.SubaccountsR\vsubaccounts\x129\n" +
+	"\aipcrown\x18\x04 \x01(\v2\x1f.proxycontrol.config.v1.IPCrownR\aipcrownJ\x04\b\x01\x10\x02R\x06access\"d\n" +
 	"\x05Usage\x12*\n" +
 	"\x11max_batch_records\x18\x01 \x01(\rR\x0fmaxBatchRecords\x12/\n" +
 	"\x14max_batch_body_bytes\x18\x02 \x01(\rR\x11maxBatchBodyBytes\"v\n" +
 	"\vSubaccounts\x12!\n" +
 	"\fpassword_key\x18\x01 \x01(\tR\vpasswordKey\x12!\n" +
 	"\fgateway_host\x18\x02 \x01(\tR\vgatewayHost\x12!\n" +
-	"\fgateway_port\x18\x03 \x01(\rR\vgatewayPortBHZFgithub.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/conf;confb\x06proto3"
+	"\fgateway_port\x18\x03 \x01(\rR\vgatewayPort\"\x85\x01\n" +
+	"\aIPCrown\x12\x19\n" +
+	"\bbase_url\x18\x01 \x01(\tR\abaseUrl\x12\x1d\n" +
+	"\n" +
+	"partner_id\x18\x02 \x01(\tR\tpartnerId\x12\x1d\n" +
+	"\n" +
+	"api_secret\x18\x03 \x01(\tR\tapiSecret\x12!\n" +
+	"\fpassword_key\x18\x04 \x01(\tR\vpasswordKeyBHZFgithub.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/conf;confb\x06proto3"
 
 var (
 	file_biz_proto_rawDescOnce sync.Once
@@ -213,20 +297,22 @@ func file_biz_proto_rawDescGZIP() []byte {
 	return file_biz_proto_rawDescData
 }
 
-var file_biz_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_biz_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_biz_proto_goTypes = []any{
 	(*Biz)(nil),         // 0: proxycontrol.config.v1.Biz
 	(*Usage)(nil),       // 1: proxycontrol.config.v1.Usage
 	(*Subaccounts)(nil), // 2: proxycontrol.config.v1.Subaccounts
+	(*IPCrown)(nil),     // 3: proxycontrol.config.v1.IPCrown
 }
 var file_biz_proto_depIdxs = []int32{
 	1, // 0: proxycontrol.config.v1.Biz.usage:type_name -> proxycontrol.config.v1.Usage
 	2, // 1: proxycontrol.config.v1.Biz.subaccounts:type_name -> proxycontrol.config.v1.Subaccounts
-	2, // [2:2] is the sub-list for method output_type
-	2, // [2:2] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	3, // 2: proxycontrol.config.v1.Biz.ipcrown:type_name -> proxycontrol.config.v1.IPCrown
+	3, // [3:3] is the sub-list for method output_type
+	3, // [3:3] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_biz_proto_init() }
@@ -240,7 +326,7 @@ func file_biz_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_biz_proto_rawDesc), len(file_biz_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

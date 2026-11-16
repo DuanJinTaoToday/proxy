@@ -20,7 +20,7 @@ func ReportingDecoder(maxBytes int64) http.DecodeRequestFunc {
 		switch body.(type) {
 		case *v1.StickySessionRequest, *v1.CreateSubaccountRequest, *v1.UpdateSubaccountRequest:
 			return decodeLimitedProto(req, message, "SUBACCOUNT_REQUEST", "subaccount request", "invalid subaccount body")
-		case *v1.QuoteWalletRechargeRequest, *v1.RechargeWalletRequest, *v1.PurchaseTrafficPackageRequest:
+		case *v1.QuoteWalletRechargeRequest, *v1.RechargeWalletRequest, *v1.PurchaseTrafficPackageRequest, *v1.PurchaseStaticIPRequest, *v1.ResolveStaticPurchaseRequest:
 			return decodeLimitedProto(req, message, "WALLET_REQUEST", "wallet request", "invalid wallet body")
 		case *v1.UpdateTrafficPackageRequest, *v1.SetProductSaleRequest:
 			return decodeLimitedProto(req, message, "PRODUCT_REQUEST", "product request", "invalid product configuration body")
@@ -68,7 +68,7 @@ func ControlResponseEncoder(w stdhttp.ResponseWriter, req *stdhttp.Request, resp
 		*v1.AuthSnapshot, *v1.RefreshAuthStateResponse, *v1.Products, *v1.Product, *v1.TrafficPackage, *v1.TrafficPackages,
 		*v1.WalletTenant, *v1.WalletRechargeQuote, *v1.WalletEntry, *v1.WalletEntries, *v1.PurchaseOrder, *v1.PurchaseOrders,
 		*v1.SubmitBatchResponse, *v1.QueryUsageResponse, *v1.ListRecordAnomaliesResponse, *v1.ListUsageGapsResponse,
-		*v1.DailyUsageResponse, *v1.TrafficAlert:
+		*v1.DailyUsageResponse, *v1.TrafficAlert, *v1.StaticOffers, *v1.StaticIPs, *v1.PendingStaticPurchases:
 		_, dailyUsage := response.(*v1.DailyUsageResponse)
 		data, err := (protojson.MarshalOptions{UseProtoNames: true, EmitDefaultValues: dailyUsage}).Marshal(response.(proto.Message))
 		if err != nil {

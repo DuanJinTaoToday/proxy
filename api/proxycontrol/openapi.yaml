@@ -324,6 +324,23 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/proxycontrol.v1.Product'
+    /v1/operations/static-purchases/pending:
+        get:
+            tags:
+                - WalletService
+            operationId: WalletService_ListPendingStaticPurchases
+            parameters:
+                - name: afterId
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.PendingStaticPurchases'
     /v1/operations/tenants:
         get:
             tags:
@@ -417,6 +434,35 @@ paths:
                   required: true
                   schema:
                     type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.PurchaseOrder'
+    /v1/operations/tenants/{tenantId}/orders/{orderId}/static-resolution:
+        post:
+            tags:
+                - WalletService
+            operationId: WalletService_ResolveStaticPurchase
+            parameters:
+                - name: tenantId
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+                - name: orderId
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.ResolveStaticPurchaseRequest'
+                required: true
             responses:
                 "200":
                     description: OK
@@ -629,6 +675,18 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/proxycontrol.v1.QueryUsageResponse'
+    /v1/products/static/offers:
+        get:
+            tags:
+                - WalletService
+            operationId: WalletService_ListStaticOffers
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.StaticOffers'
     /v1/reporting/batches:
         post:
             tags:
@@ -761,6 +819,24 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/proxycontrol.v1.PurchaseOrders'
+    /v1/tenant/orders/static-ips:
+        post:
+            tags:
+                - WalletService
+            operationId: WalletService_PurchaseStaticIP
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.PurchaseStaticIPRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.PurchaseOrder'
     /v1/tenant/orders/traffic-packages:
         post:
             tags:
@@ -800,6 +876,18 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/proxycontrol.v1.PurchaseOrder'
+    /v1/tenant/static-ips:
+        get:
+            tags:
+                - WalletService
+            operationId: WalletService_ListStaticIPs
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.StaticIPs'
     /v1/tenant/subaccounts:
         get:
             tags:
@@ -1186,6 +1274,31 @@ components:
                     type: integer
                     description: 令牌从签发起的有效时长，单位为秒。
                     format: int32
+        proxycontrol.v1.PendingStaticPurchase:
+            type: object
+            properties:
+                orderId:
+                    type: string
+                tenantId:
+                    type: string
+                supplierOrderId:
+                    type: string
+                createdAt:
+                    type: string
+                    format: date-time
+                deliveredCount:
+                    type: string
+                canClose:
+                    type: boolean
+        proxycontrol.v1.PendingStaticPurchases:
+            type: object
+            properties:
+                purchases:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/proxycontrol.v1.PendingStaticPurchase'
+                nextAfterId:
+                    type: string
         proxycontrol.v1.Product:
             type: object
             properties:
@@ -1300,6 +1413,20 @@ components:
                 nextBeforeId:
                     type: string
                     description: 下一页的 before_id，0 表示已到末页。
+        proxycontrol.v1.PurchaseStaticIPRequest:
+            type: object
+            properties:
+                nodeId:
+                    type: string
+                term:
+                    type: string
+                quantity:
+                    type: integer
+                    format: int32
+                unitMinor:
+                    type: string
+                requestKey:
+                    type: string
         proxycontrol.v1.PurchaseTrafficPackageRequest:
             type: object
             properties:
@@ -1468,6 +1595,19 @@ components:
                 password:
                     type: string
                     description: 新密码，至少 12 个字符。
+        proxycontrol.v1.ResolveStaticPurchaseRequest:
+            type: object
+            properties:
+                tenantId:
+                    type: string
+                orderId:
+                    type: string
+                supplierOrderId:
+                    type: string
+                evidence:
+                    type: string
+                closeRemaining:
+                    type: boolean
         proxycontrol.v1.SetLowBalanceThresholdRequest:
             type: object
             properties:
@@ -1489,6 +1629,58 @@ components:
                 acceptanceEvidence:
                     type: string
                     description: 开售时填写对应验收记录或链接。
+        proxycontrol.v1.StaticIP:
+            type: object
+            properties:
+                supplierItemId:
+                    type: string
+                orderId:
+                    type: string
+                ip:
+                    type: string
+                port:
+                    type: integer
+                    format: int32
+                username:
+                    type: string
+                password:
+                    type: string
+                expiresAt:
+                    type: string
+                    format: date-time
+        proxycontrol.v1.StaticIPs:
+            type: object
+            properties:
+                allocations:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/proxycontrol.v1.StaticIP'
+        proxycontrol.v1.StaticOffer:
+            type: object
+            properties:
+                nodeId:
+                    type: string
+                region:
+                    type: string
+                ipType:
+                    type: string
+                term:
+                    type: string
+                termDays:
+                    type: integer
+                    format: int32
+                unitMinor:
+                    type: string
+                available:
+                    type: integer
+                    format: int32
+        proxycontrol.v1.StaticOffers:
+            type: object
+            properties:
+                offers:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/proxycontrol.v1.StaticOffer'
         proxycontrol.v1.StickySession:
             type: object
             properties:

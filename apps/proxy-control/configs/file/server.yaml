@@ -29,6 +29,12 @@ biz:
   #   password_key: ""
   #   gateway_host: ""
   #   gateway_port: 1080
+  # 在受保护的配置源填写皇冠地址、签名凭据和独立的 IP 密码加密密钥。
+  # ipcrown:
+  #   base_url: ""
+  #   partner_id: ""
+  #   api_secret: ""
+  #   password_key: ""
   usage:
     # 单次 Recorder 上报允许的最大记录条数。
     max_batch_records: 1000

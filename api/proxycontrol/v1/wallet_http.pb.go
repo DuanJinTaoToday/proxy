@@ -26,9 +26,14 @@ const OperationWalletServiceListCustomerPurchaseOrders = "/proxycontrol.v1.Walle
 const OperationWalletServiceListCustomerWalletEntries = "/proxycontrol.v1.WalletService/ListCustomerWalletEntries"
 const OperationWalletServiceListOperatorPurchaseOrders = "/proxycontrol.v1.WalletService/ListOperatorPurchaseOrders"
 const OperationWalletServiceListOperatorWalletEntries = "/proxycontrol.v1.WalletService/ListOperatorWalletEntries"
+const OperationWalletServiceListPendingStaticPurchases = "/proxycontrol.v1.WalletService/ListPendingStaticPurchases"
+const OperationWalletServiceListStaticIPs = "/proxycontrol.v1.WalletService/ListStaticIPs"
+const OperationWalletServiceListStaticOffers = "/proxycontrol.v1.WalletService/ListStaticOffers"
+const OperationWalletServicePurchaseStaticIP = "/proxycontrol.v1.WalletService/PurchaseStaticIP"
 const OperationWalletServicePurchaseTrafficPackage = "/proxycontrol.v1.WalletService/PurchaseTrafficPackage"
 const OperationWalletServiceQuoteWalletRecharge = "/proxycontrol.v1.WalletService/QuoteWalletRecharge"
 const OperationWalletServiceRechargeWallet = "/proxycontrol.v1.WalletService/RechargeWallet"
+const OperationWalletServiceResolveStaticPurchase = "/proxycontrol.v1.WalletService/ResolveStaticPurchase"
 
 type WalletServiceHTTPServer interface {
 	FindTenants(context.Context, *FindWalletTenantRequest) (*WalletTenant, error)
@@ -40,13 +45,23 @@ type WalletServiceHTTPServer interface {
 	ListCustomerWalletEntries(context.Context, *CustomerWalletEntriesRequest) (*WalletEntries, error)
 	ListOperatorPurchaseOrders(context.Context, *OperatorPurchaseOrdersRequest) (*PurchaseOrders, error)
 	ListOperatorWalletEntries(context.Context, *OperatorWalletEntriesRequest) (*WalletEntries, error)
+	ListPendingStaticPurchases(context.Context, *PendingStaticPurchasesRequest) (*PendingStaticPurchases, error)
+	ListStaticIPs(context.Context, *BaseRequest) (*StaticIPs, error)
+	ListStaticOffers(context.Context, *BaseRequest) (*StaticOffers, error)
+	PurchaseStaticIP(context.Context, *PurchaseStaticIPRequest) (*PurchaseOrder, error)
 	PurchaseTrafficPackage(context.Context, *PurchaseTrafficPackageRequest) (*PurchaseOrder, error)
 	QuoteWalletRecharge(context.Context, *QuoteWalletRechargeRequest) (*WalletRechargeQuote, error)
 	RechargeWallet(context.Context, *RechargeWalletRequest) (*WalletEntry, error)
+	ResolveStaticPurchase(context.Context, *ResolveStaticPurchaseRequest) (*PurchaseOrder, error)
 }
 
 func RegisterWalletServiceHTTPServer(s *http.Server, srv WalletServiceHTTPServer) {
 	r := s.Route("/")
+	r.Handle("GET", "/v1/products/static/offers", _WalletService_ListStaticOffers0_HTTP_Handler(srv))
+	r.Handle("POST", "/v1/tenant/orders/static-ips", _WalletService_PurchaseStaticIP0_HTTP_Handler(srv))
+	r.Handle("GET", "/v1/tenant/static-ips", _WalletService_ListStaticIPs0_HTTP_Handler(srv))
+	r.Handle("GET", "/v1/operations/static-purchases/pending", _WalletService_ListPendingStaticPurchases0_HTTP_Handler(srv))
+	r.Handle("POST", "/v1/operations/tenants/{tenant_id}/orders/{order_id}/static-resolution", _WalletService_ResolveStaticPurchase0_HTTP_Handler(srv))
 	r.Handle("GET", "/v1/operations/tenants", _WalletService_FindTenants0_HTTP_Handler(srv))
 	r.Handle("GET", "/v1/operations/tenants/{tenant_id}", _WalletService_GetTenant0_HTTP_Handler(srv))
 	r.Handle("POST", "/v1/operations/tenants/{tenant_id}/wallet/recharge-quotes", _WalletService_QuoteWalletRecharge0_HTTP_Handler(srv))
@@ -59,6 +74,104 @@ func RegisterWalletServiceHTTPServer(s *http.Server, srv WalletServiceHTTPServer
 	r.Handle("GET", "/v1/tenant/orders", _WalletService_ListCustomerPurchaseOrders0_HTTP_Handler(srv))
 	r.Handle("GET", "/v1/operations/tenants/{tenant_id}/orders/{order_id}", _WalletService_GetOperatorPurchaseOrder0_HTTP_Handler(srv))
 	r.Handle("GET", "/v1/tenant/orders/{order_id}", _WalletService_GetCustomerPurchaseOrder0_HTTP_Handler(srv))
+}
+
+func _WalletService_ListStaticOffers0_HTTP_Handler(srv WalletServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in BaseRequest
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationWalletServiceListStaticOffers)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.ListStaticOffers(ctx, req.(*BaseRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*StaticOffers)
+		return ctx.Result(200, reply)
+	}
+}
+
+func _WalletService_PurchaseStaticIP0_HTTP_Handler(srv WalletServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in PurchaseStaticIPRequest
+		if err := ctx.Bind(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationWalletServicePurchaseStaticIP)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.PurchaseStaticIP(ctx, req.(*PurchaseStaticIPRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*PurchaseOrder)
+		return ctx.Result(200, reply)
+	}
+}
+
+func _WalletService_ListStaticIPs0_HTTP_Handler(srv WalletServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in BaseRequest
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationWalletServiceListStaticIPs)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.ListStaticIPs(ctx, req.(*BaseRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*StaticIPs)
+		return ctx.Result(200, reply)
+	}
+}
+
+func _WalletService_ListPendingStaticPurchases0_HTTP_Handler(srv WalletServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in PendingStaticPurchasesRequest
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationWalletServiceListPendingStaticPurchases)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.ListPendingStaticPurchases(ctx, req.(*PendingStaticPurchasesRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*PendingStaticPurchases)
+		return ctx.Result(200, reply)
+	}
+}
+
+func _WalletService_ResolveStaticPurchase0_HTTP_Handler(srv WalletServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in ResolveStaticPurchaseRequest
+		if err := ctx.Bind(&in); err != nil {
+			return err
+		}
+		if err := ctx.BindVars(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationWalletServiceResolveStaticPurchase)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.ResolveStaticPurchase(ctx, req.(*ResolveStaticPurchaseRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*PurchaseOrder)
+		return ctx.Result(200, reply)
+	}
 }
 
 func _WalletService_FindTenants0_HTTP_Handler(srv WalletServiceHTTPServer) func(ctx http.Context) error {
@@ -320,9 +433,14 @@ type WalletServiceHTTPClient interface {
 	ListCustomerWalletEntries(ctx context.Context, req *CustomerWalletEntriesRequest, opts ...http.CallOption) (rsp *WalletEntries, err error)
 	ListOperatorPurchaseOrders(ctx context.Context, req *OperatorPurchaseOrdersRequest, opts ...http.CallOption) (rsp *PurchaseOrders, err error)
 	ListOperatorWalletEntries(ctx context.Context, req *OperatorWalletEntriesRequest, opts ...http.CallOption) (rsp *WalletEntries, err error)
+	ListPendingStaticPurchases(ctx context.Context, req *PendingStaticPurchasesRequest, opts ...http.CallOption) (rsp *PendingStaticPurchases, err error)
+	ListStaticIPs(ctx context.Context, req *BaseRequest, opts ...http.CallOption) (rsp *StaticIPs, err error)
+	ListStaticOffers(ctx context.Context, req *BaseRequest, opts ...http.CallOption) (rsp *StaticOffers, err error)
+	PurchaseStaticIP(ctx context.Context, req *PurchaseStaticIPRequest, opts ...http.CallOption) (rsp *PurchaseOrder, err error)
 	PurchaseTrafficPackage(ctx context.Context, req *PurchaseTrafficPackageRequest, opts ...http.CallOption) (rsp *PurchaseOrder, err error)
 	QuoteWalletRecharge(ctx context.Context, req *QuoteWalletRechargeRequest, opts ...http.CallOption) (rsp *WalletRechargeQuote, err error)
 	RechargeWallet(ctx context.Context, req *RechargeWalletRequest, opts ...http.CallOption) (rsp *WalletEntry, err error)
+	ResolveStaticPurchase(ctx context.Context, req *ResolveStaticPurchaseRequest, opts ...http.CallOption) (rsp *PurchaseOrder, err error)
 }
 
 type WalletServiceHTTPClientImpl struct {
@@ -477,6 +595,71 @@ func (c *WalletServiceHTTPClientImpl) ListOperatorWalletEntries(ctx context.Cont
 	return &out, nil
 }
 
+func (c *WalletServiceHTTPClientImpl) ListPendingStaticPurchases(ctx context.Context, in *PendingStaticPurchasesRequest, opts ...http.CallOption) (*PendingStaticPurchases, error) {
+	var out PendingStaticPurchases
+	pattern := "/v1/operations/static-purchases/pending"
+	path := http.BuildPath(pattern, in, http.WithQueryParams())
+	opts = append([]http.CallOption{
+		http.Accept("application/protojson"),
+		http.Operation(OperationWalletServiceListPendingStaticPurchases),
+		http.PathTemplate(pattern),
+	}, opts...)
+	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (c *WalletServiceHTTPClientImpl) ListStaticIPs(ctx context.Context, in *BaseRequest, opts ...http.CallOption) (*StaticIPs, error) {
+	var out StaticIPs
+	pattern := "/v1/tenant/static-ips"
+	path := http.BuildPath(pattern, in, http.WithQueryParams())
+	opts = append([]http.CallOption{
+		http.Accept("application/protojson"),
+		http.Operation(OperationWalletServiceListStaticIPs),
+		http.PathTemplate(pattern),
+	}, opts...)
+	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (c *WalletServiceHTTPClientImpl) ListStaticOffers(ctx context.Context, in *BaseRequest, opts ...http.CallOption) (*StaticOffers, error) {
+	var out StaticOffers
+	pattern := "/v1/products/static/offers"
+	path := http.BuildPath(pattern, in, http.WithQueryParams())
+	opts = append([]http.CallOption{
+		http.Accept("application/protojson"),
+		http.Operation(OperationWalletServiceListStaticOffers),
+		http.PathTemplate(pattern),
+	}, opts...)
+	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (c *WalletServiceHTTPClientImpl) PurchaseStaticIP(ctx context.Context, in *PurchaseStaticIPRequest, opts ...http.CallOption) (*PurchaseOrder, error) {
+	var out PurchaseOrder
+	pattern := "/v1/tenant/orders/static-ips"
+	path := http.BuildPath(pattern, in)
+	opts = append([]http.CallOption{
+		http.Accept("application/protojson"),
+		http.ContentType("application/protojson"),
+		http.Operation(OperationWalletServicePurchaseStaticIP),
+		http.PathTemplate(pattern),
+	}, opts...)
+	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 func (c *WalletServiceHTTPClientImpl) PurchaseTrafficPackage(ctx context.Context, in *PurchaseTrafficPackageRequest, opts ...http.CallOption) (*PurchaseOrder, error) {
 	var out PurchaseOrder
 	pattern := "/v1/tenant/orders/traffic-packages"
@@ -519,6 +702,23 @@ func (c *WalletServiceHTTPClientImpl) RechargeWallet(ctx context.Context, in *Re
 		http.Accept("application/protojson"),
 		http.ContentType("application/protojson"),
 		http.Operation(OperationWalletServiceRechargeWallet),
+		http.PathTemplate(pattern),
+	}, opts...)
+	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (c *WalletServiceHTTPClientImpl) ResolveStaticPurchase(ctx context.Context, in *ResolveStaticPurchaseRequest, opts ...http.CallOption) (*PurchaseOrder, error) {
+	var out PurchaseOrder
+	pattern := "/v1/operations/tenants/{tenant_id}/orders/{order_id}/static-resolution"
+	path := http.BuildPath(pattern, in)
+	opts = append([]http.CallOption{
+		http.Accept("application/protojson"),
+		http.ContentType("application/protojson"),
+		http.Operation(OperationWalletServiceResolveStaticPurchase),
 		http.PathTemplate(pattern),
 	}, opts...)
 	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)

@@ -36,7 +36,11 @@ func wireApp(confServer *conf.Server, confData *conf.Data, biz *conf.Biz, appCon
 		return nil, nil, err
 	}
 	serviceAccess := service.NewAccess(accessService)
-	walletRepository := repo.ProvideWalletRepository(dataData)
+	walletRepository, err := repo.ProvideWalletRepository(dataData, biz)
+	if err != nil {
+		cleanup()
+		return nil, nil, err
+	}
 	walletService := wallet.NewService(walletRepository, accessService)
 	serviceWallet := service.NewWallet(walletService)
 	productRepository := repo.ProvideProductRepository(dataData)

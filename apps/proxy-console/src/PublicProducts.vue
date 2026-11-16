@@ -2,6 +2,7 @@
 import { onMounted, onUnmounted, ref } from 'vue'
 import { listProducts, productNames } from './api/product'
 import type { Product } from './api/product'
+import StaticCheckout from './StaticCheckout.vue'
 import { flowAmount, money } from './wallet-format'
 
 const products = ref<Product[]>([])
@@ -49,6 +50,7 @@ onUnmounted(() => controller.abort())
           <RouterLink :to="{ path: '/', query: { view: 'packages', package: pkg.id } }">购买</RouterLink>
         </li>
       </ul>
+      <StaticCheckout v-else />
     </section>
   </main>
 </template>

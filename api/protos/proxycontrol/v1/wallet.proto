@@ -11,6 +11,25 @@ import "validate/validate.proto";
 option go_package = "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1";
 
 service WalletService {
+  rpc ListStaticOffers(BaseRequest) returns (StaticOffers) {
+    option (google.api.http) = {get: "/v1/products/static/offers"};
+  }
+
+  rpc PurchaseStaticIP(PurchaseStaticIPRequest) returns (PurchaseOrder) {
+    option (google.api.http) = {post: "/v1/tenant/orders/static-ips", body: "*"};
+  }
+
+  rpc ListStaticIPs(BaseRequest) returns (StaticIPs) {
+    option (google.api.http) = {get: "/v1/tenant/static-ips"};
+  }
+
+  rpc ListPendingStaticPurchases(PendingStaticPurchasesRequest) returns (PendingStaticPurchases) {
+    option (google.api.http) = {get: "/v1/operations/static-purchases/pending"};
+  }
+
+  rpc ResolveStaticPurchase(ResolveStaticPurchaseRequest) returns (PurchaseOrder) {
+    option (google.api.http) = {post: "/v1/operations/tenants/{tenant_id}/orders/{order_id}/static-resolution", body: "*"};
+  }
   rpc FindTenants(FindWalletTenantRequest) returns (WalletTenant) {
     option (google.api.http) = {get: "/v1/operations/tenants"};
     option (openapi.v3.operation) = {summary: "按主账号名或手机号查找租户"};
@@ -264,4 +283,66 @@ message OperatorPurchaseOrderRequest {
   string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_bytes: 64}];
   // 该租户的订单编号。
   int64 order_id = 2 [(validate.rules).int64.gt = 0];
+}
+
+message StaticOffer {
+  int64 node_id = 1;
+  string region = 2;
+  string ip_type = 3;
+  string term = 4;
+  int32 term_days = 5;
+  int64 unit_minor = 6;
+  int32 available = 7;
+}
+
+message StaticOffers {
+  repeated StaticOffer offers = 1;
+}
+
+message PurchaseStaticIPRequest {
+  int64 node_id = 1 [(validate.rules).int64.gt = 0];
+  string term = 2 [(validate.rules).string = {min_len: 1, max_bytes: 16}];
+  int32 quantity = 3 [(validate.rules).int32.gt = 0];
+  int64 unit_minor = 4 [(validate.rules).int64.gt = 0];
+  string request_key = 5 [(validate.rules).string = {min_len: 1, max_bytes: 128}];
+}
+
+message StaticIP {
+  string supplier_item_id = 1;
+  int64 order_id = 2;
+  string ip = 3;
+  int32 port = 4;
+  string username = 5;
+  string password = 6;
+  google.protobuf.Timestamp expires_at = 7;
+}
+
+message StaticIPs {
+  repeated StaticIP allocations = 1;
+}
+
+message ResolveStaticPurchaseRequest {
+  string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_bytes: 64}];
+  int64 order_id = 2 [(validate.rules).int64.gt = 0];
+  string supplier_order_id = 3 [(validate.rules).string.max_bytes = 128];
+  string evidence = 4 [(validate.rules).string = {min_len: 1, max_bytes: 500}];
+  bool close_remaining = 5;
+}
+
+message PendingStaticPurchasesRequest {
+  int64 after_id = 1 [(validate.rules).int64.gte = 0];
+}
+
+message PendingStaticPurchase {
+  int64 order_id = 1;
+  string tenant_id = 2;
+  string supplier_order_id = 3;
+  google.protobuf.Timestamp created_at = 4;
+  int64 delivered_count = 5;
+  bool can_close = 6;
+}
+
+message PendingStaticPurchases {
+  repeated PendingStaticPurchase purchases = 1;
+  int64 next_after_id = 2;
 }
