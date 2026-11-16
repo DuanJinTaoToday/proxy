@@ -55,7 +55,7 @@ func (r *SubaccountRepository) Create(ctx context.Context, a subaccount.Account)
 		if err := tx.Raw(`SELECT count(*) FROM proxy_subaccounts WHERE tenant_id=?`, a.TenantID).Scan(&count).Error; err != nil {
 			return err
 		}
-		if count >= 10 {
+		if count >= subaccount.MaxAccounts {
 			return subaccount.ErrTooMany
 		}
 		result := tx.Exec(`INSERT INTO proxy_subaccounts(client_id,tenant_id,name,password_ciphertext,remark,active,limit_bytes)

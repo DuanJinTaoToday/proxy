@@ -101,6 +101,7 @@ function switchMode() {
     class="login-block bg-muted text-foreground flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
     <a class="skip-link" href="#console-auth-main">跳到主要内容</a>
     <div class="flex w-full max-w-sm flex-col gap-6">
+      <RouterLink v-if="!operations" to="/products#socks5" class="self-center text-sm underline">官网 SOCKS5 接入说明</RouterLink>
       <div class="flex items-center gap-2 self-center font-medium">
         <span class="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-md">
           <GalleryVerticalEnd class="size-4" />
@@ -110,7 +111,7 @@ function switchMode() {
       <LoginForm v-if="!token" v-model:account="phone" v-model:password="password" :operations="operations"
         :registering="registering" :submitting="signingIn" :error="loginError" @submit="signIn" @switch-mode="switchMode" />
       <Card v-else class="border-solid">
-        <CardHeader class="text-center"><h1 class="text-xl tracking-normal">钱包与订单</h1></CardHeader>
+        <CardHeader class="text-center"><h1 class="text-xl tracking-normal">租户控制台</h1></CardHeader>
         <CardContent class="flex flex-col gap-3">
           <template v-if="tenantError">
             <p role="alert" class="text-sm text-destructive">{{ tenantError }}</p>

@@ -15,6 +15,7 @@ import (
 	v1 "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/integration/testfixture"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/access"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/overview"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/product"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/subaccount"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/usage"
@@ -85,8 +86,10 @@ func setupUsage(t *testing.T, suppliers ...wallet.StaticSupplier) usageFixture {
 			t.Fatal(err)
 		}
 	}
-	server.RegisterWallet(handler, httpservice.NewWallet(wallet.NewService(walletStore, accessService)))
-	server.RegisterProduct(handler, httpservice.NewProduct(product.NewService(repo.NewProductRepository(db), accessService)))
+	walletService := wallet.NewService(walletStore, accessService)
+	productService := product.NewService(repo.NewProductRepository(db), accessService)
+	server.RegisterWallet(handler, httpservice.NewWallet(walletService))
+	server.RegisterProduct(handler, httpservice.NewProduct(productService))
 	subs, err := subaccount.NewService(repo.NewSubaccountRepository(db), accessService, &conf.Biz{
 		Subaccounts: &conf.Subaccounts{PasswordKey: base64.RawURLEncoding.EncodeToString(make([]byte, 32)), GatewayHost: "gateway.example.test", GatewayPort: 1080},
 	})
@@ -94,6 +97,7 @@ func setupUsage(t *testing.T, suppliers ...wallet.StaticSupplier) usageFixture {
 		t.Fatal(err)
 	}
 	server.RegisterSubaccounts(handler, httpservice.NewSubaccounts(subs))
+	server.RegisterOverview(handler, httpservice.NewOverview(overview.New(walletService, service, productService, subs)))
 	return usageFixture{db: db, http: handler}
 }
 

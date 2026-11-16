@@ -67,7 +67,20 @@ type PendingStaticPurchase struct {
 	CanClose                  bool
 }
 
+type StaticSummary struct {
+	Active, Expiring int32
+}
+
+func (s *Service) StaticSummary(ctx context.Context, token string) (StaticSummary, error) {
+	tenant, err := s.scope(ctx, token, "", false)
+	if err != nil {
+		return StaticSummary{}, err
+	}
+	return s.store.StaticSummary(ctx, tenant)
+}
+
 type StaticRepository interface {
+	StaticSummary(context.Context, string) (StaticSummary, error)
 	ClaimStaticIPExpiryNotices(context.Context, string) (int32, error)
 	QuoteStatic(context.Context, string, StaticPurchaseRequest) (StaticQuote, error)
 	PendingStaticPurchases(context.Context, int64) ([]PendingStaticPurchase, error)

@@ -16,6 +16,8 @@ import (
 	"github.com/google/uuid"
 )
 
+const MaxAccounts = 10
+
 type Account struct {
 	ClientID, TenantID, Name, Remark string
 	PasswordCiphertext               []byte

@@ -373,6 +373,19 @@ func (r *WalletRepository) PendingStaticPurchases(ctx context.Context, afterID i
 	return purchases, err
 }
 
+func (r *WalletRepository) StaticSummary(ctx context.Context, tenant string) (wallet.StaticSummary, error) {
+	if r.db == nil {
+		return wallet.StaticSummary{}, errWalletUnavailable
+	}
+	var summary wallet.StaticSummary
+	err := r.db.WithContext(ctx).Raw(`
+		SELECT COUNT(*) AS active,
+			COUNT(*) FILTER (WHERE expires_at <= statement_timestamp() + interval '120 hours') AS expiring
+		FROM static_ip_allocations
+		WHERE tenant_id = ? AND expires_at > statement_timestamp()`, tenant).Scan(&summary).Error
+	return summary, err
+}
+
 func (r *WalletRepository) ClaimStaticIPExpiryNotices(ctx context.Context, tenant string) (int32, error) {
 	if r.db == nil {
 		return 0, errWalletUnavailable

@@ -16,6 +16,10 @@ func NewHTTPServer(addr string, accessService *service.Access, options ...http.S
 	return srv
 }
 
+func RegisterOverview(srv *http.Server, overview *service.Overview) {
+	v1.RegisterOverviewServiceHTTPServer(srv, overview)
+}
+
 func RegisterSubaccounts(srv *http.Server, subaccounts *service.Subaccounts) {
 	v1.RegisterSubaccountServiceHTTPServer(srv, subaccounts)
 	v1.RegisterGatewayAuthServiceHTTPServer(srv, subaccounts)

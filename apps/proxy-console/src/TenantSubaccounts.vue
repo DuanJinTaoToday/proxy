@@ -16,7 +16,7 @@ import TableHead from './ui/table/TableHead.vue'
 import TableHeader from './ui/table/TableHeader.vue'
 import TableRow from './ui/table/TableRow.vue'
 
-const props = defineProps<{ token: string; primaryAccount: string }>()
+const props = defineProps<{ token: string; primaryAccount: string; startCreating?: boolean }>()
 const emit = defineEmits<{ expired: [] }>()
 const controller = new AbortController()
 const accounts = ref<Subaccount[]>([])
@@ -158,7 +158,10 @@ async function copyConfig(config: ProxyConfig) {
   }
 }
 
-onMounted(reload)
+onMounted(async () => {
+  await reload()
+  if (!controller.signal.aborted && !error.value && props.startCreating && accounts.value.length < 10) edit()
+})
 onBeforeUnmount(() => {
   controller.abort()
   password.value = ''

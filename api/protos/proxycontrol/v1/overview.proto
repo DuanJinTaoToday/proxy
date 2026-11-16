@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package proxycontrol.v1;
+
+import "google/api/annotations.proto";
+import "proxycontrol/v1/common.proto";
+
+option go_package = "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1";
+
+service OverviewService {
+  rpc GetOverview(BaseRequest) returns (Overview) {
+    option (google.api.http) = { get: "/v1/tenant/overview" };
+  }
+}
+
+message Overview {
+  int64 wallet_minor = 1;
+  int64 traffic_bytes = 2;
+  int32 active_static_ip_count = 3;
+  repeated OverviewNotice notices = 4;
+  repeated OverviewProduct products = 5;
+  bool can_create_subaccount = 6;
+}
+
+message OverviewNotice {
+  string kind = 1;
+  int32 count = 2;
+}
+
+message OverviewProduct {
+  string kind = 1;
+  bool open = 2;
+  bool can_purchase = 3;
+}

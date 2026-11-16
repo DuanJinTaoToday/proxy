@@ -896,6 +896,18 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/proxycontrol.v1.PurchaseOrder'
+    /v1/tenant/overview:
+        get:
+            tags:
+                - OverviewService
+            operationId: OverviewService_GetOverview
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.Overview'
     /v1/tenant/static-ip-expiry-notices:
         post:
             tags:
@@ -1476,6 +1488,43 @@ components:
                     type: integer
                     description: 令牌从签发起的有效时长，单位为秒。
                     format: int32
+        proxycontrol.v1.Overview:
+            type: object
+            properties:
+                walletMinor:
+                    type: string
+                trafficBytes:
+                    type: string
+                activeStaticIpCount:
+                    type: integer
+                    format: int32
+                notices:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/proxycontrol.v1.OverviewNotice'
+                products:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/proxycontrol.v1.OverviewProduct'
+                canCreateSubaccount:
+                    type: boolean
+        proxycontrol.v1.OverviewNotice:
+            type: object
+            properties:
+                kind:
+                    type: string
+                count:
+                    type: integer
+                    format: int32
+        proxycontrol.v1.OverviewProduct:
+            type: object
+            properties:
+                kind:
+                    type: string
+                open:
+                    type: boolean
+                canPurchase:
+                    type: boolean
         proxycontrol.v1.PendingStaticPurchase:
             type: object
             properties:
@@ -2423,6 +2472,7 @@ tags:
     - name: AccessService
     - name: GatewayAuthService
     - name: HealthService
+    - name: OverviewService
     - name: ProductService
     - name: ReportingService
     - name: StickySessionService
