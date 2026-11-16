@@ -1,42 +1,36 @@
+# 线上运行配置模板。部署前填写实际值，凭据放在受保护的配置源。
 server:
   http:
-    # HTTP 监听地址。默认只接受本机连接。
-    addr: 127.0.0.1:8000
+    addr:
   cron_tasks:
-    # 修改任务列表后自动更新调度。将列表设为 [] 会停止后续调度。
-    # 启用用量模块后执行用量归档。name 对应 CronService 方法名。
+    # 用量归档任务。填写六段 cron 表达式，第一段为秒。
+    # timeout 为 0s 时不限制单次执行时间。
     - name: MaintainUsage
-      # 六段 cron 表达式，第一段为秒。每分钟的第 0 秒执行。
-      spec: "0 * * * * *"
-      # 0s 表示不限制单次执行时间。
-      timeout: 0s
+      spec:
+      timeout:
 
-# 配置数据库前先应用 migrations/ 下的 Goose 迁移。
-# 将此文件复制为 server.local.yaml，在本地副本中取消所需配置的注释并填入凭据。
-# data:
-#   repo:
-#     proxy_auth:
-#       # 用于账户访问的 PostgreSQL DSN。
-#       database_dsn: ""
-#     usage:
-#       # 用量上报和查询使用的 PostgreSQL DSN。需能维护用量分区。
-#       database_dsn: ""
+data:
+  repo:
+    # 配置数据库前先应用 migrations/ 下的 Goose 迁移。
+    proxy_auth:
+      database_dsn:
+    usage:
+      # 数据库账号需能维护用量分区。
+      database_dsn:
 
 biz:
-  # 使用独立、持久保存的 32 随机字节，无填充 base64url 编码。
-  # 在 server.local.yaml 填写密钥及客户实际使用的 SOCKS5 网关地址。
-  # subaccounts:
-  #   password_key: ""
-  #   gateway_host: ""
-  #   gateway_port: 1080
-  # 在受保护的配置源填写皇冠地址、签名凭据和独立的 IP 密码加密密钥。
-  # ipcrown:
-  #   base_url: ""
-  #   partner_id: ""
-  #   api_secret: ""
-  #   password_key: ""
+  subaccounts:
+    # 使用独立、持久保存的 32 随机字节，无填充 base64url 编码。
+    password_key:
+    gateway_host:
+    gateway_port:
+    explicit_sidtime:
+  ipcrown:
+    base_url:
+    partner_id:
+    api_secret:
+    # 皇冠 IP 密码使用独立的加密密钥。
+    password_key:
   usage:
-    # 单次 Recorder 上报允许的最大记录条数。
-    max_batch_records: 1000
-    # 单次 Recorder 上报请求体的最大字节数（1 MiB）。
-    max_batch_body_bytes: 1048576
+    max_batch_records:
+    max_batch_body_bytes:

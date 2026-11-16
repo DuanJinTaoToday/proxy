@@ -11,6 +11,7 @@ import (
 	"log/slog"
 	"os"
 	"strings"
+	"sync"
 	"time"
 	"unicode/utf8"
 
@@ -46,7 +47,6 @@ type Config struct {
 	ConnectionKey string
 	MaxRecords    int
 	MaxBytes      int
-	Interval      time.Duration
 }
 
 type retry struct {
@@ -56,6 +56,7 @@ type retry struct {
 }
 
 type Collector struct {
+	scanMu         sync.Mutex
 	cfg            Config
 	reporter       Reporter
 	spool          Spool
@@ -74,9 +75,6 @@ func New(cfg Config, spool Spool, reporter Reporter) *Collector {
 	if cfg.MaxBytes <= 0 {
 		cfg.MaxBytes = 1 << 20
 	}
-	if cfg.Interval <= 0 {
-		cfg.Interval = time.Second
-	}
 	return &Collector{cfg: cfg, spool: spool, reporter: reporter, retries: make(map[string]retry), pendingSince: make(map[string]time.Time),
 		now: time.Now, refreshQuota: make(chan struct{}, 1), admission: admissionState{blocked: true, pending: make(map[string]pendingFile)}}
 }
@@ -89,24 +87,15 @@ func (c *Collector) SetConnectionKey(key string) {
 	c.cfg.ConnectionKey = key
 }
 
-func (c *Collector) Run(ctx context.Context) {
-	ticker := time.NewTicker(c.cfg.Interval)
-	defer ticker.Stop()
-	for {
-		if err := c.Scan(ctx); err != nil && ctx.Err() == nil {
-			slog.Warn("Recorder scan", "error", err)
-		}
-		select {
-		case <-ctx.Done():
-			return
-		case <-ticker.C:
-		}
-	}
-}
-
 // Scan advances each boot by at most one accepted batch. A failed boot does
 // not prevent other boots from submitting their own contiguous records.
 func (c *Collector) Scan(ctx context.Context) error {
+	// A slow report may still be running when the next cron tick fires.
+	if ctx.Err() != nil || !c.scanMu.TryLock() {
+		return nil
+	}
+	defer c.scanMu.Unlock()
+
 	before, _ := c.QuotaRenewal()
 	defer func() {
 		if after, ready := c.QuotaRenewal(); ready && before != after {

@@ -27,7 +27,7 @@ RUN curl --fail --silent --show-error --location --retry 3 \
 FROM alpine:3.23 AS control
 COPY --from=go-build /out/proxy-control /usr/local/bin/
 COPY deploy/test/init.yaml /config/init.yaml
-COPY deploy/test/control.yaml /config/server.yaml
+COPY apps/proxy-control/configs/file/test-server.yaml /config/test-server.yaml
 ENTRYPOINT ["proxy-control", "-conf", "/config/init.yaml"]
 
 FROM alpine:3.23 AS wukong-mock
@@ -38,7 +38,7 @@ ENTRYPOINT ["gost"]
 FROM wukong-mock AS gateway
 COPY --from=go-build /out/proxy-gateway /usr/local/bin/
 COPY deploy/test/init.yaml /config/init.yaml
-COPY deploy/test/gateway.yaml /config/server.yaml
+COPY apps/proxy-gateway/configs/file/test-server.yaml /config/test-server.yaml
 COPY deploy/test/gost.yaml /config/gost.yaml
 ENTRYPOINT ["proxy-gateway", "-conf", "/config/init.yaml"]
 

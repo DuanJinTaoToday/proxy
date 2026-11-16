@@ -18,3 +18,9 @@ biz:
     password_key: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
     gateway_host: 127.0.0.1
     gateway_port: 1080
+  # 联调皇冠测试系统时，在 Git 忽略的 *.local.yaml 中启用此段并填写凭据。
+  # ipcrown:
+  #   base_url: http://test.ipcrown.com
+  #   partner_id:
+  #   api_secret:
+  #   password_key:

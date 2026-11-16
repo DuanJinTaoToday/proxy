@@ -24,8 +24,12 @@ apps/proxy-console/node_modules
 apps/proxy-console/dist
 apps/proxy-console/.env*
 !deploy/test/init.yaml
-!deploy/test/control.yaml
-!deploy/test/gateway.yaml
+!apps/proxy-control/configs/
+!apps/proxy-control/configs/file/
+!apps/proxy-control/configs/file/test-server.yaml
+!apps/proxy-gateway/configs/
+!apps/proxy-gateway/configs/file/
+!apps/proxy-gateway/configs/file/test-server.yaml
 !deploy/test/gost.yaml
 !deploy/test/supplier.yaml
 !deploy/test/seed.sql

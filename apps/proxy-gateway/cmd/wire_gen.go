@@ -52,7 +52,7 @@ func wireApp(confServer *conf.Server, data *conf.Data, confBiz *conf.Biz, appCon
 		return nil, nil, err
 	}
 	lifecycle := recorder.NewLifecycle(spool, httpReporter)
-	cronService := service.NewCronService(logger)
+	cronService := service.NewCronService(logger, collector)
 	cronServerImpl, err := server.NewCronServer(appConfig, cronService)
 	if err != nil {
 		cleanup()

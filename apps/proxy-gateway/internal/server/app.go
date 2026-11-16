@@ -92,7 +92,6 @@ func (a *App) Run() error {
 		}
 	}()
 	go a.relay.RunRefresh(ctx, a.collector.QuotaRefreshes())
-	go a.collector.Run(ctx)
 	go a.lifecycle.RunLifecycle(ctx, a.gatewayID, process.Boot, process.Exited)
 	go recorderdata.MonitorDisk(ctx, a.spool)
 	finished := make(chan error, 1)

@@ -31,16 +31,13 @@ func NewGatewaySettings(server *conf.Server, cfg *conf.Data, biz *conf.Biz) (Gat
 	gostCfg := cfg.GetGost()
 	controlCfg := cfg.GetAcl().GetControl()
 	recorderCfg := biz.GetRecorder()
-	recorderSettings := recorder.Config{GatewayID: biz.GetGatewayId(), MaxRecords: 1000, MaxBytes: 1 << 20, Interval: time.Second}
+	recorderSettings := recorder.Config{GatewayID: biz.GetGatewayId(), MaxRecords: 1000, MaxBytes: 1 << 20}
 	reportTimeout := 3 * time.Second
 	if recorderCfg != nil && recorderCfg.MaxRecords != nil {
 		recorderSettings.MaxRecords = int(recorderCfg.GetMaxRecords())
 	}
 	if recorderCfg != nil && recorderCfg.MaxBytes != nil {
 		recorderSettings.MaxBytes = int(recorderCfg.GetMaxBytes())
-	}
-	if duration := recorderCfg.GetScanInterval(); duration != nil {
-		recorderSettings.Interval = duration.AsDuration()
 	}
 	if duration := recorderCfg.GetReportTimeout(); duration != nil {
 		reportTimeout = duration.AsDuration()
@@ -49,7 +46,7 @@ func NewGatewaySettings(server *conf.Server, cfg *conf.Data, biz *conf.Biz) (Gat
 	if spoolPath == "" || gostCfg.GetBinary() == "" || gostCfg.GetConfig() == "" ||
 		recorderSettings.GatewayID == "" || len(recorderSettings.GatewayID) > 128 ||
 		recorderSettings.MaxRecords < 1 || recorderSettings.MaxBytes < 128 || recorderSettings.MaxBytes > 16<<20 ||
-		recorderSettings.Interval <= 0 || reportTimeout <= 0 {
+		reportTimeout <= 0 {
 		return GatewaySettings{}, errors.New("configure GOST binary and template, Recorder spool, gateway ID and positive report limits")
 	}
 	spool, err := filepath.Abs(spoolPath)

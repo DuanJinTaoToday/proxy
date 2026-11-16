@@ -103,7 +103,7 @@ Goose SQL 迁移放在控制面的 `migrations/`。`make dao` 的入口和开发
 
 从应用目录启动，默认 `-conf ./configs`，也可传入单个入口文件。`main.go` 直接调用 Kratos 的 `config.New`、`Load`、`Scan` 读取定义配置源和 `zap` 的 `configs/init.yaml`。各应用在自己的 `internal/conf/config.go` 中实现 `AppConfig`、`GetBootstrap` 和 `Register`，由 Kratos `Watch` 分发配置变更。
 
-应用运行配置集中在 `configs/file/server.yaml`，按 `server`、`data`、`biz` 分组，对需要说明的字段就地加注释。文件源通过 `source.file` 指定，相对路径以进程工作目录为基准。启用 Apollo 时通过 `source.apollo` 选择单个 YAML 或 JSON namespace。配置中包含凭据时使用 Git 忽略的 `configs/**/*.local.yaml`，并限制读取权限。
+线上运行配置模板位于 `configs/file/server.yaml`，Docker 测试环境的应用运行配置位于 `configs/file/test-server.yaml`。两者均按 `server`、`data`、`biz` 分组，对需要说明的字段就地加注释。文件源通过 `source.file` 指定，相对路径以进程工作目录为基准。启用 Apollo 时通过 `source.apollo` 选择单个 YAML 或 JSON namespace。配置中包含凭据时使用 Git 忽略的 `configs/**/*.local.yaml`，并限制读取权限。
 
 `zap` 支持控制台、日志级别及滚动文件。构建时可通过 `make build GO_LDFLAGS='-X main.GitTag=v0.1.0 -X main.GitCommit=<commit> -X main.BuildTime=<RFC3339>'` 注入版本信息。
 
@@ -113,7 +113,7 @@ Goose SQL 迁移放在控制面的 `migrations/`。`make dao` 的入口和开发
 
 ### Cron
 
-两个 Go 应用统一使用 `pkg/cron` 调度。`internal/service/cron.go` 定义 `CronService` 及任务方法，`internal/server/cron.go` 负责注册任务和管理调度生命周期。任务名称对应 `CronService` 的方法，表达式放在 `server.yaml` 的 `server.cron_tasks` 下。控制面通过 `MaintainUsage` 调度用量维护，网关通过 `PrintHello` 定时打印日志。
+两个 Go 应用统一使用 `pkg/cron` 调度。`internal/service/cron.go` 定义 `CronService` 及任务方法，`internal/server/cron.go` 负责注册任务和管理调度生命周期。任务名称对应 `CronService` 的方法，表达式放在运行配置的 `server.cron_tasks` 下。控制面通过 `MaintainUsage` 调度用量维护，网关通过 `ReportUsage` 扫描 Recorder 并上报用量。
 
 Cron Server 通过 `AppConfig.Register("server", ...)` 注册监听，收到 `Notify` 后按更新后的 `cron_tasks` 重新注册任务，无需重启。将列表设为 `[]` 可停止后续调度。其他应用配置通过重启生效。
 
