@@ -4,13 +4,15 @@ export class ApiError extends Error {
   }
 }
 
-export async function request<T>(path: string, options: {
+interface RequestOptions {
   token?: string
   signal?: AbortSignal
   body?: object
   method?: 'PATCH' | 'PUT'
-} = {}): Promise<T> {
-  const headers = new Headers({ Accept: 'application/json' })
+}
+
+async function fetchControl(path: string, options: RequestOptions, accept: string) {
+  const headers = new Headers({ Accept: accept })
   if (options.token) headers.set('Authorization', `Bearer ${options.token}`)
   if (options.body) headers.set('Content-Type', 'application/json')
   const response = await fetch(path, {
@@ -24,7 +26,15 @@ export async function request<T>(path: string, options: {
     const error = await response.json().catch(() => ({})) as { reason?: string; metadata?: Record<string, string> }
     throw new ApiError(response.status, error?.reason, error?.metadata)
   }
-  return response.json()
+  return response
+}
+
+export async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  return (await fetchControl(path, options, 'application/json')).json()
+}
+
+export async function requestCSV(path: string, options: RequestOptions) {
+  return (await fetchControl(path, options, 'text/csv')).blob()
 }
 
 export async function login(phone: string, password: string) {

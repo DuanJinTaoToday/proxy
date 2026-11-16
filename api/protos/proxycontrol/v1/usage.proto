@@ -6,10 +6,45 @@ import "google/api/annotations.proto";
 import "openapiv3/annotations.proto";
 import "validate/validate.proto";
 import "google/protobuf/timestamp.proto";
+import "proxycontrol/v1/common.proto";
 
 option go_package = "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1";
 
+// ExportDailyUsage is served directly by Go so its response is a download.
+option (openapi.v3.document) = {
+  paths: { path: {
+    name: "/v1/tenant/usage/daily.csv"
+    value: { get: {
+      tags: "UsageService"
+      summary: "导出租户日实扣用量"
+      operation_id: "UsageService_ExportDailyUsage"
+      parameters: { parameter: { name: "startDate" in: "query" description: "上海自然日起点（含），格式 YYYY-MM-DD" schema: { schema: { type: "string" } } } }
+      parameters: { parameter: { name: "endDate" in: "query" description: "上海自然日终点（含），格式 YYYY-MM-DD" schema: { schema: { type: "string" } } } }
+      parameters: { parameter: { name: "clientId" in: "query" description: "可选代理子账号 ID" schema: { schema: { type: "string" } } } }
+      responses: { response_or_reference: {
+        name: "200"
+        value: { response: {
+          description: "完整筛选结果的 CSV 下载，流量单位为十进制 GB"
+          content: { additional_properties: { name: "text/csv" value: { schema: { schema: { type: "string" format: "binary" } } } } }
+        } }
+      } }
+    } }
+  } }
+};
+
 service UsageService {
+  rpc ListDailyUsage(DailyUsageRequest) returns (DailyUsageResponse) {
+    option (google.api.http) = { get: "/v1/tenant/usage/daily" };
+    option (openapi.v3.operation) = { summary: "查询租户日实扣用量" };
+  }
+  rpc GetTrafficAlert(BaseRequest) returns (TrafficAlert) {
+    option (google.api.http) = { get: "/v1/tenant/traffic-alert" };
+    option (openapi.v3.operation) = { summary: "查看动态流量余额和当前低余额提醒" };
+  }
+  rpc SetLowBalanceThreshold(SetLowBalanceThresholdRequest) returns (TrafficAlert) {
+    option (google.api.http) = { put: "/v1/tenant/traffic-alert" body: "*" };
+    option (openapi.v3.operation) = { summary: "设置或清除动态流量低余额提醒阈值" };
+  }
   rpc QueryUsage(QueryUsageRequest) returns (QueryUsageResponse) {
     option (google.api.http) = { get: "/v1/operations/usage" };
     option (openapi.v3.operation) = {
@@ -28,6 +63,45 @@ service UsageService {
       summary: "分页查询待回放或可能缺失的用量"
     };
   }
+}
+
+message DailyUsageRequest {
+  // 上海自然日（含），格式 YYYY-MM-DD。仅填一端时查询该日，两端均省略时查询上海当天。
+  string start_date = 1 [(validate.rules).string = {pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$", ignore_empty: true}];
+  // 上海自然日（含），格式 YYYY-MM-DD。
+  string end_date = 2 [(validate.rules).string = {pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$", ignore_empty: true}];
+  // 可选代理子账号 ID，留空时汇总租户全部子账号。
+  string client_id = 3 [(validate.rules).string = {uuid: true, ignore_empty: true}];
+}
+
+message DailyUsage {
+  // 上海自然日，格式 YYYY-MM-DD。
+  string date = 1;
+  // 上下行合计实扣字节数。
+  int64 billable_bytes = 2;
+  // 对应筛选范围内，该日用量最近一次入库时间。
+  google.protobuf.Timestamp updated_at = 3;
+}
+
+message DailyUsageResponse {
+  // 按日期升序返回有实扣量的天，查询区间无实扣时为空列表。
+  repeated DailyUsage days = 1;
+}
+
+message SetLowBalanceThresholdRequest {
+  // 非负字节数，传 null 或省略时停用提醒。
+  optional int64 threshold_bytes = 1 [(validate.rules).int64.gte = 0];
+}
+
+message TrafficAlert {
+  // 保留负值以表示欠费。
+  int64 available_bytes = 1;
+  // 阈值字节数，未设置时省略。
+  optional int64 threshold_bytes = 2;
+  // 当前提醒周期。当前无需提醒时省略。
+  int64 occurrence = 3;
+  // 当前周期第一次触发的时间，当前无需提醒时省略。
+  google.protobuf.Timestamp triggered_at = 4;
 }
 
 message ListRecordAnomaliesRequest {

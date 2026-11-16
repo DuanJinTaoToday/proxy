@@ -8,6 +8,9 @@ import (
 type Repository interface {
 	Transact(ctx context.Context, run func(Transaction) error) error
 	QueryUsageBuckets(ctx context.Context, query UsageQuery, after *UsageKey, limit int) ([]UsageBucket, error)
+	QueryDailyUsage(ctx context.Context, tenant string, filter DailyUsageFilter) ([]DailyUsage, error)
+	TrafficAlert(ctx context.Context, tenant string) (TrafficAlert, error)
+	SetTrafficAlert(ctx context.Context, tenant string, threshold *int64) (TrafficAlert, error)
 	ListRecordAnomalies(ctx context.Context, filter FindingFilter, after *FindingKey, limit int) ([]RecordAnomaly, error)
 	ListUsageGaps(ctx context.Context, filter FindingFilter, after *FindingKey, limit int) ([]UsageGap, error)
 }

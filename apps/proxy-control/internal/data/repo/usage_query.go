@@ -8,6 +8,19 @@ import (
 	"gorm.io/gorm"
 )
 
+func (r *UsageRepository) QueryDailyUsage(ctx context.Context, tenant string, filter usage.DailyUsageFilter) ([]usage.DailyUsage, error) {
+	const where = ` WHERE tenant_id = @tenant AND (@client = '' OR client_id = @client)
+		AND usage_date BETWEEN CAST(@start AS date) AND CAST(@end AS date) AND billable_bytes > 0`
+	var rows []usage.DailyUsage
+	err := r.db.WithContext(ctx).Raw(`SELECT to_char(usage_date, 'YYYY-MM-DD') AS date,
+		SUM(billable_bytes) AS billable_bytes, MAX(last_received_at) AS updated_at
+		FROM (SELECT usage_date, billable_bytes, last_received_at FROM usage_minutely`+where+
+		` UNION ALL SELECT usage_date, billable_bytes, last_received_at FROM usage_daily`+where+
+		`) AS buckets GROUP BY usage_date ORDER BY usage_date`,
+		sql.Named("tenant", tenant), sql.Named("client", filter.ClientID), sql.Named("start", filter.StartDate), sql.Named("end", filter.EndDate)).Scan(&rows).Error
+	return rows, err
+}
+
 func (r *UsageRepository) QueryUsageBuckets(ctx context.Context, query usage.UsageQuery, after *usage.UsageKey, limit int) ([]usage.UsageBucket, error) {
 	return queryUsageBuckets(r.db.WithContext(ctx), query, after, limit)
 }

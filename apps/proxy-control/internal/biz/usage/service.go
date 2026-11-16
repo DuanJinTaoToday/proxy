@@ -1,6 +1,7 @@
 package usage
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/base64"
 	"time"
@@ -25,6 +26,7 @@ func init() {
 
 type TenantAccess interface {
 	Require(string, string, access.Permission) error
+	Account(context.Context, string) (access.Tenant, error)
 }
 
 type Service struct {

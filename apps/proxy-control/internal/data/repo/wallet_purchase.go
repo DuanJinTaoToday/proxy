@@ -43,6 +43,9 @@ func grantPurchasedTraffic(tx *gorm.DB, tenant string, orderID, capacity int64, 
 		usage_version = usage_version + 1, updated_at = ? WHERE tenant_id = ?`, capacity, now, tenant).Error; err != nil {
 		return err
 	}
+	if err := reconcileTrafficAlert(tx, tenant); err != nil {
+		return err
+	}
 	return tx.Exec(`INSERT INTO traffic_grants
 		(tenant_id, order_id, order_position, purchased_bytes, debt_offset_bytes, remaining_bytes, granted_at)
 		VALUES (?, ?, 1, ?, ?, ?, ?)`, tenant, orderID, capacity, offset, capacity-offset, now).Error

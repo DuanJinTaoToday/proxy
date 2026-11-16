@@ -17,21 +17,87 @@ var _ = new(context.Context)
 
 const _ = http.SupportPackageIsVersion3
 
+const OperationUsageServiceGetTrafficAlert = "/proxycontrol.v1.UsageService/GetTrafficAlert"
+const OperationUsageServiceListDailyUsage = "/proxycontrol.v1.UsageService/ListDailyUsage"
 const OperationUsageServiceListRecordAnomalies = "/proxycontrol.v1.UsageService/ListRecordAnomalies"
 const OperationUsageServiceListUsageGaps = "/proxycontrol.v1.UsageService/ListUsageGaps"
 const OperationUsageServiceQueryUsage = "/proxycontrol.v1.UsageService/QueryUsage"
+const OperationUsageServiceSetLowBalanceThreshold = "/proxycontrol.v1.UsageService/SetLowBalanceThreshold"
 
 type UsageServiceHTTPServer interface {
+	GetTrafficAlert(context.Context, *BaseRequest) (*TrafficAlert, error)
+	ListDailyUsage(context.Context, *DailyUsageRequest) (*DailyUsageResponse, error)
 	ListRecordAnomalies(context.Context, *ListRecordAnomaliesRequest) (*ListRecordAnomaliesResponse, error)
 	ListUsageGaps(context.Context, *ListUsageGapsRequest) (*ListUsageGapsResponse, error)
 	QueryUsage(context.Context, *QueryUsageRequest) (*QueryUsageResponse, error)
+	SetLowBalanceThreshold(context.Context, *SetLowBalanceThresholdRequest) (*TrafficAlert, error)
 }
 
 func RegisterUsageServiceHTTPServer(s *http.Server, srv UsageServiceHTTPServer) {
 	r := s.Route("/")
+	r.Handle("GET", "/v1/tenant/usage/daily", _UsageService_ListDailyUsage0_HTTP_Handler(srv))
+	r.Handle("GET", "/v1/tenant/traffic-alert", _UsageService_GetTrafficAlert0_HTTP_Handler(srv))
+	r.Handle("PUT", "/v1/tenant/traffic-alert", _UsageService_SetLowBalanceThreshold0_HTTP_Handler(srv))
 	r.Handle("GET", "/v1/operations/usage", _UsageService_QueryUsage0_HTTP_Handler(srv))
 	r.Handle("GET", "/v1/operations/anomalies", _UsageService_ListRecordAnomalies0_HTTP_Handler(srv))
 	r.Handle("GET", "/v1/operations/gaps", _UsageService_ListUsageGaps0_HTTP_Handler(srv))
+}
+
+func _UsageService_ListDailyUsage0_HTTP_Handler(srv UsageServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in DailyUsageRequest
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationUsageServiceListDailyUsage)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.ListDailyUsage(ctx, req.(*DailyUsageRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*DailyUsageResponse)
+		return ctx.Result(200, reply)
+	}
+}
+
+func _UsageService_GetTrafficAlert0_HTTP_Handler(srv UsageServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in BaseRequest
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationUsageServiceGetTrafficAlert)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.GetTrafficAlert(ctx, req.(*BaseRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*TrafficAlert)
+		return ctx.Result(200, reply)
+	}
+}
+
+func _UsageService_SetLowBalanceThreshold0_HTTP_Handler(srv UsageServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in SetLowBalanceThresholdRequest
+		if err := ctx.Bind(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationUsageServiceSetLowBalanceThreshold)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.SetLowBalanceThreshold(ctx, req.(*SetLowBalanceThresholdRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*TrafficAlert)
+		return ctx.Result(200, reply)
+	}
 }
 
 func _UsageService_QueryUsage0_HTTP_Handler(srv UsageServiceHTTPServer) func(ctx http.Context) error {
@@ -92,9 +158,12 @@ func _UsageService_ListUsageGaps0_HTTP_Handler(srv UsageServiceHTTPServer) func(
 }
 
 type UsageServiceHTTPClient interface {
+	GetTrafficAlert(ctx context.Context, req *BaseRequest, opts ...http.CallOption) (rsp *TrafficAlert, err error)
+	ListDailyUsage(ctx context.Context, req *DailyUsageRequest, opts ...http.CallOption) (rsp *DailyUsageResponse, err error)
 	ListRecordAnomalies(ctx context.Context, req *ListRecordAnomaliesRequest, opts ...http.CallOption) (rsp *ListRecordAnomaliesResponse, err error)
 	ListUsageGaps(ctx context.Context, req *ListUsageGapsRequest, opts ...http.CallOption) (rsp *ListUsageGapsResponse, err error)
 	QueryUsage(ctx context.Context, req *QueryUsageRequest, opts ...http.CallOption) (rsp *QueryUsageResponse, err error)
+	SetLowBalanceThreshold(ctx context.Context, req *SetLowBalanceThresholdRequest, opts ...http.CallOption) (rsp *TrafficAlert, err error)
 }
 
 type UsageServiceHTTPClientImpl struct {
@@ -103,6 +172,38 @@ type UsageServiceHTTPClientImpl struct {
 
 func NewUsageServiceHTTPClient(client *http.Client) UsageServiceHTTPClient {
 	return &UsageServiceHTTPClientImpl{client}
+}
+
+func (c *UsageServiceHTTPClientImpl) GetTrafficAlert(ctx context.Context, in *BaseRequest, opts ...http.CallOption) (*TrafficAlert, error) {
+	var out TrafficAlert
+	pattern := "/v1/tenant/traffic-alert"
+	path := http.BuildPath(pattern, in, http.WithQueryParams())
+	opts = append([]http.CallOption{
+		http.Accept("application/protojson"),
+		http.Operation(OperationUsageServiceGetTrafficAlert),
+		http.PathTemplate(pattern),
+	}, opts...)
+	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (c *UsageServiceHTTPClientImpl) ListDailyUsage(ctx context.Context, in *DailyUsageRequest, opts ...http.CallOption) (*DailyUsageResponse, error) {
+	var out DailyUsageResponse
+	pattern := "/v1/tenant/usage/daily"
+	path := http.BuildPath(pattern, in, http.WithQueryParams())
+	opts = append([]http.CallOption{
+		http.Accept("application/protojson"),
+		http.Operation(OperationUsageServiceListDailyUsage),
+		http.PathTemplate(pattern),
+	}, opts...)
+	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
 }
 
 func (c *UsageServiceHTTPClientImpl) ListRecordAnomalies(ctx context.Context, in *ListRecordAnomaliesRequest, opts ...http.CallOption) (*ListRecordAnomaliesResponse, error) {
@@ -147,6 +248,23 @@ func (c *UsageServiceHTTPClientImpl) QueryUsage(ctx context.Context, in *QueryUs
 		http.PathTemplate(pattern),
 	}, opts...)
 	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (c *UsageServiceHTTPClientImpl) SetLowBalanceThreshold(ctx context.Context, in *SetLowBalanceThresholdRequest, opts ...http.CallOption) (*TrafficAlert, error) {
+	var out TrafficAlert
+	pattern := "/v1/tenant/traffic-alert"
+	path := http.BuildPath(pattern, in)
+	opts = append([]http.CallOption{
+		http.Accept("application/protojson"),
+		http.ContentType("application/protojson"),
+		http.Operation(OperationUsageServiceSetLowBalanceThreshold),
+		http.PathTemplate(pattern),
+	}, opts...)
+	err := c.cc.Invoke(ctx, "PUT", path, in, &out, opts...)
 	if err != nil {
 		return nil, err
 	}

@@ -29,6 +29,9 @@ func (t usageTx) DebitTenant(tenant string, bytes int64, now time.Time) error {
 	if bytes == 0 {
 		return nil
 	}
+	if err := reconcileTrafficAlert(t.db, tenant); err != nil {
+		return err
+	}
 	return t.db.Exec(`WITH fifo AS (
         SELECT id,COALESCE(SUM(remaining_bytes) OVER (
             ORDER BY granted_at,id ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
