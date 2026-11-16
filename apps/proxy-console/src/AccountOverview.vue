@@ -88,8 +88,8 @@ onUnmounted(() => controller.abort())
                 <RouterLink class="underline" :to="{ path: '/', query: { view: 'usage' } }">查看日用量</RouterLink>
               </template>
               <template v-else-if="notice.kind === 'static_ip_expiry'">
-                <span role="status"><strong v-if="claimedExpiry">新提醒 · </strong></span>
                 {{ notice.count }} 个静态 IP 将在 5 天内到期。
+                <span role="status"><strong v-if="claimedExpiry">其中 {{ claimedExpiry }} 个为新提醒。</strong></span>
                 <RouterLink class="underline" :to="{ path: '/', query: { view: 'ips' } }">查看我的 IP</RouterLink>
               </template>
             </li>
