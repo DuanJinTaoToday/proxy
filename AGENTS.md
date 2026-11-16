@@ -12,6 +12,8 @@
 
 ## Agent skills
 
+在 Proxy 使用 `to-spec` 或 `to-tickets` 时，先阅读开发规范中的 [`to-spec` 与 `to-tickets`](docs/standards/proxy-development-conventions.md#to-spec-与-to-tickets)；使用 `implement` 时，先阅读 [Issue 实现与交付](docs/standards/proxy-development-conventions.md#issue-实现与交付)。
+
 ### Issue tracker
 
 Issues are tracked in `DuanJinTaoToday/proxy` on GitHub. See `docs/agents/issue-tracker.md`.
