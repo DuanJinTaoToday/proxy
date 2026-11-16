@@ -16,6 +16,10 @@ const route = useRoute()
 const controller = new AbortController()
 const offers = ref<StaticOffer[]>([])
 const selected = ref('')
+const region = ref('')
+const ipType = ref('')
+const termDays = ref<number | ''>('')
+const inStock = ref(false)
 const rawQuantity = ref<number | string>(Math.max(1, Math.min(2147483647, Number(route.query.quantity) || 1)))
 const quantity = computed(() => Number(rawQuantity.value))
 const loading = ref(true)
@@ -41,7 +45,21 @@ if (storageKey) {
   }
 }
 const offerKey = (offer: StaticOffer) => offer.node_id + '/' + offer.term
-const offer = computed(() => offers.value.find(item => offerKey(item) === selected.value))
+const regions = computed(() => [...new Set(offers.value.map(item => item.region).filter(Boolean))])
+const ipTypes = computed(() => [...new Set(offers.value.map(item => item.ip_type).filter(Boolean))])
+const terms = computed(() => [...new Set(offers.value.map(item => item.term_days))].sort((a, b) => a - b))
+const filteredOffers = computed(() => offers.value.filter(item =>
+  (!region.value || item.region === region.value) &&
+  (!ipType.value || item.ip_type === ipType.value) &&
+  (!termDays.value || item.term_days === termDays.value) &&
+  (!inStock.value || (item.available ?? 0) > 0),
+))
+const offer = computed(() => filteredOffers.value.find(item => offerKey(item) === selected.value))
+watch([region, ipType, termDays, inStock], () => {
+  if (filteredOffers.value.some(item => offerKey(item) === selected.value)) return
+  const first = filteredOffers.value[0]
+  selected.value = first ? offerKey(first) : ''
+}, { flush: 'sync' })
 const total = computed(() => offer.value && Number.isInteger(quantity.value) ? BigInt(offer.value.unit_minor) * BigInt(quantity.value) : 0n)
 const canSubmit = computed(() => offer.value && Number.isInteger(quantity.value) && quantity.value >= 1 && quantity.value <= (offer.value.available ?? 0))
 const checkoutQuery = computed(() => ({ view: 'static', offer: selected.value, quantity: String(quantity.value) }))
@@ -182,15 +200,38 @@ onUnmounted(() => controller.abort())
     <Button v-if="!offers.length && error" type="button" variant="outline" @click="load">重新加载</Button>
     <p v-else-if="!offers.length">当前没有可选规格。</p>
     <form v-if="offers.length || order" class="checkout" @submit.prevent="submit">
-      <label v-if="!closed">地区、类型和租期
+      <fieldset v-if="!closed" class="offer-filters" :disabled="sending">
+        <legend>筛选规格</legend>
+        <label>地区
+          <select v-model="region">
+            <option value="">全部地区</option>
+            <option v-for="value in regions" :key="value" :value="value">{{ value }}</option>
+          </select>
+        </label>
+        <label>类型
+          <select v-model="ipType">
+            <option value="">全部类型</option>
+            <option v-for="value in ipTypes" :key="value" :value="value">{{ value }}</option>
+          </select>
+        </label>
+        <label>租期
+          <select v-model="termDays">
+            <option value="">全部租期</option>
+            <option v-for="days in terms" :key="days" :value="days">{{ days }} 天</option>
+          </select>
+        </label>
+        <label class="stock-filter"><input v-model="inStock" type="checkbox"> 仅显示有库存</label>
+      </fieldset>
+      <p v-if="!closed && !filteredOffers.length" role="status">没有符合筛选条件的规格。</p>
+      <label v-if="!closed && filteredOffers.length">规格
         <select v-model="selected" :disabled="sending">
           <option value="" disabled>请选择规格</option>
-          <option v-for="item in offers" :key="offerKey(item)" :value="offerKey(item)">
-            {{ item.region }} {{ item.ip_type }} · {{ item.term_days }} 天
+          <option v-for="item in filteredOffers" :key="offerKey(item)" :value="offerKey(item)">
+            {{ item.region }} {{ item.ip_type }} · {{ item.term_days }} 天 · {{ money(item.unit_minor) }}/个 · 可购 {{ item.available ?? 0 }} 个
           </option>
         </select>
       </label>
-      <label v-if="!closed">数量
+      <label v-if="offer && !closed">数量
         <Input v-model="rawQuantity" type="number" min="1" :max="offer?.available ?? 0" :disabled="sending" />
       </label>
       <p v-if="offer && !closed">
@@ -214,4 +255,6 @@ onUnmounted(() => controller.abort())
 .checkout { display: grid; gap: 12px; justify-items: start; }
 .checkout label { display: grid; gap: 4px; }
 .checkout select, .checkout input { max-width: 100%; }
+.offer-filters { display: flex; flex-wrap: wrap; align-items: end; gap: 8px 12px; min-width: 0; }
+.offer-filters .stock-filter { display: flex; align-items: center; }
 </style>
