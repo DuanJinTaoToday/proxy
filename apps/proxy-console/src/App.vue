@@ -1,11 +1,17 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { GalleryVerticalEnd } from 'lucide-vue-next'
 import { ApiError, login, loginOperator, register } from './api/control'
 import { getWallet } from './api/wallet'
 import type { WalletTenant } from './api/wallet'
 import OperatorWallet from './OperatorWallet.vue'
-import WalletRecords from './WalletRecords.vue'
-import { money } from './wallet-format'
+import TenantWallet from './TenantWallet.vue'
+import LoginForm from './LoginForm.vue'
+import { Button } from './ui/button'
+import Card from './ui/card/Card.vue'
+import CardContent from './ui/card/CardContent.vue'
+import CardHeader from './ui/card/CardHeader.vue'
+import './ui/theme.css'
 
 const { operations } = defineProps<{ operations: boolean }>()
 const sessionKey = operations ? 'proxy-console.operations-session' : 'proxy-console.session'
@@ -87,49 +93,33 @@ function switchMode() {
 </script>
 
 <template>
-  <a class="skip-link" href="#main">跳到主要内容</a>
-  <header class="topbar">
-    <div class="shell topbar-inner">
-      <div class="brand"><span class="brand-mark" aria-hidden="true"></span>{{ operations ? '运营控制台' : '代理控制台' }}</div>
-      <button v-if="token" class="secondary" type="button" @click="endSession()">退出登录</button>
+  <OperatorWallet v-if="operations && token" :token="token" :operator-name="operatorName"
+    @logout="endSession()" @expired="endSession(true)" />
+  <TenantWallet v-else-if="!operations && token && account" :token="token" :account="account"
+    @logout="endSession()" @expired="endSession(true)" />
+  <main v-else id="console-auth-main" tabindex="-1"
+    class="login-block bg-muted text-foreground flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
+    <a class="skip-link" href="#console-auth-main">跳到主要内容</a>
+    <div class="flex w-full max-w-sm flex-col gap-6">
+      <div class="flex items-center gap-2 self-center font-medium">
+        <span class="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-md">
+          <GalleryVerticalEnd class="size-4" />
+        </span>
+        {{ operations ? '运营控制台' : '代理控制台' }}
+      </div>
+      <LoginForm v-if="!token" v-model:account="phone" v-model:password="password" :operations="operations"
+        :registering="registering" :submitting="signingIn" :error="loginError" @submit="signIn" @switch-mode="switchMode" />
+      <Card v-else class="border-solid">
+        <CardHeader class="text-center"><h1 class="text-xl tracking-normal">钱包与订单</h1></CardHeader>
+        <CardContent class="flex flex-col gap-3">
+          <template v-if="tenantError">
+            <p role="alert" class="text-sm text-destructive">{{ tenantError }}</p>
+            <Button type="button" class="min-h-0 border-0" @click="retry++">重新加载</Button>
+          </template>
+          <p v-else class="text-sm text-muted-foreground" role="status">正在加载租户…</p>
+          <Button type="button" variant="outline" class="min-h-0" @click="endSession()">退出登录</Button>
+        </CardContent>
+      </Card>
     </div>
-  </header>
-
-  <main id="main" class="shell wallet-console">
-    <section v-if="!token" class="panel login-panel">
-      <h1>{{ operations ? '运营登录' : registering ? '注册代理控制台' : '登录控制台' }}</h1>
-      <form class="login-form" @submit.prevent="signIn">
-        <label v-if="operations">运营账号<input v-model="phone" autocomplete="username" required></label>
-        <label v-else>手机号<input v-model="phone" type="tel" autocomplete="username" placeholder="可带 +86" required></label>
-        <label>密码<input v-model="password" type="password" :autocomplete="registering ? 'new-password' : 'current-password'" :minlength="registering ? 12 : undefined" required></label>
-        <p v-if="loginError" role="alert" class="error">{{ loginError }}</p>
-        <button type="submit" :disabled="signingIn">{{ signingIn ? '正在提交…' : registering ? '注册' : '登录' }}</button>
-        <button v-if="!operations" class="secondary" type="button" :disabled="signingIn" @click="switchMode">{{ registering ? '已有账号，去登录' : '注册账号' }}</button>
-        <p v-if="!registering && !operations">忘记密码？请联系运营核实租户归属后重置。</p>
-      </form>
-    </section>
-
-    <OperatorWallet v-else-if="operations" :token="token" :operator-name="operatorName" @expired="endSession(true)" />
-    <template v-else>
-      <div class="page-heading">
-        <h1>钱包与订单</h1>
-        <span v-if="account">{{ account.name }}</span>
-      </div>
-      <div v-if="tenantError" class="panel state">
-        <p role="alert" class="error">{{ tenantError }}</p>
-        <button class="secondary" type="button" @click="retry++">重新加载</button>
-      </div>
-      <p v-else-if="account === null" class="panel state" role="status">正在加载租户…</p>
-      <template v-else>
-        <section class="panel overview wallet-summary" aria-labelledby="wallet-balance">
-          <div>
-            <h2 id="wallet-balance">钱包余额</h2>
-            <p class="balance">{{ money(account.available_minor) }}</p>
-          </div>
-          <p class="muted">充值、开票和售后请线下联系运营。</p>
-        </section>
-        <WalletRecords :token="token" @expired="endSession(true)" />
-      </template>
-    </template>
   </main>
 </template>
