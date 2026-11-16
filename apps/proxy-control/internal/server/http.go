@@ -1,6 +1,9 @@
 package server
 
 import (
+	"context"
+	stdhttp "net/http"
+
 	v1 "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/service"
 	"github.com/go-kratos/kratos/v3/transport/http"
@@ -25,4 +28,20 @@ func RegisterProduct(srv *http.Server, product *service.Product) {
 
 func RegisterWallet(srv *http.Server, wallet *service.Wallet) {
 	v1.RegisterWalletServiceHTTPServer(srv, wallet)
+	srv.Route("/").POST("/v1/tenant/static-ips:export", func(ctx http.Context) error {
+		var request v1.StaticIPExportRequest
+		if err := ctx.Bind(&request); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, "/proxycontrol.v1.WalletService/ExportStaticIPs")
+		handle := ctx.Middleware(func(ctx context.Context, _ any) (any, error) {
+			return wallet.ExportStaticIPs(ctx, &request)
+		})
+		data, err := handle(ctx, &request)
+		if err != nil {
+			return err
+		}
+		ctx.Response().Header().Set("Content-Disposition", `attachment; filename="static-ips.txt"`)
+		return ctx.Blob(stdhttp.StatusOK, "text/plain; charset=utf-8", data.([]byte))
+	})
 }

@@ -5,8 +5,10 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"math"
+	"strings"
 	"time"
 
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/product"
@@ -62,6 +64,63 @@ func (r *WalletRepository) StaticOffers(ctx context.Context) ([]wallet.StaticOff
 	return offers, nil
 }
 
+type staticQuoteToken struct {
+	NodeID, UnitMinor int64
+	Term              string
+	Quantity          int32
+	ExpiresAt         time.Time
+}
+
+func (r *WalletRepository) QuoteStatic(ctx context.Context, tenant string, p wallet.StaticPurchaseRequest) (wallet.StaticQuote, error) {
+	offer, err := r.selectStaticOffer(ctx, p)
+	if err != nil {
+		return wallet.StaticQuote{}, err
+	}
+	p.UnitMinor = offer.UnitMinor
+	if err := p.CheckOffer(offer); err != nil {
+		return wallet.StaticQuote{}, err
+	}
+	expires := time.Now().UTC().Add(5 * time.Minute)
+	payload := staticQuoteToken{NodeID: p.NodeID, Term: p.Term, UnitMinor: offer.UnitMinor, Quantity: p.Quantity, ExpiresAt: expires}
+	content, err := json.Marshal(payload)
+	if err != nil {
+		return wallet.StaticQuote{}, err
+	}
+	token := r.staticCipher.Seal(nil, nil, content, []byte("static-quote/"+tenant))
+	return wallet.StaticQuote{Offer: offer, Quantity: p.Quantity, ExpiresAt: expires,
+		ConfirmationToken: base64.RawURLEncoding.EncodeToString(token)}, nil
+}
+
+func (r *WalletRepository) confirmStaticQuote(tenant string, p wallet.StaticPurchaseRequest) error {
+	token, err := base64.RawURLEncoding.DecodeString(p.ConfirmationToken)
+	if err != nil || r.staticCipher == nil {
+		return wallet.ErrStaticQuoteExpired
+	}
+	content, err := r.staticCipher.Open(nil, nil, token, []byte("static-quote/"+tenant))
+	if err != nil {
+		return wallet.ErrStaticQuoteExpired
+	}
+	var quote staticQuoteToken
+	if json.Unmarshal(content, &quote) != nil || !time.Now().Before(quote.ExpiresAt) ||
+		quote.NodeID != p.NodeID || quote.Term != p.Term || quote.Quantity != p.Quantity || quote.UnitMinor != p.UnitMinor {
+		return wallet.ErrStaticQuoteExpired
+	}
+	return nil
+}
+
+func (r *WalletRepository) selectStaticOffer(ctx context.Context, p wallet.StaticPurchaseRequest) (wallet.StaticOffer, error) {
+	offers, err := r.StaticOffers(ctx)
+	if err != nil {
+		return wallet.StaticOffer{}, err
+	}
+	for _, offer := range offers {
+		if offer.NodeID == p.NodeID && offer.Term == p.Term {
+			return offer, nil
+		}
+	}
+	return wallet.StaticOffer{}, wallet.ErrStaticOfferMissing
+}
+
 func (r *WalletRepository) PurchaseStatic(ctx context.Context, tenant string, p wallet.StaticPurchaseRequest) (wallet.Order, error) {
 	if r.db == nil {
 		return wallet.Order{}, errWalletUnavailable
@@ -78,19 +137,15 @@ func (r *WalletRepository) PurchaseStatic(ctx context.Context, tenant string, p 
 		return r.Order(ctx, tenant, previous.OrderID)
 	}
 
-	offers, err := r.StaticOffers(ctx)
-	if err != nil {
+	if err := RequireProductSale(ctx, r.db, product.Static); err != nil {
 		return wallet.Order{}, err
 	}
-	var selected wallet.StaticOffer
-	for _, offer := range offers {
-		if offer.NodeID == p.NodeID && offer.Term == p.Term {
-			selected = offer
-			break
-		}
+	if err := r.confirmStaticQuote(tenant, p); err != nil {
+		return wallet.Order{}, err
 	}
-	if selected.NodeID == 0 {
-		return wallet.Order{}, wallet.ErrStaticOfferMissing
+	selected, err := r.selectStaticOffer(ctx, p)
+	if err != nil {
+		return wallet.Order{}, err
 	}
 	if err := p.CheckOffer(selected); err != nil {
 		return wallet.Order{}, err
@@ -108,7 +163,10 @@ func (r *WalletRepository) PurchaseStatic(ctx context.Context, tenant string, p 
 	}
 	created := false
 	entry, err := r.apply(ctx, command, p, func(tx *gorm.DB, _ *wallet.Command) error {
-		return RequireProductSale(ctx, tx, product.Static)
+		if err := RequireProductSale(ctx, tx, product.Static); err != nil {
+			return err
+		}
+		return r.confirmStaticQuote(tenant, p)
 	}, func(tx *gorm.DB, e wallet.Entry) error {
 		created = true
 		return tx.Exec("INSERT INTO static_purchases (tenant_id, order_id) VALUES (?, ?)", tenant, e.OrderID).Error
@@ -133,17 +191,29 @@ func (r *WalletRepository) PurchaseStatic(ctx context.Context, tenant string, p 
 	return r.Order(process, tenant, entry.OrderID)
 }
 
-func (r *WalletRepository) StaticAllocations(ctx context.Context, tenant string) ([]wallet.StaticAllocation, error) {
+func (r *WalletRepository) StaticAllocations(ctx context.Context, tenant string, ids []string, onlyActive bool) ([]wallet.StaticAllocation, error) {
 	if r.db == nil {
 		return nil, errWalletUnavailable
 	}
 	var rows []storedStaticIP
-	if err := r.db.WithContext(ctx).Table("static_ip_allocations").Where("tenant_id = ?", tenant).
-		Order("expires_at DESC, supplier_item_id").Scan(&rows).Error; err != nil {
+	db := r.db.WithContext(ctx).Table("static_ip_allocations").Where("tenant_id = ?", tenant)
+	if len(ids) == 0 {
+		db = db.Select("supplier_item_id, order_id, ip, port, expires_at")
+	} else {
+		db = db.Where("supplier_item_id IN ?", ids)
+	}
+	if onlyActive {
+		db = db.Where("expires_at > clock_timestamp()")
+	}
+	if err := db.Order("expires_at DESC, supplier_item_id").Scan(&rows).Error; err != nil {
 		return nil, err
 	}
 	allocations := make([]wallet.StaticAllocation, 0, len(rows))
 	for _, row := range rows {
+		if len(ids) == 0 {
+			allocations = append(allocations, row.StaticAllocation)
+			continue
+		}
 		if r.staticCipher == nil {
 			return nil, errWalletUnavailable
 		}
@@ -157,7 +227,7 @@ func (r *WalletRepository) StaticAllocations(ctx context.Context, tenant string)
 	return allocations, nil
 }
 
-func (r *WalletRepository) ResolveStatic(ctx context.Context, tenant string, id int64, operator, supplierID, evidence string, closeRemaining bool) (wallet.Order, error) {
+func (r *WalletRepository) ResolveStatic(ctx context.Context, tenant string, id int64, operator, supplierID, evidence string, closeRemaining, confirmedUndeliverable bool) (wallet.Order, error) {
 	if r.db == nil {
 		return wallet.Order{}, errWalletUnavailable
 	}
@@ -166,7 +236,7 @@ func (r *WalletRepository) ResolveStatic(ctx context.Context, tenant string, id 
         SELECT COALESCE(s.supplier_order_id, '') FROM static_purchases s
         JOIN purchase_orders o ON o.id = s.order_id AND o.tenant_id = s.tenant_id
         WHERE s.tenant_id = ? AND s.order_id = ? AND o.status = 'pending'
-        AND o.created_at <= clock_timestamp() - interval '24 hours'`, tenant, id), &supplierOrderID)
+        AND (? OR o.created_at <= clock_timestamp() - interval '24 hours')`, tenant, id, confirmedUndeliverable), &supplierOrderID)
 	if err != nil {
 		return wallet.Order{}, err
 	}
@@ -178,17 +248,18 @@ func (r *WalletRepository) ResolveStatic(ctx context.Context, tenant string, id 
 	}
 	var delivery wallet.StaticDelivery
 	if supplierID != "" {
-		if r.static == nil {
-			return wallet.Order{}, wallet.ErrStaticUnavailable
+		if r.static != nil {
+			delivery, err = r.static.Detail(ctx, supplierID)
+		} else {
+			err = wallet.ErrStaticUnavailable
 		}
-		delivery, err = r.static.Detail(ctx, supplierID)
 		if err != nil && !closeRemaining {
 			return wallet.Order{}, wallet.ErrStaticUnavailable
 		}
 	} else if !closeRemaining {
 		return wallet.Order{}, wallet.ErrInvalid
 	}
-	if err := r.recordStaticDelivery(ctx, tenant, id, delivery, operator, evidence, closeRemaining, closeRemaining); err != nil {
+	if err := r.recordStaticDelivery(ctx, tenant, id, delivery, operator, evidence, closeRemaining, closeRemaining && !confirmedUndeliverable); err != nil {
 		return wallet.Order{}, err
 	}
 	return r.Order(ctx, tenant, id)
@@ -218,7 +289,11 @@ func (r *WalletRepository) recordStaticDelivery(ctx context.Context, tenant stri
 				return wallet.ErrState
 			}
 		}
+		node, _, _ := strings.Cut(item.Reference, "/")
 		for _, ip := range delivery.Allocations {
+			if fmt.Sprint(ip.NodeID) != node {
+				return wallet.ErrState
+			}
 			if r.staticCipher == nil {
 				return errWalletUnavailable
 			}
@@ -241,17 +316,17 @@ func (r *WalletRepository) recordStaticDelivery(ctx context.Context, tenant stri
 		if count > item.Quantity {
 			return wallet.ErrState
 		}
-		if count < item.Quantity && !closeRemaining {
-			order.DeliveredCount = int64(count)
-			order.Items[0].DeliveredCount = count
-			_, err := saveSettlementOrder(tx, tenant, order)
-			return err
-		}
 		if operator != "" {
 			if err := tx.Exec(`INSERT INTO static_purchase_resolutions (tenant_id, order_id, operator_id, evidence)
                 VALUES (?, ?, ?, ?)`, tenant, id, operator, evidence).Error; err != nil {
 				return err
 			}
+		}
+		if count < item.Quantity && !closeRemaining {
+			order.DeliveredCount = int64(count)
+			order.Items[0].DeliveredCount = count
+			_, err := saveSettlementOrder(tx, tenant, order)
+			return err
 		}
 		var before int64
 		if err := scanWalletRecord(tx.Raw("SELECT available_minor FROM wallets WHERE tenant_id = ? FOR UPDATE", tenant), &before); err != nil {
@@ -280,4 +355,20 @@ func (r *WalletRepository) PendingStaticPurchases(ctx context.Context, afterID i
         WHERE o.status = 'pending' AND o.created_at <= clock_timestamp() - interval '24 hours' AND o.id > ?
         ORDER BY o.id LIMIT ?`, afterID, wallet.PageSize+1).Scan(&purchases).Error
 	return purchases, err
+}
+
+func (r *WalletRepository) ClaimStaticIPExpiryNotices(ctx context.Context, tenant string) (int32, error) {
+	if r.db == nil {
+		return 0, errWalletUnavailable
+	}
+	var count int32
+	err := scanWalletRecord(r.db.WithContext(ctx).Raw(`
+        WITH received AS (
+            UPDATE static_ip_allocations SET reminded_expiry = expires_at
+            WHERE tenant_id = ? AND expires_at > statement_timestamp()
+            AND expires_at <= statement_timestamp() + interval '120 hours'
+            AND reminded_expiry IS DISTINCT FROM expires_at
+            RETURNING 1
+        ) SELECT COUNT(*) FROM received`, tenant), &count)
+	return count, err
 }

@@ -147,7 +147,7 @@ func parseDelivery(id supplierID, items []allocation, nodeID int64) wallet.Stati
 			strings.ContainsAny(ip.Username+ip.Password, "\r\n\x00") {
 			continue
 		}
-		result.Allocations = append(result.Allocations, wallet.StaticAllocation{SupplierItemID: string(ip.ID),
+		result.Allocations = append(result.Allocations, wallet.StaticAllocation{NodeID: ip.NodeID, SupplierItemID: string(ip.ID),
 			IP: ip.IP, Port: ip.Port, Username: ip.Username, Password: ip.Password, ExpiresAt: expires})
 	}
 	return result

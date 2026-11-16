@@ -9,7 +9,7 @@ import (
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/wallet"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/conf"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/data"
-	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/data/ipcrown"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/data/acl/ipcrown"
 	"github.com/go-kratos/kratos/v3/errors"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"

@@ -266,6 +266,6 @@ async function submitRecharge() {
       </Card>
       <WalletRecords :key="tenant.tenant_id" :token="token" :tenant-id="tenant.tenant_id" :revision="revision" @expired="emit('expired')" />
     </template>
-    <OperatorStaticPurchases v-if="permitted" :token="token" @expired="emit('expired')" @resolved="refreshResolvedWallet" />
+    <OperatorStaticPurchases :can-resolve="permitted" :token="token" @expired="emit('expired')" @resolved="refreshResolvedWallet" />
   </DashboardShell>
 </template>

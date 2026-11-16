@@ -1,11 +1,17 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { ApiError } from './api/control'
-import { staticIPs } from './api/static-ip'
+import { claimStaticIPExpiryNotices, staticIPConfig, staticIPExport, staticIPs } from './api/static-ip'
 import type { StaticIP } from './api/static-ip'
 import { Button } from './ui/button'
+import Table from './ui/table/Table.vue'
+import TableHeader from './ui/table/TableHeader.vue'
+import TableBody from './ui/table/TableBody.vue'
+import TableRow from './ui/table/TableRow.vue'
+import TableHead from './ui/table/TableHead.vue'
+import TableCell from './ui/table/TableCell.vue'
 
-const { token, tenantId, summary } = defineProps<{ token: string; tenantId: string; summary?: boolean }>()
+const { token, summary } = defineProps<{ token: string; summary?: boolean }>()
 const emit = defineEmits<{ expired: [] }>()
 const controller = new AbortController()
 const allocations = ref<StaticIP[]>([])
@@ -24,19 +30,10 @@ const selected = computed(() => allocations.value.filter(ip => available(ip) && 
 const formatter = new Intl.DateTimeFormat('zh-CN', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Shanghai' })
 const line = (ip: StaticIP) => [ip.ip.includes(':') ? '[' + ip.ip + ']' : ip.ip, ip.port, ip.username, ip.password].join(':')
 
-watch([allocations, now], () => {
-  const soon = allocations.value.filter(nearingExpiry)
-  if (!soon.length) return
-  try {
-    const key = 'proxy-console.static-expiry.' + tenantId
-    const previous = JSON.parse(localStorage.getItem(key) ?? '{}') as Record<string, string>
-    const active = Object.fromEntries(soon.map(ip => [ip.supplier_item_id, ip.expires_at]))
-    const count = soon.filter(ip => previous[ip.supplier_item_id] !== ip.expires_at).length
-    if (count) expiryNotice.value = count
-    localStorage.setItem(key, JSON.stringify(active))
-  } catch {
-    // Current expiry status and counts remain visible even without storage.
-  }
+watch(expiringCount, async (count) => {
+  if (!count) return
+  const notice = await claimStaticIPExpiryNotices(token, controller.signal).catch(() => undefined)
+  if (notice?.count) expiryNotice.value = notice.count
 })
 
 async function load() {
@@ -55,21 +52,27 @@ async function load() {
 
 async function copy(ip: StaticIP) {
   try {
-    await navigator.clipboard.writeText(line(ip))
+    const config = await staticIPConfig(token, ip.supplier_item_id, controller.signal)
+    await navigator.clipboard.writeText(line(config))
     feedback.value = '已复制。'
   } catch {
     feedback.value = '复制失败，请检查剪贴板权限。'
   }
 }
 
-function exportTXT() {
+async function exportTXT() {
   if (!selected.value.length) return
-  const url = URL.createObjectURL(new Blob([selected.value.map(line).join('\n') + '\n'], { type: 'text/plain;charset=utf-8' }))
-  const link = document.createElement('a')
-  link.href = url
-  link.download = 'static-ips.txt'
-  link.click()
-  window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+  try {
+    const blob = await staticIPExport(token, selected.value.map(ip => ip.supplier_item_id), controller.signal)
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = 'static-ips.txt'
+    link.click()
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+  } catch {
+    feedback.value = '导出失败，请刷新列表并检查所选 IP 是否仍可用。'
+  }
 }
 
 onMounted(load)
@@ -92,18 +95,18 @@ onUnmounted(() => { controller.abort(); window.clearInterval(timer) })
         <Button type="button" variant="outline" :disabled="!selected.length" @click="exportTXT">导出所选 IP 的 TXT</Button>
         <p v-if="feedback" role="status">{{ feedback }}</p>
         <div class="table-scroll">
-          <table>
-            <thead><tr><th scope="col">选择</th><th scope="col">IP</th><th scope="col">到期时间（北京时间）</th><th scope="col">状态</th><th scope="col">操作</th></tr></thead>
-            <tbody>
-              <tr v-for="ip in allocations" :key="ip.supplier_item_id">
-                <td><input v-model="checked" type="checkbox" :value="ip.supplier_item_id" :disabled="!available(ip)" :aria-label="'选择 ' + ip.ip" /></td>
-                <td>{{ ip.ip }}:{{ ip.port }}</td>
-                <td>{{ formatter.format(new Date(ip.expires_at)) }}</td>
-                <td>{{ !available(ip) ? '已到期' : nearingExpiry(ip) ? '即将到期' : '可用' }}</td>
-                <td><Button type="button" variant="outline" @click="copy(ip)">复制接入信息</Button></td>
-              </tr>
-            </tbody>
-          </table>
+          <Table>
+            <TableHeader><TableRow><TableHead scope="col">选择</TableHead><TableHead scope="col">IP</TableHead><TableHead scope="col">到期时间（北京时间）</TableHead><TableHead scope="col">状态</TableHead><TableHead scope="col">操作</TableHead></TableRow></TableHeader>
+            <TableBody>
+              <TableRow v-for="ip in allocations" :key="ip.supplier_item_id">
+                <TableCell><input v-model="checked" type="checkbox" :value="ip.supplier_item_id" :disabled="!available(ip)" :aria-label="'选择 ' + ip.ip" /></TableCell>
+                <TableCell>{{ ip.ip }}:{{ ip.port }}</TableCell>
+                <TableCell>{{ formatter.format(new Date(ip.expires_at)) }}</TableCell>
+                <TableCell>{{ !available(ip) ? '已到期' : nearingExpiry(ip) ? '即将到期' : '可用' }}</TableCell>
+                <TableCell><Button type="button" variant="outline" :disabled="!available(ip)" @click="copy(ip)">复制接入信息</Button></TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
         </div>
       </template>
     </template>

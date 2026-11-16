@@ -11,17 +11,21 @@ import (
 
 	v1 "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/integration/testfixture"
-	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/data/ipcrown"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/data/acl/ipcrown"
 )
 
 func TestStaticPurchaseAndIndependentSales(t *testing.T) {
 	const item = `{"id":23,"nid":3,"ip":"192.0.2.1","port":43000,"p_user":"customer","p_pass":"fixture","stoptime":"2099-01-01 12:00:00"}`
 	calls := make(chan string, 4)
 	var supplierMode atomic.Int32
+	var quotePrice atomic.Int64
+	quotePrice.Store(10)
+	var quoteStock atomic.Int32
+	quoteStock.Store(2)
 	supplier := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/open/api/nodes-and-continents":
-			_, _ = io.WriteString(w, `{"code":0,"data":{"nodes":[{"id":3,"title":"东京","isp":"独享","max":2,"prices":[{"price_type":"yp1","buytime":1,"price":10}]}]}}`)
+			_, _ = fmt.Fprintf(w, `{"code":0,"data":{"nodes":[{"id":3,"title":"东京","isp":"独享","max":%d,"prices":[{"price_type":"yp1","buytime":1,"price":%d}]}]}}`, quoteStock.Load(), quotePrice.Load())
 		case "/open/api/order/place":
 			body, _ := io.ReadAll(r.Body)
 			if r.Header.Get("X-Partner-ID") != "test" || !strings.Contains(string(body), `"list":[{"nid":3,"number":2}]`) {
@@ -55,12 +59,12 @@ func TestStaticPurchaseAndIndependentSales(t *testing.T) {
 	readProto(t, testfixture.Request(f.http, "POST", "/v1/access/login", credentials, ""), &session)
 	fundCatalogWallet(t, f.db, tenant.GetTenantId())
 
-	const catalog = "/v1/products/static/offers"
-	const pendingPath = "/v1/operations/static-purchases/pending"
+	const catalog = "/v1/public/static-offers"
+	const pendingPath = "/v1/operations/orders/static-pending"
 	const sales = "/v1/operations/product-sales/"
 	const open = `{"open":true,"quote_ready":true,"acceptance_evidence":"controlled integration fixture"}`
-	const buy = "/v1/tenant/orders/static-ips"
-	const request = `{"node_id":"3","term":"yp1","quantity":2,"unit_minor":"1000","request_key":"static-purchase"}`
+	const buy = "/v1/tenant/static-orders"
+	request := `{"node_id":"3","term":"yp1","quantity":2,"unit_minor":"1000","request_key":"static-purchase"}`
 	req := func(method, path, body, token string) *httptest.ResponseRecorder {
 		return testfixture.Request(f.http, method, path, body, token)
 	}
@@ -78,7 +82,11 @@ func TestStaticPurchaseAndIndependentSales(t *testing.T) {
 		`{"version":"1","capacity_bytes":"5000000000","price_minor":"500","listed":true}`, cashier), &configured)
 	var sale v1.Product
 	readProto(t, req("PUT", sales+"dynamic", open, cashier), &sale)
-	testfixture.AssertStatus(t, req("GET", catalog, "", ""), http.StatusConflict, "PRODUCT_SALE_CLOSED")
+	var closedOffers v1.StaticOffers
+	readProto(t, req("GET", catalog, "", ""), &closedOffers)
+	if closedOffers.GetOpen() || len(closedOffers.GetOffers()) != 0 {
+		t.Fatalf("closed sale exposed quotes: %v", &closedOffers)
+	}
 	testfixture.AssertStatus(t, req("POST", buy, request, session.GetAccessToken()), http.StatusConflict, "PRODUCT_SALE_CLOSED")
 	walletBalance(4500)
 	var orders v1.PurchaseOrders
@@ -105,14 +113,27 @@ func TestStaticPurchaseAndIndependentSales(t *testing.T) {
 	if len(offers.GetOffers()) != 1 || offers.Offers[0].GetUnitMinor() != 1000 {
 		t.Fatalf("unexpected supplier offers: %v", &offers)
 	}
-	price := req("POST", buy, strings.Replace(request, `"1000"`, `"1200"`, 1), session.GetAccessToken())
+	const quotePath = "/v1/tenant/static-purchase-quotes"
+	const quoteSpec = `{"node_id":"3","term":"yp1","quantity":2}`
+	var quote v1.StaticPurchaseQuote
+	readProto(t, req("POST", quotePath, quoteSpec, session.GetAccessToken()), &quote)
+	if quote.GetConfirmationToken() == "" || quote.GetOffer().GetUnitMinor() != 1000 {
+		t.Fatalf("invalid quote: %v", quote.GetOffer())
+	}
+	testfixture.AssertStatus(t, req("POST", buy, request, session.GetAccessToken()), http.StatusConflict, "STATIC_QUOTE_EXPIRED")
+	request = strings.TrimSuffix(request, "}") + fmt.Sprintf(`,"confirmation_token":%q}`, quote.GetConfirmationToken())
+	quotePrice.Store(12)
+	price := req("POST", buy, request, session.GetAccessToken())
+	quotePrice.Store(10)
 	testfixture.AssertStatus(t, price, http.StatusConflict, "STATIC_PRICE_CHANGED")
-	if !strings.Contains(price.Body.String(), `"unit_minor":"1000"`) {
+	if !strings.Contains(price.Body.String(), `"unit_minor":"1200"`) {
 		t.Fatal("price confirmation did not reveal the current quote")
 	}
-	stock := req("POST", buy, strings.Replace(request, `"quantity":2`, `"quantity":3`, 1), session.GetAccessToken())
+	quoteStock.Store(1)
+	stock := req("POST", buy, request, session.GetAccessToken())
+	quoteStock.Store(2)
 	testfixture.AssertStatus(t, stock, http.StatusConflict, "STATIC_STOCK_INSUFFICIENT")
-	if !strings.Contains(stock.Body.String(), `"available":"2"`) {
+	if !strings.Contains(stock.Body.String(), `"available":"1"`) {
 		t.Fatal("stock error did not reveal the current quantity")
 	}
 	walletBalance(4500)
@@ -134,16 +155,46 @@ func TestStaticPurchaseAndIndependentSales(t *testing.T) {
 	}
 	walletBalance(2500)
 	readProto(t, req("PUT", sales+"static", `{"open":false}`, cashier), &sale)
+	direct := strings.Replace(request, "static-purchase", "fresh-key-while-closed", 1)
+	testfixture.AssertStatus(t, req("POST", buy, direct, session.GetAccessToken()), http.StatusConflict, "PRODUCT_SALE_CLOSED")
+	walletBalance(2500)
 	readProto(t, req("POST", buy, request, session.GetAccessToken()), &order)
 	if len(calls) != 1 {
 		t.Fatalf("supplier was called %d times", len(calls))
 	}
 	var ips v1.StaticIPs
 	readProto(t, req("GET", "/v1/tenant/static-ips", "", session.GetAccessToken()), &ips)
-	if len(ips.GetAllocations()) != 1 || ips.Allocations[0].GetIp() != "192.0.2.1" || ips.Allocations[0].GetPassword() != "fixture" ||
+	if len(ips.GetAllocations()) != 1 || ips.Allocations[0].GetIp() != "192.0.2.1" || ips.Allocations[0].GetPassword() != "" ||
 		!strings.HasPrefix(ips.Allocations[0].GetExpiresAt().AsTime().String(), "2099-01-01 04:00:00") {
 		t.Fatalf("partial delivery was not immediately usable: %v", &ips)
 	}
+	var config v1.StaticIP
+	readProto(t, req("GET", "/v1/tenant/static-ips/23/proxy-config", "", session.GetAccessToken()), &config)
+	if config.GetPassword() != "fixture" {
+		t.Fatal("authorized single-IP config did not return credentials")
+	}
+	export := req("POST", "/v1/tenant/static-ips:export", `{"supplier_item_ids":["23"]}`, session.GetAccessToken())
+	if export.Code != http.StatusOK || export.Body.String() != "192.0.2.1:43000:customer:fixture\n" {
+		t.Fatalf("unexpected export: %d", export.Code)
+	}
+	const secondCredentials = `{"phone":"13800004802","password":"second-static-password"}`
+	var otherTenant v1.TenantAccess
+	readProto(t, req("POST", "/v1/access/register", secondCredentials, ""), &otherTenant)
+	var otherSession v1.LoginResponse
+	readProto(t, req("POST", "/v1/access/login", secondCredentials, ""), &otherSession)
+	testfixture.AssertStatus(t, req("GET", "/v1/tenant/static-ips/23/proxy-config", "", otherSession.GetAccessToken()), http.StatusNotFound, "WALLET_RECORD_NOT_FOUND")
+	testfixture.AssertStatus(t, req("POST", "/v1/tenant/static-ips:export", `{"supplier_item_ids":["23"]}`, otherSession.GetAccessToken()), http.StatusNotFound, "WALLET_RECORD_NOT_FOUND")
+	testfixture.AssertStatus(t, req("POST", buy, request, otherSession.GetAccessToken()), http.StatusConflict, "PRODUCT_SALE_CLOSED")
+	execSQL(t, f.db, "UPDATE static_ip_allocations SET expires_at=now()+interval '3 days' WHERE supplier_item_id='23'")
+	for _, expected := range []int32{1, 0} {
+		var notice v1.StaticIPExpiryNotices
+		readProto(t, req("POST", "/v1/tenant/static-ip-expiry-notices", `{}`, session.GetAccessToken()), &notice)
+		if notice.GetCount() != expected {
+			t.Fatalf("expiry notice count %d, want %d", notice.GetCount(), expected)
+		}
+	}
+	execSQL(t, f.db, "UPDATE static_ip_allocations SET expires_at=now()-interval '1 hour' WHERE supplier_item_id='23'")
+	testfixture.AssertStatus(t, req("POST", "/v1/tenant/static-ips:export", `{"supplier_item_ids":["23"]}`, session.GetAccessToken()), http.StatusNotFound, "WALLET_RECORD_NOT_FOUND")
 	resolve := fmt.Sprintf("/v1/operations/tenants/%s/orders/%d/static-resolution", tenant.GetTenantId(), order.GetId())
 	const closeOrder = `{"evidence":"supplier confirms the remaining IP is unknown","close_remaining":true}`
 	testfixture.AssertStatus(t, req("POST", resolve, closeOrder, cashier), http.StatusNotFound, "WALLET_RECORD_NOT_FOUND")
@@ -171,6 +222,7 @@ func TestStaticPurchaseAndIndependentSales(t *testing.T) {
 	walletBalance(3500)
 
 	readProto(t, req("PUT", sales+"static", open, cashier), &sale)
+	testfixture.AssertStatus(t, req("POST", buy, request, otherSession.GetAccessToken()), http.StatusConflict, "STATIC_QUOTE_EXPIRED")
 	supplierMode.Store(1)
 	rejected := strings.Replace(request, "static-purchase", "stock-race", 1)
 	readProto(t, req("POST", buy, rejected, session.GetAccessToken()), &order)

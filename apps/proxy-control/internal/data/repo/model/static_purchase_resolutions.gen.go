@@ -12,8 +12,9 @@ const TableNameStaticPurchaseResolution = "static_purchase_resolutions"
 
 // StaticPurchaseResolution mapped from table <static_purchase_resolutions>
 type StaticPurchaseResolution struct {
-	TenantID   string     `gorm:"column:tenant_id;type:text;primaryKey" json:"tenant_id"`
-	OrderID    int64      `gorm:"column:order_id;type:bigint;primaryKey" json:"order_id"`
+	ID         int64      `gorm:"column:id;type:bigint;primaryKey;autoIncrement:true" json:"id"`
+	TenantID   string     `gorm:"column:tenant_id;type:text;not null" json:"tenant_id"`
+	OrderID    int64      `gorm:"column:order_id;type:bigint;not null" json:"order_id"`
 	OperatorID string     `gorm:"column:operator_id;type:text;not null" json:"operator_id"`
 	Evidence   string     `gorm:"column:evidence;type:text;not null" json:"evidence"`
 	CreatedAt  *time.Time `gorm:"column:created_at;type:timestamp with time zone;not null;default:clock_timestamp()" json:"created_at"`

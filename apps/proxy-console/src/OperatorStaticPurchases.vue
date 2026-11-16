@@ -6,7 +6,7 @@ import type { PendingStaticPurchase } from './api/static-ip'
 import { dateTime } from './wallet-format'
 import { Button } from './ui/button'
 
-const { token } = defineProps<{ token: string }>()
+const { token, canResolve } = defineProps<{ token: string; canResolve: boolean }>()
 const emit = defineEmits<{ expired: []; resolved: [string] }>()
 const controller = new AbortController()
 const pending = ref<PendingStaticPurchase[]>([])
@@ -47,16 +47,16 @@ function select(order: PendingStaticPurchase) {
   error.value = ''
 }
 
-async function resolve(closeRemaining: boolean) {
+async function resolve(closeRemaining: boolean, confirmedUndeliverable = false) {
   const order = active.value
   if (!order || submitting.value || !evidence.value.trim() ||
-      (closeRemaining ? !order.can_close : !supplierID.value.trim())) return
+      (closeRemaining ? !order.can_close && !confirmedUndeliverable : !supplierID.value.trim())) return
   submitting.value = true
   error.value = ''
   result.value = ''
   try {
     const updated = await resolveStaticPurchase(token, order.tenant_id, order.order_id, {
-      supplier_order_id: supplierID.value.trim(), evidence: evidence.value.trim(), close_remaining: closeRemaining,
+      supplier_order_id: supplierID.value.trim(), evidence: evidence.value.trim(), close_remaining: closeRemaining, confirmed_undeliverable: confirmedUndeliverable,
     })
     result.value = updated.status === 'pending' ? '已同步交付，剩余部分继续核实。' : '订单已结算。'
     emit('resolved', order.tenant_id)
@@ -82,7 +82,8 @@ onUnmounted(() => controller.abort())
     <p v-if="!loading && !error && !pending.length">暂无超过 24 小时的待核实订单。</p>
     <ul v-if="!loading">
       <li v-for="order in pending" :key="order.order_id">
-        <Button type="button" variant="link" :disabled="submitting" @click="select(order)">核实订单 #{{ order.order_id }}</Button>
+        <Button v-if="canResolve" type="button" variant="link" :disabled="submitting" @click="select(order)">核实订单 #{{ order.order_id }}</Button>
+        <span v-else>订单 #{{ order.order_id }} ·</span>
         {{ dateTime(order.created_at) }} · 已交付 {{ order.delivered_count ?? 0 }} 个
       </li>
     </ul>
@@ -92,6 +93,7 @@ onUnmounted(() => controller.abort())
       <label>皇冠订单号 <input v-model="supplierID" maxlength="128" :readonly="!!active.supplier_order_id" :disabled="submitting" /></label>
       <label>核实依据 <textarea v-model="evidence" required maxlength="500" :disabled="submitting" /></label>
       <Button type="submit" :disabled="submitting || !supplierID.trim() || !evidence.trim()">查询皇冠并同步交付</Button>
+      <Button type="button" variant="outline" :disabled="submitting || !evidence.trim()" @click="resolve(true, true)">已确认无法交付，退回剩余预扣</Button>
       <template v-if="active.can_close">
         <p>提交后会关闭剩余交付并退回对应预扣款。随后补发的 IP 由运营处理。</p>
         <Button type="button" variant="outline" :disabled="submitting || !evidence.trim()" @click="resolve(true)">关闭剩余交付并退款</Button>

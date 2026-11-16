@@ -16,17 +16,18 @@ CREATE TABLE static_ip_allocations (
     username text NOT NULL,
     password_ciphertext bytea NOT NULL,
     expires_at timestamptz NOT NULL,
+    reminded_expiry timestamptz,
     FOREIGN KEY (tenant_id, order_id) REFERENCES static_purchases (tenant_id, order_id)
 );
 CREATE INDEX static_ip_allocations_by_tenant ON static_ip_allocations (tenant_id, expires_at, supplier_item_id);
 
 CREATE TABLE static_purchase_resolutions (
+    id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     tenant_id text NOT NULL,
     order_id bigint NOT NULL,
     operator_id text NOT NULL REFERENCES operators(id),
     evidence text NOT NULL,
     created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
-    PRIMARY KEY (tenant_id, order_id),
     FOREIGN KEY (tenant_id, order_id) REFERENCES static_purchases (tenant_id, order_id)
 );
 
