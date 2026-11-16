@@ -27,8 +27,8 @@
 .tenant-avatar { background: #e9e9eb; color: #27272a; }
 .dashboard-sidebar nav { display: grid; gap: 3px; }
 .nav-label { color: var(--dashboard-muted); font-size: 12px; padding: 0 8px 5px; }
-.dashboard-sidebar nav button { display: flex; align-items: center; justify-content: flex-start; height: auto; text-align: left; gap: 9px; white-space: nowrap; }
-.dashboard-sidebar nav button[aria-current] { background: #ececee; font-weight: 650; }
+.dashboard-sidebar nav :is(button, a) { display: flex; align-items: center; justify-content: flex-start; height: auto; text-align: left; gap: 9px; white-space: nowrap; }
+.dashboard-sidebar nav :is(button, a)[aria-current] { background: #ececee; font-weight: 650; }
 .dashboard-sidebar nav svg { width: 16px; height: 16px; flex: none; }
 .dashboard-account { position: sticky; bottom: 11px; background: #fafafa; margin-top: auto; }
 .dashboard-account small { display: block; color: var(--dashboard-muted); }
@@ -60,7 +60,7 @@
   .sidebar-collapsed .dashboard-sidebar { padding-inline: 9px; }
   .sidebar-collapsed .dashboard-brand strong, .sidebar-collapsed .nav-label, .sidebar-collapsed .dashboard-account div { display: none; }
   .sidebar-collapsed .dashboard-brand, .sidebar-collapsed .dashboard-account { padding-inline: 4px; }
-  .sidebar-collapsed .dashboard-sidebar nav button { font-size: 0; justify-content: center; }
+  .sidebar-collapsed .dashboard-sidebar nav :is(button, a) { font-size: 0; justify-content: center; }
 }
 @media (max-width: 1160px) {
   .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }

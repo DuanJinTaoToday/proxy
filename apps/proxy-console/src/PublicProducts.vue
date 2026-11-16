@@ -30,11 +30,27 @@ onUnmounted(() => controller.abort())
   <header class="topbar">
     <div class="shell topbar-inner">
       <strong>住宅代理</strong>
-      <RouterLink to="/">控制台</RouterLink>
+      <nav aria-label="官网导航" class="flex flex-wrap gap-4">
+        <RouterLink to="/products">产品</RouterLink>
+        <RouterLink to="/products#socks5">SOCKS5 接入说明</RouterLink>
+        <RouterLink to="/">控制台</RouterLink>
+      </nav>
     </div>
   </header>
   <main class="shell wallet-console">
     <h1>住宅代理产品</h1>
+    <section id="socks5" class="panel">
+      <h2>动态住宅代理 SOCKS5 接入说明</h2>
+      <p>在客户端选择 SOCKS5 和用户名／密码认证。以下为示例配置。</p>
+      <dl class="grid gap-2 sm:grid-cols-[max-content_1fr]">
+        <dt>网关地址</dt><dd><code>proxy.example.com</code></dd>
+        <dt>端口</dt><dd><code>1080</code></dd>
+        <dt>用户名</dt><dd><code class="break-all">p0123456789abcdef0123456789abcdef.browser</code>（格式为 <code>主账号名.子账号名</code>）</dd>
+        <dt>密码</dt><dd><code>Demo123456</code></dd>
+      </dl>
+      <p>登录控制台后，在「动态住宅代理 → 代理子账号」选择已启用的账号，查看并复制实际接入配置。</p>
+      <p>成功建立的连接按实际上传和下载字节量扣减流量，计量可能包含 SOCKS5 协议字节。失败连接不计量，1 GB = 1,000,000,000 字节。</p>
+    </section>
     <p v-if="loading" role="status">正在加载商品…</p>
     <div v-else-if="loadError" class="panel">
       <p role="alert">暂时无法查询商品状态。</p>

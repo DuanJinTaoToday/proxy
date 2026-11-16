@@ -16,6 +16,8 @@ import (
 	"github.com/google/uuid"
 )
 
+const MaxAccounts = 10
+
 type Account struct {
 	ClientID, TenantID, Name, Remark string
 	PasswordCiphertext               []byte
@@ -134,6 +136,21 @@ func (s *Service) List(ctx context.Context, token string) ([]Account, error) {
 		return nil, unavailable()
 	}
 	return rows, nil
+}
+
+func (s *Service) CanCreate(ctx context.Context, token string) (bool, error) {
+	tenant, err := s.access.Account(ctx, token)
+	if err != nil {
+		return false, err
+	}
+	if s.cipher == nil || s.repo == nil {
+		return false, nil
+	}
+	rows, err := s.repo.List(ctx, tenant.ID)
+	if err != nil {
+		return false, unavailable()
+	}
+	return len(rows) < MaxAccounts, nil
 }
 
 func (s *Service) Create(ctx context.Context, token, name, password, remark string, active bool, limit *int64, validate func() error) (Account, error) {

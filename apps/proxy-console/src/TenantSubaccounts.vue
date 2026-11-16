@@ -16,7 +16,7 @@ import TableHead from './ui/table/TableHead.vue'
 import TableHeader from './ui/table/TableHeader.vue'
 import TableRow from './ui/table/TableRow.vue'
 
-const props = defineProps<{ token: string; primaryAccount: string }>()
+const props = defineProps<{ token: string; primaryAccount: string; startCreating?: boolean }>()
 const emit = defineEmits<{ expired: [] }>()
 const controller = new AbortController()
 const accounts = ref<Subaccount[]>([])
@@ -30,6 +30,7 @@ const password = ref('')
 const remark = ref('')
 const active = ref(true)
 const limit = ref('')
+const maxAccounts = 10
 const GB = 1_000_000_000n
 
 function asGB(bytes: string) {
@@ -158,7 +159,10 @@ async function copyConfig(config: ProxyConfig) {
   }
 }
 
-onMounted(reload)
+onMounted(async () => {
+  await reload()
+  if (!controller.signal.aborted && !error.value && props.startCreating && accounts.value.length < maxAccounts) edit()
+})
 onBeforeUnmount(() => {
   controller.abort()
   password.value = ''
@@ -171,7 +175,7 @@ onBeforeUnmount(() => {
     <Card>
       <CardHeader class="flex flex-row items-center justify-between gap-3">
         <h2 class="text-base font-semibold">代理子账号（{{ accounts.length }}/10）</h2>
-        <Button type="button" :disabled="loading || busy || accounts.length >= 10" @click="edit()">创建子账号</Button>
+        <Button type="button" :disabled="loading || busy || accounts.length >= maxAccounts" @click="edit()">创建子账号</Button>
       </CardHeader>
       <CardContent class="overflow-x-auto">
         <p v-if="loading" role="status">正在加载子账号…</p>

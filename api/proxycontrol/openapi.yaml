@@ -896,6 +896,19 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/proxycontrol.v1.PurchaseOrder'
+    /v1/tenant/overview:
+        get:
+            tags:
+                - OverviewService
+            summary: 查看当前租户的余额、可用静态 IP、提醒和快捷入口状态
+            operationId: OverviewService_GetOverview
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.Overview'
     /v1/tenant/static-ip-expiry-notices:
         post:
             tags:
@@ -1476,6 +1489,54 @@ components:
                     type: integer
                     description: 令牌从签发起的有效时长，单位为秒。
                     format: int32
+        proxycontrol.v1.Overview:
+            type: object
+            properties:
+                wallet_minor:
+                    type: string
+                    description: 钱包可用余额，单位为人民币分。
+                traffic_bytes:
+                    type: string
+                    description: 动态流量余额，单位为字节，可为负数。
+                active_static_ip_count:
+                    type: integer
+                    description: 尚未到期的静态 IP 分配数量。
+                    format: int32
+                notices:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/proxycontrol.v1.OverviewNotice'
+                    description: 当前提醒，无提醒时为空列表。
+                products:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/proxycontrol.v1.OverviewProduct'
+                    description: 动态和静态商品各自的当前开售状态。
+                can_create_subaccount:
+                    type: boolean
+                    description: 当前允许创建代理子账号。禁用的子账号也占用额度。
+        proxycontrol.v1.OverviewNotice:
+            type: object
+            properties:
+                kind:
+                    type: string
+                    description: low_traffic_balance 表示流量低余额，static_ip_expiry 表示静态 IP 即将到期。
+                count:
+                    type: integer
+                    description: 低余额提醒固定为 1，静态到期提醒为涉及的 IP 数量。
+                    format: int32
+        proxycontrol.v1.OverviewProduct:
+            type: object
+            properties:
+                kind:
+                    type: string
+                    description: dynamic 或 static。
+                open:
+                    type: boolean
+                    description: 运营设置的开售状态。
+                can_purchase:
+                    type: boolean
+                    description: 购买入口可用。动态商品还需有在售套餐。
         proxycontrol.v1.PendingStaticPurchase:
             type: object
             properties:
@@ -2423,6 +2484,7 @@ tags:
     - name: AccessService
     - name: GatewayAuthService
     - name: HealthService
+    - name: OverviewService
     - name: ProductService
     - name: ReportingService
     - name: StickySessionService

@@ -8,6 +8,7 @@ package main
 
 import (
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/access"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/overview"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/product"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/subaccount"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/usage"
@@ -53,9 +54,11 @@ func wireApp(confServer *conf.Server, confData *conf.Data, biz *conf.Biz, appCon
 		return nil, nil, err
 	}
 	subaccounts := service.NewSubaccounts(subaccountService)
-	httpServer := server.NewConfiguredHTTPServer(confServer, biz, serviceAccess, serviceWallet, serviceProduct, subaccounts)
 	usageRepository := repo.ProvideUsageRepository(dataData)
 	usageService := usage.NewConfigured(biz, usageRepository, accessService)
+	overviewService := overview.New(walletService, usageService, productService, subaccountService)
+	serviceOverview := service.NewOverview(overviewService)
+	httpServer := server.NewConfiguredHTTPServer(confServer, biz, serviceAccess, serviceWallet, serviceProduct, subaccounts, serviceOverview)
 	serviceUsage := service.NewUsage(usageService)
 	cronService := service.NewCronService(usageService)
 	cronServerImpl, err := server.NewCronServer(appConfig, cronService)

@@ -6,6 +6,9 @@ import './style.css'
 
 const router = createRouter({
   history: createWebHistory(),
+  scrollBehavior(to, _, saved) {
+    return saved ?? (to.hash ? { el: to.hash } : { top: 0 })
+  },
   routes: [
     { path: '/', component: App, props: { operations: false } },
     { path: '/products', component: PublicProducts },

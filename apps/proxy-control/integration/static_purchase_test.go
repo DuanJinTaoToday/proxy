@@ -82,6 +82,12 @@ func TestStaticPurchaseAndIndependentSales(t *testing.T) {
 		`{"version":"1","capacity_bytes":"5000000000","price_minor":"500","listed":true}`, cashier), &configured)
 	var sale v1.Product
 	readProto(t, req("PUT", sales+"dynamic", open, cashier), &sale)
+	const overviewPath = "/v1/tenant/overview"
+	var overview v1.Overview
+	readProto(t, req("GET", overviewPath, "", session.GetAccessToken()), &overview)
+	if len(overview.GetProducts()) != 2 || !overview.Products[0].GetCanPurchase() || overview.Products[1].GetCanPurchase() {
+		t.Fatalf("overview with only dynamic on sale: %v", &overview)
+	}
 	var closedOffers v1.StaticOffers
 	readProto(t, req("GET", catalog, "", ""), &closedOffers)
 	if closedOffers.GetOpen() || len(closedOffers.GetOffers()) != 0 {
@@ -97,6 +103,10 @@ func TestStaticPurchaseAndIndependentSales(t *testing.T) {
 
 	readProto(t, req("PUT", sales+"static", open, cashier), &sale)
 	readProto(t, req("PUT", sales+"dynamic", `{"open":false}`, cashier), &sale)
+	readProto(t, req("GET", overviewPath, "", session.GetAccessToken()), &overview)
+	if len(overview.GetProducts()) != 2 || overview.Products[0].GetCanPurchase() || !overview.Products[1].GetCanPurchase() {
+		t.Fatalf("overview with only static on sale: %v", &overview)
+	}
 	var products v1.Products
 	readProto(t, req("GET", "/public/products", "", ""), &products)
 	if len(products.GetProducts()) != 2 || products.Products[0].GetCanPurchase() ||
@@ -186,6 +196,15 @@ func TestStaticPurchaseAndIndependentSales(t *testing.T) {
 	testfixture.AssertStatus(t, req("POST", "/v1/tenant/static-ips:export", `{"supplier_item_ids":["23"]}`, otherSession.GetAccessToken()), http.StatusNotFound, "WALLET_RECORD_NOT_FOUND")
 	testfixture.AssertStatus(t, req("POST", buy, request, otherSession.GetAccessToken()), http.StatusConflict, "PRODUCT_SALE_CLOSED")
 	execSQL(t, f.db, "UPDATE static_ip_allocations SET expires_at=now()+interval '3 days' WHERE supplier_item_id='23'")
+	readProto(t, req("GET", overviewPath, "", session.GetAccessToken()), &overview)
+	if overview.GetWalletMinor() != 2500 || overview.GetActiveStaticIpCount() != 1 || len(overview.GetNotices()) != 1 ||
+		overview.Notices[0].GetKind() != "static_ip_expiry" || overview.Notices[0].GetCount() != 1 {
+		t.Fatalf("overview with expiring static IP: %v", &overview)
+	}
+	readProto(t, req("GET", overviewPath, "", otherSession.GetAccessToken()), &overview)
+	if overview.GetActiveStaticIpCount() != 0 || len(overview.GetNotices()) != 0 {
+		t.Fatalf("overview leaked static IP summary across tenants: %v", &overview)
+	}
 	for _, expected := range []int32{1, 0} {
 		var notice v1.StaticIPExpiryNotices
 		readProto(t, req("POST", "/v1/tenant/static-ip-expiry-notices", `{}`, session.GetAccessToken()), &notice)
@@ -193,7 +212,15 @@ func TestStaticPurchaseAndIndependentSales(t *testing.T) {
 			t.Fatalf("expiry notice count %d, want %d", notice.GetCount(), expected)
 		}
 	}
+	readProto(t, req("GET", overviewPath, "", session.GetAccessToken()), &overview)
+	if len(overview.GetNotices()) != 1 || overview.Notices[0].GetKind() != "static_ip_expiry" {
+		t.Fatalf("claiming the reminder removed the current expiry status: %v", &overview)
+	}
 	execSQL(t, f.db, "UPDATE static_ip_allocations SET expires_at=now()-interval '1 hour' WHERE supplier_item_id='23'")
+	readProto(t, req("GET", overviewPath, "", session.GetAccessToken()), &overview)
+	if overview.GetActiveStaticIpCount() != 0 || len(overview.GetNotices()) != 0 {
+		t.Fatalf("overview included expired IP: %v", &overview)
+	}
 	testfixture.AssertStatus(t, req("POST", "/v1/tenant/static-ips:export", `{"supplier_item_ids":["23"]}`, session.GetAccessToken()), http.StatusNotFound, "WALLET_RECORD_NOT_FOUND")
 	resolve := fmt.Sprintf("/v1/operations/tenants/%s/orders/%d/static-resolution", tenant.GetTenantId(), order.GetId())
 	const closeOrder = `{"evidence":"supplier confirms the remaining IP is unknown","close_remaining":true}`
