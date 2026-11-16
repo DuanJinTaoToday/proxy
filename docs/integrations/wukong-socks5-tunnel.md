@@ -9,9 +9,9 @@
 | 协议 | SOCKS5。curl 使用 `socks5h` 时，目标域名由代理解析。 |
 | 入口 | 联调可从 `154.81.157.72:12347` 开始。入口 IP 见下方机器清单，实测端口为 `12347`。 |
 | 基础用户名 | `JTG5iYU3` |
-| 用户名模板 | `{username}-res-any-sid-{sid}-sidtime-{sidtime}`，认证时发送展开后的完整用户名。 |
+| 用户名模板 | `{username}-res-any-sid-{sid}-sidtime-{sidtime}`。省略时长时使用 `{username}-res-any-sid-{sid}`。认证时发送展开后的完整用户名。 |
 | `sid` | 恰好 9 位数字，例如 `112312345`。原配置约定同一个 URL 生成同一个 SID，这是调用方的映射规则。 |
-| `sidtime` | 按同事提供的样例传 `3600`。参数单位、可用范围、默认值及到期行为待联调确认，见 [#40](https://github.com/DuanJinTaoToday/proxy/issues/40)。 |
+| `sidtime` | 按同事提供的样例传 `3600`。[#40 验收记录](../features/proxy-first-release/issue-40-wukong-sidtime-acceptance.md)已验证省略时长可转发。参数单位、有效范围、默认值及实际到期行为待供应商确认。 |
 | 密码 | 从已授权的凭据来源注入 `SEEDPIPE_PROXY_PASSWORD`。仓库和诊断输出只记录字段名。 |
 
 ## 代理机器
