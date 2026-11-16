@@ -22,6 +22,7 @@ type admissionState struct {
 	deadline        time.Time
 	observedAt      time.Time
 	authInterrupted bool
+	submitting      bool
 
 	// Only the scan loop reads or changes these fields.
 	pending     map[string]pendingFile
@@ -47,7 +48,7 @@ func (c *Collector) QuotaRenewal() (uint64, bool) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	a.expire(c.now())
-	return a.generation, !a.blocked
+	return a.generation, !a.blocked && !a.submitting
 }
 
 func (a *admissionState) expire(now time.Time) {
@@ -68,6 +69,15 @@ func (a *admissionState) block() {
 		a.blocked = true
 		a.generation++
 	}
+}
+
+// A quota read overlapping a submission may predate its debit, even if
+// PostgreSQL committed while the reply or durable offset is still pending.
+func (a *admissionState) setSubmitting(submitting bool) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	a.submitting = submitting
+	a.generation++
 }
 
 func (a *admissionState) failSubmission() {

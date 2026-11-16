@@ -794,6 +794,40 @@ func (m *SubmitBatchResponse) validate(all bool) error {
 
 	// no validation rules for Duplicates
 
+	for idx, item := range m.GetWatermarks() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, SubmitBatchResponseValidationError{
+						field:  fmt.Sprintf("Watermarks[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, SubmitBatchResponseValidationError{
+						field:  fmt.Sprintf("Watermarks[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return SubmitBatchResponseValidationError{
+					field:  fmt.Sprintf("Watermarks[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
 	if len(errors) > 0 {
 		return SubmitBatchResponseMultiError(errors)
 	}
@@ -873,6 +907,112 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = SubmitBatchResponseValidationError{}
+
+// Validate checks the field values on RecorderWatermark with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *RecorderWatermark) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on RecorderWatermark with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// RecorderWatermarkMultiError, or nil if none found.
+func (m *RecorderWatermark) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *RecorderWatermark) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for FileId
+
+	// no validation rules for ConfirmedOffset
+
+	if len(errors) > 0 {
+		return RecorderWatermarkMultiError(errors)
+	}
+
+	return nil
+}
+
+// RecorderWatermarkMultiError is an error wrapping multiple validation errors
+// returned by RecorderWatermark.ValidateAll() if the designated constraints
+// aren't met.
+type RecorderWatermarkMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m RecorderWatermarkMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m RecorderWatermarkMultiError) AllErrors() []error { return m }
+
+// RecorderWatermarkValidationError is the validation error returned by
+// RecorderWatermark.Validate if the designated constraints aren't met.
+type RecorderWatermarkValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e RecorderWatermarkValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e RecorderWatermarkValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e RecorderWatermarkValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e RecorderWatermarkValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e RecorderWatermarkValidationError) ErrorName() string {
+	return "RecorderWatermarkValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e RecorderWatermarkValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sRecorderWatermark.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = RecorderWatermarkValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = RecorderWatermarkValidationError{}
 
 // Validate checks the field values on ReportLifecycleRequest with the rules
 // defined in the proto definition for this message. If any rules are

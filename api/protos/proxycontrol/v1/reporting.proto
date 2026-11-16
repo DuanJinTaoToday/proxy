@@ -98,6 +98,15 @@ message SubmitBatchResponse {
   uint32 quarantined = 3;
   // 本批中此前已处理的重复记录数。
   uint32 duplicates = 4;
+  // 各文件当前已提交的连续水位，包含本批中只出现重复记录的文件。
+  repeated RecorderWatermark watermarks = 5;
+}
+
+message RecorderWatermark {
+  // 与请求一致的 Recorder 文件标识。
+  string file_id = 1;
+  // 已确认前缀的结束字节偏移。
+  uint64 confirmed_offset = 2;
 }
 
 // A missing exit timestamp reports a heartbeat for the running boot.

@@ -91,7 +91,7 @@ func (a *App) Run() error {
 			log.Printf("stop cron server: %v", err)
 		}
 	}()
-	go a.relay.RunRefresh(ctx)
+	go a.relay.RunRefresh(ctx, a.collector.QuotaRefreshes())
 	go a.collector.Run(ctx)
 	go a.lifecycle.RunLifecycle(ctx, a.gatewayID, process.Boot, process.Exited)
 	go recorderdata.MonitorDisk(ctx, a.spool)

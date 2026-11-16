@@ -21,12 +21,12 @@ func partitionName(date string) (string, error) {
 
 func (t usageTx) ArchiveDay(date string) error {
 	if err := t.db.Exec(`INSERT INTO usage_daily
-		(tenant_id, gateway_id, usage_date, input_bytes, output_bytes, billable_bytes, record_count, last_received_at)
-		SELECT tenant_id, gateway_id, usage_date,
+		(tenant_id, gateway_id, usage_date, client_id, input_bytes, output_bytes, billable_bytes, record_count, last_received_at)
+		SELECT tenant_id, gateway_id, usage_date, client_id,
 			SUM(input_bytes), SUM(output_bytes), SUM(billable_bytes), SUM(record_count), MAX(last_received_at)
 		FROM usage_minutely WHERE usage_date = ?
-		GROUP BY tenant_id, gateway_id, usage_date
-		ON CONFLICT (tenant_id, gateway_id, usage_date) DO UPDATE SET
+		GROUP BY tenant_id, gateway_id, usage_date, client_id
+		ON CONFLICT (tenant_id, gateway_id, usage_date, client_id) DO UPDATE SET
 			input_bytes = usage_daily.input_bytes + EXCLUDED.input_bytes,
 			output_bytes = usage_daily.output_bytes + EXCLUDED.output_bytes,
 			billable_bytes = usage_daily.billable_bytes + EXCLUDED.billable_bytes,

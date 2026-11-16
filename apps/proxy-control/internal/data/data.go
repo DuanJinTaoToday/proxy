@@ -48,6 +48,10 @@ func NewData(settings *conf.Data) (*Data, func(), error) {
 			return nil, nil, errors.New("could not connect to the proxy auth database")
 		}
 		cleanups = append(cleanups, closeDB)
+		if err := client.Exec("SELECT usage_version FROM tenant_balances LIMIT 0").Error; err != nil {
+			cleanup()
+			return nil, nil, fmt.Errorf("proxy auth requires migration 00011: %w", err)
+		}
 		data.repo.proxyAuthDB = client
 	}
 	if usageSettings := repoSettings.GetUsage(); usageSettings != nil {
@@ -70,6 +74,11 @@ func NewData(settings *conf.Data) (*Data, func(), error) {
 		if err := client.Exec("SELECT gateway_id, boot_id, session_id FROM usage_gaps LIMIT 0").Error; err != nil {
 			cleanup()
 			return nil, nil, fmt.Errorf("usage requires the usage_gaps migration: %w", err)
+		}
+		if err := client.Exec(`SELECT m.client_id,d.client_id,g.remaining_bytes,b.usage_version
+            FROM usage_minutely m CROSS JOIN usage_daily d CROSS JOIN traffic_grants g CROSS JOIN tenant_balances b LIMIT 0`).Error; err != nil {
+			cleanup()
+			return nil, nil, fmt.Errorf("usage requires migration 00011: %w", err)
 		}
 		data.repo.usageDB = client
 	}

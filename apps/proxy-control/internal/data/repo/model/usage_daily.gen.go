@@ -20,6 +20,7 @@ type UsageDaily struct {
 	BillableBytes  int64     `gorm:"column:billable_bytes;type:bigint;not null" json:"billable_bytes"`
 	RecordCount    int64     `gorm:"column:record_count;type:bigint;not null" json:"record_count"`
 	LastReceivedAt time.Time `gorm:"column:last_received_at;type:timestamp with time zone;not null" json:"last_received_at"`
+	ClientID       string    `gorm:"column:client_id;type:text;primaryKey" json:"client_id"`
 }
 
 // TableName UsageDaily's table name

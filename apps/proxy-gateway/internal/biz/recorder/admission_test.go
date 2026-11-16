@@ -160,3 +160,55 @@ func TestQuotaRenewalRequiresFreshScanAfterStallOrAuthInterruption(t *testing.T)
 	scan()
 	check(true)
 }
+func TestQuotaCannotRenewWhileSuccessfulSubmissionIsInFlight(t *testing.T) {
+	spool := admissionSpool{root: t.TempDir(), offsets: make(map[string]uint64)}
+	for _, boot := range []string{"a", "b"} {
+		if err := os.WriteFile(filepath.Join(spool.root, boot), nil, 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	var collector *Collector
+	check := func() {
+		if _, ok := collector.QuotaRenewal(); ok {
+			t.Fatal("a quota refresh overlapped an unacknowledged submission")
+		}
+	}
+	collector = New(Config{}, spool, submitCallback{run: check})
+	if err := collector.Scan(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	before, ok := collector.QuotaRenewal()
+	if !ok {
+		t.Fatal("fresh empty spool did not allow renewal")
+	}
+	select {
+	case <-collector.QuotaRefreshes():
+	default:
+		t.Fatal("initial recovery did not request an immediate refresh")
+	}
+	if err := os.WriteFile(filepath.Join(spool.root, "a"), []byte("{}\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := collector.Scan(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	after, ok := collector.QuotaRenewal()
+	if !ok || after == before {
+		t.Fatal("acknowledged submission did not invalidate earlier reads and restore renewal")
+	}
+	select {
+	case <-collector.QuotaRefreshes():
+	default:
+		t.Fatal("commit did not request a fresh read after the overlapping read")
+	}
+}
+
+type submitCallback struct {
+	Reporter
+	run func()
+}
+
+func (r submitCallback) Submit(context.Context, *v1.SubmitBatchRequest) error {
+	r.run()
+	return nil
+}

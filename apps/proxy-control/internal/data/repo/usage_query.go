@@ -18,6 +18,7 @@ func queryUsageBuckets(db *gorm.DB, query usage.UsageQuery, after *usage.UsageKe
 	const dimensions = `gateway_id, input_bytes, output_bytes, billable_bytes`
 	const filters = ` WHERE tenant_id = @tenant
 		AND (@gateway = '' OR gateway_id = @gateway)
+AND (@client = '' OR client_id = @client)
 		AND usage_date BETWEEN (CAST(@start AS timestamptz) AT TIME ZONE 'Asia/Shanghai')::date
 			AND (CAST(@end AS timestamptz) AT TIME ZONE 'Asia/Shanghai')::date`
 
@@ -40,7 +41,7 @@ func queryUsageBuckets(db *gorm.DB, query usage.UsageQuery, after *usage.UsageKe
 	}
 
 	args := []any{
-		sql.Named("tenant", query.TenantID), sql.Named("gateway", query.GatewayID),
+		sql.Named("tenant", query.TenantID), sql.Named("gateway", query.GatewayID), sql.Named("client", query.ClientID),
 		sql.Named("start", query.Start), sql.Named("end", query.End),
 		sql.Named("split_gateway", query.SplitByGateway), sql.Named("limit", limit),
 	}

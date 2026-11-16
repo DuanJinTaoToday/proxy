@@ -29,6 +29,7 @@ type AuthState struct {
 	Reference, Username string
 	CredentialVersion   int64
 	AvailableBytes      int64
+	UsageVersion        int64
 }
 
 type Update struct {

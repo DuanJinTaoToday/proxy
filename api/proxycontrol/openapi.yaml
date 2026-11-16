@@ -617,6 +617,11 @@ paths:
                   description: 上一页返回的游标。查询条件应与上一页一致，首屏留空。
                   schema:
                     type: string
+                - name: clientId
+                  in: query
+                  description: 指定稳定子账号 ID。留空时统计租户全部子账号。
+                  schema:
+                    type: string
             responses:
                 "200":
                     description: OK
@@ -910,6 +915,9 @@ components:
                 availableBytes:
                     type: string
                     description: 可用流量余额，单位为字节。
+                usageVersion:
+                    type: string
+                    description: 该租户余额和子账号计量、上限的共同版本。
         proxycontrol.v1.AuthSnapshot:
             type: object
             properties:
@@ -939,6 +947,12 @@ components:
                 credentialVersion:
                     type: string
                     description: Monotonic credential revision, including password and active status changes.
+                usedBytes:
+                    type: string
+                    description: 子账号历史累计流量，单位为字节。
+                limitBytes:
+                    type: string
+                    description: 缺省表示不限，0 表示达到准入上限。
         proxycontrol.v1.BaseResp:
             type: object
             properties: {}
@@ -1241,6 +1255,15 @@ components:
                 endOffset:
                     type: string
                     description: 记录结束后的字节偏移，可作为下一条记录的起点。
+        proxycontrol.v1.RecorderWatermark:
+            type: object
+            properties:
+                fileId:
+                    type: string
+                    description: 与请求一致的 Recorder 文件标识。
+                confirmedOffset:
+                    type: string
+                    description: 已确认前缀的结束字节偏移。
         proxycontrol.v1.RefreshAuthStateRequest:
             type: object
             properties:
@@ -1422,6 +1445,11 @@ components:
                     type: integer
                     description: 本批中此前已处理的重复记录数。
                     format: uint32
+                watermarks:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/proxycontrol.v1.RecorderWatermark'
+                    description: 各文件当前已提交的连续水位，包含本批中只出现重复记录的文件。
         proxycontrol.v1.TenantAccess:
             type: object
             properties:
@@ -1521,7 +1549,7 @@ components:
                     description: 原始输入和输出字节数之和。
                 billableBytes:
                     type: string
-                    description: 按计费规则折算后扣减的字节数。
+                    description: 实际扣减的字节数，首版按合格会话总字节 1:1 计量。
         proxycontrol.v1.UsageBucket:
             type: object
             properties:

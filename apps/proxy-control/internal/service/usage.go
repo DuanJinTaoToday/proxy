@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"maps"
+	"slices"
 	"strconv"
 	"time"
 
@@ -29,9 +31,13 @@ func (s *Usage) SubmitBatch(ctx context.Context, req *v1.SubmitBatchRequest) (*v
 	if err != nil {
 		return nil, err
 	}
-	return &v1.SubmitBatchResponse{
+	response := &v1.SubmitBatchResponse{
 		Billable: result.Billable, NotBillable: result.NotBillable, Quarantined: result.Quarantined, Duplicates: result.Duplicates,
-	}, nil
+	}
+	for _, file := range slices.Sorted(maps.Keys(result.ConfirmedOffsets)) {
+		response.Watermarks = append(response.Watermarks, &v1.RecorderWatermark{FileId: file, ConfirmedOffset: result.ConfirmedOffsets[file]})
+	}
+	return response, nil
 }
 
 func (s *Usage) ReportLifecycle(ctx context.Context, req *v1.ReportLifecycleRequest) (*v1.BaseResp, error) {
@@ -70,7 +76,7 @@ func (s *Usage) QueryUsage(ctx context.Context, req *v1.QueryUsageRequest) (*v1.
 	start, _ := readTimestamp(req.GetStartTime())
 	end, _ := readTimestamp(req.GetEndTime())
 	query := usage.UsageQuery{
-		TenantID: req.GetTenantId(), GatewayID: req.GetGatewayId(), SplitByGateway: req.GetSplitByGateway(),
+		TenantID: req.GetTenantId(), GatewayID: req.GetGatewayId(), ClientID: req.GetClientId(), SplitByGateway: req.GetSplitByGateway(),
 	}
 	if start != nil && end != nil {
 		query.Start, query.End = *start, *end

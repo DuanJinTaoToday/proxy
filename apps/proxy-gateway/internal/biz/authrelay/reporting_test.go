@@ -73,3 +73,63 @@ func TestReportingFailureFreezesQuotaWithoutFreezingCredentials(t *testing.T) {
 	refresh()
 	auth("warm", "OK")
 }
+func TestCumulativeLimitUsesCurrentTenantUsageVersion(t *testing.T) {
+	control := &versionedControl{rows: make(map[string]*v1.AuthSnapshot)}
+	limit := int64(5)
+	set := func(user string, version, used int64, limit *int64) {
+		digest := sha256.Sum256([]byte("password"))
+		control.rows[user] = &v1.AuthSnapshot{Username: user, Reference: user, ClientId: user, TenantId: "tenant",
+			Active: true, PasswordHash: digest[:], LimitBytes: limit, UsedBytes: used,
+			Quota: &v1.AuthQuota{AvailableBytes: 1, UsageVersion: version}}
+	}
+	set("first", 1, 4, &limit)
+	set("second", 1, 0, nil)
+	now := time.Now()
+	relay := New(control, func() time.Time { return now })
+	auth := func(user, want string) {
+		t.Helper()
+		if _, got := relay.Authenticate(t.Context(), user, "password", ""); got != want {
+			t.Fatalf("%s auth=%s want %s", user, got, want)
+		}
+	}
+	refresh := func() {
+		t.Helper()
+		now = now.Add(time.Second)
+		if err := relay.Refresh(t.Context()); err != nil {
+			t.Fatal(err)
+		}
+	}
+	auth("first", "OK")
+	auth("second", "OK")
+	set("first", 1, 4, &limit)
+	set("second", 2, 0, nil)
+	refresh()
+	auth("first", "AUTH_STATE_UNAVAILABLE")
+	auth("second", "OK")
+	set("first", 2, 5, &limit)
+	refresh()
+	auth("first", "SUBACCOUNT_LIMIT_REACHED")
+	set("first", 1, 4, &limit)
+	refresh()
+	auth("first", "SUBACCOUNT_LIMIT_REACHED")
+	set("first", 3, 5, nil)
+	set("second", 3, 0, nil)
+	refresh()
+	auth("first", "OK")
+}
+
+type versionedControl struct {
+	rows map[string]*v1.AuthSnapshot
+}
+
+func (c *versionedControl) Load(_ context.Context, user, _ string) (*v1.AuthSnapshot, error) {
+	return c.rows[user], nil
+}
+
+func (c *versionedControl) Refresh(_ context.Context, refs []string) ([]*v1.AuthSnapshot, error) {
+	snapshots := make([]*v1.AuthSnapshot, 0, len(refs))
+	for _, ref := range refs {
+		snapshots = append(snapshots, c.rows[ref])
+	}
+	return snapshots, nil
+}

@@ -489,6 +489,12 @@ func (m *AuthSnapshot) validate(all bool) error {
 
 	// no validation rules for CredentialVersion
 
+	// no validation rules for UsedBytes
+
+	if m.LimitBytes != nil {
+		// no validation rules for LimitBytes
+	}
+
 	if len(errors) > 0 {
 		return AuthSnapshotMultiError(errors)
 	}
@@ -589,6 +595,8 @@ func (m *AuthQuota) validate(all bool) error {
 	var errors []error
 
 	// no validation rules for AvailableBytes
+
+	// no validation rules for UsageVersion
 
 	if len(errors) > 0 {
 		return AuthQuotaMultiError(errors)

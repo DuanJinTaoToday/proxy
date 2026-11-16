@@ -146,6 +146,8 @@ message QueryUsageRequest {
   int32 page_size = 8 [(validate.rules).int32 = {gte: 0, lte: 500}];
   // 上一页返回的游标。查询条件应与上一页一致，首屏留空。
   string page_token = 9;
+  // 指定稳定子账号 ID。留空时统计租户全部子账号。
+  string client_id = 10 [(validate.rules).string = {uuid: true, ignore_empty: true}];
 }
 
 message UsageBucket {
@@ -171,6 +173,6 @@ message UsageAmount {
   uint64 output_bytes = 2;
   // 原始输入和输出字节数之和。
   uint64 total_bytes = 3;
-  // 按计费规则折算后扣减的字节数。
+  // 实际扣减的字节数，首版按合格会话总字节 1:1 计量。
   uint64 billable_bytes = 4;
 }

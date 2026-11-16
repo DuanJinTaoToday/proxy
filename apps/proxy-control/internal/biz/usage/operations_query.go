@@ -6,6 +6,7 @@ import (
 
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/access"
 	"github.com/go-kratos/kratos/v3/errors"
+	"github.com/google/uuid"
 )
 
 type Granularity string
@@ -18,6 +19,7 @@ const (
 
 type UsageQuery struct {
 	TenantID, GatewayID string
+	ClientID            string `json:",omitempty"`
 	Start, End          time.Time
 	Granularity         Granularity
 	SplitByGateway      bool
@@ -44,6 +46,11 @@ func (s *Service) QueryUsage(ctx context.Context, token string, query UsageQuery
 	}
 	if query.TenantID == "" {
 		return nil, errors.BadRequest("TENANT_REQUIRED", "tenant_id is required")
+	}
+	if query.ClientID != "" {
+		if _, err := uuid.Parse(query.ClientID); len(query.ClientID) != 36 || err != nil {
+			return nil, errors.BadRequest("INVALID_CLIENT_ID", "client_id must be a valid UUID")
+		}
 	}
 	if err := validateUsageWindow(query, time.Now()); err != nil {
 		return nil, err
