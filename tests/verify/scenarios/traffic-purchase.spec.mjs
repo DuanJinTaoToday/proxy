@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test'
 import { findTenant, login, prepareRecharge, screenshot, submitRecharge } from '../support/console.mjs'
+import { expectTrafficPurchaseRecords, openTrafficSale, trafficSaleSettings } from '../support/traffic.mjs'
 
 test('流量套餐开售 → 余额不足 → 充值后扣款并到账', async ({ browser, page: tenant, baseURL }, info) => {
   const operatorContext = await browser.newContext({ baseURL, ignoreHTTPSErrors: true })
@@ -12,20 +13,19 @@ test('流量套餐开售 → 余额不足 → 充值后扣款并到账', async (
 
   try {
     await test.step('运营定价并单独开启动态套餐购买', async () => {
+      await login(operator, '/operations', '运营账号', 'operator')
+      const sale = await trafficSaleSettings(operator)
+      const close = sale.getByRole('button', { name: '关闭购买', exact: true })
+      if (await close.isVisible()) {
+        await close.click()
+        await expect(sale.getByRole('heading', { name: /^动态.* · 未开售$/ })).toBeVisible()
+      }
+
       await login(tenant, '/console', '手机号', '13800000002')
       await expect(tenant.getByRole('heading', { name: '快捷操作', exact: true })).toBeVisible()
       await expect(packages).toHaveCount(0)
 
-      await login(operator, '/operations', '运营账号', 'operator')
-      await operator.getByText('商品与套餐', { exact: true }).click()
-      const tariff = operator.locator('form').filter({ has: operator.getByRole('heading', { name: '5gb', exact: true }) })
-      await tariff.getByLabel('总价（分，0 表示未定价）').fill('1500')
-      await tariff.getByRole('button', { name: '保存套餐', exact: true }).click()
-      const sale = operator.locator('form').filter({ has: operator.getByRole('heading', { name: /^动态.* · 未开售$/ }) })
-      await sale.getByLabel('验收依据').fill('本地 Playwright 验收 ' + process.env.VERIFY_ID)
-      await sale.getByRole('checkbox', { name: '已确认报价就绪' }).check()
-      await sale.getByRole('button', { name: '确认开售', exact: true }).click()
-      await expect(operator.getByRole('heading', { name: /^动态.* · 已开售$/ })).toBeVisible()
+      await openTrafficSale(operator, sale)
       await expect(operator.getByRole('heading', { name: /^静态.* · 未开售$/ })).toBeVisible()
       await screenshot(operator, info, '01-dynamic-on-sale')
     })
@@ -70,22 +70,7 @@ test('流量套餐开售 → 余额不足 → 充值后扣款并到账', async (
       await expect(tenant.getByRole('main').getByText('5 GB', { exact: true })).toBeVisible()
       await screenshot(tenant, info, '04-balances-after-refresh')
 
-      await nav.getByRole('link', { name: '订单记录', exact: true }).click()
-      const orders = tenant.getByRole('region', { name: '订单记录', exact: true })
-      const order = orders.getByRole('row').filter({
-        has: tenant.getByRole('rowheader', { name: '#' + orderId, exact: true }),
-      })
-      await expect(order.getByRole('cell', { name: '¥15.00', exact: true })).toBeVisible()
-      await expect(orders.getByRole('rowheader')).toHaveCount(1)
-
-      await nav.getByRole('link', { name: '钱包流水', exact: true }).click()
-      const debit = tenant.getByRole('region', { name: '钱包流水', exact: true }).getByRole('row').filter({
-        has: tenant.getByRole('button', { name: '#' + orderId, exact: true }),
-      })
-      await expect(debit).toHaveCount(1)
-      await expect(debit.getByRole('cell', { name: '扣款', exact: true })).toBeVisible()
-      await expect(debit.getByRole('cell', { name: '−¥15.00', exact: true })).toBeVisible()
-      await expect(debit.getByRole('cell', { name: '¥5.00', exact: true })).toBeVisible()
+      await expectTrafficPurchaseRecords(tenant, nav, orderId, '¥5.00')
       await screenshot(tenant, info, '05-linked-wallet-debit')
     })
   } catch (error) {
