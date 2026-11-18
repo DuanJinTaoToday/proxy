@@ -244,12 +244,14 @@ onUnmounted(() => controller.abort())
       <p v-if="order" role="status">
         订单 #{{ order.id }} ·
         {{ order.status === 'succeeded' ? '已交付' : order.status === 'failed' ? '采购失败，已退回预扣款' : '确认中' }}
-        <RouterLink :to="{ path: '/', query: { view: 'ips' } }">查看我的 IP</RouterLink>
+        <RouterLink :to="{ name: 'console', query: { view: 'ips' } }">查看我的 IP</RouterLink>
       </p>
       <Button v-if="token && !closed" type="submit" :disabled="!canSubmit || sending || !!order">
         {{ sending ? '提交中…' : quote ? '确认购买' : '获取确认报价' }}
       </Button>
-      <RouterLink v-else-if="canSubmit" :to="{ path: '/', query: checkoutQuery }">购买</RouterLink>
+      <Button v-else-if="canSubmit" as-child variant="outline" class="static-buy">
+        <RouterLink :to="{ name: 'console', query: checkoutQuery }">购买静态 IP</RouterLink>
+      </Button>
     </form>
   </div>
 </template>
