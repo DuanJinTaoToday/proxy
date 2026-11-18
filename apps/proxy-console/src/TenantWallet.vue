@@ -55,7 +55,7 @@ onUnmounted(() => controller.abort())
   <DashboardShell brand="代理控制台" area="租户控制台" :title="titles[view]" :account-name="account.name" @logout="emit('logout')">
     <template #navigation="{ closeSidebar }">
       <nav aria-label="租户导航">
-        <Button as-child variant="ghost"><RouterLink to="/" :aria-current="view === 'overview' ? 'page' : undefined" @click="closeSidebar"><House />账户概览</RouterLink></Button>
+        <Button as-child variant="ghost"><RouterLink :to="{ name: 'console' }" :aria-current="view === 'overview' ? 'page' : undefined" @click="closeSidebar"><House />账户概览</RouterLink></Button>
         <p class="nav-label">动态住宅代理</p>
         <Button v-if="dynamicOnSale" as-child variant="ghost"><RouterLink :to="{ query: { view: 'packages' } }" :aria-current="view === 'packages' ? 'page' : undefined" @click="closeSidebar"><Package />流量套餐</RouterLink></Button>
         <Button as-child variant="ghost"><RouterLink :to="{ query: { view: 'subaccounts' } }" :aria-current="view === 'subaccounts' ? 'page' : undefined" @click="closeSidebar"><Network />代理子账号</RouterLink></Button>
@@ -67,7 +67,7 @@ onUnmounted(() => controller.abort())
         <Button as-child variant="ghost"><RouterLink :to="{ query: { view: 'wallet' } }" :aria-current="view === 'wallet' && tab === 'entries' ? 'page' : undefined" @click="tab = 'entries'; closeSidebar()"><List />钱包流水</RouterLink></Button>
         <Button as-child variant="ghost"><RouterLink :to="{ query: { view: 'wallet' } }" :aria-current="view === 'wallet' && tab === 'orders' ? 'page' : undefined" @click="tab = 'orders'; closeSidebar()"><ReceiptText />订单记录</RouterLink></Button>
         <p class="nav-label">官网</p>
-        <Button as-child variant="ghost"><RouterLink to="/products#socks5"><CircleHelp />SOCKS5 接入说明</RouterLink></Button>
+        <Button as-child variant="ghost"><RouterLink to="/#socks5"><CircleHelp />SOCKS5 接入说明</RouterLink></Button>
       </nav>
     </template>
 
