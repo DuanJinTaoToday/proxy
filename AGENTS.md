@@ -12,7 +12,9 @@
 
 ## Agent skills
 
-在 Proxy 使用 `to-spec` 或 `to-tickets` 时，先阅读开发规范中的 [`to-spec` 与 `to-tickets`](docs/standards/proxy-development-conventions.md#to-spec-与-to-tickets)；使用 `implement` 时，先阅读 [Issue 实现与交付](docs/standards/proxy-development-conventions.md#issue-实现与交付)。
+在 Proxy 使用 `to-spec` 或 `to-tickets` 时，先阅读开发规范中的 [`to-spec` 与 `to-tickets`](docs/standards/proxy-development-conventions.md#to-spec-与-to-tickets)。
+
+收到“实现 Issue”或 `implement` 请求时，按 [Issue 实现与交付](docs/standards/proxy-development-conventions.md#issue-实现与交付) 执行，交付前主动运行项目级 [verify](.agents/skills/verify/SKILL.md)。逐条取得该 Issue 的验收证据后再报完成。
 
 ### Issue tracker
 
