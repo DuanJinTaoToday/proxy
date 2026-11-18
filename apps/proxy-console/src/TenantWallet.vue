@@ -5,6 +5,7 @@ import { ChartColumn, CircleHelp, House, List, ReceiptText, Network, Package } f
 import type { WalletTenant } from './api/wallet'
 import type { Overview } from './api/overview'
 import { listProducts } from './api/product'
+import kunxingMark from './assets/kunxing-mark.png'
 import AccountOverview from './AccountOverview.vue'
 import DashboardShell from './DashboardShell.vue'
 import WalletRecords from './WalletRecords.vue'
@@ -52,7 +53,7 @@ onUnmounted(() => controller.abort())
 </script>
 
 <template>
-  <DashboardShell brand="代理控制台" area="租户控制台" :title="titles[view]" :account-name="account.name" @logout="emit('logout')">
+  <DashboardShell brand="鲲星代理" :brand-logo="kunxingMark" area="租户控制台" :title="titles[view]" :account-name="account.name" @logout="emit('logout')">
     <template #navigation="{ closeSidebar }">
       <nav aria-label="租户导航">
         <Button as-child variant="ghost"><RouterLink :to="{ name: 'console' }" :aria-current="view === 'overview' ? 'page' : undefined" @click="closeSidebar"><House />账户概览</RouterLink></Button>

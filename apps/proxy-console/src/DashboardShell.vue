@@ -4,7 +4,7 @@ import { ChevronRight, Layers3, PanelLeft } from 'lucide-vue-next'
 import { Button } from './ui/button'
 import './dashboard.css'
 
-defineProps<{ brand: string; area: string; title: string; accountName?: string }>()
+defineProps<{ brand: string; brandLogo?: string; area: string; title: string; accountName?: string }>()
 const emit = defineEmits<{ logout: [] }>()
 const sidebarOpen = ref(true)
 const mobileSidebarOpen = ref(false)
@@ -26,7 +26,9 @@ function toggleSidebar() {
     <a class="skip-link" :href="'#' + mainId">跳到主要内容</a>
     <aside :id="sidebarId" class="dashboard-sidebar">
       <div class="dashboard-brand">
-        <span class="brand-icon"><Layers3 :size="17" /></span><strong>{{ brand }}</strong>
+        <img v-if="brandLogo" :src="brandLogo" alt="" width="23" height="23" class="shrink-0 object-contain" />
+        <span v-else class="brand-icon"><Layers3 :size="17" /></span>
+        <strong>{{ brand }}</strong>
       </div>
       <slot name="navigation" :close-sidebar="closeSidebar" />
       <div v-if="accountName" class="dashboard-account">
