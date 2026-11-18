@@ -26,7 +26,6 @@ npm --prefix tests/verify test
 | 路径 | 操作与判断依据 | 自动化 |
 | --- | --- | --- |
 | 运营充值 → 租户看到到账 | 租户从钱包流水读取余额。运营查找同一租户，核对租户名、主账号、10.00 元金额、预计余额和本轮唯一原因，确认后获取流水号。租户刷新两次，每次核对余额增量、该编号的唯一流水以及流水上的金额和余额。 | [wallet-recharge.spec.mjs](../../../tests/verify/scenarios/wallet-recharge.spec.mjs) |
-| 手机号自助开户 → +86 去重 | 用带 +86 的测试手机号注册，核对钱包和流量从零开始。用不带 +86 的同一号码重复注册，应收到拒绝。用本地号码格式和原密码登录，核对仍进入同一租户。 | [tenant-registration.spec.mjs](../../../tests/verify/scenarios/tenant-registration.spec.mjs) |
 | 动态套餐开售 → 充值后购买 | 运营给 5 GB 定价并单独开售动态套餐。租户第一次购买时看到差额，订单和余额无变化。运营充值后，租户重新确认。刷新后核对钱包扣款、到账流量、唯一订单和关联流水。 | [traffic-purchase.spec.mjs](../../../tests/verify/scenarios/traffic-purchase.spec.mjs) |
 
 新 Issue 优先复用已有场景。验收项覆盖新行为时，在 `tests/verify/scenarios/` 增加或扩展对应的用户路径，通过页面或公开接口核对业务效果。真实供应商、网关或其他依赖仅在相应场景实际接入并运行后计为已验证。

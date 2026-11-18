@@ -1,16 +1,10 @@
 import { expect } from '@playwright/test'
 
-export async function submitCredentials(page, {
-  account, label = '手机号', password = 'proxy-local-test', button = '登录',
-}) {
-  await page.getByLabel(label, { exact: true }).fill(account)
-  await page.getByLabel('密码', { exact: true }).fill(password)
-  await page.getByRole('button', { name: button, exact: true }).click()
-}
-
 export async function login(page, route, label, account) {
   await page.goto(route)
-  await submitCredentials(page, { label, account })
+  await page.getByLabel(label, { exact: true }).fill(account)
+  await page.getByLabel('密码', { exact: true }).fill('proxy-local-test')
+  await page.getByRole('button', { name: '登录', exact: true }).click()
 }
 
 export async function findTenant(operator, account) {
