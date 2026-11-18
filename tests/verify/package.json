@@ -1,0 +1,12 @@
+{
+  "name": "proxy-verify",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "browser:install": "playwright install chromium --only-shell",
+    "test": "node run.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.65.1"
+  }
+}

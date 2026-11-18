@@ -1,0 +1,9 @@
+services:
+  control:
+    container_name: !reset null
+    image: !reset null
+  console:
+    container_name: !reset null
+    image: !reset null
+    ports: !override
+      - "127.0.0.1::443"
