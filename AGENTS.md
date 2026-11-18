@@ -12,9 +12,9 @@
 
 ## Agent skills
 
-在 Proxy 使用 `to-spec` 或 `to-tickets` 时，先阅读开发规范中的 [`to-spec` 与 `to-tickets`](docs/standards/proxy-development-conventions.md#to-spec-与-to-tickets)。
+需求对齐、编写 Spec 和拆票使用 Matt Pocock 工作流，按开发规范中的 [`to-spec` 与 `to-tickets`](docs/standards/proxy-development-conventions.md#to-spec-与-to-tickets) 推进。
 
-收到“实现 Issue”或 `implement` 请求时，按 [Issue 实现与交付](docs/standards/proxy-development-conventions.md#issue-实现与交付) 执行，交付前主动运行项目级 [verify](.agents/skills/verify/SKILL.md)。逐条取得该 Issue 的验收证据后再报完成。
+收到“实现 Issue”或 `implement` 请求时，统一由 `implement` 按 [Issue 实现与交付](docs/standards/proxy-development-conventions.md#issue-实现与交付) 负责接票、实现、评审和交付。pstack 技能按需用于具体步骤。交付前主动运行项目级 [verify](.agents/skills/verify/SKILL.md)，逐条取得验收证据后再报完成。
 
 ### Issue tracker
 
