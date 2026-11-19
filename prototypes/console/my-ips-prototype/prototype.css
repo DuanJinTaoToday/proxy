@@ -1,0 +1,160 @@
+.ip-preview {
+  --ip-line: #e0e7ef;
+  --ip-muted: #52677e;
+  --ip-blue: #155eb0;
+  color: #172d47;
+  padding-bottom: 64px;
+}
+.dashboard-sidebar .ip-preview-nav > span:not(.nav-label) {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 36px;
+  padding-inline: 8px;
+  border-radius: 6px;
+}
+.dashboard-sidebar .ip-preview-nav > span.ip-preview-nav-current {
+  background: #e5f1ff;
+  color: #0759b3;
+  font-weight: 650;
+  padding-inline-start: 33px;
+}
+.ip-preview-nav-parent { font-weight: 600; }
+.sidebar-collapsed .ip-preview-nav > span:not(.nav-label) { font-size: 0; justify-content: center; }
+.sidebar-collapsed .ip-preview-nav > span.ip-preview-nav-current { padding: 0; min-height: 4px; }
+
+.ip-preview-intro {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: -13px 0 24px;
+  color: var(--ip-muted);
+}
+.ip-preview-intro > span { font-size: 12px; }
+.ip-preview-notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 8px 12px;
+  border: 1px solid #ead8b3;
+  border-radius: 8px;
+  background: #fffbef;
+  color: #67470d;
+}
+.ip-preview-notice > svg { flex: none; }
+.ip-preview-notice button[data-slot="button"] { margin-inline-start: auto; color: #67470d; white-space: nowrap; }
+.ip-preview-notice button[data-slot="button"]:hover { background: #f8edd6; }
+.ip-preview-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
+.ip-preview-layout.ip-preview-split { grid-template-columns: minmax(0, 1fr) minmax(235px, 264px); }
+.ip-preview-panel { min-width: 0; background: white; border: 1px solid var(--ip-line); border-radius: 9px; }
+.ip-preview-filters {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 14px;
+  border-bottom: 1px solid var(--ip-line);
+}
+.ip-preview-search { position: relative; width: min(100%, 225px); }
+.ip-preview-search > svg { position: absolute; top: 9px; left: 10px; color: var(--ip-muted); pointer-events: none; }
+.ip-preview-search > input, .ip-preview-filters > select, .ip-preview-dialog select {
+  width: 100%;
+  min-height: 34px;
+  border: 1px solid #d9e1eb;
+  border-radius: 6px;
+  background: white;
+  color: inherit;
+  padding: 5px 9px;
+}
+.ip-preview-search > input { padding-inline-start: 33px; }
+.ip-preview-filters > select { width: auto; min-width: 116px; }
+.ip-preview-batch { display: flex; flex-wrap: wrap; gap: 7px; margin-inline-start: auto; }
+.console-dashboard .ip-preview button[data-variant="outline"] { border: 1px solid #d9e1eb; background: white; padding-inline: 10px; }
+.console-dashboard .ip-preview button[data-variant="outline"]:hover { background: #f4f8fd; }
+.console-dashboard .ip-preview button.ip-preview-primary { background: var(--ip-blue); color: white; padding-inline: 12px; }
+.console-dashboard .ip-preview button.ip-preview-primary:hover { background: #114f95; }
+.ip-preview-hint { padding: 9px 14px; color: var(--ip-muted); font-size: 13px; }
+
+.console-dashboard .ip-preview-table { width: 100%; }
+.console-dashboard .ip-preview-table :is(th, td) { text-align: left; padding: 8px 12px; border-top: 0; border-bottom: 1px solid var(--ip-line); }
+.console-dashboard .ip-preview-table th { height: 42px; font-weight: 550; color: var(--ip-muted); background: #f7f9fc; }
+.console-dashboard .ip-preview-table td { height: 51px; }
+.ip-preview-table :is(th, td):first-child { width: 43px; text-align: center; }
+.ip-preview-table input[type="checkbox"] { width: 15px; height: 15px; min-height: 0; padding: 0; margin: 0; vertical-align: middle; accent-color: var(--ip-blue); }
+.ip-preview-table input:disabled { opacity: .48; }
+.ip-preview-table tr[data-focused="true"] { background: #eef5ff; }
+.ip-preview-address { font-family: "Cascadia Mono", Consolas, monospace; font-variant-numeric: tabular-nums; font-weight: 600; }
+.ip-preview-numerals { font-variant-numeric: tabular-nums; }
+.console-dashboard .ip-preview-table button:is(.ip-preview-address, .ip-preview-sort) { min-height: 28px; margin-inline-start: -6px; padding: 2px 6px; }
+.ip-preview-sort-desc { transform: rotate(180deg); }
+.ip-preview-status[data-status="即将到期"] { border-color: #ead8b3; color: #6c4a0c; background: #fff9e9; }
+.ip-preview-status[data-status="可用"] { border-color: #cee5da; color: #236248; background: #f3fbf7; }
+.ip-preview-status[data-status="续费确认中"] { border-color: #cadff6; color: #245990; background: #f0f7ff; }
+.ip-preview-status[data-status="已到期"] { color: #586779; background: #f1f3f6; }
+.ip-preview-row-actions { display: flex; justify-content: flex-end; gap: 2px; }
+.console-dashboard .ip-preview-table th.ip-preview-row-actions { display: table-cell; text-align: right; padding-inline-end: 22px; }
+.console-dashboard .ip-preview-table td.ip-preview-empty { height: 110px; text-align: center; color: var(--ip-muted); }
+.ip-preview-table-footer {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  padding: 12px 14px;
+  font-size: 12px;
+  color: var(--ip-muted);
+}
+.ip-preview-details { display: grid; justify-items: start; gap: 14px; padding: 17px; }
+.ip-preview-details h2 { font-size: 15px; margin-bottom: 6px; }
+.ip-preview-details dl { width: 100%; display: grid; gap: 11px; border-block: 1px solid var(--ip-line); margin: 0; padding-block: 13px; }
+.ip-preview-details dl div { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 5px 10px; }
+.ip-preview-details dt { color: var(--ip-muted); }
+.ip-preview-details dd { margin: 0; font-variant-numeric: tabular-nums; }
+.ip-preview-detail-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.ip-preview-feedback { min-height: 21px; margin-top: 7px; color: var(--ip-muted); }
+.ip-preview-switch {
+  display: flex;
+  position: fixed;
+  z-index: 5;
+  inset: auto auto 15px 50%;
+  transform: translateX(-50%);
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 5px;
+  border: 1px solid #33435b;
+  border-radius: 10px;
+  background: #192940;
+  color: #fff;
+  white-space: nowrap;
+  box-shadow: 0 4px 15px #19294026;
+}
+.ip-preview-switch > span { color: #cbd7e7; font-size: 12px; padding-inline: 7px; }
+.console-dashboard .ip-preview-switch button:hover { background: #334762; }
+.console-dashboard .ip-preview-switch button[aria-pressed="true"] { background: #fff; color: #1a304d; }
+.ip-preview-dialog { width: calc(100% - 28px); max-width: 440px; border: 1px solid #d9e1eb; color: #172d47; background: white; border-radius: 12px; }
+.ip-preview-dialog p { color: #52677e; font-size: 14px; }
+.ip-preview-dialog button[data-slot="button"] { min-height: 34px; }
+.ip-preview-dialog button[data-variant="outline"] { color: #172d47; background: white; border: 1px solid #d9e1eb; }
+.ip-preview-dialog .ip-preview-dialog-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
+.ip-preview-dialog .ip-preview-dialog-actions button:not([data-variant="outline"]) { background: #155eb0; color: #fff; border-color: transparent; }
+.ip-preview-quote-list { list-style: none; display: grid; gap: 6px; margin: 0; padding: 10px; background: #f5f8fc; border-radius: 6px; font-size: 14px; }
+.ip-preview-quote-list li, .ip-preview-total { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.ip-preview-total strong { color: #172d47; font-size: 19px; }
+
+@media (max-width: 1100px) {
+  .ip-preview-layout.ip-preview-split { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 520px) {
+  .ip-preview-notice { flex-wrap: wrap; }
+  .ip-preview-notice button[data-slot="button"] { margin-inline-start: 20px; }
+  .ip-preview-filters > select { flex: 1 0 95px; }
+  .ip-preview-search { flex: 1 1 145px; }
+  .ip-preview-batch { margin-inline-start: 0; }
+  .ip-preview-switch > span { display: none; }
+  .console-dashboard .ip-preview-split .ip-preview-table :is(th, td) { padding-inline: 6px; }
+  .ip-preview-split .ip-preview-table :is(th, td):first-child { width: 31px; }
+  .ip-preview-split .ip-preview-table :is(.ip-preview-address, .ip-preview-numerals) { font-size: 12px; }
+}

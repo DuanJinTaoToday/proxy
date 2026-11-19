@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>鲲星代理 · 租户控制台原型</title>
+    <link rel="stylesheet" href="./tenant-console-prototype/prototype.css">
+    <script type="module" src="./tenant-console-prototype/prototype.js"></script>
+  </head>
+  <body>
+    <!-- Compare resource overview, first-time setup, and daily operations in one prototype. -->
+    <a class="skip" href="#main">跳到主要内容</a>
+    <div class="shell">
+      <aside class="sidebar" id="sidebar" aria-label="控制台导航">
+        <a class="brand" href="#overview" data-page="overview">
+          <span class="brand-mark"><img id="brand-logo" alt=""></span>
+          <span class="side-label"><strong>鲲星代理</strong><small>租户控制台</small></span>
+        </a>
+        <nav id="navigation" aria-label="租户功能"></nav>
+        <div class="side-footer">
+          <button class="nav-link" data-page="guide" title="接入指南"><span data-icon="book"></span><span class="side-label">接入指南</span></button>
+        </div>
+      </aside>
+      <div class="workspace">
+        <header class="topbar">
+          <div class="breadcrumb">
+            <button class="icon-button" id="sidebar-toggle" aria-label="切换侧栏" aria-controls="sidebar" aria-expanded="true" data-icon="sidebar"></button>
+            <span class="crumb-root">租户控制台</span><span class="crumb-divider" data-icon="chevron"></span><span id="breadcrumb">账户概览</span>
+          </div>
+          <button class="tenant" data-page="profile" title="账户信息"><span class="avatar" id="avatar">星</span><span id="tenant-name">星河工作室</span><span data-icon="chevron"></span></button>
+        </header>
+        <main id="main" tabindex="-1"></main>
+      </div>
+    </div>
+    <div class="prototype-switcher" aria-label="原型预览选项">
+      <span class="demo-label"><i></i>原型预览</span>
+      <div class="switch-group variant-switch" aria-label="概览布局">
+        <button data-shift="-1" data-icon="left" aria-label="上一种布局"></button>
+        <span id="variant-name" aria-live="polite"></span>
+        <button data-shift="1" data-icon="chevron" aria-label="下一种布局"></button>
+      </div>
+      <div class="switch-group scenarios" aria-label="示例账户状态">
+        <button data-scenario="new">刚注册</button><button data-scenario="active">已有资源</button>
+      </div>
+    </div>
+    <dialog id="dialog" aria-labelledby="dialog-title"></dialog>
+  </body>
+</html>
