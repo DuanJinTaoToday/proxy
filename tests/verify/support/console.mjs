@@ -8,6 +8,9 @@ export async function login(page, route, label, account) {
 }
 
 export async function findTenant(operator, account) {
+  const walletLink = operator.getByRole('navigation', { name: '运营导航' })
+    .getByRole('link', { name: '租户钱包', exact: true })
+  if (await walletLink.isVisible()) await walletLink.click()
   await operator.getByLabel('主账号名或手机号').fill(account)
   await operator.getByRole('button', { name: '查找租户', exact: true }).click()
 }

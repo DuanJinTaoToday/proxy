@@ -86,7 +86,7 @@ func TestCronServerReloadsFileWithoutRestart(t *testing.T) {
 }
 
 func TestCronServerRegistersFileConfiguration(t *testing.T) {
-	app := conf.NewAppConfig(&conf.Config_Source{File: "../../configs/file/server.yaml"})
+	app := conf.NewAppConfig(&conf.Config_Source{File: "../../configs/file/test-server.yaml"})
 	t.Cleanup(func() { _ = app.Close() })
 	bootstrap := app.GetBootstrap()
 	settings := bootstrap.GetServer()

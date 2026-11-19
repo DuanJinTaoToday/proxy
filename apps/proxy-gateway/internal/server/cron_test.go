@@ -1,48 +1,72 @@
 package server_test
 
 import (
-	"log/slog"
+	"context"
+	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 	"time"
 
+	v1 "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/biz/recorder"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/conf"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/data/repo"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/server"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-gateway/internal/service"
 )
 
-type cronOutput chan string
-
-func (out cronOutput) Write(p []byte) (int, error) {
-	select {
-	case out <- string(p):
-	default:
-	}
-	return len(p), nil
+type cronReporter struct {
+	recorder.Reporter
+	batches chan *v1.SubmitBatchRequest
+	release chan struct{}
 }
 
-func TestPrintHelloCronReloadsWithoutRestart(t *testing.T) {
-	config, err := os.ReadFile("../../configs/file/server.yaml")
-	if err != nil {
+func (r cronReporter) Submit(ctx context.Context, batch *v1.SubmitBatchRequest) error {
+	select {
+	case r.batches <- batch:
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+	select {
+	case <-r.release:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+}
+
+func TestReportUsageCronReloadsWithoutRestart(t *testing.T) {
+	root := t.TempDir()
+	boot := filepath.Join(root, "boot-a")
+	if err := os.Mkdir(boot, 0o700); err != nil {
 		t.Fatal(err)
 	}
+	if err := os.WriteFile(filepath.Join(boot, "sessions.jsonl"), []byte("{}\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	spool := repo.NewSpool(root)
+	reporter := cronReporter{batches: make(chan *v1.SubmitBatchRequest, 1), release: make(chan struct{})}
+	collector := recorder.New(recorder.Config{GatewayID: "gateway"}, spool, reporter)
+
 	path := filepath.Join(t.TempDir(), "server.yaml")
-	save := func(contents string) {
+	save := func(spec string) {
 		t.Helper()
+		contents := fmt.Sprintf(`server:
+  http:
+    addr: 127.0.0.1:8091
+  cron_tasks:
+    - name: ReportUsage
+      spec: %q
+`, spec)
 		if err := os.WriteFile(path, []byte(contents), 0o600); err != nil {
 			t.Fatal(err)
 		}
 	}
-	const defaultSpec = "0 * * * * *"
-	initial := strings.Replace(string(config), defaultSpec, "@every 1h", 1)
-	save(initial)
+	save("@every 1h")
 	app := conf.NewAppConfig(&conf.Config_Source{File: path})
 	t.Cleanup(func() { _ = app.Close() })
-	output := make(cronOutput, 8)
-	logger := slog.New(slog.NewTextHandler(output, nil))
-	scheduler, err := server.NewCronServer(app, service.NewCronService(logger))
+	scheduler, err := server.NewCronServer(app, service.NewCronService(nil, collector))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -55,13 +79,32 @@ func TestPrintHelloCronReloadsWithoutRestart(t *testing.T) {
 		}
 	}()
 
-	save(strings.Replace(string(config), defaultSpec, "*/1 * * * * *", 1))
+	save("*/1 * * * * *")
 	select {
-	case line := <-output:
-		if !strings.Contains(line, "Hello from proxy-gateway") {
-			t.Fatalf("unexpected log: %s", line)
+	case batch := <-reporter.batches:
+		if records := batch.GetRecords(); batch.GetBootId() != "boot-a" || len(records) != 1 || records[0].GetEndOffset() != 3 {
+			t.Fatalf("unexpected Recorder batch: %v", batch)
 		}
 	case <-time.After(5 * time.Second):
-		t.Fatal("PrintHello did not run with the updated cron expression")
+		t.Fatal("ReportUsage did not run with the updated cron expression")
 	}
+
+	select {
+	case <-reporter.batches:
+		t.Fatal("cron submitted another batch while the previous report was still running")
+	case <-time.After(1200 * time.Millisecond):
+	}
+	close(reporter.release)
+	deadline := time.Now().Add(time.Second)
+	for time.Now().Before(deadline) {
+		offset, err := spool.Offset("boot-a")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if offset == 3 {
+			return
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	t.Fatal("Recorder offset did not advance after acknowledgement")
 }

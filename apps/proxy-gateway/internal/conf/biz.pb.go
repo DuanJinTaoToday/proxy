@@ -75,11 +75,14 @@ func (x *Biz) GetRecorder() *Biz_Recorder {
 }
 
 type Biz_Recorder struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	MaxRecords    *uint32                `protobuf:"varint,1,opt,name=max_records,json=maxRecords,proto3,oneof" json:"max_records,omitempty"`
-	MaxBytes      *uint32                `protobuf:"varint,2,opt,name=max_bytes,json=maxBytes,proto3,oneof" json:"max_bytes,omitempty"`
-	ScanInterval  *durationpb.Duration   `protobuf:"bytes,3,opt,name=scan_interval,json=scanInterval,proto3" json:"scan_interval,omitempty"`
-	ReportTimeout *durationpb.Duration   `protobuf:"bytes,4,opt,name=report_timeout,json=reportTimeout,proto3" json:"report_timeout,omitempty"`
+	state      protoimpl.MessageState `protogen:"open.v1"`
+	MaxRecords *uint32                `protobuf:"varint,1,opt,name=max_records,json=maxRecords,proto3,oneof" json:"max_records,omitempty"`
+	MaxBytes   *uint32                `protobuf:"varint,2,opt,name=max_bytes,json=maxBytes,proto3,oneof" json:"max_bytes,omitempty"`
+	// Kept for existing configurations. Set the ReportUsage schedule in server.cron_tasks.
+	//
+	// Deprecated: Marked as deprecated in biz.proto.
+	ScanInterval  *durationpb.Duration `protobuf:"bytes,3,opt,name=scan_interval,json=scanInterval,proto3" json:"scan_interval,omitempty"`
+	ReportTimeout *durationpb.Duration `protobuf:"bytes,4,opt,name=report_timeout,json=reportTimeout,proto3" json:"report_timeout,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -128,6 +131,7 @@ func (x *Biz_Recorder) GetMaxBytes() uint32 {
 	return 0
 }
 
+// Deprecated: Marked as deprecated in biz.proto.
 func (x *Biz_Recorder) GetScanInterval() *durationpb.Duration {
 	if x != nil {
 		return x.ScanInterval
@@ -146,16 +150,16 @@ var File_biz_proto protoreflect.FileDescriptor
 
 const file_biz_proto_rawDesc = "" +
 	"\n" +
-	"\tbiz.proto\x12\x16proxygateway.config.v1\x1a\x1egoogle/protobuf/duration.proto\"\xdb\x02\n" +
+	"\tbiz.proto\x12\x16proxygateway.config.v1\x1a\x1egoogle/protobuf/duration.proto\"\xdf\x02\n" +
 	"\x03Biz\x12\x1d\n" +
 	"\n" +
 	"gateway_id\x18\x01 \x01(\tR\tgatewayId\x12@\n" +
-	"\brecorder\x18\x02 \x01(\v2$.proxygateway.config.v1.Biz.RecorderR\brecorder\x1a\xf2\x01\n" +
+	"\brecorder\x18\x02 \x01(\v2$.proxygateway.config.v1.Biz.RecorderR\brecorder\x1a\xf6\x01\n" +
 	"\bRecorder\x12$\n" +
 	"\vmax_records\x18\x01 \x01(\rH\x00R\n" +
 	"maxRecords\x88\x01\x01\x12 \n" +
-	"\tmax_bytes\x18\x02 \x01(\rH\x01R\bmaxBytes\x88\x01\x01\x12>\n" +
-	"\rscan_interval\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\fscanInterval\x12@\n" +
+	"\tmax_bytes\x18\x02 \x01(\rH\x01R\bmaxBytes\x88\x01\x01\x12B\n" +
+	"\rscan_interval\x18\x03 \x01(\v2\x19.google.protobuf.DurationB\x02\x18\x01R\fscanInterval\x12@\n" +
 	"\x0ereport_timeout\x18\x04 \x01(\v2\x19.google.protobuf.DurationR\rreportTimeoutB\x0e\n" +
 	"\f_max_recordsB\f\n" +
 	"\n" +

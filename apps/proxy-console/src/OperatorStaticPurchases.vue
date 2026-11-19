@@ -81,13 +81,15 @@ onUnmounted(() => controller.abort())
 
 <template>
   <section class="panel wallet-section" aria-labelledby="static-operations-title">
-    <h2 id="static-operations-title">待核实静态 IP 订单</h2>
-    <Button type="button" variant="outline" :disabled="loading || submitting" @click="load()">刷新</Button>
+    <div class="orders-heading">
+      <h2 id="static-operations-title">待核实静态 IP 订单</h2>
+      <Button type="button" variant="outline" :disabled="loading || submitting" @click="load()">刷新订单</Button>
+    </div>
     <p v-if="loading" role="status">正在加载待核实订单…</p>
     <p v-if="error" role="alert">{{ error }}</p>
     <p v-if="result" role="status">{{ result }}</p>
-    <p v-if="!loading && !error && !pending.length">暂无超过 24 小时的待核实订单。</p>
-    <ul v-if="!loading">
+    <p v-if="!loading && !error && !pending.length" class="muted">暂无超过 24 小时的待核实订单。</p>
+    <ul v-if="!loading && pending.length">
       <li v-for="order in pending" :key="order.order_id">
         <Button v-if="canResolve" type="button" variant="link" :disabled="submitting" @click="select(order)">核实{{ order.pending_renewal_items?.length ? '续费' : '购买' }} #{{ order.order_id }}</Button>
         <span v-else>订单 #{{ order.order_id }} ·</span>
@@ -113,5 +115,10 @@ onUnmounted(() => controller.abort())
 </template>
 
 <style scoped>
+.wallet-section { padding: 16px; }
+.orders-heading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px; }
+.orders-heading h2 { font-weight: 650; }
+.wallet-section .orders-heading button { border: 1px solid var(--dashboard-line); }
 .resolution, .resolution label { display: grid; gap: 8px; justify-items: start; }
+.resolution input, .resolution select, .resolution textarea { max-width: 100%; }
 </style>

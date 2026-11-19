@@ -50,7 +50,6 @@ type Task struct {
 	spec    string        // 任务执行时间规则
 	timeout time.Duration // 任务执行超时时间
 	err     error         // 任务执行错误
-	errMsg  string        // 任务执行错误信息
 }
 
 func NewServer(opts ...ServerOptions) *Server {
@@ -159,16 +158,17 @@ func (s *Server) addTaskToCron(task *Task) (cron.EntryID, error) {
 //  2. It defers a function that does the following:
 //     a. It recovers from any panic that might occur during the task execution and logs the panic.
 //     b. It calculates the elapsed time since the start of the task.
-//     c. If an error occurred during the task execution, it logs the error and resets the task's error.
+//     c. If an error occurred during the task execution, it logs the error.
 //     d. If no error occurred, it logs the successful completion of the task.
 //  3. It attempts to acquire a Redis lock to prevent concurrent execution of the task.
 //     a. If it fails to acquire the lock, it logs the failure and returns.
 //     b. If it succeeds in acquiring the lock, it defers a function that releases the lock.
 //  4. It sets a timeout for the task execution if a timeout is specified in the task.
-//  5. It executes the task's function.
-//     a. If an error occurs during the execution, it sets the error on the task.
+//  5. It executes the task's function and records the error for this invocation.
 func (s *Server) wrapFunc(task *Task) func() {
 	return func() {
+		var taskErr error
+		var errMsg string
 		// 创建 tracer
 		tracer := otel.Tracer("cron.task")
 		// 记录任务耗时
@@ -183,8 +183,8 @@ func (s *Server) wrapFunc(task *Task) func() {
 		defer func() {
 			// 捕获panic
 			if r := recover(); r != nil {
-				task.err = errors.Errorf("Recover from panic --> %+v", r)
-				task.errMsg = fmt.Sprintf("panic stack -->\n%s", string(debug.Stack()))
+				taskErr = errors.Errorf("Recover from panic --> %+v", r)
+				errMsg = fmt.Sprintf("panic stack -->\n%s", string(debug.Stack()))
 			}
 
 			elapsed := time.Since(start)
@@ -193,14 +193,12 @@ func (s *Server) wrapFunc(task *Task) func() {
 			// 记录任务执行时间
 			span.SetAttributes(attribute.Float64("task.elapsed_sec", elapsedInSec))
 
-			if task.err != nil {
+			if taskErr != nil {
 				// 记录错误到 span
-				span.RecordError(task.err)
-				span.SetStatus(codes.Error, task.errMsg)
+				span.RecordError(taskErr)
+				span.SetStatus(codes.Error, errMsg)
 
-				s.log.ErrorContext(ctx, "[cron-task] Task Failed", "task", task.name, "error", task.err, "detail", task.errMsg, "elapsed_sec", elapsedInSec)
-				task.err = nil
-				task.errMsg = ""
+				s.log.ErrorContext(ctx, "[cron-task] Task Failed", "task", task.name, "error", taskErr, "detail", errMsg, "elapsed_sec", elapsedInSec)
 			} else {
 				// 成功完成
 				span.SetStatus(codes.Ok, "Task completed successfully")
@@ -226,8 +224,8 @@ func (s *Server) wrapFunc(task *Task) func() {
 				defer func() {
 					err := unlock(ctx)
 					if err != nil {
-						task.err = err
-						task.errMsg = fmt.Sprintf("unlock fail: %v", err)
+						taskErr = err
+						errMsg = fmt.Sprintf("unlock fail: %v", err)
 						span.AddEvent("redis.unlock.fail", trace.WithAttributes(
 							attribute.String("error", err.Error()),
 						))
@@ -262,8 +260,8 @@ func (s *Server) wrapFunc(task *Task) func() {
 
 		// 执行定时任务
 		if err := task.tFunc(ctxInFunc); err != nil {
-			task.err = err
-			task.errMsg = fmt.Sprintf("task exec fail: %v", err)
+			taskErr = err
+			errMsg = fmt.Sprintf("task exec fail: %v", err)
 			span.AddEvent("task.execution.error", trace.WithAttributes(
 				attribute.String("error", err.Error()),
 			))

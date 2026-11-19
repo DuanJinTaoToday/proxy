@@ -10,7 +10,8 @@ message Biz {
   message Recorder {
     optional uint32 max_records = 1;
     optional uint32 max_bytes = 2;
-    google.protobuf.Duration scan_interval = 3;
+    // Kept for existing configurations. Set the ReportUsage schedule in server.cron_tasks.
+    google.protobuf.Duration scan_interval = 3 [deprecated = true];
     google.protobuf.Duration report_timeout = 4;
   }
   string gateway_id = 1;

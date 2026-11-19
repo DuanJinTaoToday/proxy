@@ -1,0 +1,78 @@
+/* 三个版本共用控制台外壳，方案 A 与 B 只比较创建入口和表单布局。 */
+.console-dashboard { padding-bottom: 70px; }
+.prototype-tenant-nav button:disabled { opacity: .65; cursor: default; }
+.prototype-stack, .prototype-create { display: grid; gap: 16px; }
+.prototype-list[data-slot="card"] { padding: 0; gap: 0; overflow: hidden; }
+.prototype-list-head, .prototype-launch { display: flex; align-items: center; gap: 16px; padding: 20px; }
+.prototype-list-head { justify-content: space-between; }
+.prototype-list-head h2, .prototype-launch h2, .prototype-create-intro h2 { font-size: 16px; font-weight: 650; }
+.prototype-help { color: #506985; font-size: 13px; line-height: 1.5; }
+.prototype-list-head p, .prototype-launch p, .prototype-drawer-header p { margin-top: 4px; }
+.prototype-launch { border: 1px solid #dbe5f0; border-radius: 12px; background: #fff; }
+.prototype-launch .prototype-primary { margin-left: auto; }
+.prototype-icon { display: grid; flex: 0 0 44px; width: 44px; height: 44px; place-items: center; border-radius: 9px; background: #edf5ff; color: #0759b3; }
+.prototype-rows { margin: 0; padding: 0; list-style: none; }
+.prototype-row { display: grid; align-items: center; gap: 12px; grid-template-columns: minmax(0, 1.1fr) minmax(70px, .6fr) minmax(0, 1fr); padding: 13px 20px; border-top: 1px solid #dbe5f0; }
+.prototype-row small { display: block; margin-top: 2px; color: #506985; overflow-wrap: anywhere; }
+.prototype-amount { font-variant-numeric: tabular-nums; }
+.prototype-amount-label { display: none; }
+.prototype-columns { background: #f5f8fc; color: #506985; font-size: 12px; }
+.prototype-badge { justify-self: start; padding: 2px 8px; border: 1px solid #dbe5f0; border-radius: 6px; color: #52525b; font-size: 12px; white-space: nowrap; }
+.prototype-active { border-color: #d3e8db; background: #f2faf5; color: #166042; }
+.prototype-list-state { padding: 20px; border-top: 1px solid #dbe5f0; }
+.prototype-success { display: flex; align-items: center; gap: 9px; padding: 12px 16px; border: 1px solid #cce7d5; border-radius: 8px; background: #f2faf5; color: #166042; }
+.prototype-new { background: #f2faf5; }
+.prototype-create { max-width: 950px; }
+.prototype-create .prototype-back { justify-self: start; margin-left: -8px; }
+.prototype-create-card[data-slot="card"] { display: grid; grid-template-columns: minmax(190px, .65fr) minmax(0, 1fr); gap: clamp(24px, 4vw, 56px); padding: clamp(20px, 3.2vw, 36px); }
+.prototype-create-intro h2 { margin-top: 12px; }
+.prototype-create-intro p { max-width: 27ch; margin-top: 6px; }
+.prototype-create-intro .prototype-slots { margin-top: 18px; }
+.prototype-drawer[data-slot="dialog-content"] {
+  position: fixed; inset: 0 0 0 auto; translate: none; width: min(100%, 460px); max-width: none;
+  height: 100dvh; display: flex; flex-direction: column; align-items: stretch; gap: 24px; overflow-y: auto;
+  padding: 24px; border: 0; border-left: 1px solid #dbe5f0; border-radius: 0; color: #102b4b;
+  font: 14px/1.5 Inter, "Microsoft YaHei", "PingFang SC", sans-serif;
+}
+.prototype-drawer-header { padding-bottom: 17px; border-bottom: 1px solid #dbe5f0; }
+.prototype-drawer-header h2 { line-height: 1.4; }
+.prototype-drawer .prototype-form { flex: 1; }
+.prototype-drawer .prototype-actions { margin-top: auto; }
+.prototype-form, .prototype-fields { display: flex; flex-direction: column; gap: 16px; }
+.prototype-field { display: grid; gap: 6px; }
+.prototype-form [data-slot="input"] { height: 42px; min-height: 42px; border-color: #dbe5f0; }
+.prototype-form input[aria-invalid="true"] { border-color: #a12d23; }
+.prototype-checkbox { display: flex; align-items: center; gap: 8px; }
+.prototype-checkbox input { width: 16px; min-height: 16px; accent-color: #066cdb; }
+.prototype-error { color: #a12d23; font-size: 13px; }
+.prototype-options { border-block: 1px solid #dbe5f0; }
+.prototype-options summary { display: flex; align-items: center; justify-content: space-between; min-height: 44px; gap: 8px; cursor: pointer; font-weight: 600; list-style: none; }
+.prototype-options summary::-webkit-details-marker { display: none; }
+.prototype-options[open] summary svg { transform: rotate(180deg); }
+.prototype-fields { padding-block: 4px 14px; }
+.prototype-actions { display: flex; justify-content: flex-end; gap: 8px; padding-block: 6px 0; }
+.prototype-actions button { min-height: 44px; padding-inline: 14px; border: 1px solid #dbe5f0; background: #fff; color: #102b4b; }
+.prototype-actions button:hover { background: #edf5ff; }
+.prototype-primary[data-slot="button"] { min-height: 44px; padding-inline: 14px; border: 1px solid #065ebf; border-radius: 7px; background: #065ebf; color: #fff; font-weight: 650; }
+.prototype-primary[data-slot="button"]:hover { background: #084d98; }
+.prototype-switch { position: fixed; z-index: 5; inset: auto auto 12px 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 3px; padding: 4px; border-radius: 10px; background: #18181b; color: #fff; white-space: nowrap; box-shadow: 0 2px 10px #18181b35; font: 13px/1.4 Inter, "Microsoft YaHei", sans-serif; }
+.prototype-switch span, .prototype-switch a { padding: 6px 9px; }
+.prototype-switch span { color: #d4d4d8; }
+.prototype-switch a { color: inherit; border-radius: 6px; text-decoration: none; }
+.prototype-switch a[aria-current] { background: #fff; color: #18181b; }
+
+@media (max-width: 760px) {
+  .prototype-list-head, .prototype-launch { padding: 14px; gap: 10px; }
+  .prototype-row { grid-template-columns: minmax(0, 1fr) auto; gap: 5px 12px; padding: 12px 14px; }
+  .prototype-columns { display: none; }
+  .prototype-amount { grid-column: 1 / -1; font-size: 13px; }
+  .prototype-amount-label { display: inline; color: #506985; margin-right: 8px; }
+  .prototype-launch { flex-wrap: wrap; }
+  .prototype-launch .prototype-primary { width: 100%; margin: 2px 0 0; }
+  .prototype-create-card[data-slot="card"] { grid-template-columns: minmax(0, 1fr); }
+  .prototype-create-intro .prototype-icon { display: none; }
+  .prototype-create-intro h2 { margin-top: 0; }
+  .prototype-create-intro p { max-width: none; }
+  .prototype-create-intro .prototype-slots { margin-top: 8px; }
+  .prototype-drawer[data-slot="dialog-content"] { padding: 18px; }
+}

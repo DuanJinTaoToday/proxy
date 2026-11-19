@@ -185,7 +185,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <section class="grid gap-4" aria-label="代理子账号">
+  <section class="grid grid-cols-1 gap-4" aria-label="代理子账号">
     <Card>
       <CardHeader class="flex flex-row items-center justify-between gap-3">
         <h2 class="text-base font-semibold">代理子账号（{{ accounts.length }}/10）</h2>

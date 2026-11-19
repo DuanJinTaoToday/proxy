@@ -14,25 +14,35 @@ import (
 
 type cronServerImpl struct {
 	*cron.Server
+	cancel      context.CancelFunc
 	service     *service.CronService
 	cronTaskCfg []*conf.Server_CronTask
 }
 
 func NewCronServer(app *conf.AppConfig, cronService *service.CronService) (*cronServerImpl, error) {
 	bootstrap := app.GetBootstrap()
+	ctx, cancel := context.WithCancel(context.Background())
 	cronServer := &cronServerImpl{
 		service:     cronService,
-		Server:      cron.NewServer(),
+		Server:      cron.NewServer(cron.WithContext(ctx)),
+		cancel:      cancel,
 		cronTaskCfg: bootstrap.GetServer().GetCronTasks(),
 	}
 	if err := cronService.InitService(); err != nil {
+		cancel()
 		return nil, err
 	}
 	if err := cronServer.addCronTask(); err != nil {
+		cancel()
 		return nil, err
 	}
 	app.Register("server", cronServer)
 	return cronServer, nil
+}
+
+func (s *cronServerImpl) Stop(ctx context.Context) error {
+	s.cancel()
+	return s.Server.Stop(ctx)
 }
 
 // Notify 动态加载配置

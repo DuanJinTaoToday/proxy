@@ -1,38 +1,40 @@
+# 线上运行配置模板。部署前填写实际值，凭据放在受保护的配置源。
 server:
   http:
-    addr: 127.0.0.1:8091
+    addr:
   cron_tasks:
-    # 每分钟打印一次。name 对应 CronService 方法名，spec 第一段为秒。
-    # 任务列表支持热更新，设为 [] 可停止后续调度。
-    - name: PrintHello
-      spec: "0 * * * * *"
-      timeout: 0s
+    # 扫描 Recorder 并上报用量。每秒执行可填 "* * * * * *"。
+    - name: ReportUsage
+      spec:
+      timeout:
+
 data:
   gost:
-    binary: ./bin/gost
-    config: ./gost/auth.example.yaml
-    local_auth_token: ""
+    binary:
+    config:
+    local_auth_token:
     wukong:
-      address: ""
-      username: ""
-      password: ""
-      entries: []
-      probe_url: ""
-      backup_probe_url: ""
-      probe_timeout_seconds: 2
+      address:
+      username:
+      password:
+      entries:
+      probe_url:
+      backup_probe_url:
+      probe_timeout_seconds:
+      explicit_sidtime:
   acl:
     control:
-      url: ""
-      ca_file: ""
-      auth_token: ""
-      report_token: ""
+      url:
+      ca_file:
+      auth_token:
+      report_token:
   repo:
     recorder:
-      spool: ./spool
+      spool:
+
 biz:
-  gateway_id: ""
+  gateway_id:
   recorder:
-    max_records: 1000
-    max_bytes: 1048576
-    scan_interval: 1s
-    report_timeout: 3s
+    max_records:
+    max_bytes:
+    report_timeout:

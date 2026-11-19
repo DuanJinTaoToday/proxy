@@ -1,6 +1,10 @@
 server:
   http:
     addr: 127.0.0.1:8091
+  cron_tasks:
+    - name: ReportUsage
+      spec: "* * * * * *"
+      timeout: 0s
 data:
   gost:
     binary: /usr/local/bin/gost
@@ -11,6 +15,15 @@ data:
       password: fixture
       probe_url: https://console/fixture/primary
       backup_probe_url: https://console/fixture/backup
+      # 联调真实悟空时，在 Git 忽略的 *.local.yaml 中用下列字段替换上面的模拟配置。
+      # 两个探测地址填写独立、可直接访问且稳定返回 HTTPS 2xx 的受控目标。
+      # entries: ["154.81.157.72:12347"]
+      # username:
+      # password:
+      # probe_url:
+      # backup_probe_url:
+      # probe_timeout_seconds: 2
+      # explicit_sidtime: false
     local_auth_token: "xF7BYgCywEDoqSzEoCsHWxBdxY6AByM1FxbN6HiPo1E"
   acl:
     control:

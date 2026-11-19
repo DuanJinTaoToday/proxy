@@ -1,5 +1,5 @@
 source:
-  file: /config/server.yaml
+  file: /config/test-server.yaml
 zap:
   console: true
   level: info

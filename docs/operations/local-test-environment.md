@@ -27,13 +27,13 @@ Compose 项目名为 `proxy-test`。项目服务的镜像使用 `proxy-<组件>:
 
 ## 访问和联调
 
-- 客户控制台访问 `https://localhost:8443`。租户管理员测试手机号为 `13800000001`（Alpha）和 `13800000002`（Beta）。运营在 `https://localhost:8443/operations` 使用账号 `operator` 登录，可以查找上述测试租户并核对充值。初始密码均为 `proxy-local-test`。也可以在客户控制台用其他测试手机号注册。
+- 产品首页访问 `https://localhost:8443/`，租户控制台访问 `https://localhost:8443/console`。租户管理员测试手机号为 `13800000001`（Alpha）和 `13800000002`（Beta）。运营在 `https://localhost:8443/operations` 使用账号 `operator` 登录，可以查找上述测试租户并核对充值。初始密码均为 `proxy-local-test`。也可以在租户控制台用其他测试手机号注册。
 - SOCKS5 监听为 `127.0.0.1:1080`。新版子账号与计量完成前，完整认证转发联调暂停。
 - HTTPS 使用 Caddy 测试 CA。浏览器需要信任时，从 Docker Desktop 的 `console-1` 容器导出 `/data/caddy/pki/authorities/local/root.crt`，导入当前用户的受信任根证书。网关通过挂载的 CA 校验 `https://console`。
 
 ## 搭建与维护约定
 
-- 在 [Compose 配置](../../deploy/test/compose.yaml) 定义服务、依赖、健康检查和数据卷，在 [Dockerfile](../../deploy/test/Dockerfile) 定义各服务的构建阶段。Caddy、控制面、网关和 GOST 模板都在 `deploy/test/`，修改后通过 `make test-env` 构建并应用。
+- 在 [Compose 配置](../../deploy/test/compose.yaml) 定义服务、依赖、健康检查和数据卷，在 [Dockerfile](../../deploy/test/Dockerfile) 定义各服务的构建阶段。控制面和网关分别从各自应用目录下的 `configs/file/test-server.yaml` 加载测试配置，Caddy 和 GOST 模板位于 `deploy/test/`。修改后通过 `make test-env` 构建并应用。
 - 控制台和 SOCKS5 入口只绑定宿主机回环地址。控制面、模拟悟空和数据库使用 Docker 网络通信。测试配置使用本地专用账号、令牌和 CA。
 - 数据库结构通过 Goose 迁移维护。初始化 SQL 负责种入测试网关、令牌摘要、租户、两类余额账户和运营账号，重复执行可保留已有记录。PostgreSQL 数据、网关 Recorder 文件和 Caddy CA 分别存放在 `db`、`recorder` 和 `caddy` 命名卷，日常更新和停止服务均保留这些卷。
 

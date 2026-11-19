@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 import { writeFile } from 'node:fs/promises'
 import { findTenant, login, prepareRecharge, screenshot, submitRecharge } from '../support/console.mjs'
-import { expectTrafficPurchaseRecords, openTrafficSale, trafficSaleSettings } from '../support/traffic.mjs'
+import { expectTrafficPurchaseRecords, openTrafficPackages, openTrafficSale, trafficSaleSettings } from '../support/traffic.mjs'
 
 const purchasePath = '/v1/tenant/orders/traffic-packages'
 const purchaseURL = url => url.pathname === purchasePath
@@ -24,7 +24,7 @@ test('购买结果未知 → 重试原提交 → 只扣款和到账一次', asyn
       await submitRecharge(operator)
 
       await login(tenant, '/console', '手机号', '13800000001')
-      await nav.getByRole('link', { name: '流量套餐', exact: true }).click()
+      await openTrafficPackages(nav)
       const startingWallet = /^钱包余额 ¥([\d,]+)\.(\d{2}) · 可用流量 0(?:\.0+)? (?:B|GB)$/
       await expect(wallet).toHaveText(startingWallet)
       const [, yuan, cents] = startingWallet.exec(await wallet.innerText())
