@@ -1,7 +1,8 @@
 import { expect } from '@playwright/test'
 
 export async function trafficSaleSettings(operator) {
-  await operator.getByText('商品与套餐', { exact: true }).click()
+  await operator.getByRole('navigation', { name: '运营导航' })
+    .getByRole('link', { name: '商品与套餐', exact: true }).click()
   const sale = operator.locator('form').filter({
     has: operator.getByRole('heading', { name: /^动态.* · (已开售|未开售)$/ }),
   })
@@ -28,8 +29,19 @@ export async function openTrafficSale(operator, sale) {
   await expect(sale.getByRole('heading', { name: /^动态.* · 已开售$/ })).toBeVisible()
 }
 
+export async function openTrafficPackages(nav) {
+  const group = nav.getByRole('button', { name: '动态住宅代理-GB', exact: true })
+  if (await group.getAttribute('aria-expanded') === 'false') await group.click()
+  await nav.getByRole('link', { name: '流量套餐', exact: true }).click()
+}
+
+export async function openWalletOrders(tenant, nav) {
+  await nav.getByRole('link', { name: '鲲星钱包', exact: true }).click()
+  await tenant.getByRole('tab', { name: '订单记录', exact: true }).click()
+}
+
 export async function expectTrafficPurchaseRecords(tenant, nav, orderId, remaining) {
-  await nav.getByRole('link', { name: '订单记录', exact: true }).click()
+  await openWalletOrders(tenant, nav)
   const orders = tenant.getByRole('region', { name: '订单记录', exact: true })
   const orderIds = orders.getByRole('rowheader')
   await expect(orderIds).toHaveText(['#' + orderId])
@@ -38,7 +50,7 @@ export async function expectTrafficPurchaseRecords(tenant, nav, orderId, remaini
   })
   await expect(order.getByRole('cell', { name: '¥15.00', exact: true })).toBeVisible()
 
-  await nav.getByRole('link', { name: '钱包流水', exact: true }).click()
+  await tenant.getByRole('tab', { name: '钱包流水', exact: true }).click()
   const debit = tenant.getByRole('region', { name: '钱包流水', exact: true }).getByRole('row').filter({
     has: tenant.getByRole('cell', { name: '扣款', exact: true }),
   })

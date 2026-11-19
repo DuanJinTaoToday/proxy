@@ -14,7 +14,8 @@ test('运营充值 → 租户看到到账', async ({ browser, page: tenant, base
   try {
     await test.step('租户登录并读取初始余额', async () => {
       await login(tenant, '/console', '手机号', '13800000001')
-      await tenant.getByRole('link', { name: '钱包流水', exact: true }).click()
+      await tenant.getByRole('navigation', { name: '租户导航' })
+        .getByRole('link', { name: '鲲星钱包', exact: true }).click()
       await expect(balance).toHaveText(/^¥[\d,]+\.\d{2}$/)
       before = await balance.innerText()
       const [yuan, fraction] = before.slice(1).replaceAll(',', '').split('.')
@@ -23,6 +24,13 @@ test('运营充值 → 租户看到到账', async ({ browser, page: tenant, base
     })
     await test.step('运营核对租户、金额、原因和预计余额', async () => {
       await login(operator, '/operations', '运营账号', 'operator')
+      const nav = operator.getByRole('navigation', { name: '运营导航' })
+      const toggle = operator.getByRole('button', { name: '切换侧栏' })
+      await toggle.click()
+      await expect(nav.getByRole('button', { name: '租户钱包', exact: true })).toHaveAttribute('title', '租户钱包')
+      await expect(nav.getByRole('link', { name: '商品与套餐', exact: true })).toHaveAttribute('title', '商品与套餐')
+      await expect(nav.getByRole('link', { name: '待核实订单', exact: true })).toHaveAttribute('title', '待核实订单')
+      await toggle.click()
       await findTenant(operator, '13800000001')
       const summary = operator.getByRole('region', { name: 'Alpha', exact: true })
       await expect(summary.getByText(before, { exact: true })).toBeVisible()

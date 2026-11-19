@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue'
+import { ChartColumn, Layers3, Wallet } from 'lucide-vue-next'
 import { ApiError } from './api/control'
 import { getOverview, type Overview } from './api/overview'
 import { claimStaticIPExpiryNotices } from './api/static-ip'
@@ -49,30 +50,30 @@ onUnmounted(() => controller.abort())
     <p v-else-if="!overview" role="status">正在加载账户概览…</p>
     <template v-else>
       <div class="grid gap-4 sm:grid-cols-3">
-        <Card>
-          <CardHeader><h2 class="text-sm text-muted-foreground">钱包可用余额</h2></CardHeader>
-          <CardContent class="break-all text-2xl font-semibold">{{ money(overview.wallet_minor) }}</CardContent>
+        <Card class="account-stat gap-3">
+          <CardHeader><h2 class="flex items-center gap-2 text-sm text-muted-foreground"><Wallet :size="17" />钱包可用余额</h2></CardHeader>
+          <CardContent class="text-3xl font-semibold">{{ money(overview.wallet_minor) }}</CardContent>
         </Card>
-        <Card>
-          <CardHeader><h2 class="text-sm text-muted-foreground">动态流量余额</h2></CardHeader>
-          <CardContent class="break-all text-2xl font-semibold">{{ flowAmount(overview.traffic_bytes) }}</CardContent>
+        <Card class="account-stat gap-3">
+          <CardHeader><h2 class="flex items-center gap-2 text-sm text-muted-foreground"><ChartColumn :size="17" />动态流量余额</h2></CardHeader>
+          <CardContent class="text-3xl font-semibold">{{ flowAmount(overview.traffic_bytes) }}</CardContent>
         </Card>
-        <Card>
-          <CardHeader><h2 class="text-sm text-muted-foreground">可用静态 IP</h2></CardHeader>
-          <CardContent class="text-2xl font-semibold">{{ overview.active_static_ip_count }} 个</CardContent>
+        <Card class="account-stat gap-3">
+          <CardHeader><h2 class="flex items-center gap-2 text-sm text-muted-foreground"><Layers3 :size="17" />可用静态 IP</h2></CardHeader>
+          <CardContent class="text-3xl font-semibold">{{ overview.active_static_ip_count }} 个</CardContent>
         </Card>
       </div>
       <Card>
         <CardHeader><h2 class="font-semibold">快捷操作</h2></CardHeader>
         <CardContent class="flex flex-wrap items-center gap-3">
           <Button v-if="overview.products.some(p => p.kind === 'dynamic' && p.can_purchase)" as-child variant="outline">
-            <RouterLink :to="{ path: '/', query: { view: 'packages' } }">购买流量</RouterLink>
+            <RouterLink :to="{ name: 'console', query: { view: 'packages' } }">购买流量</RouterLink>
           </Button>
           <Button v-if="overview.can_create_subaccount" as-child variant="outline">
-            <RouterLink :to="{ path: '/', query: { view: 'subaccounts', create: '1' } }">创建子账号</RouterLink>
+            <RouterLink :to="{ name: 'console', query: { view: 'subaccounts', create: '1' } }">创建子账号</RouterLink>
           </Button>
           <Button v-if="overview.products.some(p => p.kind === 'static' && p.can_purchase)" as-child variant="outline">
-            <RouterLink :to="{ path: '/', query: { view: 'static' } }">购买静态 IP</RouterLink>
+            <RouterLink :to="{ name: 'console', query: { view: 'static' } }">购买静态 IP</RouterLink>
           </Button>
           <p v-if="!overview.can_create_subaccount" class="text-sm text-muted-foreground">暂时无法创建子账号。</p>
         </CardContent>
@@ -85,12 +86,12 @@ onUnmounted(() => controller.abort())
             <li v-for="notice in overview.notices" :key="notice.kind">
               <template v-if="notice.kind === 'low_traffic_balance'">
                 动态流量余额已达到低余额提醒阈值。
-                <RouterLink class="underline" :to="{ path: '/', query: { view: 'usage' } }">查看日用量</RouterLink>
+                <RouterLink class="underline" :to="{ name: 'console', query: { view: 'usage' } }">查看日用量</RouterLink>
               </template>
               <template v-else-if="notice.kind === 'static_ip_expiry'">
                 {{ notice.count }} 个静态 IP 将在 5 天内到期。
                 <span role="status"><strong v-if="claimedExpiry">其中 {{ claimedExpiry }} 个为新提醒。</strong></span>
-                <RouterLink class="underline" :to="{ path: '/', query: { view: 'ips' } }">查看我的 IP</RouterLink>
+                <RouterLink class="underline" :to="{ name: 'console', query: { view: 'ips' } }">查看我的 IP</RouterLink>
               </template>
             </li>
           </ul>

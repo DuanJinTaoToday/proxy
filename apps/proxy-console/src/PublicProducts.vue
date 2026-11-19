@@ -203,7 +203,7 @@ onUnmounted(() => {
         <div class="product-wrap">
           <h2>动态住宅代理接入</h2>
           <ol>
-            <li><Network :size="25" aria-hidden="true" /><h3>选择代理子账号</h3><p>在控制台打开「动态住宅代理 → 代理子账号」，选择已启用的账号并复制实际接入配置。</p></li>
+            <li><Network :size="25" aria-hidden="true" /><h3>选择代理子账号</h3><p>在控制台侧边栏的「代理」分组打开「子账户」，选择已启用的账号并复制实际接入配置。</p></li>
             <li><Terminal :size="25" aria-hidden="true" /><h3>配置 SOCKS5 客户端</h3><p>选择 SOCKS5 和用户名／密码认证，填入复制的网关地址、端口、用户名和密码。</p></li>
             <li><ChartColumn :size="25" aria-hidden="true" /><h3>核对日用量</h3><p>成功连接按实际上传和下载字节扣量，可能包含 SOCKS5 协议字节。失败连接不计量。1 GB = 1,000,000,000 字节。</p></li>
           </ol>

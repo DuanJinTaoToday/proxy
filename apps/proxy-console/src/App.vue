@@ -17,9 +17,9 @@ import './ui/theme.css'
 
 const { operations } = defineProps<{ operations: boolean }>()
 const sessionKey = operations ? 'proxy-console.operations-session' : 'proxy-console.session'
-const operatorKey = 'proxy-console.operations-account'
+const accountKey = operations ? 'proxy-console.operations-account' : 'proxy-console.login-phone'
 const token = ref(sessionStorage.getItem(sessionKey) ?? '')
-const operatorName = ref(operations ? sessionStorage.getItem(operatorKey) ?? '' : '')
+const loginAccount = ref(token.value ? sessionStorage.getItem(accountKey) ?? '' : '')
 const phone = ref('')
 const route = useRoute()
 const router = useRouter()
@@ -38,7 +38,8 @@ function setSession(value: string) {
 }
 
 function endSession(expired = false) {
-  if (operations) sessionStorage.removeItem(operatorKey)
+  sessionStorage.removeItem(accountKey)
+  loginAccount.value = ''
   setSession('')
   loginError.value = expired ? '登录已失效，请重新登录。' : ''
 }
@@ -58,10 +59,8 @@ async function signIn() {
     }
     const authenticate = operations ? loginOperator : login
     const session = await authenticate(username, submittedPassword)
-    if (operations) {
-      operatorName.value = username
-      sessionStorage.setItem(operatorKey, username)
-    }
+    loginAccount.value = username
+    sessionStorage.setItem(accountKey, username)
     setSession(session)
   } catch (error) {
     const status = error instanceof ApiError ? error.status : 0
@@ -106,9 +105,9 @@ function switchMode() {
 </script>
 
 <template>
-  <OperatorWallet v-if="operations && token" :token="token" :operator-name="operatorName"
+  <OperatorWallet v-if="operations && token" :token="token" :operator-name="loginAccount"
     @logout="endSession()" @expired="endSession(true)" />
-  <TenantWallet v-else-if="!operations && token && account" :token="token" :account="account"
+  <TenantWallet v-else-if="!operations && token && account" :token="token" :account="account" :login-account="loginAccount"
     @logout="endSession()" @expired="endSession(true)" @wallet="account = $event" />
   <main v-else id="console-auth-main" tabindex="-1" class="login-block" :class="{ 'tenant-login': !operations }">
     <a class="skip-link" href="#console-auth-main">跳到主要内容</a>

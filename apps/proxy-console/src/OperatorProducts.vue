@@ -63,8 +63,8 @@ onUnmounted(() => controller.abort())
 </script>
 
 <template>
-  <details class="panel product-settings">
-    <summary>商品与套餐</summary>
+  <section class="panel product-settings" aria-labelledby="sale-settings-title">
+    <h2 id="sale-settings-title">商品开售状态</h2>
     <p v-if="error" class="error" role="alert">{{ error }}</p>
     <button type="button" class="secondary" :disabled="busy" @click="run(refresh)">重新加载商品</button>
     <p v-if="busy" role="status">正在处理商品配置…</p>
@@ -87,12 +87,12 @@ onUnmounted(() => controller.abort())
         <button type="submit" :disabled="busy">保存套餐</button>
       </form>
     </template>
-  </details>
+  </section>
 </template>
 
 <style scoped>
 .product-settings { padding: 16px; }
-summary { cursor: pointer; font-weight: 600; }
+.product-settings h2 { margin-bottom: 12px; }
 form { margin-top: 16px; }
 form h3, form h4 { margin: 0; }
 form button { justify-self: start; }

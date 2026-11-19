@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 import { findTenant, login, prepareRecharge, screenshot, submitRecharge } from '../support/console.mjs'
-import { expectTrafficPurchaseRecords, openTrafficSale, trafficSaleSettings } from '../support/traffic.mjs'
+import { expectTrafficPurchaseRecords, openTrafficPackages, openTrafficSale, openWalletOrders, trafficSaleSettings } from '../support/traffic.mjs'
 
 test('流量套餐开售 → 余额不足 → 充值后扣款并到账', async ({ browser, page: tenant, baseURL }, info) => {
   const operatorContext = await browser.newContext({ baseURL, ignoreHTTPSErrors: true })
@@ -23,6 +23,7 @@ test('流量套餐开售 → 余额不足 → 充值后扣款并到账', async (
 
       await login(tenant, '/console', '手机号', '13800000002')
       await expect(tenant.getByRole('heading', { name: '快捷操作', exact: true })).toBeVisible()
+      await nav.getByRole('button', { name: '动态住宅代理-GB', exact: true }).click()
       await expect(packages).toHaveCount(0)
 
       await openTrafficSale(operator, sale)
@@ -32,15 +33,15 @@ test('流量套餐开售 → 余额不足 → 充值后扣款并到账', async (
 
     await test.step('租户购买时提示差额，刷新后仍无订单、余额或流量变化', async () => {
       await tenant.reload()
-      await packages.click()
+      await openTrafficPackages(nav)
       await package5GB.check()
       await submit.click()
       await expect(tenant.getByRole('alert')).toHaveText('钱包余额不足，还差 ¥15.00。请联系运营充值后重新确认。')
       await screenshot(tenant, info, '02-insufficient-wallet')
       await tenant.reload()
-      await nav.getByRole('link', { name: '订单记录', exact: true }).click()
+      await openWalletOrders(tenant, nav)
       await expect(tenant.getByText('暂无符合条件的订单。', { exact: true })).toBeVisible()
-      await nav.getByRole('link', { name: '账户概览', exact: true }).click()
+      await nav.getByRole('link', { name: '仪表板', exact: true }).click()
       await expect(tenant.getByRole('main').getByText('¥0.00', { exact: true })).toBeVisible()
       await expect(tenant.getByRole('main').getByText(/^0(?:\.0+)? (?:B|GB)$/)).toBeVisible()
     })
@@ -52,7 +53,7 @@ test('流量套餐开售 → 余额不足 → 充值后扣款并到账', async (
       await submitRecharge(operator)
 
       await tenant.reload()
-      await packages.click()
+      await openTrafficPackages(nav)
       await expect(tenant.getByText(/钱包余额 ¥20\.00 · 可用流量/)).toBeVisible()
       await package5GB.check()
       await submit.click()
@@ -64,7 +65,7 @@ test('流量套餐开售 → 余额不足 → 充值后扣款并到账', async (
     })
 
     await test.step('刷新后核对余额、唯一订单和关联扣款流水', async () => {
-      await nav.getByRole('link', { name: '账户概览', exact: true }).click()
+      await nav.getByRole('link', { name: '仪表板', exact: true }).click()
       await tenant.reload()
       await expect(tenant.getByRole('main').getByText('¥5.00', { exact: true })).toBeVisible()
       await expect(tenant.getByRole('main').getByText('5 GB', { exact: true })).toBeVisible()
