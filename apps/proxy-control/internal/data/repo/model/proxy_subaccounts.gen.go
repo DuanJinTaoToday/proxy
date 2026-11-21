@@ -4,19 +4,24 @@
 
 package model
 
+import (
+	"time"
+)
+
 const TableNameProxySubaccount = "proxy_subaccounts"
 
 // ProxySubaccount mapped from table <proxy_subaccounts>
 type ProxySubaccount struct {
-	ClientID           string  `gorm:"column:client_id;type:text;primaryKey" json:"client_id"`
-	TenantID           string  `gorm:"column:tenant_id;type:text;not null" json:"tenant_id"`
-	Name               string  `gorm:"column:name;type:text;not null" json:"name"`
-	PasswordCiphertext []uint8 `gorm:"column:password_ciphertext;type:bytea;not null" json:"password_ciphertext"`
-	Remark             string  `gorm:"column:remark;type:text;not null" json:"remark"`
-	Active             bool    `gorm:"column:active;type:boolean;not null" json:"active"`
-	LimitBytes         *int64  `gorm:"column:limit_bytes;type:bigint" json:"limit_bytes"`
-	CredentialVersion  *int64  `gorm:"column:credential_version;type:bigint;not null;default:1" json:"credential_version"`
-	UsedBytes          int64   `gorm:"column:used_bytes;type:bigint;not null" json:"used_bytes"`
+	ClientID           string     `gorm:"column:client_id;type:text;primaryKey" json:"client_id"`
+	TenantID           string     `gorm:"column:tenant_id;type:text;not null" json:"tenant_id"`
+	Name               string     `gorm:"column:name;type:text;not null" json:"name"`
+	PasswordCiphertext []uint8    `gorm:"column:password_ciphertext;type:bytea;not null" json:"password_ciphertext"`
+	Remark             string     `gorm:"column:remark;type:text;not null" json:"remark"`
+	Active             bool       `gorm:"column:active;type:boolean;not null" json:"active"`
+	LimitBytes         *int64     `gorm:"column:limit_bytes;type:bigint" json:"limit_bytes"`
+	CredentialVersion  *int64     `gorm:"column:credential_version;type:bigint;not null;default:1" json:"credential_version"`
+	UsedBytes          int64      `gorm:"column:used_bytes;type:bigint;not null" json:"used_bytes"`
+	CreatedAt          *time.Time `gorm:"column:created_at;type:timestamp with time zone;default:clock_timestamp()" json:"created_at"`
 }
 
 // TableName ProxySubaccount's table name

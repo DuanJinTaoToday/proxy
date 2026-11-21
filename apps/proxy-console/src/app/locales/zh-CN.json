@@ -61,6 +61,7 @@
     "home": "返回首页"
   },
   "errors": {
+    "SUBACCOUNT_LIMIT_REACHED": "子账号名额已用完，禁用的账号也占用名额。",
     "INVALID_PHONE": "请输入有效的中国大陆手机号。",
     "INVALID_PASSWORD": "密码至少需要 12 位。",
     "PHONE_ALREADY_REGISTERED": "该手机号已注册，请直接登录。",

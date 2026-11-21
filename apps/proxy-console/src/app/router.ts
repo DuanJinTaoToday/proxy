@@ -59,7 +59,7 @@ export const routes: RouteRecordRaw[] = [
       page('', 'console-dashboard', 'nav.dashboard'),
       tabbed('dynamic', 'console-dynamic', 'nav.dynamic', [{ path: 'setup', labelKey: 'tabs.dynamicSetup' }, { path: 'pricing', labelKey: 'tabs.dynamicPricing' }, { path: 'usage', labelKey: 'tabs.dynamicUsage' }, { path: 'guide', labelKey: 'tabs.guide' }]),
       tabbed('static', 'console-static', 'nav.static', [{ path: 'ips', labelKey: 'tabs.staticIps' }, { path: 'pricing', labelKey: 'tabs.staticPricing' }, { path: 'guide', labelKey: 'tabs.guide' }]),
-      page('sub-accounts', 'console-sub-accounts', 'nav.subAccounts'),
+      { path: 'sub-accounts', name: 'console-sub-accounts', component: () => import('@/pages/console/SubAccountsPage.vue'), meta: { titleKey: 'nav.subAccounts' } },
       page('wallet', 'console-wallet', 'nav.wallet'),
       tabbed('account', 'console-account', 'nav.account', [{ path: 'profile', labelKey: 'tabs.accountProfile' }, { path: 'orders', labelKey: 'tabs.accountOrders' }]),
     ],

@@ -5,6 +5,7 @@ import (
 
 	v1 "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/subaccount"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type Subaccounts struct{ biz *subaccount.Service }
@@ -12,7 +13,11 @@ type Subaccounts struct{ biz *subaccount.Service }
 func NewSubaccounts(biz *subaccount.Service) *Subaccounts { return &Subaccounts{biz: biz} }
 
 func subaccountMetadata(a subaccount.Account) *v1.Subaccount {
-	return &v1.Subaccount{ClientId: a.ClientID, Name: a.Name, Remark: a.Remark, Active: a.Active, LimitBytes: a.LimitBytes, UsedBytes: a.UsedBytes}
+	result := &v1.Subaccount{ClientId: a.ClientID, Name: a.Name, Remark: a.Remark, Active: a.Active, LimitBytes: a.LimitBytes, UsedBytes: a.UsedBytes}
+	if a.CreatedAt != nil {
+		result.CreatedAt = timestamppb.New(*a.CreatedAt)
+	}
+	return result
 }
 
 func (s *Subaccounts) ListSubaccounts(ctx context.Context, _ *v1.BaseRequest) (*v1.Subaccounts, error) {

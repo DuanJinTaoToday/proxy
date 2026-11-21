@@ -9,6 +9,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"regexp"
+	"time"
 
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/access"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/conf"
@@ -24,6 +25,7 @@ type Account struct {
 	Active                           bool
 	LimitBytes                       *int64
 	UsedBytes                        int64
+	CreatedAt                        *time.Time
 }
 
 type AuthState struct {
@@ -45,7 +47,7 @@ type Update struct {
 type Repository interface {
 	List(context.Context, string) ([]Account, error)
 	Find(context.Context, string, string) (Account, error)
-	Create(context.Context, Account) error
+	Create(context.Context, Account) (Account, error)
 	Update(context.Context, string, string, Update, []byte) (Account, error)
 	Gateway(context.Context, []byte) (string, error)
 	Load(context.Context, string) (AuthState, error)
@@ -57,13 +59,14 @@ type Repository interface {
 }
 
 var (
-	ErrTooMany       = errors.New("maximum proxy subaccounts reached")
-	ErrDuplicate     = errors.New("proxy subaccount name already exists")
-	ErrLimitDecrease = errors.New("cumulative limit cannot decrease")
-	nameFormat       = regexp.MustCompile(`^[a-z][a-z0-9]{3,7}$`)
-	passwordFormat   = regexp.MustCompile(`^[A-Za-z0-9]{6,12}$`)
-	letter           = regexp.MustCompile(`[A-Za-z]`)
-	digit            = regexp.MustCompile(`[0-9]`)
+	ErrTooMany         = errors.New("maximum proxy subaccounts reached")
+	ErrDuplicate       = errors.New("proxy subaccount name already exists")
+	ErrLimitDecrease   = errors.New("cumulative limit cannot decrease")
+	ErrLimitBelowUsage = errors.New("cumulative limit cannot be below usage")
+	nameFormat         = regexp.MustCompile(`^[a-z][a-z0-9]{3,7}$`)
+	passwordFormat     = regexp.MustCompile(`^[A-Za-z0-9]{6,12}$`)
+	letter             = regexp.MustCompile(`[A-Za-z]`)
+	digit              = regexp.MustCompile(`[0-9]`)
 )
 
 type Service struct {
@@ -159,8 +162,11 @@ func (s *Service) Create(ctx context.Context, token, name, password, remark stri
 	if err != nil {
 		return Account{}, err
 	}
-	if !nameFormat.MatchString(name) || len(remark) > 512 || limit != nil && *limit < 0 {
-		return Account{}, kerrors.BadRequest("INVALID_SUBACCOUNT", "invalid name, remark or cumulative limit")
+	if !nameFormat.MatchString(name) {
+		return Account{}, kerrors.BadRequest("INVALID_SUBACCOUNT_NAME", "invalid subaccount name")
+	}
+	if err := validateMetadata(&remark, limit); err != nil {
+		return Account{}, err
 	}
 	id, err := uuid.NewRandom()
 	if err != nil {
@@ -174,7 +180,8 @@ func (s *Service) Create(ctx context.Context, token, name, password, remark stri
 	if validate() != nil {
 		return Account{}, kerrors.BadRequest("INVALID_SUBACCOUNT", "invalid subaccount request")
 	}
-	switch err = s.repo.Create(ctx, a); {
+	a, err = s.repo.Create(ctx, a)
+	switch {
 	case errors.Is(err, ErrTooMany):
 		return Account{}, kerrors.Conflict("SUBACCOUNT_LIMIT_REACHED", "each tenant may have at most 10 subaccounts")
 	case errors.Is(err, ErrDuplicate):
@@ -193,8 +200,8 @@ func (s *Service) Update(ctx context.Context, token, id string, update Update, v
 	if update.InvalidMask {
 		return Account{}, kerrors.BadRequest("INVALID_UPDATE_MASK", "provide supported subaccount fields to update")
 	}
-	if update.Remark != nil && len(*update.Remark) > 512 || update.UpdateLimit && update.LimitBytes != nil && *update.LimitBytes < 0 {
-		return Account{}, kerrors.BadRequest("INVALID_SUBACCOUNT", "invalid remark or cumulative limit")
+	if err := validateMetadata(update.Remark, update.LimitBytes); err != nil {
+		return Account{}, err
 	}
 	var encrypted []byte
 	if update.Password != nil {
@@ -207,6 +214,9 @@ func (s *Service) Update(ctx context.Context, token, id string, update Update, v
 		return Account{}, kerrors.BadRequest("INVALID_SUBACCOUNT", "invalid subaccount request")
 	}
 	a, err := s.repo.Update(ctx, tenant.ID, id, update, encrypted)
+	if errors.Is(err, ErrLimitBelowUsage) {
+		return Account{}, kerrors.BadRequest("SUBACCOUNT_LIMIT_BELOW_USAGE", "cumulative limit cannot be below usage")
+	}
 	if errors.Is(err, ErrLimitDecrease) {
 		return Account{}, kerrors.BadRequest("INVALID_SUBACCOUNT_LIMIT", "cumulative limit cannot decrease")
 	}
@@ -217,6 +227,16 @@ func (s *Service) Update(ctx context.Context, token, id string, update Update, v
 		return Account{}, missing()
 	}
 	return a, nil
+}
+
+func validateMetadata(remark *string, limit *int64) error {
+	if remark != nil && len(*remark) > 512 {
+		return kerrors.BadRequest("INVALID_SUBACCOUNT_REMARK", "subaccount remark exceeds 512 bytes")
+	}
+	if limit != nil && *limit < 0 {
+		return kerrors.BadRequest("INVALID_SUBACCOUNT_LIMIT", "cumulative limit cannot be negative")
+	}
+	return nil
 }
 
 func (s *Service) Credentials(ctx context.Context, token, id string, requireActive bool, validate func() error) (string, string, error) {

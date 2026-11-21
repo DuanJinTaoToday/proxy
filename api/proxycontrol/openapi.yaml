@@ -2161,6 +2161,10 @@ components:
                 usedBytes:
                     type: string
                     description: 历史累计流量，单位为字节。
+                createdAt:
+                    type: string
+                    description: 创建时间。记录时间前创建的子账号不返回此字段。
+                    format: date-time
         proxycontrol.v1.SubaccountPassword:
             type: object
             properties:

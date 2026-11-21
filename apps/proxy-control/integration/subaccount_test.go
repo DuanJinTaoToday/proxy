@@ -30,12 +30,16 @@ func TestSubaccountAcceptance(t *testing.T) {
 	create := func(name, secret, token string) *httptest.ResponseRecorder {
 		return request("POST", base, fmt.Sprintf(`{"name":%q,"password":%q,"active":true,"limit_bytes":"15"}`, name, secret), token)
 	}
-	testfixture.AssertStatus(t, create("Bad1", "Old456", token), 400, "INVALID_SUBACCOUNT")
+	testfixture.AssertStatus(t, create("Bad1", "Old456", token), 400, "INVALID_SUBACCOUNT_NAME")
 	testfixture.AssertStatus(t, create("acct", "123456", token), 400, "INVALID_PROXY_PASSWORD")
 	testfixture.AssertStatus(t, create("acct", "abcdef", token), 400, "INVALID_PROXY_PASSWORD")
 	var account v1.Subaccount
 	created := create("acct", "Old456", token)
 	readProto(t, created, &account)
+	createdAt := account.GetCreatedAt()
+	if createdAt == nil || !createdAt.IsValid() {
+		t.Fatal("creation did not return a valid timestamp")
+	}
 	id := account.GetClientId()
 	path := base + "/" + id
 	testfixture.AssertStatus(t, create("acct", "Old456", token), 409, "SUBACCOUNT_NAME_EXISTS")
@@ -46,7 +50,7 @@ func TestSubaccountAcceptance(t *testing.T) {
 	list := request("GET", base, "", token)
 	var accounts v1.Subaccounts
 	readProto(t, list, &accounts)
-	if got := accounts.GetAccounts(); len(got) != 1 || got[0].GetClientId() != id ||
+	if got := accounts.GetAccounts(); len(got) != 1 || got[0].GetClientId() != id || !got[0].GetCreatedAt().AsTime().Equal(createdAt.AsTime()) ||
 		strings.Contains(list.Body.String(), "Old456") || strings.Contains(created.Body.String(), "Old456") {
 		t.Fatalf("list or create exposed wrong data: %s", list.Body)
 	}
@@ -80,10 +84,13 @@ func TestSubaccountAcceptance(t *testing.T) {
 	}
 	execSQL(t, f.db, "UPDATE proxy_subaccounts SET used_bytes=13 WHERE client_id=?", id)
 	testfixture.AssertStatus(t, request("PATCH", path, `{"limit_bytes":"14","update_mask":"limitBytes"}`, token), 400, "INVALID_SUBACCOUNT_LIMIT")
+	testfixture.AssertStatus(t, request("PATCH", path, `{"limit_bytes":"12","update_mask":"limitBytes"}`, token), 400, "SUBACCOUNT_LIMIT_BELOW_USAGE")
 	readProto(t, request("PATCH", path, `{"password":"New456","active":false,"remark":"updated","update_mask":"password,active,remark,limitBytes"}`, token), &account)
-	if account.LimitBytes != nil || account.GetUsedBytes() != 13 || account.GetRemark() != "updated" || account.GetClientId() != id || account.GetName() != "acct" {
+	if account.LimitBytes != nil || account.GetUsedBytes() != 13 || account.GetRemark() != "updated" || account.GetClientId() != id ||
+		account.GetName() != "acct" || !account.GetCreatedAt().AsTime().Equal(createdAt.AsTime()) {
 		t.Fatalf("update lost account history or metadata: %s", account.String())
 	}
+	testfixture.AssertStatus(t, request("PATCH", path, `{"limit_bytes":"12","update_mask":"limitBytes"}`, token), 400, "SUBACCOUNT_LIMIT_BELOW_USAGE")
 	if disabled := current(); disabled.GetActive() || len(disabled.GetPasswordHash()) != 0 {
 		t.Fatal("disabled snapshot retained verifier")
 	}

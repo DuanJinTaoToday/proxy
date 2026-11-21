@@ -13,6 +13,7 @@ import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -239,7 +240,9 @@ type Subaccount struct {
 	Active     bool                   `protobuf:"varint,4,opt,name=active,proto3" json:"active,omitempty"`
 	LimitBytes *int64                 `protobuf:"varint,5,opt,name=limit_bytes,json=limitBytes,proto3,oneof" json:"limit_bytes,omitempty"`
 	// 历史累计流量，单位为字节。
-	UsedBytes     int64 `protobuf:"varint,6,opt,name=used_bytes,json=usedBytes,proto3" json:"used_bytes,omitempty"`
+	UsedBytes int64 `protobuf:"varint,6,opt,name=used_bytes,json=usedBytes,proto3" json:"used_bytes,omitempty"`
+	// 创建时间。记录时间前创建的子账号不返回此字段。
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -314,6 +317,13 @@ func (x *Subaccount) GetUsedBytes() int64 {
 		return x.UsedBytes
 	}
 	return 0
+}
+
+func (x *Subaccount) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
 }
 
 type Subaccounts struct {
@@ -495,7 +505,7 @@ var File_proxycontrol_v1_subaccount_proto protoreflect.FileDescriptor
 
 const file_proxycontrol_v1_subaccount_proto_rawDesc = "" +
 	"\n" +
-	" proxycontrol/v1/subaccount.proto\x12\x0fproxycontrol.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1bopenapiv3/annotations.proto\x1a\x17validate/validate.proto\x1a\x1cproxycontrol/v1/common.proto\x1a google/protobuf/field_mask.proto\":\n" +
+	" proxycontrol/v1/subaccount.proto\x12\x0fproxycontrol.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1bopenapiv3/annotations.proto\x1a\x17validate/validate.proto\x1a\x1cproxycontrol/v1/common.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\":\n" +
 	"\x11SubaccountRequest\x12%\n" +
 	"\tclient_id\x18\x01 \x01(\tB\b\xfaB\x05r\x03\xb0\x01\x01R\bclientId\"\xfa\x01\n" +
 	"\x17CreateSubaccountRequest\x12/\n" +
@@ -515,7 +525,7 @@ const file_proxycontrol_v1_subaccount_proto_rawDesc = "" +
 	"limitBytes\x88\x01\x01\x12;\n" +
 	"\vupdate_mask\x18\x06 \x01(\v2\x1a.google.protobuf.FieldMaskR\n" +
 	"updateMaskB\x0e\n" +
-	"\f_limit_bytes\"\xc2\x01\n" +
+	"\f_limit_bytes\"\xfd\x01\n" +
 	"\n" +
 	"Subaccount\x12\x1b\n" +
 	"\tclient_id\x18\x01 \x01(\tR\bclientId\x12\x12\n" +
@@ -525,7 +535,9 @@ const file_proxycontrol_v1_subaccount_proto_rawDesc = "" +
 	"\vlimit_bytes\x18\x05 \x01(\x03H\x00R\n" +
 	"limitBytes\x88\x01\x01\x12\x1d\n" +
 	"\n" +
-	"used_bytes\x18\x06 \x01(\x03R\tusedBytesB\x0e\n" +
+	"used_bytes\x18\x06 \x01(\x03R\tusedBytes\x129\n" +
+	"\n" +
+	"created_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAtB\x0e\n" +
 	"\f_limit_bytes\"F\n" +
 	"\vSubaccounts\x127\n" +
 	"\baccounts\x18\x01 \x03(\v2\x1b.proxycontrol.v1.SubaccountR\baccounts\"0\n" +
@@ -567,26 +579,28 @@ var file_proxycontrol_v1_subaccount_proto_goTypes = []any{
 	(*SubaccountPassword)(nil),      // 5: proxycontrol.v1.SubaccountPassword
 	(*SubaccountProxyConfig)(nil),   // 6: proxycontrol.v1.SubaccountProxyConfig
 	(*fieldmaskpb.FieldMask)(nil),   // 7: google.protobuf.FieldMask
-	(*BaseRequest)(nil),             // 8: proxycontrol.v1.BaseRequest
+	(*timestamppb.Timestamp)(nil),   // 8: google.protobuf.Timestamp
+	(*BaseRequest)(nil),             // 9: proxycontrol.v1.BaseRequest
 }
 var file_proxycontrol_v1_subaccount_proto_depIdxs = []int32{
 	7, // 0: proxycontrol.v1.UpdateSubaccountRequest.update_mask:type_name -> google.protobuf.FieldMask
-	3, // 1: proxycontrol.v1.Subaccounts.accounts:type_name -> proxycontrol.v1.Subaccount
-	8, // 2: proxycontrol.v1.SubaccountService.ListSubaccounts:input_type -> proxycontrol.v1.BaseRequest
-	1, // 3: proxycontrol.v1.SubaccountService.CreateSubaccount:input_type -> proxycontrol.v1.CreateSubaccountRequest
-	2, // 4: proxycontrol.v1.SubaccountService.UpdateSubaccount:input_type -> proxycontrol.v1.UpdateSubaccountRequest
-	0, // 5: proxycontrol.v1.SubaccountService.RevealSubaccountPassword:input_type -> proxycontrol.v1.SubaccountRequest
-	0, // 6: proxycontrol.v1.SubaccountService.GetProxyConfig:input_type -> proxycontrol.v1.SubaccountRequest
-	4, // 7: proxycontrol.v1.SubaccountService.ListSubaccounts:output_type -> proxycontrol.v1.Subaccounts
-	3, // 8: proxycontrol.v1.SubaccountService.CreateSubaccount:output_type -> proxycontrol.v1.Subaccount
-	3, // 9: proxycontrol.v1.SubaccountService.UpdateSubaccount:output_type -> proxycontrol.v1.Subaccount
-	5, // 10: proxycontrol.v1.SubaccountService.RevealSubaccountPassword:output_type -> proxycontrol.v1.SubaccountPassword
-	6, // 11: proxycontrol.v1.SubaccountService.GetProxyConfig:output_type -> proxycontrol.v1.SubaccountProxyConfig
-	7, // [7:12] is the sub-list for method output_type
-	2, // [2:7] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	8, // 1: proxycontrol.v1.Subaccount.created_at:type_name -> google.protobuf.Timestamp
+	3, // 2: proxycontrol.v1.Subaccounts.accounts:type_name -> proxycontrol.v1.Subaccount
+	9, // 3: proxycontrol.v1.SubaccountService.ListSubaccounts:input_type -> proxycontrol.v1.BaseRequest
+	1, // 4: proxycontrol.v1.SubaccountService.CreateSubaccount:input_type -> proxycontrol.v1.CreateSubaccountRequest
+	2, // 5: proxycontrol.v1.SubaccountService.UpdateSubaccount:input_type -> proxycontrol.v1.UpdateSubaccountRequest
+	0, // 6: proxycontrol.v1.SubaccountService.RevealSubaccountPassword:input_type -> proxycontrol.v1.SubaccountRequest
+	0, // 7: proxycontrol.v1.SubaccountService.GetProxyConfig:input_type -> proxycontrol.v1.SubaccountRequest
+	4, // 8: proxycontrol.v1.SubaccountService.ListSubaccounts:output_type -> proxycontrol.v1.Subaccounts
+	3, // 9: proxycontrol.v1.SubaccountService.CreateSubaccount:output_type -> proxycontrol.v1.Subaccount
+	3, // 10: proxycontrol.v1.SubaccountService.UpdateSubaccount:output_type -> proxycontrol.v1.Subaccount
+	5, // 11: proxycontrol.v1.SubaccountService.RevealSubaccountPassword:output_type -> proxycontrol.v1.SubaccountPassword
+	6, // 12: proxycontrol.v1.SubaccountService.GetProxyConfig:output_type -> proxycontrol.v1.SubaccountProxyConfig
+	8, // [8:13] is the sub-list for method output_type
+	3, // [3:8] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_proxycontrol_v1_subaccount_proto_init() }

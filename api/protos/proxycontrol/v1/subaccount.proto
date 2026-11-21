@@ -7,6 +7,7 @@ import "openapiv3/annotations.proto";
 import "validate/validate.proto";
 import "proxycontrol/v1/common.proto";
 import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1";
 
@@ -64,6 +65,8 @@ message Subaccount {
   optional int64 limit_bytes = 5;
   // 历史累计流量，单位为字节。
   int64 used_bytes = 6;
+  // 创建时间。记录时间前创建的子账号不返回此字段。
+  google.protobuf.Timestamp created_at = 7;
 }
 
 message Subaccounts {

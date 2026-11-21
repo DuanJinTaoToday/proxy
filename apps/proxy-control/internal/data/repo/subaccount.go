@@ -30,7 +30,7 @@ func NewSubaccountRepository(db *gorm.DB) *SubaccountRepository {
 
 func (r *SubaccountRepository) List(ctx context.Context, tenant string) ([]subaccount.Account, error) {
 	var rows []model.ProxySubaccount
-	err := r.db.WithContext(ctx).Raw(`SELECT client_id,name,remark,active,limit_bytes,used_bytes
+	err := r.db.WithContext(ctx).Raw(`SELECT client_id,name,remark,active,limit_bytes,used_bytes,created_at
         FROM proxy_subaccounts WHERE tenant_id=? ORDER BY name`, tenant).Scan(&rows).Error
 	accounts := make([]subaccount.Account, 0, len(rows))
 	for _, row := range rows {
@@ -45,8 +45,9 @@ func (r *SubaccountRepository) Find(ctx context.Context, tenant, id string) (sub
 	return proxyAccount(row), err
 }
 
-func (r *SubaccountRepository) Create(ctx context.Context, a subaccount.Account) error {
-	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+func (r *SubaccountRepository) Create(ctx context.Context, a subaccount.Account) (subaccount.Account, error) {
+	var row model.ProxySubaccount
+	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var tenant string
 		if err := tx.Raw(`SELECT id FROM tenants WHERE id=? FOR UPDATE`, a.TenantID).Scan(&tenant).Error; err != nil {
 			return err
@@ -58,9 +59,10 @@ func (r *SubaccountRepository) Create(ctx context.Context, a subaccount.Account)
 		if count >= subaccount.MaxAccounts {
 			return subaccount.ErrTooMany
 		}
-		result := tx.Exec(`INSERT INTO proxy_subaccounts(client_id,tenant_id,name,password_ciphertext,remark,active,limit_bytes)
-            VALUES (?,?,?,?,?,?,?) ON CONFLICT(tenant_id,name) DO NOTHING`,
-			a.ClientID, a.TenantID, a.Name, a.PasswordCiphertext, a.Remark, a.Active, a.LimitBytes)
+		result := tx.Raw(`INSERT INTO proxy_subaccounts(client_id,tenant_id,name,password_ciphertext,remark,active,limit_bytes)
+            VALUES (?,?,?,?,?,?,?) ON CONFLICT(tenant_id,name) DO NOTHING
+            RETURNING created_at`,
+			a.ClientID, a.TenantID, a.Name, a.PasswordCiphertext, a.Remark, a.Active, a.LimitBytes).Scan(&row)
 		if result.Error != nil {
 			return result.Error
 		}
@@ -69,6 +71,8 @@ func (r *SubaccountRepository) Create(ctx context.Context, a subaccount.Account)
 		}
 		return nil
 	})
+	a.CreatedAt = row.CreatedAt
+	return a, err
 }
 
 func (r *SubaccountRepository) Update(ctx context.Context, tenant, id string, u subaccount.Update, encrypted []byte) (subaccount.Account, error) {
@@ -85,16 +89,21 @@ func (r *SubaccountRepository) Update(ctx context.Context, tenant, id string, u 
 				return gorm.ErrRecordNotFound
 			}
 		}
-		if err := tx.Raw(`SELECT client_id,name,remark,active,limit_bytes,used_bytes FROM proxy_subaccounts
+		if err := tx.Raw(`SELECT client_id,name,remark,active,limit_bytes,used_bytes,created_at FROM proxy_subaccounts
             WHERE tenant_id=? AND client_id=? FOR UPDATE`, tenant, id).Scan(&row).Error; err != nil || row.ClientID == "" {
 			return err
 		}
-		if u.UpdateLimit && u.LimitBytes != nil && row.LimitBytes != nil && *u.LimitBytes < *row.LimitBytes {
-			return subaccount.ErrLimitDecrease
+		if u.UpdateLimit && u.LimitBytes != nil {
+			if *u.LimitBytes < row.UsedBytes {
+				return subaccount.ErrLimitBelowUsage
+			}
+			if row.LimitBytes != nil && *u.LimitBytes < *row.LimitBytes {
+				return subaccount.ErrLimitDecrease
+			}
 		}
 		result := tx.Raw(`UPDATE proxy_subaccounts SET password_ciphertext=CASE WHEN ? THEN ?::bytea ELSE password_ciphertext END,
             credential_version=credential_version+1,remark=COALESCE(?,remark),active=COALESCE(?,active),limit_bytes=CASE WHEN ? THEN CAST(? AS bigint) ELSE limit_bytes END
-            WHERE tenant_id=? AND client_id=? RETURNING client_id,name,remark,active,limit_bytes,used_bytes`,
+            WHERE tenant_id=? AND client_id=? RETURNING client_id,name,remark,active,limit_bytes,used_bytes,created_at`,
 			encrypted != nil, encrypted, u.Remark, u.Active, u.UpdateLimit, u.LimitBytes, tenant, id).Scan(&row)
 		if result.Error != nil {
 			return result.Error
@@ -117,7 +126,7 @@ func (r *SubaccountRepository) Gateway(ctx context.Context, hash []byte) (string
 func proxyAccount(row model.ProxySubaccount) subaccount.Account {
 	return subaccount.Account{
 		ClientID: row.ClientID, TenantID: row.TenantID, Name: row.Name, Remark: row.Remark,
-		PasswordCiphertext: row.PasswordCiphertext, Active: row.Active, LimitBytes: row.LimitBytes, UsedBytes: row.UsedBytes,
+		PasswordCiphertext: row.PasswordCiphertext, Active: row.Active, LimitBytes: row.LimitBytes, UsedBytes: row.UsedBytes, CreatedAt: row.CreatedAt,
 	}
 }
 
