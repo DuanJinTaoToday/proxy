@@ -6,7 +6,8 @@ import { formatGB } from '@/features/dynamic-proxy'
 const props = defineProps<{ days: { date: string, bytes: bigint }[] }>()
 const { t, locale } = useI18n()
 const activeDate = ref<string>()
-const activeDay = computed(() => props.days.find(day => day.date === activeDate.value))
+const activeIndex = computed(() => props.days.findIndex(day => day.date === activeDate.value))
+const activeDay = computed(() => props.days[activeIndex.value])
 const peak = computed(() => props.days.reduce((max, day) => day.bytes > max ? day.bytes : max, 1n))
 const gridMaximum = computed(() => {
   const magnitude = 10n ** BigInt(peak.value.toString().length - 1)
@@ -43,7 +44,7 @@ const area = computed(() => {
             :data-date="day.date" @pointerenter="activeDate = day.date" />
         </div>
         <div v-if="activeDay" class="usage-chart__tooltip" role="status"
-          :class="{ 'usage-chart__tooltip--left': activeDay.date >= days[3].date }">
+          :class="{ 'usage-chart__tooltip--left': activeIndex >= Math.floor(days.length / 2) }">
           <time :datetime="activeDay.date">{{ activeDay.date }}</time>
           <strong>{{ t('dashboard.gb', { value: formatGB(activeDay.bytes, locale) }) }}</strong>
         </div>
@@ -58,9 +59,9 @@ const area = computed(() => {
 <style scoped>
 .usage-chart { display: grid; grid-template-columns: minmax(0, auto) minmax(0, 1fr); gap: var(--space-2); }
 .usage-chart__axes {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  display: grid;
+  grid-template-rows: repeat(4, 1fr) 0;
+  align-items: start;
   block-size: var(--dashboard-chart-height);
   text-align: end;
   color: var(--color-text-secondary);
@@ -68,6 +69,7 @@ const area = computed(() => {
   max-inline-size: var(--dashboard-chart-axis-width);
   overflow-wrap: anywhere;
 }
+.usage-chart__axes span { transform: translateY(-50%); }
 .usage-chart__plot { position: relative; block-size: var(--dashboard-chart-height); }
 .usage-chart__plot svg { width: 100%; height: 100%; }
 .usage-chart__plot line, .usage-chart__line { vector-effect: non-scaling-stroke; stroke-width: var(--border-width); stroke: var(--color-border); }

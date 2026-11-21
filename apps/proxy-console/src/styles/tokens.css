@@ -79,6 +79,8 @@
   --account-name-width: 160px;
   --dashboard-chart-height: 200px;
   --dashboard-chart-axis-width: 100px;
+  --notification-panel-width: 360px;
+  --dashboard-recharge-panel-width: 280px;
   --page-padding: var(--space-5);
   --focus-ring-width: 2px;
 

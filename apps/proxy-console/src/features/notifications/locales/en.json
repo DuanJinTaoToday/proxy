@@ -1,5 +1,7 @@
 {
   "notifications": {
+    "markAllRead": "Mark all as read",
+    "close": "Close notifications",
     "unreadLabel": "Notifications (unread)",
     "loading": "Loading notifications",
     "failed": "Notifications could not be loaded.",

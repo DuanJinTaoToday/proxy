@@ -3,7 +3,7 @@ import { computed, onScopeDispose, ref, shallowRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { ElBadge, ElButton, ElEmpty, ElPopover, ElSkeleton } from 'element-plus'
-import { Bell } from '@element-plus/icons-vue'
+import { Bell, Check, Close } from '@element-plus/icons-vue'
 import { claimStaticExpiryNotices, getOverview, getTrafficAlert } from '@/api/dashboard'
 import LinkButton from '@/shared/ui/LinkButton.vue'
 
@@ -20,6 +20,20 @@ const controller = new AbortController()
 onScopeDispose(() => controller.abort())
 
 const storageKey = `proxy-console.notifications.${props.accountKey}`
+const claimKey = `${storageKey}.claim-pending`
+let claimPending = false
+
+if (props.accountKey) {
+  try { claimPending = sessionStorage.getItem(claimKey) === '1' } catch { /* Fall back to in-memory state. */ }
+}
+
+function setClaimPending(pending: boolean) {
+  claimPending = pending
+  try {
+    if (pending) sessionStorage.setItem(claimKey, '1')
+    else sessionStorage.removeItem(claimKey)
+  } catch { /* Fall back to in-memory state. */ }
+}
 interface ReadState {
   trafficRead?: string
   staticUnread?: boolean
@@ -59,11 +73,17 @@ async function load() {
     const [overview, traffic] = await Promise.all([getOverview(controller.signal), getTrafficAlert(controller.signal)])
     if (controller.signal.aborted) return
     const count = overview.expiringIpCount
-    const claimed = count > 0 ? await claimStaticExpiryNotices() : 0
-    // 领取会改变服务端状态。即使用户已换页，也保存旧账号成功领取的结果。
-    const previous = loadReadState()
-    const staticUnread = count > 0 && (claimed > 0 || previous.staticUnread === true)
+    const recoverClaim = claimPending
+    let claimed = 0
+    if (count > 0) {
+      // The server can record the claim even if the response never reaches this tab.
+      setClaimPending(true)
+      claimed = await claimStaticExpiryNotices()
+    }
+    const previous = readState.value
+    const staticUnread = count > 0 && (claimed > 0 || recoverClaim || previous.staticUnread === true)
     if (staticUnread !== Boolean(previous.staticUnread)) saveReadState({ ...previous, staticUnread })
+    setClaimPending(false)
     if (controller.signal.aborted) return
     expiring.value = count
     trafficOccurrence.value = traffic.occurrence
@@ -77,15 +97,23 @@ async function load() {
 
 watch(() => route.path, load, { immediate: true })
 
+function refreshOnOpen() {
+  if (!failed.value) void load()
+}
+
 function markRead(kind: 'traffic' | 'static') {
   if (kind === 'traffic') saveReadState({ ...readState.value, trafficRead: trafficOccurrence.value })
   else saveReadState({ ...readState.value, staticUnread: false })
   bell.value?.hide()
 }
+
+function markAllRead() {
+  saveReadState({ trafficRead: trafficOccurrence.value, staticUnread: false })
+}
 </script>
 
 <template>
-  <ElPopover ref="bell" placement="bottom-end" trigger="click" :teleported="false" width="min(300px, calc(100vw - 24px))" @before-enter="load">
+  <ElPopover ref="bell" placement="bottom-end" trigger="click" :teleported="false" width="min(var(--notification-panel-width), calc(100vw - var(--space-5)))" @before-enter="refreshOnOpen">
     <template #reference>
       <ElButton text circle :aria-label="t(unread ? 'notifications.unreadLabel' : 'header.notifications')">
         <ElBadge is-dot :hidden="!unread"><Bell class="notification-bell__icon" /></ElBadge>
@@ -93,7 +121,15 @@ function markRead(kind: 'traffic' | 'static') {
     </template>
 
     <div class="notification-bell__panel">
-      <h2>{{ t('header.notifications') }}</h2>
+      <div class="notification-bell__heading">
+        <h2>{{ t('header.notifications') }}</h2>
+        <div class="notification-bell__actions">
+          <ElButton v-if="ready && !failed && unread" :disabled="loading" :icon="Check" link type="primary" @click="markAllRead">
+            {{ t('notifications.markAllRead') }}
+          </ElButton>
+          <ElButton text circle size="small" :icon="Close" :aria-label="t('notifications.close')" @click="bell?.hide()" />
+        </div>
+      </div>
       <ElEmpty v-if="!accountKey" :description="t('header.guestNotifications')" :image-size="56">
         <LinkButton :to="`/${locale}/login`" size="small">{{ t('header.login') }}</LinkButton>
       </ElEmpty>
@@ -125,6 +161,14 @@ function markRead(kind: 'traffic' | 'static') {
 
 <style scoped>
 .notification-bell__icon { display: block; width: var(--icon-size); height: var(--icon-size); }
+.notification-bell__heading, .notification-bell__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.notification-bell__actions { margin-inline-start: auto; }
 .notification-bell__panel h2 { font-size: var(--font-size-md); font-weight: var(--font-weight-semibold); }
 .notification-bell__panel ul { list-style: none; padding: 0; margin: var(--space-2) 0 0; }
 .notification-bell__panel li + li { border-block-start: var(--border-width) solid var(--color-border); }

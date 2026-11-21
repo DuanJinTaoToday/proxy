@@ -1,5 +1,8 @@
 {
   "dashboard": {
+    "recharge": "Contact operations to add funds",
+    "rechargeTitle": "How to add funds",
+    "rechargeInstructions": "Contact the operations team for transfer instructions. Once they confirm receipt, they will credit your wallet.",
     "loading": "Loading dashboard",
     "failed": "The dashboard could not be loaded.",
     "retry": "Retry",

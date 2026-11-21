@@ -1,5 +1,8 @@
 {
   "dashboard": {
+    "recharge": "联系运营充值",
+    "rechargeTitle": "如何充值",
+    "rechargeInstructions": "联系运营获取转账方式。运营确认到账后会为钱包充值。",
     "loading": "正在加载仪表板",
     "failed": "暂时无法加载仪表板。",
     "retry": "重试",

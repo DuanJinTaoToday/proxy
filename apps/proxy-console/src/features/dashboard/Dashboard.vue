@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, onScopeDispose, ref, shallowRef } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { ElAlert, ElButton, ElCard, ElEmpty, ElIcon, ElSkeleton, ElTable, ElTableColumn } from 'element-plus'
-import { Clock, Connection, CreditCard, Sort, Tickets } from '@element-plus/icons-vue'
+import { ElAlert, ElButton, ElCard, ElEmpty, ElIcon, ElPopover, ElSkeleton, ElTable, ElTableColumn } from 'element-plus'
+import { Clock, Connection, CreditCard, Service, Sort, Tickets } from '@element-plus/icons-vue'
 import { getDailyUsage, getNextStaticExpiry, getOverview, getTrafficAlert, hasPendingOrders } from '@/api/dashboard'
 import { formatGB } from '@/features/dynamic-proxy'
 import LinkButton from '@/shared/ui/LinkButton.vue'
@@ -21,7 +21,7 @@ async function readDashboard(signal: AbortSignal) {
   const [usage, alert, expiry, pending] = await Promise.all([
     getDailyUsage({ start: dates[0], end: dates[6], signal }),
     getTrafficAlert(signal),
-    overview.activeStaticIpCount > 0 ? getNextStaticExpiry(signal) : undefined,
+    overview.activeStaticIpCount > 0 ? getNextStaticExpiry(overview.activeStaticIpCount, signal) : undefined,
     hasPendingOrders(signal),
   ])
   const usageByDate = new Map(usage.map(day => [day.date, day]))
@@ -83,6 +83,13 @@ const staticIps = { name: 'console-static-ips' }
         <p class="dashboard__value tabular">{{ formatYuan(data.walletMinor, locale) }}</p>
         <p class="dashboard__muted">{{ t('dashboard.walletDetail') }}</p>
         <div class="dashboard__actions">
+          <ElPopover placement="bottom-start" trigger="click" width="min(var(--dashboard-recharge-panel-width), calc(100vw - var(--space-5)))">
+            <template #reference>
+              <ElButton :icon="Service" size="small" type="primary">{{ t('dashboard.recharge') }}</ElButton>
+            </template>
+            <strong>{{ t('dashboard.rechargeTitle') }}</strong>
+            <p>{{ t('dashboard.rechargeInstructions') }}</p>
+          </ElPopover>
           <LinkButton :to="{ name: 'console-wallet' }" size="small">{{ t('dashboard.walletAction') }}</LinkButton>
         </div>
       </ElCard>
@@ -222,7 +229,7 @@ const staticIps = { name: 'console-static-ips' }
 .dashboard__warning { background: var(--color-warning-bg); color: var(--color-warning-text); }
 .dashboard__info { background: var(--color-info-bg); color: var(--color-info-text); }
 .dashboard__actions { justify-content: flex-start; margin-block-start: var(--space-3); }
-.dashboard__actions a { margin-inline: 0; white-space: normal; height: auto; min-height: var(--control-height-compact); }
+.dashboard__actions > :is(a, button) { margin-inline: 0; white-space: normal; height: auto; min-height: var(--control-height-compact); }
 .dashboard__usage-footer {
   margin-block-start: var(--space-4);
   padding-block-start: var(--space-3);
@@ -240,10 +247,10 @@ const staticIps = { name: 'console-static-ips' }
 .dashboard__todos li + li { border-block-start: var(--border-width) solid var(--color-border); }
 .dashboard__todos p { margin-block: var(--space-1); }
 
-@media (max-width: 1023px) {
+@media (max-width: 1180px) {
   .dashboard__details { grid-template-columns: minmax(0, 1fr); }
 }
-@media (max-width: 767px) {
+@media (max-width: 950px) {
   .dashboard__stats { grid-template-columns: minmax(0, 1fr); }
 }
 </style>

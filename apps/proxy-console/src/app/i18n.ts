@@ -7,7 +7,7 @@ import zhCN from './locales/zh-CN.json'
 import en from './locales/en.json'
 import { messages as authMessages } from '@/features/auth'
 import { messages as dynamicProxyMessages } from '@/features/dynamic-proxy'
-import { messages as dashboardMessages } from '@/features/dashboard'
+import { messages as dashboardMessages } from '@/features/dashboard/messages'
 import { messages as notificationMessages } from '@/features/notifications'
 
 export const locales = ['zh-CN', 'en'] as const

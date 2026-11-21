@@ -69,16 +69,25 @@ test('仪表板展示余额、上海业务日用量和待处理事项，通知�
   `).split(/\r?\n/).at(-1)
 
   const usageRequest = page.waitForRequest(request => new URL(request.url()).pathname === '/v1/tenant/usage/daily')
-  const claim = page.waitForResponse(response => new URL(response.url()).pathname === '/v1/tenant/static-ip-expiry-notices')
+  const noticesPath = '**/v1/tenant/static-ip-expiry-notices'
+  const claims = []
+  await page.route(noticesPath, async route => {
+    const response = await route.fetch()
+    claims.push((await response.json()).count ?? 0)
+    await route.fulfill({ response })
+  })
   await page.reload()
   const params = new URL((await usageRequest).url()).searchParams
   expect(params.get('start_date')).toBe(firstDay)
   expect(params.get('end_date')).toBe(today)
-  expect(await (await claim).json()).toEqual({ count: 1 })
+  await expect.poll(() => claims).toContain(1)
 
   const wallet = page.getByRole('region', { name: '钱包余额' })
   await expect(wallet).toContainText(/¥123\.45/)
   await expect(wallet.getByRole('link', { name: '查看钱包流水' })).toHaveAttribute('href', '/console/wallet')
+  await wallet.getByRole('button', { name: '联系运营充值' }).click()
+  await expect(page.getByText('联系运营获取转账方式。运营确认到账后会为钱包充值。')).toBeVisible()
+  await page.getByRole('heading', { name: '仪表板' }).click()
   const traffic = page.getByRole('region', { name: '动态代理可用流量' })
   await expect(traffic).toContainText('0.75 GB')
   await expect(traffic.getByRole('link')).toHaveAttribute('href', '/console/dynamic/pricing')
@@ -115,12 +124,30 @@ test('仪表板展示余额、上海业务日用量和待处理事项，通知�
   await page.getByRole('link', { name: /1 个静态 IP 即将到期/ }).click()
   await expect(page).toHaveURL(/\/console\/static\/ips$/)
   await expect(unreadButton(page)).toHaveCount(0)
-  const repeatClaim = page.waitForResponse(response => new URL(response.url()).pathname === '/v1/tenant/static-ip-expiry-notices')
   await page.reload()
-  expect(await (await repeatClaim).json()).toEqual({})
   await notificationButton(page).click()
   await expect(page.getByRole('link', { name: /1 个静态 IP 即将到期/ })).toBeVisible()
   await expect(unreadButton(page)).toHaveCount(0)
+  expect(claims.filter(count => count > 0)).toEqual([1])
+
+  await page.unroute(noticesPath)
+  sql("UPDATE static_ip_allocations SET expires_at = now() + interval '4 days' WHERE supplier_item_id = '7102'")
+  await page.route(noticesPath, async route => {
+    // Commit the claim at the server and lose the response at the browser boundary.
+    const response = await route.fetch()
+    expect(await response.json()).toEqual({ count: 1 })
+    await route.abort()
+  }, { times: 1 })
+  await page.reload()
+  await notificationButton(page).click()
+  await expect(page.getByRole('alert')).toContainText('暂时无法加载通知。')
+  await page.getByRole('button', { name: '重试', exact: true }).click()
+  await expect(unreadButton(page)).toBeVisible()
+  await expect(page.getByRole('link', { name: /2 个静态 IP 即将到期/ })).toBeVisible()
+  await page.getByRole('button', { name: '全部已读' }).click()
+  await expect(unreadButton(page)).toHaveCount(0)
+  await page.getByRole('button', { name: '关闭通知' }).click()
+  await expect(page.getByRole('link', { name: /2 个静态 IP 即将到期/ })).toBeHidden()
 
   sql(`UPDATE tenant_balances SET available_bytes = -450000000
     WHERE tenant_id = (SELECT tenant_id FROM tenant_admins WHERE phone_e164 = '+8613900000071')`)
@@ -134,6 +161,13 @@ test('仪表板展示余额、上海业务日用量和待处理事项，通知�
   await expect(page.getByText('Orders awaiting confirmation', { exact: true })).toBeVisible()
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(360)
   await screenshot(page, info, 'dashboard-en-mobile')
+  await page.getByRole('button', { name: 'Notifications', exact: true }).click()
+  const notice = page.getByRole('link', { name: /2 static IPs expire soon/ })
+  await expect(notice).toBeVisible()
+  const noticeBounds = await notice.boundingBox()
+  expect(noticeBounds.x).toBeGreaterThanOrEqual(0)
+  expect(noticeBounds.x + noticeBounds.width).toBeLessThanOrEqual(360)
+  await screenshot(page, info, 'dashboard-notifications-en-mobile')
 })
 
 test('仪表板用量加载失败和通知加载失败均可重试', async ({ page }, info) => {
