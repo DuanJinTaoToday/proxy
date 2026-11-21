@@ -77,6 +77,8 @@
   --form-dialog-width: 520px;
   --subaccount-metric-width: 200px;
   --account-name-width: 160px;
+  --dashboard-chart-height: 200px;
+  --dashboard-chart-axis-width: 100px;
   --page-padding: var(--space-5);
   --focus-ring-width: 2px;
 

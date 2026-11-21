@@ -2,10 +2,11 @@
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { ElButton, ElDropdown, ElDropdownItem, ElDropdownMenu, ElEmpty, ElPopover } from 'element-plus'
-import { ArrowDown, Bell, Check, Menu, Switch } from '@element-plus/icons-vue'
+import { ElButton, ElDropdown, ElDropdownItem, ElDropdownMenu } from 'element-plus'
+import { ArrowDown, Check, Menu, Switch } from '@element-plus/icons-vue'
 import LinkButton from '@/shared/ui/LinkButton.vue'
-import { AccountMenu, hasSession } from '@/features/auth'
+import { AccountMenu, hasSession, sessionPhone } from '@/features/auth'
+import { NotificationBell } from '@/features/notifications'
 import { applyLocale, isLocale, locales, rememberLocale, type Locale } from '../i18n'
 
 // 三个入口共用的顶栏。右侧顺序固定为「通知铃铛 → 语言切换 → 用户入口」。
@@ -40,12 +41,7 @@ function switchLocale(next: Locale) {
     </div>
 
     <div class="app-header__tools">
-      <ElPopover placement="bottom-end" trigger="click" :width="300">
-        <template #reference>
-          <ElButton text circle :icon="Bell" :aria-label="t('header.notifications')" />
-        </template>
-        <ElEmpty :description="t('header.guestNotifications')" :image-size="56" />
-      </ElPopover>
+      <NotificationBell :key="sessionPhone" :account-key="sessionPhone" />
 
       <ElDropdown trigger="click" placement="bottom-end" @command="switchLocale">
         <ElButton text :aria-label="t('header.language', { name: t(`locale.${locale}`) })">

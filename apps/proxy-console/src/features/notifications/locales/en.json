@@ -1,0 +1,13 @@
+{
+  "notifications": {
+    "unreadLabel": "Notifications (unread)",
+    "loading": "Loading notifications",
+    "failed": "Notifications could not be loaded.",
+    "retry": "Retry",
+    "lowTraffic": "Rotating traffic balance is low",
+    "trafficAction": "View traffic packages",
+    "expiring": "{count} static IPs expire soon | {count} static IP expires soon | {count} static IPs expire soon",
+    "staticAction": "View and renew your static IPs",
+    "empty": "No notifications"
+  }
+}
