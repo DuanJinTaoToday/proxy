@@ -1,7 +1,7 @@
 {
   "subaccounts": {
     "intro": "Use subaccounts to give each project its own SOCKS5 credentials and usage limit for dynamic residential proxies.",
-    "usernameHint": "A SOCKS5 username combines the main account and subaccount names, for example {account}.shop01.",
+    "usernameHint": "Use a SOCKS5 username such as {account}.shop01. Append -sid- followed by a session ID to select a session. Each static residential IP has its own credentials.",
     "quota": "Slots used",
     "quotaValue": "{used} / {quota}",
     "quotaHint": "Enabled and disabled accounts both count.",
@@ -39,6 +39,7 @@
     "unknownDate": "Unknown",
     "actions": "Actions",
     "createAction": "Create subaccount",
+    "createFirst": "Create your first subaccount",
     "createTitle": "Create a proxy subaccount",
     "edit": "Edit",
     "editTitle": "Edit subaccount",
@@ -70,6 +71,7 @@
     "visibleCount": "Showing {visible} of {total} subaccounts",
     "saved": "Saved {name}.",
     "copied": "Copied to the clipboard.",
+    "revealToCopy": "Show the password first, then click Copy.",
     "copyFailed": "Copy failed. Check your browser’s clipboard permissions.",
     "errors": {
       "INVALID_SUBACCOUNT_NAME": "Use 4–8 lowercase letters or digits, starting with a letter. The name is fixed after creation.",

@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { ElAlert, ElButton, ElEmpty, ElInput, ElMessage, ElOption, ElProgress, ElSelect, ElSkeleton, ElSwitch, ElTable, ElTableColumn, ElTag } from 'element-plus'
 import { CopyDocument, Hide, Plus, Search, View } from '@element-plus/icons-vue'
 import { getAccount } from '@/api/access'
+import { ApiError } from '@/api/client'
 import { listSubaccounts, revealSubaccountPassword, type Subaccount } from '@/api/subaccounts'
 import { useErrorMessage } from '@/shared/lib/useErrorMessage'
 import PageHeader from '@/shared/ui/PageHeader.vue'
@@ -100,22 +101,36 @@ function clearPassword() {
 }
 
 async function readPassword(account: Subaccount, purpose: 'show' | 'copy') {
-  const wasVisible = password.value?.clientId === account.clientId
+  const current = password.value
+  if (purpose === 'copy' && current?.clientId === account.clientId) {
+    await copy(current.value)
+    return
+  }
+  if (purpose === 'copy' && (!navigator.clipboard?.write || !window.ClipboardItem)) {
+    ElMessage.error(t('subaccounts.revealToCopy'))
+    return
+  }
   clearPassword()
-  if (purpose === 'show' && wasVisible) return
+  if (purpose === 'show' && current?.clientId === account.clientId) return
 
   const request = new AbortController()
   passwordRequest = request
   passwordPending.value = account.clientId
   try {
-    const value = await revealSubaccountPassword(account.clientId, request.signal)
-    if (request.signal.aborted) return
-    if (purpose === 'copy') await copy(value)
-    if (purpose === 'show' || wasVisible) {
+    const pending = revealSubaccountPassword(account.clientId, request.signal)
+    if (purpose === 'copy') {
+      // Start writing during the click so Safari can keep the user gesture while the password loads.
+      const content = pending.then(value => new Blob([value], { type: 'text/plain' }))
+      await Promise.all([pending, navigator.clipboard.write([new ClipboardItem({ 'text/plain': content })])])
+      if (!request.signal.aborted) ElMessage.success(t('subaccounts.copied'))
+    } else {
+      const value = await pending
       if (!request.signal.aborted) password.value = { clientId: account.clientId, value }
     }
   } catch (error) {
-    if (!request.signal.aborted) ElMessage.error(errorMessage(error))
+    if (!request.signal.aborted) {
+      ElMessage.error(purpose === 'copy' && !(error instanceof ApiError) ? t('subaccounts.copyFailed') : errorMessage(error))
+    }
   } finally {
     if (passwordRequest === request) {
       passwordRequest = undefined
@@ -242,7 +257,9 @@ void loadAccounts()
           <ElEmpty v-if="accounts.length" :description="t('subaccounts.noMatches')">
             <ElButton @click="resetFilters">{{ t('subaccounts.clearFilters') }}</ElButton>
           </ElEmpty>
-          <ElEmpty v-else :description="t('subaccounts.noAccounts')" />
+          <ElEmpty v-else :description="t('subaccounts.noAccounts')">
+            <ElButton type="primary" @click="action = { kind: 'create' }">{{ t('subaccounts.createFirst') }}</ElButton>
+          </ElEmpty>
         </template>
       </ElTable>
       <p class="table-footer">{{ t('subaccounts.visibleCount', { visible: visible.length, total: accounts.length }) }}</p>

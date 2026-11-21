@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { execFileSync } from 'node:child_process'
 import { screenshot, signInTenant } from '../support/console.mjs'
 
 const createAction = page => page.getByRole('button', { name: '创建子账号', exact: true })
@@ -58,6 +59,9 @@ test('租户维护子账号账密、备注、状态和用量上限，刷新后�
   await dialog.getByLabel(/新密码/).fill('Next456')
   await dialog.getByRole('button', { name: '保存', exact: true }).click()
   await expect(dialog).toBeHidden()
+  await row.getByRole('button', { name: '复制密码' }).click()
+  await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe('Next456')
+  await expect(row.getByText('Next456', { exact: true })).toBeHidden()
 
   await row.getByRole('button', { name: '编辑', exact: true }).click()
   await dialog.getByLabel('备注', { exact: true }).fill('库存项目')
@@ -73,6 +77,21 @@ test('租户维护子账号账密、备注、状态和用量上限，刷新后�
   await dialog.getByRole('switch', { name: '累计用量上限' }).click()
   await dialog.getByRole('button', { name: '保存', exact: true }).click()
   await expect(row.getByText('0 GB / 不限')).toBeVisible()
+
+  await row.getByRole('button', { name: '编辑', exact: true }).click()
+  // Advance the isolated DB fixture while the edit dialog still has the old usage.
+  execFileSync('docker', [
+    'compose', '-p', 'proxy-verify-' + process.env.VERIFY_ID,
+    'exec', '-T', 'db', 'psql', '-U', 'proxy', '-d', 'proxy', '-v', 'ON_ERROR_STOP=1', '-c',
+    "UPDATE proxy_subaccounts SET used_bytes=2000000000 WHERE tenant_id='alpha' AND name='shop01'",
+  ], { cwd: new URL('../../../', import.meta.url) })
+  await dialog.getByRole('switch', { name: '累计用量上限' }).click()
+  await limit.fill('1')
+  await dialog.getByRole('button', { name: '保存', exact: true }).click()
+  await expect(dialog.getByText('上限不能低于已用量。', { exact: true })).toBeVisible()
+  await limit.fill('2.5')
+  await dialog.getByRole('button', { name: '保存', exact: true }).click()
+  await expect(row.getByText('2 GB / 2.5 GB')).toBeVisible()
 
   await row.getByRole('switch', { name: '禁用 shop01？' }).click()
   await expect(dialog.getByText(/已有连接会继续到正常结束/)).toBeVisible()
@@ -96,7 +115,7 @@ test('租户维护子账号账密、备注、状态和用量上限，刷新后�
   await page.reload()
   await expect(row.getByRole('switch', { name: '启用 shop01？' })).not.toBeChecked()
   await expect(row.getByText('库存项目', { exact: true })).toBeVisible()
-  await expect(row.getByText('0 GB / 不限')).toBeVisible()
+  await expect(row.getByText('2 GB / 2.5 GB')).toBeVisible()
   await expect(row.locator('time')).toHaveAttribute('datetime', createdAt)
   await row.getByRole('button', { name: '显示密码' }).click()
   await expect(row.getByText('Next456', { exact: true })).toBeVisible()
