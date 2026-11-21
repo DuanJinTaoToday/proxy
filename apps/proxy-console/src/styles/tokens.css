@@ -81,6 +81,9 @@
   --dashboard-chart-axis-width: 100px;
   --notification-panel-width: 360px;
   --dashboard-recharge-panel-width: 280px;
+  --static-catalog-width: 520px;
+  --static-checkout-width: 280px;
+  --static-offer-width: 200px;
   --page-padding: var(--space-5);
   --focus-ring-width: 2px;
 

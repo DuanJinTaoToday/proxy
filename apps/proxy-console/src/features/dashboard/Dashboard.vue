@@ -8,7 +8,8 @@ import { formatGB } from '@/features/dynamic-proxy'
 import LinkButton from '@/shared/ui/LinkButton.vue'
 import PageHeader from '@/shared/ui/PageHeader.vue'
 import UsageChart from './UsageChart.vue'
-import { formatYuan, shanghaiDateTime, usageWeek } from './format'
+import { formatYuan } from '@/shared/lib/formatYuan'
+import { shanghaiDateTime, usageWeek } from './format'
 
 const { t, locale } = useI18n()
 const showTable = ref(false)

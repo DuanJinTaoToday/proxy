@@ -151,10 +151,15 @@ func orderMessage(order wallet.Order) *v1.PurchaseOrder {
 		message.PrepaidMinor = order.DebitedMinor
 	}
 	for _, item := range order.Items {
-		message.Items = append(message.Items, &v1.PurchaseOrderItem{
+		line := &v1.PurchaseOrderItem{
 			Position: item.Position, Specification: item.Specification, CapacityBytes: item.CapacityBytes,
 			TermDays: item.TermDays, UnitMinor: item.UnitMinor, Quantity: item.Quantity, DeliveredCount: item.DeliveredCount,
-		})
+		}
+		if order.Kind == wallet.StaticRenewal {
+			line.SupplierItemId = item.Reference
+			line.Outcome = item.Outcome
+		}
+		message.Items = append(message.Items, line)
 	}
 	return message
 }

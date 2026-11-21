@@ -21,7 +21,17 @@ import (
 	"github.com/google/uuid"
 )
 
-const staticCategory = 200001
+const (
+	staticCategory = 200001
+	sharedCategory = 28
+)
+
+func categoryFor(shareMode string) int {
+	if shareMode == "shared" {
+		return sharedCategory
+	}
+	return staticCategory
+}
 
 type Client struct {
 	baseURL, partner, secret string
@@ -54,8 +64,16 @@ type node struct {
 }
 
 func (c *Client) Offers(ctx context.Context) ([]wallet.StaticOffer, error) {
+	return c.OffersFor(ctx, "exclusive", 0)
+}
+
+func (c *Client) OffersFor(ctx context.Context, shareMode string, purposeID int32) ([]wallet.StaticOffer, error) {
+	params := map[string]any{"cid": categoryFor(shareMode)}
+	if purposeID != 0 {
+		params["pid"] = int(purposeID)
+	}
 	var catalog struct{ Nodes []node }
-	code, err := c.call(ctx, "/nodes-and-continents", map[string]any{"cid": staticCategory}, &catalog)
+	code, err := c.call(ctx, "/nodes-and-continents", params, &catalog)
 	if err != nil || code != 0 {
 		return nil, wallet.ErrStaticUnavailable
 	}
@@ -63,14 +81,34 @@ func (c *Client) Offers(ctx context.Context) ([]wallet.StaticOffer, error) {
 	for _, node := range catalog.Nodes {
 		for _, price := range node.Prices {
 			amount, err := amountMinor(price.Amount)
-			if err != nil || amount <= 0 || node.ID <= 0 || price.Months <= 0 || price.Months > 120 || price.Term == "" {
+			days := termDays(price)
+			if err != nil || amount <= 0 || node.ID <= 0 || days <= 0 || price.Term == "" {
 				continue
 			}
 			offers = append(offers, wallet.StaticOffer{NodeID: node.ID, Region: node.Title, IPType: node.ISP,
-				Term: price.Term, TermDays: price.Months * 30, UnitMinor: amount, Available: max(0, node.Available)})
+				Term: price.Term, TermDays: days, UnitMinor: amount, Available: max(0, node.Available),
+				ShareMode: shareMode, PurposeID: purposeID})
 		}
 	}
 	return offers, nil
+}
+
+func termDays(price price) int32 {
+	switch price.Term {
+	case "test2h":
+		return 0
+	case "rp":
+		return 1
+	case "zp":
+		return 7
+	case "np":
+		return 360
+	default:
+		if price.Months < 1 || price.Months > 120 {
+			return 0
+		}
+		return price.Months * 30
+	}
 }
 
 func amountMinor(value json.RawMessage) (int64, error) {
@@ -111,9 +149,13 @@ type delivery struct {
 
 func (c *Client) Place(ctx context.Context, p wallet.StaticPurchaseRequest) (wallet.StaticDelivery, error) {
 	var result delivery
-	code, err := c.call(ctx, "/order/place", map[string]any{
-		"cid": staticCategory, "time": p.Term, "list": []map[string]any{{"nid": p.NodeID, "number": p.Quantity}},
-	}, &result)
+	params := map[string]any{
+		"cid": categoryFor(p.ShareMode), "time": p.Term, "list": []map[string]any{{"nid": p.NodeID, "number": p.Quantity}},
+	}
+	if p.PurposeID != 0 {
+		params["pid"] = int(p.PurposeID)
+	}
+	code, err := c.call(ctx, "/order/place", params, &result)
 	if err != nil {
 		return wallet.StaticDelivery{}, err
 	}

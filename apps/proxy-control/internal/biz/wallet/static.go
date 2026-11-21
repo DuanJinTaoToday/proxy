@@ -20,6 +20,8 @@ type StaticOffer struct {
 	NodeID               int64
 	Region, IPType, Term string
 	TermDays, Available  int32
+	ShareMode            string
+	PurposeID            int32
 	UnitMinor            int64
 }
 
@@ -27,6 +29,8 @@ type StaticPurchaseRequest struct {
 	NodeID, UnitMinor            int64
 	Term, Key, ConfirmationToken string
 	Quantity                     int32
+	ShareMode                    string `json:",omitempty"`
+	PurposeID                    int32  `json:",omitempty"`
 }
 
 type StaticQuote struct {
@@ -37,13 +41,15 @@ type StaticQuote struct {
 }
 
 type StaticAllocation struct {
-	NodeID             int64
-	SupplierItemID     string
-	OrderID            int64
-	IP                 string
-	Port               int32
-	Username, Password string
-	ExpiresAt          time.Time
+	NodeID                int64
+	SupplierItemID        string
+	OrderID               int64
+	IP                    string
+	Port                  int32
+	Username, Password    string
+	ExpiresAt             time.Time
+	Region, IPType        string
+	PendingRenewalOrderID int64
 }
 
 type StaticDelivery struct {
@@ -84,7 +90,7 @@ type StaticRepository interface {
 	ClaimStaticIPExpiryNotices(context.Context, string) (int32, error)
 	QuoteStatic(context.Context, string, StaticPurchaseRequest) (StaticQuote, error)
 	PendingStaticPurchases(context.Context, int64) ([]PendingStaticPurchase, error)
-	StaticOffers(context.Context) ([]StaticOffer, error)
+	StaticOffers(context.Context, string, int32) ([]StaticOffer, error)
 	PurchaseStatic(context.Context, string, StaticPurchaseRequest) (Order, error)
 	StaticAllocations(context.Context, string, []string, bool) ([]StaticAllocation, error)
 	ResolveStatic(context.Context, string, int64, string, string, string, bool, bool) (Order, error)
@@ -104,14 +110,20 @@ func (p StaticPurchaseRequest) CheckOffer(offer StaticOffer) error {
 	return nil
 }
 
-func (s *Service) StaticOffers(ctx context.Context) ([]StaticOffer, error) {
-	return s.store.StaticOffers(ctx)
+func (s *Service) StaticOffers(ctx context.Context, shareMode string, purposeID int32) ([]StaticOffer, error) {
+	if !validStaticCatalog(shareMode, purposeID) {
+		return nil, ErrInvalid
+	}
+	return s.store.StaticOffers(ctx, shareMode, purposeID)
 }
 
 func (s *Service) QuoteStatic(ctx context.Context, token string, request StaticPurchaseRequest) (StaticQuote, error) {
 	tenant, err := s.scope(ctx, token, "", false)
 	if err != nil {
 		return StaticQuote{}, err
+	}
+	if request.ShareMode == "exclusive" {
+		request.ShareMode = ""
 	}
 	if !request.validSpec() {
 		return StaticQuote{}, ErrInvalid
@@ -120,13 +132,17 @@ func (s *Service) QuoteStatic(ctx context.Context, token string, request StaticP
 }
 
 func (p StaticPurchaseRequest) validSpec() bool {
-	return p.NodeID > 0 && p.Quantity > 0 && p.Term != "" && len(p.Term) <= 16 && !strings.ContainsRune(p.Term, 0)
+	return p.NodeID > 0 && p.Quantity > 0 && p.Term != "" && len(p.Term) <= 16 && !strings.ContainsRune(p.Term, 0) &&
+		validStaticCatalog(p.ShareMode, p.PurposeID)
 }
 
 func (s *Service) PurchaseStatic(ctx context.Context, token string, request StaticPurchaseRequest) (Order, error) {
 	tenant, err := s.scope(ctx, token, "", false)
 	if err != nil {
 		return Order{}, err
+	}
+	if request.ShareMode == "exclusive" {
+		request.ShareMode = ""
 	}
 	if !request.validSpec() || request.UnitMinor <= 0 || request.Key == "" || len(request.Key) > 128 ||
 		len(request.ConfirmationToken) > 1024 || strings.ContainsRune(request.Key, 0) {

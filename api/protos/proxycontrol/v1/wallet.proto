@@ -44,6 +44,11 @@ option (openapi.v3.document) = {
 };
 
 service WalletService {
+  rpc ListStaticRenewalTerms(StaticRenewalTermsRequest) returns (StaticRenewalTerms) {
+    option (google.api.http) = {post: "/v1/tenant/static-renewal-terms", body: "*"};
+    option (openapi.v3.operation) = {summary: "查询所选静态 IP 共同支持的续费租期"};
+  }
+
   rpc QuoteStaticRenewal(StaticRenewalQuoteRequest) returns (StaticRenewalQuote) {
     option (google.api.http) = {post: "/v1/tenant/static-renewal-quotes", body: "*"};
     option (openapi.v3.operation) = {summary: "逐项确认静态 IP 保号续费报价"};
@@ -63,7 +68,7 @@ service WalletService {
     option (google.api.http) = {post: "/v1/operations/tenants/{tenant_id}/orders/{order_id}/renewal-resolution", body: "*"};
     option (openapi.v3.operation) = {summary: "核实并处理静态 IP 续费明细"};
   }
-  rpc ListStaticOffers(BaseRequest) returns (StaticOffers) {
+  rpc ListStaticOffers(StaticOffersRequest) returns (StaticOffers) {
     option (google.api.http) = {get: "/v1/public/static-offers"};
     option (openapi.v3.operation) = {summary: "查询公开静态 IP 报价及开售状态"};
   }
@@ -312,6 +317,10 @@ message PurchaseOrderItem {
   int32 quantity = 6;
   // 实际到账的套餐数量，或实际交付、续费的 IP 数量。
   int32 delivered_count = 7;
+  // 静态续费的皇冠明细 ID。其他订单省略。
+  string supplier_item_id = 8;
+  // 静态续费的逐项结果 pending、succeeded 或 failed。其他订单省略。
+  string outcome = 9;
 }
 
 message CustomerWalletEntriesRequest {
@@ -358,6 +367,13 @@ message OperatorPurchaseOrderRequest {
   int64 order_id = 2 [(validate.rules).int64.gt = 0];
 }
 
+message StaticOffersRequest {
+  // 独享 exclusive（缺省）或共享 shared。
+  string share_mode = 1 [(validate.rules).string = {in: ["", "exclusive", "shared"]}];
+  // 共享用途。缺省为不指定用途。
+  int32 purpose_id = 2 [(validate.rules).int32 = {in: [0, 8, 9, 10]}];
+}
+
 message StaticOffer {
   // 皇冠节点 ID，与租期代码共同标识报价。
   int64 node_id = 1;
@@ -373,6 +389,10 @@ message StaticOffer {
   int64 unit_minor = 6;
   // 当前可购 IP 数量，缺省为零。
   int32 available = 7;
+  // 独享 exclusive 或共享 shared。
+  string share_mode = 8;
+  // 共享用途。缺省为不指定用途。
+  int32 purpose_id = 9;
 }
 
 message StaticOffers {
@@ -391,6 +411,10 @@ message StaticPurchaseQuoteRequest {
   string term = 2 [(validate.rules).string = {min_len: 1, max_bytes: 16}];
   // 请求购买的 IP 数量。
   int32 quantity = 3 [(validate.rules).int32.gt = 0];
+  // 独享 exclusive（缺省）或共享 shared。
+  string share_mode = 4 [(validate.rules).string = {in: ["", "exclusive", "shared"]}];
+  // 共享用途。缺省为不指定用途。
+  int32 purpose_id = 5 [(validate.rules).int32 = {in: [0, 8, 9, 10]}];
 }
 
 message StaticPurchaseQuote {
@@ -417,6 +441,10 @@ message PurchaseStaticIPRequest {
   string request_key = 5 [(validate.rules).string = {min_len: 1, max_bytes: 128}];
   // 报价确认凭证。
   string confirmation_token = 6 [(validate.rules).string = {min_len: 1, max_bytes: 1024}];
+  // 独享 exclusive（缺省）或共享 shared。
+  string share_mode = 7 [(validate.rules).string = {in: ["", "exclusive", "shared"]}];
+  // 共享用途。缺省为不指定用途。
+  int32 purpose_id = 8 [(validate.rules).int32 = {in: [0, 8, 9, 10]}];
 }
 
 message StaticIP {
@@ -434,6 +462,12 @@ message StaticIP {
   string password = 6;
   // 皇冠返回的逐 IP 到期时间。
   google.protobuf.Timestamp expires_at = 7;
+  // 购买时锁定的节点地区。
+  string region = 8;
+  // 购买时锁定的节点类型描述。
+  string ip_type = 9;
+  // 仍待确认的续费订单编号。无待确认续费时省略。
+  int64 pending_renewal_order_id = 10;
 }
 
 message StaticIPs {
@@ -498,6 +532,23 @@ message PendingStaticPurchases {
 message StaticIPExpiryNotices {
   // 即将到期且本次首次提示的分配数量。缺省为零。
   int32 count = 1;
+}
+
+message StaticRenewalTermsRequest {
+  // 属于当前租户且可续费的皇冠明细 ID，单个为长度 1。
+  repeated string supplier_item_ids = 1 [(validate.rules).repeated = {min_items: 1, max_items: 25, unique: true, items: {string: {min_len: 1, max_bytes: 128}}}];
+}
+
+message StaticRenewalTerm {
+  // 皇冠续费租期代码。
+  string term = 1;
+  // 从原到期时间顺延的天数。
+  int32 term_days = 2;
+}
+
+message StaticRenewalTerms {
+  // 所选 IP 均支持的续费租期。不受新购库存或开售状态影响。
+  repeated StaticRenewalTerm terms = 1;
 }
 
 message StaticRenewalQuoteRequest {

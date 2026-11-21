@@ -22,7 +22,7 @@ const RoutePlaceholder = () => import('./RoutePlaceholder.vue')
 const RouteTabs = () => import('./RouteTabs.vue')
 const AuthPage = () => import('@/pages/public/AuthPage.vue')
 
-interface Tab { path: string, labelKey: string }
+interface Tab { path: string, labelKey: string, component?: RouteRecordRaw['component'] }
 
 // 页签页：父路由显示标题和页签，第一个页签为默认子页，子路由名为「前缀-路径」。
 function tabbed(path: string, prefix: string, titleKey: string, tabs: Tab[]): RouteRecordRaw {
@@ -32,7 +32,7 @@ function tabbed(path: string, prefix: string, titleKey: string, tabs: Tab[]): Ro
     component: RouteTabs,
     meta: { titleKey, tabs: tabs.map(tab => ({ name: name(tab), labelKey: tab.labelKey })) },
     redirect: { name: name(tabs[0]) },
-    children: tabs.map(tab => ({ path: tab.path, name: name(tab), component: RoutePlaceholder, meta: { titleKey: tab.labelKey } })),
+    children: tabs.map(tab => ({ path: tab.path, name: name(tab), component: tab.component ?? RoutePlaceholder, meta: { titleKey: tab.labelKey } })),
   }
 }
 
@@ -58,7 +58,11 @@ export const routes: RouteRecordRaw[] = [
     children: [
       { path: '', name: 'console-dashboard', component: () => import('@/pages/console/DashboardPage.vue'), meta: { titleKey: 'nav.dashboard' } },
       tabbed('dynamic', 'console-dynamic', 'nav.dynamic', [{ path: 'setup', labelKey: 'tabs.dynamicSetup' }, { path: 'pricing', labelKey: 'tabs.dynamicPricing' }, { path: 'usage', labelKey: 'tabs.dynamicUsage' }, { path: 'guide', labelKey: 'tabs.guide' }]),
-      tabbed('static', 'console-static', 'nav.static', [{ path: 'ips', labelKey: 'tabs.staticIps' }, { path: 'pricing', labelKey: 'tabs.staticPricing' }, { path: 'guide', labelKey: 'tabs.guide' }]),
+      tabbed('static', 'console-static', 'nav.static', [
+        { path: 'ips', labelKey: 'tabs.staticIps', component: () => import('@/pages/console/StaticIpsPage.vue') },
+        { path: 'pricing', labelKey: 'tabs.staticPricing', component: () => import('@/pages/console/StaticPricingPage.vue') },
+        { path: 'guide', labelKey: 'tabs.guide', component: () => import('@/pages/console/StaticGuidePage.vue') },
+      ]),
       { path: 'sub-accounts', name: 'console-sub-accounts', component: () => import('@/pages/console/SubAccountsPage.vue'), meta: { titleKey: 'nav.subAccounts' } },
       page('wallet', 'console-wallet', 'nav.wallet'),
       tabbed('account', 'console-account', 'nav.account', [{ path: 'profile', labelKey: 'tabs.accountProfile' }, { path: 'orders', labelKey: 'tabs.accountOrders' }]),

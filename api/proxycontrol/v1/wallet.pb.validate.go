@@ -1694,6 +1694,10 @@ func (m *PurchaseOrderItem) validate(all bool) error {
 
 	// no validation rules for DeliveredCount
 
+	// no validation rules for SupplierItemId
+
+	// no validation rules for Outcome
+
 	if len(errors) > 0 {
 		return PurchaseOrderItemMultiError(errors)
 	}
@@ -2598,6 +2602,143 @@ var _ interface {
 	ErrorName() string
 } = OperatorPurchaseOrderRequestValidationError{}
 
+// Validate checks the field values on StaticOffersRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *StaticOffersRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on StaticOffersRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// StaticOffersRequestMultiError, or nil if none found.
+func (m *StaticOffersRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *StaticOffersRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if _, ok := _StaticOffersRequest_ShareMode_InLookup[m.GetShareMode()]; !ok {
+		err := StaticOffersRequestValidationError{
+			field:  "ShareMode",
+			reason: "value must be in list [ exclusive shared]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if _, ok := _StaticOffersRequest_PurposeId_InLookup[m.GetPurposeId()]; !ok {
+		err := StaticOffersRequestValidationError{
+			field:  "PurposeId",
+			reason: "value must be in list [0 8 9 10]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return StaticOffersRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// StaticOffersRequestMultiError is an error wrapping multiple validation
+// errors returned by StaticOffersRequest.ValidateAll() if the designated
+// constraints aren't met.
+type StaticOffersRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m StaticOffersRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m StaticOffersRequestMultiError) AllErrors() []error { return m }
+
+// StaticOffersRequestValidationError is the validation error returned by
+// StaticOffersRequest.Validate if the designated constraints aren't met.
+type StaticOffersRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e StaticOffersRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e StaticOffersRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e StaticOffersRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e StaticOffersRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e StaticOffersRequestValidationError) ErrorName() string {
+	return "StaticOffersRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e StaticOffersRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sStaticOffersRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = StaticOffersRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = StaticOffersRequestValidationError{}
+
+var _StaticOffersRequest_ShareMode_InLookup = map[string]struct{}{
+	"":          {},
+	"exclusive": {},
+	"shared":    {},
+}
+
+var _StaticOffersRequest_PurposeId_InLookup = map[int32]struct{}{
+	0:  {},
+	8:  {},
+	9:  {},
+	10: {},
+}
+
 // Validate checks the field values on StaticOffer with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -2633,6 +2774,10 @@ func (m *StaticOffer) validate(all bool) error {
 	// no validation rules for UnitMinor
 
 	// no validation rules for Available
+
+	// no validation rules for ShareMode
+
+	// no validation rules for PurposeId
 
 	if len(errors) > 0 {
 		return StaticOfferMultiError(errors)
@@ -2941,6 +3086,28 @@ func (m *StaticPurchaseQuoteRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	if _, ok := _StaticPurchaseQuoteRequest_ShareMode_InLookup[m.GetShareMode()]; !ok {
+		err := StaticPurchaseQuoteRequestValidationError{
+			field:  "ShareMode",
+			reason: "value must be in list [ exclusive shared]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if _, ok := _StaticPurchaseQuoteRequest_PurposeId_InLookup[m.GetPurposeId()]; !ok {
+		err := StaticPurchaseQuoteRequestValidationError{
+			field:  "PurposeId",
+			reason: "value must be in list [0 8 9 10]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if len(errors) > 0 {
 		return StaticPurchaseQuoteRequestMultiError(errors)
 	}
@@ -3020,6 +3187,19 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = StaticPurchaseQuoteRequestValidationError{}
+
+var _StaticPurchaseQuoteRequest_ShareMode_InLookup = map[string]struct{}{
+	"":          {},
+	"exclusive": {},
+	"shared":    {},
+}
+
+var _StaticPurchaseQuoteRequest_PurposeId_InLookup = map[int32]struct{}{
+	0:  {},
+	8:  {},
+	9:  {},
+	10: {},
+}
 
 // Validate checks the field values on StaticPurchaseQuote with the rules
 // defined in the proto definition for this message. If any rules are
@@ -3306,6 +3486,28 @@ func (m *PurchaseStaticIPRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	if _, ok := _PurchaseStaticIPRequest_ShareMode_InLookup[m.GetShareMode()]; !ok {
+		err := PurchaseStaticIPRequestValidationError{
+			field:  "ShareMode",
+			reason: "value must be in list [ exclusive shared]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if _, ok := _PurchaseStaticIPRequest_PurposeId_InLookup[m.GetPurposeId()]; !ok {
+		err := PurchaseStaticIPRequestValidationError{
+			field:  "PurposeId",
+			reason: "value must be in list [0 8 9 10]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if len(errors) > 0 {
 		return PurchaseStaticIPRequestMultiError(errors)
 	}
@@ -3386,6 +3588,19 @@ var _ interface {
 	ErrorName() string
 } = PurchaseStaticIPRequestValidationError{}
 
+var _PurchaseStaticIPRequest_ShareMode_InLookup = map[string]struct{}{
+	"":          {},
+	"exclusive": {},
+	"shared":    {},
+}
+
+var _PurchaseStaticIPRequest_PurposeId_InLookup = map[int32]struct{}{
+	0:  {},
+	8:  {},
+	9:  {},
+	10: {},
+}
+
 // Validate checks the field values on StaticIP with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -3448,6 +3663,12 @@ func (m *StaticIP) validate(all bool) error {
 			}
 		}
 	}
+
+	// no validation rules for Region
+
+	// no validation rules for IpType
+
+	// no validation rules for PendingRenewalOrderId
 
 	if len(errors) > 0 {
 		return StaticIPMultiError(errors)
@@ -4607,6 +4828,403 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = StaticIPExpiryNoticesValidationError{}
+
+// Validate checks the field values on StaticRenewalTermsRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *StaticRenewalTermsRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on StaticRenewalTermsRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// StaticRenewalTermsRequestMultiError, or nil if none found.
+func (m *StaticRenewalTermsRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *StaticRenewalTermsRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if l := len(m.GetSupplierItemIds()); l < 1 || l > 25 {
+		err := StaticRenewalTermsRequestValidationError{
+			field:  "SupplierItemIds",
+			reason: "value must contain between 1 and 25 items, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	_StaticRenewalTermsRequest_SupplierItemIds_Unique := make(map[string]struct{}, len(m.GetSupplierItemIds()))
+
+	for idx, item := range m.GetSupplierItemIds() {
+		_, _ = idx, item
+
+		if _, exists := _StaticRenewalTermsRequest_SupplierItemIds_Unique[item]; exists {
+			err := StaticRenewalTermsRequestValidationError{
+				field:  fmt.Sprintf("SupplierItemIds[%v]", idx),
+				reason: "repeated value must contain unique items",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		} else {
+			_StaticRenewalTermsRequest_SupplierItemIds_Unique[item] = struct{}{}
+		}
+
+		if utf8.RuneCountInString(item) < 1 {
+			err := StaticRenewalTermsRequestValidationError{
+				field:  fmt.Sprintf("SupplierItemIds[%v]", idx),
+				reason: "value length must be at least 1 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+		if len(item) > 128 {
+			err := StaticRenewalTermsRequestValidationError{
+				field:  fmt.Sprintf("SupplierItemIds[%v]", idx),
+				reason: "value length must be at most 128 bytes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return StaticRenewalTermsRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// StaticRenewalTermsRequestMultiError is an error wrapping multiple validation
+// errors returned by StaticRenewalTermsRequest.ValidateAll() if the
+// designated constraints aren't met.
+type StaticRenewalTermsRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m StaticRenewalTermsRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m StaticRenewalTermsRequestMultiError) AllErrors() []error { return m }
+
+// StaticRenewalTermsRequestValidationError is the validation error returned by
+// StaticRenewalTermsRequest.Validate if the designated constraints aren't met.
+type StaticRenewalTermsRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e StaticRenewalTermsRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e StaticRenewalTermsRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e StaticRenewalTermsRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e StaticRenewalTermsRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e StaticRenewalTermsRequestValidationError) ErrorName() string {
+	return "StaticRenewalTermsRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e StaticRenewalTermsRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sStaticRenewalTermsRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = StaticRenewalTermsRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = StaticRenewalTermsRequestValidationError{}
+
+// Validate checks the field values on StaticRenewalTerm with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *StaticRenewalTerm) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on StaticRenewalTerm with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// StaticRenewalTermMultiError, or nil if none found.
+func (m *StaticRenewalTerm) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *StaticRenewalTerm) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Term
+
+	// no validation rules for TermDays
+
+	if len(errors) > 0 {
+		return StaticRenewalTermMultiError(errors)
+	}
+
+	return nil
+}
+
+// StaticRenewalTermMultiError is an error wrapping multiple validation errors
+// returned by StaticRenewalTerm.ValidateAll() if the designated constraints
+// aren't met.
+type StaticRenewalTermMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m StaticRenewalTermMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m StaticRenewalTermMultiError) AllErrors() []error { return m }
+
+// StaticRenewalTermValidationError is the validation error returned by
+// StaticRenewalTerm.Validate if the designated constraints aren't met.
+type StaticRenewalTermValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e StaticRenewalTermValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e StaticRenewalTermValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e StaticRenewalTermValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e StaticRenewalTermValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e StaticRenewalTermValidationError) ErrorName() string {
+	return "StaticRenewalTermValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e StaticRenewalTermValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sStaticRenewalTerm.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = StaticRenewalTermValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = StaticRenewalTermValidationError{}
+
+// Validate checks the field values on StaticRenewalTerms with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *StaticRenewalTerms) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on StaticRenewalTerms with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// StaticRenewalTermsMultiError, or nil if none found.
+func (m *StaticRenewalTerms) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *StaticRenewalTerms) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetTerms() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, StaticRenewalTermsValidationError{
+						field:  fmt.Sprintf("Terms[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, StaticRenewalTermsValidationError{
+						field:  fmt.Sprintf("Terms[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return StaticRenewalTermsValidationError{
+					field:  fmt.Sprintf("Terms[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return StaticRenewalTermsMultiError(errors)
+	}
+
+	return nil
+}
+
+// StaticRenewalTermsMultiError is an error wrapping multiple validation errors
+// returned by StaticRenewalTerms.ValidateAll() if the designated constraints
+// aren't met.
+type StaticRenewalTermsMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m StaticRenewalTermsMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m StaticRenewalTermsMultiError) AllErrors() []error { return m }
+
+// StaticRenewalTermsValidationError is the validation error returned by
+// StaticRenewalTerms.Validate if the designated constraints aren't met.
+type StaticRenewalTermsValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e StaticRenewalTermsValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e StaticRenewalTermsValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e StaticRenewalTermsValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e StaticRenewalTermsValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e StaticRenewalTermsValidationError) ErrorName() string {
+	return "StaticRenewalTermsValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e StaticRenewalTermsValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sStaticRenewalTerms.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = StaticRenewalTermsValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = StaticRenewalTermsValidationError{}
 
 // Validate checks the field values on StaticRenewalQuoteRequest with the rules
 // defined in the proto definition for this message. If any rules are

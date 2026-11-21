@@ -31,6 +31,7 @@ const OperationWalletServiceListOperatorWalletEntries = "/proxycontrol.v1.Wallet
 const OperationWalletServiceListPendingStaticPurchases = "/proxycontrol.v1.WalletService/ListPendingStaticPurchases"
 const OperationWalletServiceListStaticIPs = "/proxycontrol.v1.WalletService/ListStaticIPs"
 const OperationWalletServiceListStaticOffers = "/proxycontrol.v1.WalletService/ListStaticOffers"
+const OperationWalletServiceListStaticRenewalTerms = "/proxycontrol.v1.WalletService/ListStaticRenewalTerms"
 const OperationWalletServicePurchaseStaticIP = "/proxycontrol.v1.WalletService/PurchaseStaticIP"
 const OperationWalletServicePurchaseTrafficPackage = "/proxycontrol.v1.WalletService/PurchaseTrafficPackage"
 const OperationWalletServiceQuoteStaticPurchase = "/proxycontrol.v1.WalletService/QuoteStaticPurchase"
@@ -56,7 +57,8 @@ type WalletServiceHTTPServer interface {
 	ListOperatorWalletEntries(context.Context, *OperatorWalletEntriesRequest) (*WalletEntries, error)
 	ListPendingStaticPurchases(context.Context, *PendingStaticPurchasesRequest) (*PendingStaticPurchases, error)
 	ListStaticIPs(context.Context, *BaseRequest) (*StaticIPs, error)
-	ListStaticOffers(context.Context, *BaseRequest) (*StaticOffers, error)
+	ListStaticOffers(context.Context, *StaticOffersRequest) (*StaticOffers, error)
+	ListStaticRenewalTerms(context.Context, *StaticRenewalTermsRequest) (*StaticRenewalTerms, error)
 	PurchaseStaticIP(context.Context, *PurchaseStaticIPRequest) (*PurchaseOrder, error)
 	PurchaseTrafficPackage(context.Context, *PurchaseTrafficPackageRequest) (*PurchaseOrder, error)
 	QuoteStaticPurchase(context.Context, *StaticPurchaseQuoteRequest) (*StaticPurchaseQuote, error)
@@ -71,6 +73,7 @@ type WalletServiceHTTPServer interface {
 
 func RegisterWalletServiceHTTPServer(s *http.Server, srv WalletServiceHTTPServer) {
 	r := s.Route("/")
+	r.Handle("POST", "/v1/tenant/static-renewal-terms", _WalletService_ListStaticRenewalTerms0_HTTP_Handler(srv))
 	r.Handle("POST", "/v1/tenant/static-renewal-quotes", _WalletService_QuoteStaticRenewal0_HTTP_Handler(srv))
 	r.Handle("POST", "/v1/tenant/static-renewal-orders", _WalletService_RenewStatic0_HTTP_Handler(srv))
 	r.Handle("POST", "/v1/tenant/static-renewal-orders/{order_id}/recheck", _WalletService_RecheckStaticRenewal0_HTTP_Handler(srv))
@@ -95,6 +98,25 @@ func RegisterWalletServiceHTTPServer(s *http.Server, srv WalletServiceHTTPServer
 	r.Handle("GET", "/v1/tenant/orders", _WalletService_ListCustomerPurchaseOrders0_HTTP_Handler(srv))
 	r.Handle("GET", "/v1/operations/tenants/{tenant_id}/orders/{order_id}", _WalletService_GetOperatorPurchaseOrder0_HTTP_Handler(srv))
 	r.Handle("GET", "/v1/tenant/orders/{order_id}", _WalletService_GetCustomerPurchaseOrder0_HTTP_Handler(srv))
+}
+
+func _WalletService_ListStaticRenewalTerms0_HTTP_Handler(srv WalletServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in StaticRenewalTermsRequest
+		if err := ctx.Bind(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationWalletServiceListStaticRenewalTerms)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.ListStaticRenewalTerms(ctx, req.(*StaticRenewalTermsRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*StaticRenewalTerms)
+		return ctx.Result(200, reply)
+	}
 }
 
 func _WalletService_QuoteStaticRenewal0_HTTP_Handler(srv WalletServiceHTTPServer) func(ctx http.Context) error {
@@ -181,13 +203,13 @@ func _WalletService_ResolveStaticRenewal0_HTTP_Handler(srv WalletServiceHTTPServ
 
 func _WalletService_ListStaticOffers0_HTTP_Handler(srv WalletServiceHTTPServer) func(ctx http.Context) error {
 	return func(ctx http.Context) error {
-		var in BaseRequest
+		var in StaticOffersRequest
 		if err := ctx.BindQuery(&in); err != nil {
 			return err
 		}
 		http.SetOperation(ctx, OperationWalletServiceListStaticOffers)
 		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
-			return srv.ListStaticOffers(ctx, req.(*BaseRequest))
+			return srv.ListStaticOffers(ctx, req.(*StaticOffersRequest))
 		})
 		out, err := h(ctx, &in)
 		if err != nil {
@@ -600,7 +622,8 @@ type WalletServiceHTTPClient interface {
 	ListOperatorWalletEntries(ctx context.Context, req *OperatorWalletEntriesRequest, opts ...http.CallOption) (rsp *WalletEntries, err error)
 	ListPendingStaticPurchases(ctx context.Context, req *PendingStaticPurchasesRequest, opts ...http.CallOption) (rsp *PendingStaticPurchases, err error)
 	ListStaticIPs(ctx context.Context, req *BaseRequest, opts ...http.CallOption) (rsp *StaticIPs, err error)
-	ListStaticOffers(ctx context.Context, req *BaseRequest, opts ...http.CallOption) (rsp *StaticOffers, err error)
+	ListStaticOffers(ctx context.Context, req *StaticOffersRequest, opts ...http.CallOption) (rsp *StaticOffers, err error)
+	ListStaticRenewalTerms(ctx context.Context, req *StaticRenewalTermsRequest, opts ...http.CallOption) (rsp *StaticRenewalTerms, err error)
 	PurchaseStaticIP(ctx context.Context, req *PurchaseStaticIPRequest, opts ...http.CallOption) (rsp *PurchaseOrder, err error)
 	PurchaseTrafficPackage(ctx context.Context, req *PurchaseTrafficPackageRequest, opts ...http.CallOption) (rsp *PurchaseOrder, err error)
 	QuoteStaticPurchase(ctx context.Context, req *StaticPurchaseQuoteRequest, opts ...http.CallOption) (rsp *StaticPurchaseQuote, err error)
@@ -830,7 +853,7 @@ func (c *WalletServiceHTTPClientImpl) ListStaticIPs(ctx context.Context, in *Bas
 	return &out, nil
 }
 
-func (c *WalletServiceHTTPClientImpl) ListStaticOffers(ctx context.Context, in *BaseRequest, opts ...http.CallOption) (*StaticOffers, error) {
+func (c *WalletServiceHTTPClientImpl) ListStaticOffers(ctx context.Context, in *StaticOffersRequest, opts ...http.CallOption) (*StaticOffers, error) {
 	var out StaticOffers
 	pattern := "/v1/public/static-offers"
 	path := http.BuildPath(pattern, in, http.WithQueryParams())
@@ -840,6 +863,23 @@ func (c *WalletServiceHTTPClientImpl) ListStaticOffers(ctx context.Context, in *
 		http.PathTemplate(pattern),
 	}, opts...)
 	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (c *WalletServiceHTTPClientImpl) ListStaticRenewalTerms(ctx context.Context, in *StaticRenewalTermsRequest, opts ...http.CallOption) (*StaticRenewalTerms, error) {
+	var out StaticRenewalTerms
+	pattern := "/v1/tenant/static-renewal-terms"
+	path := http.BuildPath(pattern, in)
+	opts = append([]http.CallOption{
+		http.Accept("application/protojson"),
+		http.ContentType("application/protojson"),
+		http.Operation(OperationWalletServiceListStaticRenewalTerms),
+		http.PathTemplate(pattern),
+	}, opts...)
+	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
 	if err != nil {
 		return nil, err
 	}

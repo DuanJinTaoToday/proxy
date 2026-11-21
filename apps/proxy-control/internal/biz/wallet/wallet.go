@@ -72,6 +72,7 @@ type OrderItem struct {
 	OrderID, CapacityBytes, UnitMinor            int64
 	Position, TermDays, Quantity, DeliveredCount int32
 	Specification, Reference                     string
+	Outcome                                      string
 }
 
 func (o Order) UnsettledMinor() int64 {
