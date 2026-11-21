@@ -1,0 +1,15 @@
+{
+  "notifications": {
+    "markAllRead": "全部已读",
+    "close": "关闭通知",
+    "unreadLabel": "通知（有未读提醒）",
+    "loading": "正在加载通知",
+    "failed": "暂时无法加载通知。",
+    "retry": "重试",
+    "lowTraffic": "动态流量余额偏低",
+    "trafficAction": "查看流量套餐",
+    "expiring": "{count} 个静态 IP 即将到期",
+    "staticAction": "查看并续费静态 IP",
+    "empty": "暂无通知"
+  }
+}
