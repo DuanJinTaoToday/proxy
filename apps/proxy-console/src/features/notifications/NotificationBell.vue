@@ -10,7 +10,7 @@ import LinkButton from '@/shared/ui/LinkButton.vue'
 const props = defineProps<{ accountKey: string }>()
 const { t, locale } = useI18n()
 const route = useRoute()
-const open = ref(false)
+const bell = ref<InstanceType<typeof ElPopover>>()
 const ready = ref(false)
 const loading = ref(false)
 const failed = ref(false)
@@ -80,12 +80,12 @@ watch(() => route.path, load, { immediate: true })
 function markRead(kind: 'traffic' | 'static') {
   if (kind === 'traffic') saveReadState({ ...readState.value, trafficRead: trafficOccurrence.value })
   else saveReadState({ ...readState.value, staticUnread: false })
-  open.value = false
+  bell.value?.hide()
 }
 </script>
 
 <template>
-  <ElPopover v-model:visible="open" placement="bottom-end" trigger="click" width="min(300px, calc(100vw - 24px))" @show="load">
+  <ElPopover ref="bell" placement="bottom-end" trigger="click" :teleported="false" width="min(300px, calc(100vw - 24px))" @before-enter="load">
     <template #reference>
       <ElButton text circle :aria-label="t(unread ? 'notifications.unreadLabel' : 'header.notifications')">
         <ElBadge is-dot :hidden="!unread"><Bell class="notification-bell__icon" /></ElBadge>
