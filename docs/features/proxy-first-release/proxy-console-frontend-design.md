@@ -84,7 +84,3 @@
 ### 第四阶段 · 商品能力与开售验收
 
 动态住宅验证子账号、SOCKS5 接入、近 7 天消耗、用量筛选和 CSV。静态住宅验证库存及价格复核、部分交付、退款、单条复制、TXT 导出和批量续费逐项结果。两类商品独立验收开售。涉及真实控制面和供应商的验收按首版 Spec 和项目 verify 执行。 [首版 Spec](proxy-first-release-spec.md) · [项目 verify](../../../.agents/skills/verify/SKILL.md)
-
-## 与首版 Spec 对齐
-
-设计已确认将「创建代理子账号」放到侧栏管理页。首版 Spec 原文把创建入口列在仪表板快捷入口中。对应产品条目应改为「仪表板提供两类商品购买入口。管理员从左侧『代理子账号』进入列表并创建」。同步 GitHub Spec 与受影响工单时使用同一验收口径。 [首版 Spec #36](https://github.com/DuanJinTaoToday/proxy/issues/36)
