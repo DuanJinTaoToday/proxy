@@ -1,22 +1,24 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { ElAlert, ElButton, ElDialog, ElMessage } from 'element-plus'
+import { ElAlert, ElButton, ElDialog, ElEmpty, ElMessage } from 'element-plus'
 import { CircleCheck } from '@element-plus/icons-vue'
 import { formatMoney } from './demo'
-import { balanceCents, basePerGbCents, recordTrafficPurchase, trafficBalanceGb, trafficPackages, type TrafficPackage } from './state'
+import { balanceCents, basePerGbCents, productOnSale, recordTrafficPurchase, trafficBalanceGb, trafficPackages, type TrafficPackage } from './state'
 
 const emit = defineEmits<{ purchased: [] }>()
-const selected = ref<TrafficPackage>(trafficPackages[1])
+const listed = computed(() => trafficPackages.value.filter(pkg => pkg.listed))
+const selectedId = ref(listed.value[1]?.id ?? listed.value[0]?.id)
+const selected = computed(() => listed.value.find(pkg => pkg.id === selectedId.value) ?? listed.value[0])
 const confirmOpen = ref(false)
 
 const perGb = (pkg: TrafficPackage) => pkg.cents / pkg.gb
-const discount = (pkg: TrafficPackage) => Math.round((1 - perGb(pkg) / basePerGbCents) * 100)
-const shortfall = computed(() => Math.max(0, selected.value.cents - balanceCents.value))
+const discount = (pkg: TrafficPackage) => Math.round((1 - perGb(pkg) / basePerGbCents.value) * 100)
+const shortfall = computed(() => selected.value ? Math.max(0, selected.value.cents - balanceCents.value) : 0)
 const gb = (value: number) => `${value.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GB`
-const afterGb = computed(() => trafficBalanceGb.value + selected.value.gb)
+const afterGb = computed(() => trafficBalanceGb.value + (selected.value?.gb ?? 0))
 
 function submit() {
-  const pkg = selected.value
+  const pkg = selected.value!
   recordTrafficPurchase(pkg)
   confirmOpen.value = false
   ElMessage.success(`已到账 ${pkg.gb} GB 流量`)
@@ -25,10 +27,13 @@ function submit() {
 </script>
 
 <template>
-  <div class="traffic-pricing">
+  <section v-if="!productOnSale.dynamic || !selected" class="details-card">
+    <ElEmpty :description="productOnSale.dynamic ? '流量包暂时全部下架，请稍后再来' : '动态住宅代理-GB 暂未开放购买'" :image-size="80" />
+  </section>
+  <div v-else class="traffic-pricing">
     <div class="package-grid" role="radiogroup" aria-label="选择流量包">
-      <button v-for="pkg in trafficPackages" :key="pkg.gb" type="button" role="radio" class="package-card"
-        :aria-checked="selected.gb === pkg.gb" @click="selected = pkg">
+      <button v-for="pkg in listed" :key="pkg.id" type="button" role="radio" class="package-card"
+        :aria-checked="selected.id === pkg.id" @click="selectedId = pkg.id">
         <span v-if="discount(pkg)" class="package-badge">每 GB 省 {{ discount(pkg) }}%</span>
         <span class="package-size">{{ pkg.gb }} <small>GB</small></span>
         <span class="package-price">{{ formatMoney(pkg.cents) }}</span>

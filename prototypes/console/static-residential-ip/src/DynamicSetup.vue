@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { ElAlert, ElButton, ElCollapse, ElCollapseItem, ElInput, ElInputNumber, ElMessage, ElOption, ElRadioButton, ElRadioGroup, ElSelect } from 'element-plus'
+import { ElAlert, ElButton, ElInput, ElInputNumber, ElMessage, ElOption, ElRadioButton, ElRadioGroup, ElSelect } from 'element-plus'
 import { CopyDocument, Hide, View } from '@element-plus/icons-vue'
 import { gatewayHost, gatewayPort, socksUsername, subAccounts, trafficBalanceGb, trafficThresholdGb } from './state'
 
@@ -10,7 +10,6 @@ const accountName = ref(enabled.value[0]?.name ?? '')
 const account = computed(() => enabled.value.find(a => a.name === accountName.value))
 const mode = ref<'default' | 'sticky'>('default')
 const sid = ref('')
-const sidtime = ref('')
 const reveal = ref(false)
 const threshold = ref(trafficThresholdGb.value)
 
@@ -20,10 +19,7 @@ const sidError = computed(() => mode.value === 'sticky' && !sidPattern.test(sid.
 const username = computed(() => {
   if (!account.value) return ''
   let name = socksUsername(account.value.name)
-  if (mode.value === 'sticky' && !sidError.value) {
-    name += `-sid-${sid.value}`
-    if (sidtime.value.trim()) name += `-sidtime-${sidtime.value.trim()}`
-  }
+  if (mode.value === 'sticky' && !sidError.value) name += `-sid-${sid.value}`
   return name
 })
 const password = computed(() => account.value?.password ?? '')
@@ -82,14 +78,6 @@ const gb = (value: number) => `${value.toLocaleString('zh-CN', { minimumFraction
               <template #prepend>sid</template>
             </ElInput>
             <p :class="sidError ? 'form-error' : 'form-hint'">{{ sidError || '同一会话标识的新连接尽量使用同一出口，重连时出口 IP 仍可能变化。' }}</p>
-            <ElCollapse class="sidtime-collapse">
-              <ElCollapseItem title="会话时长（有限支持）" name="sidtime">
-                <ElInput v-model="sidtime" maxlength="8" placeholder="留空使用上游默认" class="sid-input">
-                  <template #prepend>sidtime</template>
-                </ElInput>
-                <p class="form-hint">原样透传给上游，实际时长、到期处理和出口 IP 由上游决定。</p>
-              </ElCollapseItem>
-            </ElCollapse>
           </div>
         </div>
 

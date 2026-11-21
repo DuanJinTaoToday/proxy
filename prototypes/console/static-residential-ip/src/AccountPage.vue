@@ -4,13 +4,12 @@ import { ElAlert, ElButton, ElDatePicker, ElEmpty, ElInput, ElOption, ElPaginati
 import { Search } from '@element-plus/icons-vue'
 import OrderDrawer from './OrderDrawer.vue'
 import { formatExpiry, formatMoney } from './demo'
-import { currentIp, orderKindLabels, orders, orderRefundCents, orderStatusLabels, orderTotalCents, type Order, type OrderKind, type OrderStatus } from './state'
+import { currentIp, orderKindLabels, orders, orderRefundCents, orderStatusLabels, orderStatusTags, orderTotalCents, type Order, type OrderKind, type OrderStatus } from './state'
 
 // ElTable 的插槽行类型是 DefaultRow，模板里按 Order 读取字段。
 type OrderRow = { row: any }
 type OrderProduct = 'dynamic' | 'static'
 const pageSize = 8
-const statusTagTypes: Record<OrderStatus, 'success' | 'warning' | 'primary'> = { completed: 'success', partial: 'warning', processing: 'primary' }
 const productLabels: Record<OrderProduct, string> = { dynamic: '动态住宅代理-GB', static: '静态住宅代理' }
 const productOf = (order: Order): OrderProduct => order.kind === 'traffic' ? 'dynamic' : 'static'
 
@@ -139,7 +138,7 @@ function resetFilters() {
           </ElTableColumn>
           <ElTableColumn label="状态" min-width="100">
             <template #default="{ row }: OrderRow">
-              <ElTag :type="statusTagTypes[row.status as OrderStatus]" size="small" disable-transitions>{{ orderStatusLabels[row.status as OrderStatus] }}</ElTag>
+              <ElTag :type="orderStatusTags[row.status as OrderStatus]" size="small" disable-transitions>{{ orderStatusLabels[row.status as OrderStatus] }}</ElTag>
             </template>
           </ElTableColumn>
           <ElTableColumn label="下单时间" min-width="150">

@@ -2,15 +2,15 @@
 import { computed } from 'vue'
 import { ElAlert, ElDescriptions, ElDescriptionsItem, ElDrawer, ElTable, ElTableColumn, ElTag } from 'element-plus'
 import { formatExpiry, formatMoney } from './demo'
-import { ledger, ledgerKindLabels, orderById, orderKindLabels, orderRefundCents, orderStatusLabels, orderTotalCents, type OrderStatus } from './state'
+import { books, ledgerKindLabels, liveTenantId, orderKindLabels, orderRefundCents, orderStatusLabels, orderStatusTags, orderTotalCents } from './state'
 
-const statusTagTypes: Record<OrderStatus, 'success' | 'warning' | 'primary'> = { completed: 'success', partial: 'warning', processing: 'primary' }
-
-const props = defineProps<{ orderId?: string }>()
+// 客户控制台只看自己的订单；运营后台传入 tenantId 查看任一租户，并通过插槽追加核实记录和操作。
+const props = defineProps<{ orderId?: string, tenantId?: string }>()
 const open = defineModel<boolean>({ required: true })
 
-const order = computed(() => props.orderId ? orderById(props.orderId) : undefined)
-const entries = computed(() => ledger.value.filter(entry => entry.orderId === props.orderId))
+const book = computed(() => books.value[props.tenantId ?? liveTenantId])
+const order = computed(() => book.value?.orders.find(o => o.id === props.orderId))
+const entries = computed(() => book.value?.ledger.filter(entry => entry.orderId === props.orderId) ?? [])
 const total = computed(() => order.value ? orderTotalCents(order.value) : 0)
 const refund = computed(() => order.value ? orderRefundCents(order.value) : 0)
 // ElTable 的插槽行类型是 DefaultRow，模板里按 OrderLine 读取字段。
@@ -27,7 +27,7 @@ type LineRow = { row: any }
         <ElDescriptionsItem label="订单号" :span="2"><span class="mono">{{ order.id }}</span></ElDescriptionsItem>
         <ElDescriptionsItem label="类型">{{ orderKindLabels[order.kind] }}</ElDescriptionsItem>
         <ElDescriptionsItem label="状态">
-          <ElTag :type="statusTagTypes[order.status]" size="small" disable-transitions>{{ orderStatusLabels[order.status] }}</ElTag>
+          <ElTag :type="orderStatusTags[order.status]" size="small" disable-transitions>{{ orderStatusLabels[order.status] }}</ElTag>
         </ElDescriptionsItem>
         <ElDescriptionsItem label="下单时间">{{ formatExpiry(order.createdAt) }}</ElDescriptionsItem>
         <ElDescriptionsItem label="租期">{{ order.term ?? '—' }}</ElDescriptionsItem>
@@ -60,6 +60,7 @@ type LineRow = { row: any }
           <span :class="entry.amountCents > 0 ? 'amount-in' : 'amount-out'">{{ entry.amountCents > 0 ? '+' : '−' }}{{ formatMoney(Math.abs(entry.amountCents)) }}</span>
         </li>
       </ul>
+      <slot :order="order" />
     </template>
   </ElDrawer>
 </template>

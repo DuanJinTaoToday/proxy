@@ -4,7 +4,7 @@ import { ElAlert, ElButton, ElDialog, ElEmpty, ElInput, ElInputNumber, ElOption,
 import { Search } from '@element-plus/icons-vue'
 import { supplierNodes, supplierProjects, type ProjectKey, type SupplierNode } from './catalog'
 import { deliverIps, formatMoney, priceCents, productLabels, regionName, stockOf, termsOf, type Product } from './demo'
-import { addIps, balanceCents, recordStaticPurchase } from './state'
+import { addIps, balanceCents, productOnSale, recordStaticPurchase } from './state'
 
 const emit = defineEmits<{ purchased: [count: number] }>()
 
@@ -89,7 +89,10 @@ function submit() {
 </script>
 
 <template>
-  <div class="pricing">
+  <section v-if="!productOnSale.static" class="details-card">
+    <ElEmpty description="静态住宅代理暂未开放购买" :image-size="80" />
+  </section>
+  <div v-else class="pricing">
     <section class="pricing-card">
       <div class="product-switch">
         <ElRadioGroup v-model="product" size="large" aria-label="选择产品">
