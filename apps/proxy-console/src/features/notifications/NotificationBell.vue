@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { ElBadge, ElButton, ElEmpty, ElPopover, ElSkeleton } from 'element-plus'
 import { Bell, Check, Close } from '@element-plus/icons-vue'
-import { claimStaticExpiryNotices, getOverview, getTrafficAlert } from '@/api/dashboard'
+import { claimStaticExpiryNotices, getOverview, getTrafficAlert, listActiveStaticExpiries } from '@/api/dashboard'
 import LinkButton from '@/shared/ui/LinkButton.vue'
 
 const props = defineProps<{ accountKey: string }>()
@@ -15,7 +15,7 @@ const ready = ref(false)
 const loading = ref(false)
 const failed = ref(false)
 const trafficOccurrence = ref<string>()
-const expiring = ref(0)
+const expiringKeys = ref<string[]>([])
 const controller = new AbortController()
 onScopeDispose(() => controller.abort())
 
@@ -34,22 +34,27 @@ function setClaimPending(pending: boolean) {
     else sessionStorage.removeItem(claimKey)
   } catch { /* Fall back to in-memory state. */ }
 }
+type StaticReadStatus = 'read' | 'unread'
 interface ReadState {
   trafficRead?: string
-  staticUnread?: boolean
+  staticStatus: Partial<Record<string, StaticReadStatus>>
 }
 
 function loadReadState(): ReadState {
   try {
     const stored = JSON.parse(localStorage.getItem(storageKey) ?? '{}')
-    return { trafficRead: stored?.trafficRead, staticUnread: stored?.staticUnread === true }
+    return {
+      trafficRead: typeof stored?.trafficRead === 'string' ? stored.trafficRead : undefined,
+      staticStatus: Object.fromEntries(Object.entries(stored?.staticStatus ?? {})
+        .flatMap(([key, status]) => status === 'read' || status === 'unread' ? [[key, status]] : [])),
+    }
   } catch {
-    return {}
+    return { staticStatus: {} }
   }
 }
-const readState = shallowRef(props.accountKey ? loadReadState() : {})
+const readState = shallowRef<ReadState>(props.accountKey ? loadReadState() : { staticStatus: {} })
 const unreadTraffic = computed(() => trafficOccurrence.value !== undefined && trafficOccurrence.value !== readState.value.trafficRead)
-const unreadStatic = computed(() => expiring.value > 0 && readState.value.staticUnread === true)
+const unreadStatic = computed(() => expiringKeys.value.some(key => readState.value.staticStatus[key] === 'unread'))
 const unread = computed(() => unreadTraffic.value || unreadStatic.value)
 
 function saveReadState(next: ReadState) {
@@ -72,20 +77,25 @@ async function load() {
   try {
     const [overview, traffic] = await Promise.all([getOverview(controller.signal), getTrafficAlert(controller.signal)])
     if (controller.signal.aborted) return
-    const count = overview.expiringIpCount
-    const recoverClaim = claimPending
-    let claimed = 0
-    if (count > 0) {
+    const active = overview.expiringIpCount > 0
+      ? await listActiveStaticExpiries(overview.activeStaticIpCount, controller.signal)
+      : []
+    if (controller.signal.aborted) return
+    const keys = active.slice(0, overview.expiringIpCount).map(allocation => allocation.key)
+    let newStatus: StaticReadStatus = 'read'
+    if (keys.some(key => !readState.value.staticStatus[key])) {
+      const recoverClaim = claimPending
       // The server can record the claim even if the response never reaches this tab.
       setClaimPending(true)
-      claimed = await claimStaticExpiryNotices()
+      const claimed = await claimStaticExpiryNotices()
+      if (claimed > 0 || recoverClaim) newStatus = 'unread'
     }
     const previous = readState.value
-    const staticUnread = count > 0 && (claimed > 0 || recoverClaim || previous.staticUnread === true)
-    if (staticUnread !== Boolean(previous.staticUnread)) saveReadState({ ...previous, staticUnread })
+    const staticStatus = Object.fromEntries(keys.map(key => [key, previous.staticStatus[key] ?? newStatus]))
+    saveReadState({ ...previous, staticStatus })
     setClaimPending(false)
     if (controller.signal.aborted) return
-    expiring.value = count
+    expiringKeys.value = keys
     trafficOccurrence.value = traffic.occurrence
     ready.value = true
   } catch {
@@ -101,14 +111,14 @@ function refreshOnOpen() {
   if (!failed.value) void load()
 }
 
-function markRead(kind: 'traffic' | 'static') {
-  if (kind === 'traffic') saveReadState({ ...readState.value, trafficRead: trafficOccurrence.value })
-  else saveReadState({ ...readState.value, staticUnread: false })
-  bell.value?.hide()
-}
-
-function markAllRead() {
-  saveReadState({ trafficRead: trafficOccurrence.value, staticUnread: false })
+function markRead(kind: 'traffic' | 'static' | 'all') {
+  const next = { ...readState.value }
+  if (kind === 'traffic' || kind === 'all') next.trafficRead = trafficOccurrence.value
+  if (kind === 'static' || kind === 'all') {
+    next.staticStatus = Object.fromEntries(expiringKeys.value.map(key => [key, 'read']))
+  }
+  saveReadState(next)
+  if (kind !== 'all') bell.value?.hide()
 }
 </script>
 
@@ -124,7 +134,7 @@ function markAllRead() {
       <div class="notification-bell__heading">
         <h2>{{ t('header.notifications') }}</h2>
         <div class="notification-bell__actions">
-          <ElButton v-if="ready && !failed && unread" :disabled="loading" :icon="Check" link type="primary" @click="markAllRead">
+          <ElButton v-if="ready && !failed && unread" :disabled="loading" :icon="Check" link type="primary" @click="markRead('all')">
             {{ t('notifications.markAllRead') }}
           </ElButton>
           <ElButton text circle size="small" :icon="Close" :aria-label="t('notifications.close')" @click="bell?.hide()" />
@@ -140,16 +150,16 @@ function markAllRead() {
       <div v-else-if="!ready" role="status" :aria-label="t('notifications.loading')">
         <ElSkeleton animated :rows="2" />
       </div>
-      <ul v-else-if="trafficOccurrence || expiring">
+      <ul v-else-if="trafficOccurrence || expiringKeys.length">
         <li v-if="trafficOccurrence">
           <RouterLink :to="{ name: 'console-dynamic-pricing' }" @click="markRead('traffic')">
             <ElBadge is-dot :hidden="!unreadTraffic"><strong>{{ t('notifications.lowTraffic') }}</strong></ElBadge>
             <span>{{ t('notifications.trafficAction') }}</span>
           </RouterLink>
         </li>
-        <li v-if="expiring">
+        <li v-if="expiringKeys.length">
           <RouterLink :to="{ name: 'console-static-ips' }" @click="markRead('static')">
-            <ElBadge is-dot :hidden="!unreadStatic"><strong class="tabular">{{ t('notifications.expiring', expiring) }}</strong></ElBadge>
+            <ElBadge is-dot :hidden="!unreadStatic"><strong class="tabular">{{ t('notifications.expiring', expiringKeys.length) }}</strong></ElBadge>
             <span>{{ t('notifications.staticAction') }}</span>
           </RouterLink>
         </li>

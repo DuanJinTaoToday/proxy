@@ -3,7 +3,7 @@ import { computed, onScopeDispose, ref, shallowRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElAlert, ElButton, ElCard, ElEmpty, ElIcon, ElPopover, ElSkeleton, ElTable, ElTableColumn } from 'element-plus'
 import { Clock, Connection, CreditCard, Service, Sort, Tickets } from '@element-plus/icons-vue'
-import { getDailyUsage, getNextStaticExpiry, getOverview, getTrafficAlert, hasPendingOrders } from '@/api/dashboard'
+import { getDailyUsage, getOverview, getTrafficAlert, hasPendingOrders, listActiveStaticExpiries } from '@/api/dashboard'
 import { formatGB } from '@/features/dynamic-proxy'
 import LinkButton from '@/shared/ui/LinkButton.vue'
 import PageHeader from '@/shared/ui/PageHeader.vue'
@@ -18,17 +18,17 @@ onScopeDispose(() => request?.abort())
 async function readDashboard(signal: AbortSignal) {
   const dates = usageWeek()
   const overview = await getOverview(signal)
-  const [usage, alert, expiry, pending] = await Promise.all([
+  const [usage, alert, activeExpiries, pending] = await Promise.all([
     getDailyUsage({ start: dates[0], end: dates[6], signal }),
     getTrafficAlert(signal),
-    overview.activeStaticIpCount > 0 ? getNextStaticExpiry(overview.activeStaticIpCount, signal) : undefined,
+    listActiveStaticExpiries(overview.activeStaticIpCount, signal),
     hasPendingOrders(signal),
   ])
   const usageByDate = new Map(usage.map(day => [day.date, day]))
   return {
     ...overview,
     lowTraffic: alert.thresholdBytes !== undefined && overview.trafficBytes <= alert.thresholdBytes,
-    expiry,
+    expiry: activeExpiries[0]?.expiresAt,
     pending,
     days: usage.length ? dates.map(date => ({ date, bytes: usageByDate.get(date)?.bytes ?? 0n })) : [],
     updatedAt: usage.reduce((latest, day) => Math.max(latest, Date.parse(day.updatedAt ?? '') || 0), 0),

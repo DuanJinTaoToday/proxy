@@ -128,7 +128,7 @@ test('仪表板展示余额、上海业务日用量和待处理事项，通知�
   await notificationButton(page).click()
   await expect(page.getByRole('link', { name: /1 个静态 IP 即将到期/ })).toBeVisible()
   await expect(unreadButton(page)).toHaveCount(0)
-  expect(claims.filter(count => count > 0)).toEqual([1])
+  expect(claims).toEqual([1])
 
   await page.unroute(noticesPath)
   sql("UPDATE static_ip_allocations SET expires_at = now() + interval '4 days' WHERE supplier_item_id = '7102'")

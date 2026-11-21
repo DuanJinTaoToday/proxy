@@ -42,12 +42,15 @@ export async function getTrafficAlert(signal: AbortSignal) {
   }
 }
 
-export async function getNextStaticExpiry(activeCount: number, signal: AbortSignal) {
-  const wire = await request<{ allocations?: { expires_at: string }[] }>('/v1/tenant/static-ips', { signal })
-  const expiries = (wire.allocations ?? []).map(allocation => Date.parse(allocation.expires_at)).sort((a, b) => b - a)
+export async function listActiveStaticExpiries(activeCount: number, signal: AbortSignal) {
+  if (activeCount === 0) return []
+  const wire = await request<{ allocations?: { supplier_item_id: string, expires_at: string }[] }>('/v1/tenant/static-ips', { signal })
+  const expiries = (wire.allocations ?? []).map(allocation => ({
+    key: JSON.stringify([allocation.supplier_item_id, allocation.expires_at]),
+    expiresAt: new Date(allocation.expires_at),
+  })).filter(allocation => Number.isFinite(allocation.expiresAt.getTime()))
   // The overview counts active IPs using server time. The active allocations have the latest expiries.
-  const next = expiries[activeCount - 1]
-  return Number.isFinite(next) ? new Date(next) : undefined
+  return expiries.sort((a, b) => a.expiresAt.getTime() - b.expiresAt.getTime()).slice(-activeCount)
 }
 
 export async function hasPendingOrders(signal: AbortSignal) {
