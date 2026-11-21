@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { DynamicSetup } from '@/features/dynamic-proxy'
+import { DynamicSetup, TrafficAlertSettings } from '@/features/dynamic-proxy'
 </script>
 
 <template>
-  <DynamicSetup />
+  <DynamicSetup>
+    <template #aside><TrafficAlertSettings /></template>
+  </DynamicSetup>
 </template>

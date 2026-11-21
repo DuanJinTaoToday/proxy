@@ -13,6 +13,7 @@ test('租户从代理设置获取 SOCKS5 凭据并使用双语教程', async ({ 
     await signInTenant(page, phone)
     await page.getByRole('menuitem', { name: '动态住宅代理-GB' }).click()
     await expect(page.getByText('还没有启用的子账号')).toBeVisible()
+    await expect(page.getByRole('region', { name: '低余额提醒' })).toBeVisible()
     await screenshot(page, info, 'no-enabled-subaccounts')
     await page.getByRole('link', { name: '去创建子账号' }).click()
     await expect(page).toHaveURL(/\/console\/sub-accounts$/)
@@ -86,6 +87,14 @@ test('租户从代理设置获取 SOCKS5 凭据并使用双语教程', async ({ 
     await expect(setup).not.toContainText('Another72')
     await expect(setup).not.toContainText('Example72')
 
+    await expect(setup.getByRole('heading', { name: 'SOCKS5 接入信息' })).toBeVisible()
+    const alertSettings = setup.getByRole('region', { name: '低余额提醒' })
+    await alertSettings.getByRole('textbox', { name: '提醒阈值（GB）' }).fill('0.75')
+    await alertSettings.getByRole('button', { name: '保存阈值' }).click()
+    await expect(alertSettings.getByText('已保存低余额阈值。')).toBeVisible()
+    await expect(setup.getByText(account.primary_account_name + '.next72-sid-session72', { exact: true })).toBeVisible()
+    await screenshot(page, info, 'combined-socks5-and-low-balance-settings')
+
     await page.getByRole('tab', { name: '使用教程' }).click()
     await expect(page.getByRole('heading', { name: '通过 SOCKS5 接入动态住宅代理' })).toBeVisible()
     await expect(page.getByText('<主账号名>.<子账号名>', { exact: true })).toBeVisible()
@@ -99,6 +108,7 @@ test('租户从代理设置获取 SOCKS5 凭据并使用双语教程', async ({ 
     await screenshot(page, info, 'guide-en')
     await page.getByRole('link', { name: 'Open proxy setup' }).click()
     await expect(page).toHaveURL(/\/console\/dynamic\/setup$/)
+    await expect(setup.getByRole('textbox', { name: 'Alert threshold (GB)' })).toHaveValue('0.75')
   } finally {
     await tenant.dispose()
   }

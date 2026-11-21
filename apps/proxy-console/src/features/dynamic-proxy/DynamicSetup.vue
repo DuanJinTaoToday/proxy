@@ -197,21 +197,25 @@ void loadBalance()
       </template>
     </ElCard>
 
-    <ElCard shadow="never">
-      <template #header><h2>{{ t('dynamicSetup.balance') }}</h2></template>
-      <ElSkeleton v-if="!balance" animated :rows="1" />
-      <ElAlert v-else-if="balance.kind === 'error'" :title="errorMessage(balance.error)" type="error" :closable="false">
-        <ElButton size="small" @click="loadBalance">{{ t('dynamicSetup.retry') }}</ElButton>
-      </ElAlert>
-      <strong v-else class="tabular balance">{{ t('subaccounts.gb', { value: formatGB(balance.bytes, locale) }) }}</strong>
-      <p>{{ t('dynamicSetup.balanceHint') }}</p>
-      <LinkButton :to="{ name: 'console-dynamic-pricing' }" type="primary">{{ t('dynamicSetup.buy') }}</LinkButton>
-    </ElCard>
+    <div class="setup-side">
+      <ElCard shadow="never">
+        <template #header><h2>{{ t('dynamicSetup.balance') }}</h2></template>
+        <ElSkeleton v-if="!balance" animated :rows="1" />
+        <ElAlert v-else-if="balance.kind === 'error'" :title="errorMessage(balance.error)" type="error" :closable="false">
+          <ElButton size="small" @click="loadBalance">{{ t('dynamicSetup.retry') }}</ElButton>
+        </ElAlert>
+        <strong v-else class="tabular balance">{{ t('subaccounts.gb', { value: formatGB(balance.bytes, locale) }) }}</strong>
+        <p>{{ t('dynamicSetup.balanceHint') }}</p>
+        <LinkButton :to="{ name: 'console-dynamic-pricing' }" type="primary">{{ t('dynamicSetup.buy') }}</LinkButton>
+      </ElCard>
+      <slot name="aside" />
+    </div>
   </div>
 </template>
 
 <style scoped>
 .setup { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 1fr); align-items: start; gap: var(--space-4); }
+.setup-side { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-4); }
 .toolbar, .credential, .form-row { display: flex; align-items: start; flex-wrap: wrap; gap: var(--space-2) var(--space-4); }
 .toolbar, .credential { justify-content: space-between; align-items: center; }
 .form-row { margin-block-end: var(--space-4); }
