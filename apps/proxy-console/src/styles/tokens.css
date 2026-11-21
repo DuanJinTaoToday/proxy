@@ -76,7 +76,10 @@
   --auth-card-width: 440px;
   --form-dialog-width: 520px;
   --subaccount-metric-width: 200px;
+  --traffic-alert-input-width: 200px;
   --account-name-width: 160px;
+  --usage-date-range-width: 320px;
+  --usage-account-filter-width: 200px;
   --dashboard-chart-height: 200px;
   --dashboard-chart-axis-width: 100px;
   --notification-panel-width: 360px;

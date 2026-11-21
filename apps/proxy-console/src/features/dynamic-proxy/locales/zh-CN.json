@@ -1,4 +1,18 @@
 {
+  "trafficAlert": {
+    "title": "低余额提醒",
+    "hint": "可用流量降到阈值或以下时，控制台会提醒一次。余额回到阈值以上后，下次降到阈值可再次提醒。",
+    "threshold": "提醒阈值（GB）",
+    "invalid": "请输入有效的非负 GB 数值，最多 9 位小数。",
+    "save": "保存阈值",
+    "disable": "停用提醒",
+    "saved": "已保存低余额阈值。",
+    "disabled": "已停用低余额提醒。",
+    "loading": "正在加载低余额提醒",
+    "loadFailed": "无法加载低余额提醒。",
+    "updateFailed": "未能确认提醒设置，请重试。",
+    "retry": "重试"
+  },
   "subaccounts": {
     "intro": "子账号用于动态住宅代理的 SOCKS5 接入，可为各项目分配独立账密和用量上限。",
     "usernameHint": "SOCKS5 用户名格式为 {account}.子账号名，可追加 -sid-会话标识指定会话。静态住宅 IP 使用各自的交付账密。",

@@ -4,8 +4,10 @@ import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { ElBadge, ElButton, ElEmpty, ElPopover, ElSkeleton } from 'element-plus'
 import { Bell, Check, Close } from '@element-plus/icons-vue'
-import { claimStaticExpiryNotices, getOverview, getTrafficAlert, listActiveStaticExpiries } from '@/api/dashboard'
+import { claimStaticExpiryNotices, getOverview, listActiveStaticExpiries } from '@/api/dashboard'
+import { getTrafficAlert } from '@/api/trafficAlert'
 import LinkButton from '@/shared/ui/LinkButton.vue'
+import { trafficNoticeRevision } from './trafficNotice'
 
 const props = defineProps<{ accountKey: string }>()
 const { t, locale } = useI18n()
@@ -22,6 +24,7 @@ onScopeDispose(() => controller.abort())
 const storageKey = `proxy-console.notifications.${props.accountKey}`
 const claimKey = `${storageKey}.claim-pending`
 let claimPending = false
+let refreshPending = false
 
 if (props.accountKey) {
   try { claimPending = sessionStorage.getItem(claimKey) === '1' } catch { /* Fall back to in-memory state. */ }
@@ -102,10 +105,18 @@ async function load() {
     if (!controller.signal.aborted) failed.value = true
   } finally {
     loading.value = false
+    if (refreshPending && !controller.signal.aborted) {
+      refreshPending = false
+      void load()
+    }
   }
 }
 
 watch(() => route.path, load, { immediate: true })
+watch(trafficNoticeRevision, () => {
+  if (loading.value) refreshPending = true
+  else void load()
+})
 
 function refreshOnOpen() {
   if (!failed.value) void load()

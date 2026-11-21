@@ -1,4 +1,18 @@
 {
+  "trafficAlert": {
+    "title": "Low balance alerts",
+    "hint": "The console alerts you once when available traffic falls to or below your threshold. When the balance rises above the threshold, it can trigger a new alert the next time it falls.",
+    "threshold": "Alert threshold (GB)",
+    "invalid": "Enter a valid non-negative value in GB with up to 9 decimal places.",
+    "save": "Save threshold",
+    "disable": "Disable alerts",
+    "saved": "Low balance threshold saved.",
+    "disabled": "Low balance alerts disabled.",
+    "loading": "Loading low balance alerts",
+    "loadFailed": "Could not load low balance alerts.",
+    "updateFailed": "Could not confirm the alert settings. Try again.",
+    "retry": "Retry"
+  },
   "subaccounts": {
     "intro": "Use subaccounts to give each project its own SOCKS5 credentials and usage limit for dynamic residential proxies.",
     "usernameHint": "Use a SOCKS5 username such as {account}.shop01. Append -sid- followed by a session ID to select a session. Each static residential IP has its own credentials.",
