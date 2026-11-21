@@ -229,6 +229,10 @@ message WalletTenant {
   int64 available_minor = 4;
   // 可用流量字节数。负值为待抵扣的用量。
   int64 available_traffic_bytes = 5;
+  // 当前租户累计充值，人民币分，以十进制字符串返回。
+  string total_recharge_minor = 6;
+  // 当前租户累计净实扣，人民币分，以十进制字符串返回。
+  string total_spend_minor = 7;
 }
 
 message WalletEntry {
@@ -264,6 +268,8 @@ message PurchaseOrders {
   repeated PurchaseOrder orders = 1;
   // 下一页的 before_id，0 表示已到末页。
   int64 next_before_id = 2;
+  // 当前租户确认中的订单总数，与筛选和游标无关。
+  int64 pending_count = 3;
 }
 
 message PurchaseOrder {
@@ -295,6 +301,12 @@ message PurchaseOrder {
   int64 unsettled_minor = 13;
   // 详情返回已锁定的商品明细及逐项交付数量。
   repeated PurchaseOrderItem items = 14;
+  // 客户订单详情中的关联资金流水。
+  repeated WalletEntry wallet_entries = 15;
+  // 客户列表中的首条锁定明细，用于摘要展示。
+  PurchaseOrderItem summary_item = 16;
+  // 客户列表中的锁定明细行数。
+  int64 item_count = 17;
 }
 
 message PurchaseOrderItem {
@@ -317,6 +329,12 @@ message PurchaseOrderItem {
 message CustomerWalletEntriesRequest {
   // 查询此编号之前的流水。默认从最新开始。
   int64 before_id = 1 [(validate.rules).int64.gte = 0];
+  // 流水类型。debit 包含预扣，refund 包含预扣释放。
+  string kind = 2 [(validate.rules).string = {in: ["", "recharge", "debit", "hold", "release", "refund"]}];
+  // 上海业务日起点（YYYY-MM-DD），包含当天。
+  string start_date = 3 [(validate.rules).string = {pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$", ignore_empty: true}];
+  // 上海业务日终点（YYYY-MM-DD），包含当天。
+  string end_date = 4 [(validate.rules).string = {pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$", ignore_empty: true}];
 }
 
 message OperatorWalletEntriesRequest {
@@ -329,10 +347,18 @@ message OperatorWalletEntriesRequest {
 message CustomerPurchaseOrdersRequest {
   // 查询此编号之前的订单。默认从最新开始。
   int64 before_id = 1 [(validate.rules).int64.gte = 0];
-  // 产品类型。空值表示全部。
+  // 订单类型。空值表示全部。
   string kind = 2 [(validate.rules).string = {in: ["", "traffic_package", "static_purchase", "static_renewal"]}];
   // 交付状态。空值表示全部。
   string status = 3 [(validate.rules).string = {in: ["", "pending", "succeeded", "partial", "failed"]}];
+  // 按订单号的数字片段筛选，空值表示全部。
+  string order_query = 4 [(validate.rules).string = {pattern: "^[0-9]{1,19}$", ignore_empty: true}];
+  // 上海业务日起点（YYYY-MM-DD），包含当天。
+  string start_date = 5 [(validate.rules).string = {pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$", ignore_empty: true}];
+  // 上海业务日终点（YYYY-MM-DD），包含当天。
+  string end_date = 6 [(validate.rules).string = {pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$", ignore_empty: true}];
+  // 产品分组。static 包含购买和续费。
+  string product = 7 [(validate.rules).string = {in: ["", "dynamic", "static"]}];
 }
 
 message OperatorPurchaseOrdersRequest {

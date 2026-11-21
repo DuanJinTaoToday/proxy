@@ -40,6 +40,14 @@ func (s *Service) Tenant(ctx context.Context, token, tenantID string, operations
 	return s.store.Tenant(ctx, id)
 }
 
+func (s *Service) CustomerWallet(ctx context.Context, token string) (Tenant, error) {
+	id, err := s.scope(ctx, token, "", false)
+	if err != nil {
+		return Tenant{}, err
+	}
+	return s.store.CustomerWallet(ctx, id)
+}
+
 func (s *Service) QuoteRecharge(ctx context.Context, token, tenantID, key, reason string, amount int64) (Tenant, RechargeQuote, int64, error) {
 	actor, err := s.access.AuthorizeOperator(ctx, token, access.ManageBilling)
 	if err != nil {
@@ -98,7 +106,12 @@ func (s *Service) Entries(ctx context.Context, token, tenantID string, operation
 	if err != nil {
 		return nil, err
 	}
-	if filter.BeforeID < 0 {
+	switch Action(filter.Kind) {
+	case "", Recharge, Debit, Hold, Release, Refund:
+	default:
+		return nil, ErrInvalid
+	}
+	if filter.BeforeID < 0 || !filter.validDates() {
 		return nil, ErrInvalid
 	}
 	filter.Limit = PageSize + 1
@@ -117,17 +130,19 @@ func (s *Service) PurchasePackage(ctx context.Context, token string, purchase Pa
 	return s.store.PurchasePackage(ctx, id, purchase)
 }
 
-func (s *Service) Orders(ctx context.Context, token, tenantID string, operations bool, filter Filter) ([]Order, error) {
+func (s *Service) Orders(ctx context.Context, token, tenantID string, operations bool, filter Filter) (OrderPage, error) {
 	id, err := s.scope(ctx, token, tenantID, operations)
 	if err != nil {
-		return nil, err
+		return OrderPage{}, err
 	}
-	if filter.BeforeID < 0 || (filter.Kind != "" && !IsKind(filter.Kind)) ||
-		(filter.Status != "" && !IsStatus(filter.Status)) {
-		return nil, ErrInvalid
+	if filter.BeforeID < 0 || !filter.validOrderQuery() || !filter.validDates() ||
+		(filter.Kind != "" && !IsKind(filter.Kind)) ||
+		(filter.Status != "" && !IsStatus(filter.Status)) ||
+		(filter.Product != "" && filter.Product != "dynamic" && filter.Product != "static") {
+		return OrderPage{}, ErrInvalid
 	}
 	filter.Limit = PageSize + 1
-	return s.store.Orders(ctx, id, filter)
+	return s.store.Orders(ctx, id, filter, !operations)
 }
 
 func (s *Service) Order(ctx context.Context, token, tenantID string, operations bool, orderID int64) (Order, error) {
@@ -138,7 +153,10 @@ func (s *Service) Order(ctx context.Context, token, tenantID string, operations 
 	if orderID <= 0 {
 		return Order{}, ErrInvalid
 	}
-	return s.store.Order(ctx, id, orderID)
+	if operations {
+		return s.store.Order(ctx, id, orderID)
+	}
+	return s.store.CustomerOrder(ctx, id, orderID)
 }
 
 func (s *Service) scope(ctx context.Context, token, tenantID string, operations bool) (string, error) {

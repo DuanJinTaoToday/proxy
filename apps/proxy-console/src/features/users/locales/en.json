@@ -1,4 +1,9 @@
 {
+  "users": {
+    "account": "Account",
+    "primaryAccount": "Primary account",
+    "phone": "Phone number"
+  },
   "accessLocation": {
     "title": "Current IP address and location",
     "ip": "IP address",

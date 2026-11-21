@@ -30,7 +30,9 @@ window.addEventListener('storage', event => {
   const hadSession = Boolean(stored.value)
   stored.value = readStored()
   account.value = undefined
+  accountFailed.value = false
   if (hadSession && !stored.value) onExpired()
+  if (hadSession && stored.value) void loadAccount()
 })
 
 export const currentAccount = computed(() => account.value)
@@ -63,12 +65,14 @@ export async function register(phone: string, password: string) {
 
 // 读取失败（网络等）时记录状态，由顶栏提示并重试；会话失效由请求层统一处理。
 export async function loadAccount() {
-  if (account.value) return
+  const token = stored.value?.token
+  if (!token || account.value) return
   accountFailed.value = false
   try {
-    account.value = await access.getAccount()
+    const result = await access.getAccount()
+    if (stored.value?.token === token) account.value = result
   } catch {
-    accountFailed.value = true
+    if (stored.value?.token === token) accountFailed.value = true
   }
 }
 

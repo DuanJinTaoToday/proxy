@@ -25,7 +25,9 @@ func (s *Wallet) GetTenant(ctx context.Context, req *v1.WalletTenantRequest) (*v
 }
 
 func (s *Wallet) GetCustomerWallet(ctx context.Context, _ *v1.BaseRequest) (*v1.WalletTenant, error) {
-	return s.getTenant(ctx, "", false)
+	noStore(ctx)
+	tenant, err := s.biz.CustomerWallet(ctx, bearerToken(ctx))
+	return tenantMessage(tenant), wallet.PublicError(err)
 }
 
 func (s *Wallet) PurchaseTrafficPackage(ctx context.Context, req *v1.PurchaseTrafficPackageRequest) (*v1.PurchaseOrder, error) {
@@ -59,16 +61,18 @@ func (s *Wallet) RechargeWallet(ctx context.Context, req *v1.RechargeWalletReque
 }
 
 func (s *Wallet) ListOperatorWalletEntries(ctx context.Context, req *v1.OperatorWalletEntriesRequest) (*v1.WalletEntries, error) {
-	return s.entries(ctx, req.GetTenantId(), true, req.GetBeforeId())
+	return s.entries(ctx, req.GetTenantId(), true, wallet.Filter{BeforeID: req.GetBeforeId()})
 }
 
 func (s *Wallet) ListCustomerWalletEntries(ctx context.Context, req *v1.CustomerWalletEntriesRequest) (*v1.WalletEntries, error) {
-	return s.entries(ctx, "", false, req.GetBeforeId())
+	return s.entries(ctx, "", false, wallet.Filter{
+		BeforeID: req.GetBeforeId(), Kind: req.GetKind(), StartDate: req.GetStartDate(), EndDate: req.GetEndDate(),
+	})
 }
 
-func (s *Wallet) entries(ctx context.Context, id string, operations bool, before int64) (*v1.WalletEntries, error) {
+func (s *Wallet) entries(ctx context.Context, id string, operations bool, filter wallet.Filter) (*v1.WalletEntries, error) {
 	noStore(ctx)
-	entries, err := s.biz.Entries(ctx, bearerToken(ctx), id, operations, wallet.Filter{BeforeID: before})
+	entries, err := s.biz.Entries(ctx, bearerToken(ctx), id, operations, filter)
 	if err != nil {
 		return nil, wallet.PublicError(err)
 	}
@@ -88,16 +92,20 @@ func (s *Wallet) ListOperatorPurchaseOrders(ctx context.Context, req *v1.Operato
 }
 
 func (s *Wallet) ListCustomerPurchaseOrders(ctx context.Context, req *v1.CustomerPurchaseOrdersRequest) (*v1.PurchaseOrders, error) {
-	return s.orders(ctx, "", false, wallet.Filter{BeforeID: req.GetBeforeId(), Kind: req.GetKind(), Status: req.GetStatus()})
+	return s.orders(ctx, "", false, wallet.Filter{
+		BeforeID: req.GetBeforeId(), OrderQuery: req.GetOrderQuery(), Kind: req.GetKind(),
+		Status: req.GetStatus(), Product: req.GetProduct(), StartDate: req.GetStartDate(), EndDate: req.GetEndDate(),
+	})
 }
 
 func (s *Wallet) orders(ctx context.Context, id string, operations bool, filter wallet.Filter) (*v1.PurchaseOrders, error) {
 	noStore(ctx)
-	orders, err := s.biz.Orders(ctx, bearerToken(ctx), id, operations, filter)
+	page, err := s.biz.Orders(ctx, bearerToken(ctx), id, operations, filter)
 	if err != nil {
 		return nil, wallet.PublicError(err)
 	}
-	response := &v1.PurchaseOrders{}
+	orders := page.Orders
+	response := &v1.PurchaseOrders{PendingCount: page.PendingCount}
 	if len(orders) > wallet.PageSize {
 		orders = orders[:wallet.PageSize]
 		response.NextBeforeId = orders[len(orders)-1].ID
@@ -124,7 +132,8 @@ func (s *Wallet) getOrder(ctx context.Context, id string, operations bool, order
 
 func tenantMessage(tenant wallet.Tenant) *v1.WalletTenant {
 	return &v1.WalletTenant{TenantId: tenant.ID, Name: tenant.Name, PrimaryAccountName: tenant.PrimaryAccountName,
-		AvailableMinor: tenant.AvailableMinor, AvailableTrafficBytes: tenant.AvailableTrafficBytes}
+		AvailableMinor: tenant.AvailableMinor, AvailableTrafficBytes: tenant.AvailableTrafficBytes,
+		TotalRechargeMinor: tenant.TotalRechargeMinor, TotalSpendMinor: tenant.TotalSpendMinor}
 }
 
 func entryMessage(entry wallet.Entry, operations bool) *v1.WalletEntry {
@@ -151,10 +160,21 @@ func orderMessage(order wallet.Order) *v1.PurchaseOrder {
 		message.PrepaidMinor = order.DebitedMinor
 	}
 	for _, item := range order.Items {
-		message.Items = append(message.Items, &v1.PurchaseOrderItem{
-			Position: item.Position, Specification: item.Specification, CapacityBytes: item.CapacityBytes,
-			TermDays: item.TermDays, UnitMinor: item.UnitMinor, Quantity: item.Quantity, DeliveredCount: item.DeliveredCount,
-		})
+		message.Items = append(message.Items, orderItemMessage(item))
+	}
+	for _, entry := range order.Entries {
+		message.WalletEntries = append(message.WalletEntries, entryMessage(entry, false))
+	}
+	if order.SummaryItem != nil {
+		message.SummaryItem = orderItemMessage(*order.SummaryItem)
+		message.ItemCount = order.ItemCount
 	}
 	return message
+}
+
+func orderItemMessage(item wallet.OrderItem) *v1.PurchaseOrderItem {
+	return &v1.PurchaseOrderItem{
+		Position: item.Position, Specification: item.Specification, CapacityBytes: item.CapacityBytes,
+		TermDays: item.TermDays, UnitMinor: item.UnitMinor, Quantity: item.Quantity, DeliveredCount: item.DeliveredCount,
+	}
 }
