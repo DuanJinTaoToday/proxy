@@ -1,10 +1,19 @@
 import { expect } from '@playwright/test'
 
+// 表单标签可能带必填星号，如「*手机号」。
+export const field = (page, label) => page.getByRole('textbox', { name: new RegExp(`^\\*?${label}`) })
+
 export async function login(page, route, label, account) {
   await page.goto(route)
-  await page.getByLabel(label, { exact: true }).fill(account)
-  await page.getByLabel('密码', { exact: true }).fill('proxy-local-test')
+  await field(page, label).fill(account)
+  await field(page, '密码').fill('proxy-local-test')
   await page.getByRole('button', { name: '登录', exact: true }).click()
+}
+
+// 用种子租户 alpha 从登录页登录，等到进入控制台。
+export async function signInTenant(page, phone = '13800000001') {
+  await login(page, '/zh-CN/login', '手机号', phone)
+  await expect(page).toHaveURL(/\/console$/)
 }
 
 export async function findTenant(operator, account) {

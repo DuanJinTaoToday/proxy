@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
-import { screenshot } from '../support/console.mjs'
+import { screenshot, signInTenant } from '../support/console.mjs'
 
-// #68 前端工程骨架：三套布局、默认入口、深链回退、双语偏好和窄屏版式。
+// #68 前端工程骨架：三套布局、默认入口、深链回退、双语偏好和窄屏版式。控制台自 #69 起需要登录。
 
 const heading = page => page.getByRole('heading', { level: 1 })
 
@@ -19,6 +19,7 @@ test('默认入口、深链和未找到页', async ({ page }, info) => {
   await page.goto('/en/')
   await expect(heading(page)).toHaveText('Reliable residential proxies, bought as you need them')
 
+  await signInTenant(page)
   await page.goto('/console/wallet')
   const nav = page.getByRole('navigation', { name: '控制台导航' })
   await expect(nav.getByRole('menuitem')).toHaveText(['仪表板', '动态住宅代理-GB', '静态住宅代理', '代理子账号', '钱包', '我的账户'])
@@ -45,6 +46,7 @@ test('默认入口、深链和未找到页', async ({ page }, info) => {
 })
 
 test('控制台切换语言保持 URL 并记住偏好，官网切换到对应语言路由', async ({ page }, info) => {
+  await signInTenant(page)
   await page.goto('/console/dynamic/pricing?keep=1')
   await expect(heading(page)).toHaveText('动态住宅代理-GB')
   await switchLanguage(page, 'English')
@@ -67,6 +69,7 @@ for (const width of [390, 1280]) {
   for (const locale of ['zh-CN', 'en']) {
     test(`${width}px ${locale} 版式无失控的横向溢出`, async ({ page }, info) => {
       await page.setViewportSize({ width, height: 844 })
+      await signInTenant(page)
       await page.addInitScript(value => localStorage.setItem('proxy-console.locale', value), locale)
       for (const path of [`/${locale}/`, '/console/dynamic/setup', '/ops/products/dynamic']) {
         await page.goto(path)

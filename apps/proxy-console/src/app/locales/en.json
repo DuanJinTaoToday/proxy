@@ -55,10 +55,6 @@
     "subtitle": "Rotating residential proxies are billed per GB and static residential IPs by rental period, both over SOCKS5.",
     "console": "Open console"
   },
-  "auth": {
-    "loginTitle": "Sign in",
-    "registerTitle": "Sign up"
-  },
   "notFound": {
     "title": "Page not found",
     "description": "Check that the address is correct, or go back to the home page.",
@@ -72,6 +68,7 @@
     "AUTHENTICATION_REQUIRED": "Your session has expired. Sign in again.",
     "ACCESS_DENIED": "You do not have permission to do this.",
     "LOGIN_BUSY": "Too many requests. Try again later.",
+    "ACCESS_UNAVAILABLE": "The account service is temporarily unavailable. Try again later.",
     "network": "Network connection failed. Check your connection and try again.",
     "unknown": "The request failed. Try again later. ({status})"
   }

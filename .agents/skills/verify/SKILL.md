@@ -26,6 +26,7 @@ npm --prefix tests/verify test
 | 路径 | 操作与判断依据 | 自动化 |
 | --- | --- | --- |
 | 前端骨架 → 路由、双语与版式 | 访问 `/` 进入中文首页，直接打开控制台和运营深链显示对应布局与菜单，页签可后退，未知路径显示未找到页。控制台切换语言保持 URL 并在刷新后保留，官网切换到对应语言路由。在 390 px 与 1280 px 下检查两种语言无横向溢出，窄屏抽屉导航可用。 | [console-skeleton.spec.mjs](../../../tests/verify/scenarios/console-skeleton.spec.mjs) |
+| 注册、登录与会话 | 未登录访问控制台跳到登录页并带回跳；账密错误有提示，登录后回到原页，刷新保持登录。账号菜单显示主账号名和脱敏手机号，退出需确认，退出后控制台再次要求登录。新号码注册后直接进入控制台，站外回跳被拒；同号码（带或不带 +86）重复注册被拒。伪造凭据被拒绝时清理会话并回到登录页。 | [console-auth.spec.mjs](../../../tests/verify/scenarios/console-auth.spec.mjs) |
 | 运营充值 → 租户看到到账 | 租户从钱包流水读取余额。运营查找同一租户，核对租户名、主账号、10.00 元金额、预计余额和本轮唯一原因，确认后获取流水号。租户刷新两次，每次核对余额增量、该编号的唯一流水以及流水上的金额和余额。 | [wallet-recharge.spec.mjs](../../../tests/verify/scenarios/wallet-recharge.spec.mjs) |
 | 动态套餐开售 → 充值后购买 | 运营给 5 GB 定价并单独开售动态套餐。租户第一次购买时看到差额，订单和余额无变化。运营充值后，租户重新确认。刷新后核对钱包扣款、到账流量、唯一订单和关联流水。 | [traffic-purchase.spec.mjs](../../../tests/verify/scenarios/traffic-purchase.spec.mjs) |
 | 购买结果未知 → 重试原提交 | Playwright 把首笔请求转发给实际服务，看到成交后丢弃浏览器回执。刷新页面，核对扣款和流量已入账。点击「重试原提交」，核对请求原样重发、返回同一订单，刷新后仍只有一笔订单、一次扣款和一次流量到账。 | [traffic-purchase-retry.spec.mjs](../../../tests/verify/scenarios/traffic-purchase-retry.spec.mjs) |

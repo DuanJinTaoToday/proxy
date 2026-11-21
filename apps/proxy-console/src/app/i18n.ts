@@ -5,6 +5,7 @@ import zhCnElement from 'element-plus/es/locale/lang/zh-cn'
 import enElement from 'element-plus/es/locale/lang/en'
 import zhCN from './locales/zh-CN.json'
 import en from './locales/en.json'
+import { messages as authMessages } from '@/features/auth'
 
 export const locales = ['zh-CN', 'en'] as const
 export type Locale = (typeof locales)[number]
@@ -16,11 +17,20 @@ const dayjsLocales = { 'zh-CN': 'zh-cn', en: 'en' }
 
 export const isLocale = (value: unknown): value is Locale => locales.includes(value as Locale)
 
+type Messages = Record<string, unknown>
+type MessageSchema = typeof zhCN
+
+// 应用层文案加上各业务模块入口导出的翻译，模块各自维护自己的命名空间。
+const moduleMessages: Record<Locale, Messages>[] = [authMessages]
+function messagesFor(locale: Locale, base: MessageSchema) {
+  return moduleMessages.reduce<Messages>((all, module) => ({ ...all, ...module[locale] }), base) as MessageSchema
+}
+
 export const i18n = createI18n({
   legacy: false,
   locale: defaultLocale,
   fallbackLocale: defaultLocale,
-  messages: { 'zh-CN': zhCN, en },
+  messages: { 'zh-CN': messagesFor('zh-CN', zhCN), en: messagesFor('en', en) },
 })
 
 export const elementLocaleOf = (locale: string) => elementLocales[isLocale(locale) ? locale : defaultLocale]
