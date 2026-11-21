@@ -123,6 +123,7 @@ test('租户维护子账号账密、备注、状态和用量上限，刷新后�
   await row.getByRole('switch', { name: '启用 shop01？' }).press('Enter')
   await expect(dialog.getByText(/已有连接不会断开/)).toBeVisible()
   await dialog.getByRole('button', { name: '启用', exact: true }).click()
+  await expect(dialog).toBeHidden()
   await page.reload()
   await expect(row.getByRole('switch', { name: '禁用 shop01？' })).toBeChecked()
   await screenshot(page, info, 'subaccount-persisted')
