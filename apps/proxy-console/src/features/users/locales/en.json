@@ -1,0 +1,15 @@
+{
+  "accessLocation": {
+    "title": "Current IP address and location",
+    "ip": "IP address",
+    "location": "Location",
+    "unknown": "Unknown",
+    "loading": "Looking up your current IP address and location",
+    "failed": "Could not load your current IP address and location",
+    "retry": "Retry",
+    "mainland": "Your current network is in mainland China. Proxy is unavailable.",
+    "available": "Proxy is ready to use",
+    "notice": "All proxy products are unavailable on networks in mainland China.",
+    "attribution": "IP Geolocation by DB-IP"
+  }
+}

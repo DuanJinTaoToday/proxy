@@ -75,14 +75,15 @@ func decodeBoundedProto(req *stdhttp.Request, message proto.Message, maxBody int
 func ControlResponseEncoder(w stdhttp.ResponseWriter, req *stdhttp.Request, response any) error {
 	switch response.(type) {
 	case *v1.StickySession, *v1.Subaccounts, *v1.Subaccount, *v1.SubaccountPassword, *v1.SubaccountProxyConfig,
-		*v1.AuthSnapshot, *v1.RefreshAuthStateResponse, *v1.Products, *v1.Product, *v1.TrafficPackage, *v1.TrafficPackages,
+		*v1.AccessLocation, *v1.AuthSnapshot, *v1.RefreshAuthStateResponse, *v1.Products, *v1.Product, *v1.TrafficPackage, *v1.TrafficPackages,
 		*v1.Overview, *v1.WalletTenant, *v1.WalletRechargeQuote, *v1.WalletEntry, *v1.WalletEntries, *v1.PurchaseOrder, *v1.PurchaseOrders,
 		*v1.SubmitBatchResponse, *v1.QueryUsageResponse, *v1.ListRecordAnomaliesResponse, *v1.ListUsageGapsResponse,
 		*v1.DailyUsageResponse, *v1.TrafficAlert, *v1.StaticOffers, *v1.StaticIPs, *v1.PendingStaticPurchases, *v1.StaticPurchaseQuote, *v1.StaticIP, *v1.StaticIPExpiryNotices, *v1.StaticRenewalQuote:
 		_, dailyUsage := response.(*v1.DailyUsageResponse)
 		_, overview := response.(*v1.Overview)
+		_, accessLocation := response.(*v1.AccessLocation)
 		_, staticOffers := response.(*v1.StaticOffers)
-		data, err := (protojson.MarshalOptions{UseProtoNames: true, EmitDefaultValues: dailyUsage || staticOffers || overview}).Marshal(response.(proto.Message))
+		data, err := (protojson.MarshalOptions{UseProtoNames: true, EmitDefaultValues: dailyUsage || staticOffers || overview || accessLocation}).Marshal(response.(proto.Message))
 		if err != nil {
 			return err
 		}

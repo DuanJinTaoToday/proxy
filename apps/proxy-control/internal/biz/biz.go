@@ -12,6 +12,7 @@ import (
 
 var ProviderSet = wire.NewSet(subaccount.NewService,
 	access.NewPersistent,
+	access.NewLocationService,
 	wallet.NewService,
 	overview.New,
 	product.NewService,

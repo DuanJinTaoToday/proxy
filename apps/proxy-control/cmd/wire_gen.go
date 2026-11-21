@@ -58,7 +58,14 @@ func wireApp(confServer *conf.Server, confData *conf.Data, biz *conf.Biz, appCon
 	usageService := usage.NewConfigured(biz, usageRepository, accessService)
 	overviewService := overview.New(walletService, usageService, productService, subaccountService)
 	serviceOverview := service.NewOverview(overviewService)
-	httpServer := server.NewConfiguredHTTPServer(confServer, biz, serviceAccess, serviceWallet, serviceProduct, subaccounts, serviceOverview)
+	ipCountryLookup := repo.ProvideIPCountryLookup(confData, logger)
+	locationService := access.NewLocationService(accessService, ipCountryLookup)
+	accessLocation, err := service.NewAccessLocation(locationService, confServer)
+	if err != nil {
+		cleanup()
+		return nil, nil, err
+	}
+	httpServer := server.NewConfiguredHTTPServer(confServer, biz, serviceAccess, serviceWallet, serviceProduct, subaccounts, serviceOverview, accessLocation)
 	serviceUsage := service.NewUsage(usageService)
 	cronService := service.NewCronService(usageService)
 	cronServerImpl, err := server.NewCronServer(appConfig, cronService)

@@ -1,0 +1,15 @@
+{
+  "accessLocation": {
+    "title": "当前 IP 地址及归属地",
+    "ip": "IP 地址",
+    "location": "归属地",
+    "unknown": "未知",
+    "loading": "正在查询当前 IP 地址及归属地",
+    "failed": "无法获取当前 IP 地址及归属地",
+    "retry": "重试",
+    "mainland": "当前网络在中国大陆，无法使用 Proxy",
+    "available": "可直接使用 Proxy",
+    "notice": "所有代理产品均不支持在中国大陆网络环境下使用",
+    "attribution": "IP 归属地数据由 DB-IP 提供"
+  }
+}

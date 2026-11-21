@@ -1,6 +1,7 @@
 package server
 
 import (
+	v1 "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/conf"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/service"
 	"github.com/go-kratos/kratos/v3/transport"
@@ -21,7 +22,7 @@ func NewServerList(modules conf.Modules, httpServer *kratoshttp.Server,
 	return servers
 }
 
-func NewConfiguredHTTPServer(server *conf.Server, biz *conf.Biz, access *service.Access, wallet *service.Wallet, product *service.Product, subaccounts *service.Subaccounts, overview *service.Overview) *kratoshttp.Server {
+func NewConfiguredHTTPServer(server *conf.Server, biz *conf.Biz, access *service.Access, wallet *service.Wallet, product *service.Product, subaccounts *service.Subaccounts, overview *service.Overview, accessLocation *service.AccessLocation) *kratoshttp.Server {
 	srv := NewHTTPServer(server.GetHttp().GetAddr(), access,
 		kratoshttp.RequestDecoder(ReportingDecoder(int64(biz.GetUsage().GetMaxBatchBodyBytes()))),
 		kratoshttp.ResponseEncoder(ControlResponseEncoder),
@@ -30,5 +31,6 @@ func NewConfiguredHTTPServer(server *conf.Server, biz *conf.Biz, access *service
 	RegisterProduct(srv, product)
 	RegisterSubaccounts(srv, subaccounts)
 	RegisterOverview(srv, overview)
+	v1.RegisterAccessLocationServiceHTTPServer(srv, accessLocation)
 	return srv
 }

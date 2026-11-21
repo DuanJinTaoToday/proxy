@@ -18,6 +18,7 @@ export interface RequestOptions {
   query?: Record<string, QueryValue | QueryValue[]>
   body?: unknown
   signal?: AbortSignal
+  acceptLanguage?: string
 }
 
 interface ApiHooks {
@@ -52,6 +53,7 @@ function parseJson(text: string) {
 
 export async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const headers: Record<string, string> = { Accept: 'application/json' }
+  if (options.acceptLanguage) headers['Accept-Language'] = options.acceptLanguage
   const token = hooks.accessToken()
   if (token) headers.Authorization = `Bearer ${token}`
   if (options.body !== undefined) headers['Content-Type'] = 'application/json'

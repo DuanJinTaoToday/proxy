@@ -1,6 +1,7 @@
 import { execFileSync } from 'node:child_process'
 import { randomUUID } from 'node:crypto'
-import { mkdirSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { isIPv4 } from 'node:net'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -9,6 +10,7 @@ const suite = path.join(root, 'tests/verify')
 const runId = randomUUID()
 const project = 'proxy-verify-' + runId
 const evidence = path.join(root, '.scratch/verify', runId)
+const controlConfig = path.join(evidence, 'test-server.yaml')
 mkdirSync(evidence, { recursive: true })
 console.log('Evidence:', evidence)
 
@@ -16,7 +18,11 @@ function compose(args, capture = false) {
   return execFileSync('docker', [
     'compose', '-p', project, '-f', 'deploy/test/compose.yaml',
     '-f', 'deploy/test/compose.verify.yaml', ...args,
-  ], { cwd: root, encoding: 'utf8', stdio: capture ? ['ignore', 'pipe', 'inherit'] : 'inherit' })
+  ], {
+    cwd: root, encoding: 'utf8',
+    env: { ...process.env, PROXY_VERIFY_CONTROL_CONFIG: controlConfig },
+    stdio: capture ? ['ignore', 'pipe', 'inherit'] : 'inherit',
+  })
 }
 
 const run = { project, startedAt: new Date().toISOString(), result: 'failed' }
@@ -28,6 +34,18 @@ try {
   run.stage = 'deploy'
   compose(['up', '-d', '--wait', '--wait-timeout', '90', 'db'])
   compose(['run', '--rm', 'migrate'])
+  // Discover the address of this run's Caddy before starting the control plane.
+  compose(['up', '-d', '--no-deps', 'console'])
+  const consoleID = compose(['ps', '-q', 'console'], true).trim()
+  const proxyIP = execFileSync('docker', [
+    'inspect', '--format', '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}', consoleID,
+  ], { encoding: 'utf8' }).trim()
+  if (!isIPv4(proxyIP)) throw new Error('Unexpected Caddy container address: ' + proxyIP)
+  const config = readFileSync(path.join(root, 'apps/proxy-control/configs/file/test-server.yaml'), 'utf8')
+  const trustedProxies = 'trusted_proxy_cidrs: []'
+  if (!config.includes(trustedProxies)) throw new Error('Expected empty trusted proxy config in test-server.yaml')
+  writeFileSync(controlConfig, config.replace(trustedProxies, 'trusted_proxy_cidrs: ["' + proxyIP + '/32"]'))
+  run.trustedProxyCIDR = proxyIP + '/32'
   compose(['up', '-d', '--wait', '--wait-timeout', '120', 'console'])
   run.images = compose(['images'], true).trim()
   const endpoint = compose(['port', 'console', '443'], true).trim()
