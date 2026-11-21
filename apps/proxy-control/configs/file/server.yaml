@@ -2,6 +2,8 @@
 server:
   http:
     addr:
+    # 只列出管理方控制的 HTTPS 入口和中间代理地址，空列表表示不信任转发头。
+    trusted_proxy_cidrs: []
   cron_tasks:
     # 用量归档任务。填写六段 cron 表达式，第一段为秒。
     # timeout 为 0s 时不限制单次执行时间。
@@ -12,6 +14,8 @@ server:
 data:
   repo:
     # 配置数据库前先应用 migrations/ 下的 Goose 迁移。
+    # 挂载本地 DB-IP IP to Country Lite CSV 或 CSV.GZ 数据库。
+    ip_country_file:
     proxy_auth:
       database_dsn:
     usage:

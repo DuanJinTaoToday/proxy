@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package proxycontrol.v1;
+
+import "google/api/annotations.proto";
+import "openapiv3/annotations.proto";
+import "proxycontrol/v1/common.proto";
+
+option go_package = "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1";
+
+service AccessLocationService {
+  rpc GetAccessLocation(BaseRequest) returns (AccessLocation) {
+    option (google.api.http) = {get: "/v1/tenant/access-location"};
+    option (openapi.v3.operation) = {summary: "查看本次租户访问的来源 IP 和归属地"};
+  }
+}
+
+message AccessLocation {
+  // 本次请求的来源 IP。无法确定来源时为空。
+  string ip = 1;
+  // 按 Accept-Language 返回的国家或地区名称。无法确定归属地时为空。
+  string location = 2;
+  // 仅归属地为中国大陆时为 true，未知及香港、澳门、台湾均为 false。
+  bool is_mainland_china = 3 [json_name = "is_mainland_china"];
+}
