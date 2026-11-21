@@ -10,10 +10,12 @@ import { messages as dynamicProxyMessages } from '@/features/dynamic-proxy'
 import { messages as checkoutMessages } from '@/features/checkout'
 import { messages as dashboardMessages } from '@/features/dashboard/messages'
 import { messages as notificationMessages } from '@/features/notifications'
+import { messages as walletMessages } from '@/features/wallet'
+import { messages as orderMessages } from '@/features/orders'
+import { messages as userMessages } from '@/features/users'
 import { messages as staticIpsMessages } from '@/features/static-ips'
 import { messages as staticPricingMessages } from '@/features/static-pricing'
 import { messages as staticGuideMessages } from '@/features/static-guide'
-import { messages as userMessages } from '@/features/users/messages'
 
 export const locales = ['zh-CN', 'en'] as const
 export type Locale = (typeof locales)[number]
@@ -30,7 +32,8 @@ type MessageSchema = typeof zhCN
 
 // 应用层文案加上各业务模块入口导出的翻译，模块各自维护自己的命名空间。
 const moduleMessages: Record<Locale, Messages>[] = [
-  authMessages, dynamicProxyMessages, dashboardMessages, notificationMessages, checkoutMessages, userMessages,
+  authMessages, dynamicProxyMessages, dashboardMessages, notificationMessages,
+  checkoutMessages, walletMessages, orderMessages, userMessages,
   staticIpsMessages, staticPricingMessages, staticGuideMessages,
 ]
 function messagesFor(locale: Locale, base: MessageSchema) {

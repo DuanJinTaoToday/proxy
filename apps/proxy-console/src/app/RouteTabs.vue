@@ -21,9 +21,11 @@ const active = computed({
 <template>
   <PageHeader v-if="parent?.meta.titleKey" :title="t(parent.meta.titleKey)" />
   <ElTabs v-model="active" class="route-tabs">
-    <ElTabPane v-for="tab in parent?.meta.tabs" :key="tab.name" :name="tab.name" :label="t(tab.labelKey)" />
+    <ElTabPane v-for="tab in parent?.meta.tabs" :key="tab.name" :name="tab.name" :label="t(tab.labelKey)">
+      <template #label><slot name="label" :tab="tab">{{ t(tab.labelKey) }}</slot></template>
+    </ElTabPane>
   </ElTabs>
-  <RouterView />
+  <slot><RouterView /></slot>
 </template>
 
 <style scoped>

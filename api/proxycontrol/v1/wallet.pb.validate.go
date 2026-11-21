@@ -978,6 +978,10 @@ func (m *WalletTenant) validate(all bool) error {
 
 	// no validation rules for AvailableTrafficBytes
 
+	// no validation rules for TotalRechargeMinor
+
+	// no validation rules for TotalSpendMinor
+
 	if len(errors) > 0 {
 		return WalletTenantMultiError(errors)
 	}
@@ -1393,6 +1397,8 @@ func (m *PurchaseOrders) validate(all bool) error {
 
 	// no validation rules for NextBeforeId
 
+	// no validation rules for PendingCount
+
 	if len(errors) > 0 {
 		return PurchaseOrdersMultiError(errors)
 	}
@@ -1579,6 +1585,71 @@ func (m *PurchaseOrder) validate(all bool) error {
 		}
 
 	}
+
+	for idx, item := range m.GetWalletEntries() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, PurchaseOrderValidationError{
+						field:  fmt.Sprintf("WalletEntries[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, PurchaseOrderValidationError{
+						field:  fmt.Sprintf("WalletEntries[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return PurchaseOrderValidationError{
+					field:  fmt.Sprintf("WalletEntries[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if all {
+		switch v := interface{}(m.GetSummaryItem()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, PurchaseOrderValidationError{
+					field:  "SummaryItem",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, PurchaseOrderValidationError{
+					field:  "SummaryItem",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetSummaryItem()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return PurchaseOrderValidationError{
+				field:  "SummaryItem",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	// no validation rules for ItemCount
 
 	if len(errors) > 0 {
 		return PurchaseOrderMultiError(errors)
@@ -1811,6 +1882,47 @@ func (m *CustomerWalletEntriesRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	if _, ok := _CustomerWalletEntriesRequest_Kind_InLookup[m.GetKind()]; !ok {
+		err := CustomerWalletEntriesRequestValidationError{
+			field:  "Kind",
+			reason: "value must be in list [ recharge debit hold release refund]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetStartDate() != "" {
+
+		if !_CustomerWalletEntriesRequest_StartDate_Pattern.MatchString(m.GetStartDate()) {
+			err := CustomerWalletEntriesRequestValidationError{
+				field:  "StartDate",
+				reason: "value does not match regex pattern \"^[0-9]{4}-[0-9]{2}-[0-9]{2}$\"",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if m.GetEndDate() != "" {
+
+		if !_CustomerWalletEntriesRequest_EndDate_Pattern.MatchString(m.GetEndDate()) {
+			err := CustomerWalletEntriesRequestValidationError{
+				field:  "EndDate",
+				reason: "value does not match regex pattern \"^[0-9]{4}-[0-9]{2}-[0-9]{2}$\"",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
 	if len(errors) > 0 {
 		return CustomerWalletEntriesRequestMultiError(errors)
 	}
@@ -1891,6 +2003,19 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = CustomerWalletEntriesRequestValidationError{}
+
+var _CustomerWalletEntriesRequest_Kind_InLookup = map[string]struct{}{
+	"":         {},
+	"recharge": {},
+	"debit":    {},
+	"hold":     {},
+	"release":  {},
+	"refund":   {},
+}
+
+var _CustomerWalletEntriesRequest_StartDate_Pattern = regexp.MustCompile("^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
+
+var _CustomerWalletEntriesRequest_EndDate_Pattern = regexp.MustCompile("^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
 
 // Validate checks the field values on OperatorWalletEntriesRequest with the
 // rules defined in the proto definition for this message. If any rules are
@@ -2083,6 +2208,62 @@ func (m *CustomerPurchaseOrdersRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	if m.GetOrderQuery() != "" {
+
+		if !_CustomerPurchaseOrdersRequest_OrderQuery_Pattern.MatchString(m.GetOrderQuery()) {
+			err := CustomerPurchaseOrdersRequestValidationError{
+				field:  "OrderQuery",
+				reason: "value does not match regex pattern \"^[0-9]{1,19}$\"",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if m.GetStartDate() != "" {
+
+		if !_CustomerPurchaseOrdersRequest_StartDate_Pattern.MatchString(m.GetStartDate()) {
+			err := CustomerPurchaseOrdersRequestValidationError{
+				field:  "StartDate",
+				reason: "value does not match regex pattern \"^[0-9]{4}-[0-9]{2}-[0-9]{2}$\"",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if m.GetEndDate() != "" {
+
+		if !_CustomerPurchaseOrdersRequest_EndDate_Pattern.MatchString(m.GetEndDate()) {
+			err := CustomerPurchaseOrdersRequestValidationError{
+				field:  "EndDate",
+				reason: "value does not match regex pattern \"^[0-9]{4}-[0-9]{2}-[0-9]{2}$\"",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if _, ok := _CustomerPurchaseOrdersRequest_Product_InLookup[m.GetProduct()]; !ok {
+		err := CustomerPurchaseOrdersRequestValidationError{
+			field:  "Product",
+			reason: "value must be in list [ dynamic static]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if len(errors) > 0 {
 		return CustomerPurchaseOrdersRequestMultiError(errors)
 	}
@@ -2177,6 +2358,18 @@ var _CustomerPurchaseOrdersRequest_Status_InLookup = map[string]struct{}{
 	"succeeded": {},
 	"partial":   {},
 	"failed":    {},
+}
+
+var _CustomerPurchaseOrdersRequest_OrderQuery_Pattern = regexp.MustCompile("^[0-9]{1,19}$")
+
+var _CustomerPurchaseOrdersRequest_StartDate_Pattern = regexp.MustCompile("^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
+
+var _CustomerPurchaseOrdersRequest_EndDate_Pattern = regexp.MustCompile("^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
+
+var _CustomerPurchaseOrdersRequest_Product_InLookup = map[string]struct{}{
+	"":        {},
+	"dynamic": {},
+	"static":  {},
 }
 
 // Validate checks the field values on OperatorPurchaseOrdersRequest with the

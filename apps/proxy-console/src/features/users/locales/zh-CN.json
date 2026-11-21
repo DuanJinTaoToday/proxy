@@ -1,4 +1,9 @@
 {
+  "users": {
+    "account": "账户",
+    "primaryAccount": "主账号",
+    "phone": "手机号"
+  },
   "accessLocation": {
     "title": "当前 IP 地址及归属地",
     "ip": "IP 地址",

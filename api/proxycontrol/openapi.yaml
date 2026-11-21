@@ -867,12 +867,32 @@ paths:
                     type: string
                 - name: kind
                   in: query
-                  description: 产品类型。空值表示全部。
+                  description: 订单类型。空值表示全部。
                   schema:
                     type: string
                 - name: status
                   in: query
                   description: 交付状态。空值表示全部。
+                  schema:
+                    type: string
+                - name: orderQuery
+                  in: query
+                  description: 按订单号的数字片段筛选，空值表示全部。
+                  schema:
+                    type: string
+                - name: startDate
+                  in: query
+                  description: 上海业务日起点（YYYY-MM-DD），包含当天。
+                  schema:
+                    type: string
+                - name: endDate
+                  in: query
+                  description: 上海业务日终点（YYYY-MM-DD），包含当天。
+                  schema:
+                    type: string
+                - name: product
+                  in: query
+                  description: 产品分组。static 包含购买和续费。
                   schema:
                     type: string
             responses:
@@ -1346,6 +1366,21 @@ paths:
                   description: 查询此编号之前的流水。默认从最新开始。
                   schema:
                     type: string
+                - name: kind
+                  in: query
+                  description: 流水类型。debit 包含预扣，refund 包含预扣释放。
+                  schema:
+                    type: string
+                - name: startDate
+                  in: query
+                  description: 上海业务日起点（YYYY-MM-DD），包含当天。
+                  schema:
+                    type: string
+                - name: endDate
+                  in: query
+                  description: 上海业务日终点（YYYY-MM-DD），包含当天。
+                  schema:
+                    type: string
             responses:
                 "200":
                     description: OK
@@ -1706,6 +1741,18 @@ components:
                     items:
                         $ref: '#/components/schemas/proxycontrol.v1.PurchaseOrderItem'
                     description: 详情返回已锁定的商品明细及逐项交付数量。
+                walletEntries:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/proxycontrol.v1.WalletEntry'
+                    description: 客户订单详情中的关联资金流水。
+                summaryItem:
+                    allOf:
+                        - $ref: '#/components/schemas/proxycontrol.v1.PurchaseOrderItem'
+                    description: 客户列表中的首条锁定明细，用于摘要展示。
+                itemCount:
+                    type: string
+                    description: 客户列表中的锁定明细行数。
         proxycontrol.v1.PurchaseOrderItem:
             type: object
             properties:
@@ -1751,6 +1798,9 @@ components:
                 nextBeforeId:
                     type: string
                     description: 下一页的 before_id，0 表示已到末页。
+                pendingCount:
+                    type: string
+                    description: 当前租户确认中的订单总数，与筛选和游标无关。
         proxycontrol.v1.PurchaseStaticIPRequest:
             type: object
             properties:
@@ -2664,6 +2714,12 @@ components:
                 availableTrafficBytes:
                     type: string
                     description: 可用流量字节数。负值为待抵扣的用量。
+                totalRechargeMinor:
+                    type: string
+                    description: 当前租户累计充值，人民币分，以十进制字符串返回。
+                totalSpendMinor:
+                    type: string
+                    description: 当前租户累计净实扣，人民币分，以十进制字符串返回。
 tags:
     - name: AccessLocationService
     - name: AccessService
