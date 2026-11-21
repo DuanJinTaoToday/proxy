@@ -9,8 +9,27 @@ const { t } = useI18n()
 
 <template>
   <div class="density-compact">
-    <WorkspaceFrame :sections="opsNav" :nav-label="t('nav.opsNav')">
-      <template #brand-extra><ElTag effect="dark" size="small" disable-transitions>{{ t('app.opsBadge') }}</ElTag></template>
+    <WorkspaceFrame ops :sections="opsNav" :nav-label="t('nav.opsNav')">
+      <template #brand-extra><ElTag effect="dark" size="small" disable-transitions class="ops-badge">{{ t('app.opsBadge') }}</ElTag></template>
     </WorkspaceFrame>
   </div>
 </template>
+
+<style>
+.ops-page-title {
+  margin-block-end: var(--ops-page-heading-gap);
+  font-size: var(--ops-display-size);
+  line-height: var(--ops-heading-line-height);
+  letter-spacing: var(--ops-display-tracking);
+  font-weight: var(--font-weight-heavy);
+}
+</style>
+
+<style scoped>
+.ops-badge {
+  --el-tag-bg-color: var(--color-shell);
+  --el-tag-border-color: var(--color-shell);
+  --el-tag-text-color: var(--color-accent);
+  font-weight: var(--font-weight-semibold);
+}
+</style>

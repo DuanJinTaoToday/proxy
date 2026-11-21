@@ -2,7 +2,21 @@
   "users": {
     "account": "账户",
     "primaryAccount": "主账号",
-    "phone": "手机号"
+    "phone": "手机号",
+    "opsFindTenant": "查找租户",
+    "opsSearchHint": "输入完整的主账号名或注册手机号，手机号可以不带 +86。",
+    "opsSearchLabel": "主账号名或手机号",
+    "opsSearchPlaceholder": "例如 chenxl-studio 或 13800136021",
+    "opsSearch": "查找",
+    "opsSearchBalance": "余额 {amount}",
+    "opsNoTenant": "没有找到租户，请确认主账号名或手机号是否完整",
+    "opsBack": "返回租户查找",
+    "opsRegisteredAt": "注册于 {date}",
+    "opsWalletBalance": "钱包可用余额",
+    "opsWalletHint": "购买和续费从余额扣款",
+    "opsTrafficBalance": "动态流量余额",
+    "opsTrafficDebt": "负值为待抵扣的用量",
+    "opsTrafficHint": "1 GB = 10⁹ 字节"
   },
   "accessLocation": {
     "title": "当前 IP 地址及归属地",

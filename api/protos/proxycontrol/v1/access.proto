@@ -25,6 +25,11 @@ service AccessService {
     option (openapi.v3.operation) = {summary: "登录运营控制台"};
   }
 
+  rpc GetOperatorAccount(BaseRequest) returns (OperatorAccount) {
+    option (google.api.http) = {get: "/v1/operations/access/account"};
+    option (openapi.v3.operation) = {summary: "查看当前运营账号及其权限"};
+  }
+
   rpc ResetTenantPassword(ResetTenantPasswordRequest) returns (BaseResp) {
     option (google.api.http) = {post: "/v1/operations/tenants/{tenant_id}:reset-password", body: "*"};
     option (openapi.v3.operation) = {summary: "运营核实租户归属后重置管理员密码"};
@@ -73,6 +78,12 @@ message LoginOperatorRequest {
   string username = 1 [(validate.rules).string = {min_len: 1, max_bytes: 128}];
   // 运营登录密码。
   string password = 2 [(validate.rules).string = {min_len: 1, max_bytes: 1024}];
+}
+
+message OperatorAccount {
+  string username = 1;
+  // 独立授权项：read_operations、manage_billing、manage_tenant_accounts。
+  repeated string permissions = 2;
 }
 
 message ResetTenantPasswordRequest {

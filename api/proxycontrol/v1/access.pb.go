@@ -301,6 +301,59 @@ func (x *LoginOperatorRequest) GetPassword() string {
 	return ""
 }
 
+type OperatorAccount struct {
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	Username string                 `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
+	// 独立授权项：read_operations、manage_billing、manage_tenant_accounts。
+	Permissions   []string `protobuf:"bytes,2,rep,name=permissions,proto3" json:"permissions,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *OperatorAccount) Reset() {
+	*x = OperatorAccount{}
+	mi := &file_proxycontrol_v1_access_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OperatorAccount) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OperatorAccount) ProtoMessage() {}
+
+func (x *OperatorAccount) ProtoReflect() protoreflect.Message {
+	mi := &file_proxycontrol_v1_access_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OperatorAccount.ProtoReflect.Descriptor instead.
+func (*OperatorAccount) Descriptor() ([]byte, []int) {
+	return file_proxycontrol_v1_access_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *OperatorAccount) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
+}
+
+func (x *OperatorAccount) GetPermissions() []string {
+	if x != nil {
+		return x.Permissions
+	}
+	return nil
+}
+
 type ResetTenantPasswordRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 运营已核实归属的租户 ID。
@@ -313,7 +366,7 @@ type ResetTenantPasswordRequest struct {
 
 func (x *ResetTenantPasswordRequest) Reset() {
 	*x = ResetTenantPasswordRequest{}
-	mi := &file_proxycontrol_v1_access_proto_msgTypes[4]
+	mi := &file_proxycontrol_v1_access_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -325,7 +378,7 @@ func (x *ResetTenantPasswordRequest) String() string {
 func (*ResetTenantPasswordRequest) ProtoMessage() {}
 
 func (x *ResetTenantPasswordRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_access_proto_msgTypes[4]
+	mi := &file_proxycontrol_v1_access_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -338,7 +391,7 @@ func (x *ResetTenantPasswordRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResetTenantPasswordRequest.ProtoReflect.Descriptor instead.
 func (*ResetTenantPasswordRequest) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_access_proto_rawDescGZIP(), []int{4}
+	return file_proxycontrol_v1_access_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *ResetTenantPasswordRequest) GetTenantId() string {
@@ -367,7 +420,7 @@ type LoginResponse struct {
 
 func (x *LoginResponse) Reset() {
 	*x = LoginResponse{}
-	mi := &file_proxycontrol_v1_access_proto_msgTypes[5]
+	mi := &file_proxycontrol_v1_access_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -379,7 +432,7 @@ func (x *LoginResponse) String() string {
 func (*LoginResponse) ProtoMessage() {}
 
 func (x *LoginResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_access_proto_msgTypes[5]
+	mi := &file_proxycontrol_v1_access_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -392,7 +445,7 @@ func (x *LoginResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LoginResponse.ProtoReflect.Descriptor instead.
 func (*LoginResponse) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_access_proto_rawDescGZIP(), []int{5}
+	return file_proxycontrol_v1_access_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *LoginResponse) GetAccessToken() string {
@@ -421,7 +474,7 @@ type CheckPermissionRequest struct {
 
 func (x *CheckPermissionRequest) Reset() {
 	*x = CheckPermissionRequest{}
-	mi := &file_proxycontrol_v1_access_proto_msgTypes[6]
+	mi := &file_proxycontrol_v1_access_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -433,7 +486,7 @@ func (x *CheckPermissionRequest) String() string {
 func (*CheckPermissionRequest) ProtoMessage() {}
 
 func (x *CheckPermissionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_access_proto_msgTypes[6]
+	mi := &file_proxycontrol_v1_access_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -446,7 +499,7 @@ func (x *CheckPermissionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CheckPermissionRequest.ProtoReflect.Descriptor instead.
 func (*CheckPermissionRequest) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_access_proto_rawDescGZIP(), []int{6}
+	return file_proxycontrol_v1_access_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *CheckPermissionRequest) GetTenantId() string {
@@ -484,7 +537,10 @@ const file_proxycontrol_v1_access_proto_rawDesc = "" +
 	"\busername\x18\x01 \x01(\tB\n" +
 	"\xfaB\ar\x05\x10\x01(\x80\x01R\busername\x12&\n" +
 	"\bpassword\x18\x02 \x01(\tB\n" +
-	"\xfaB\ar\x05\x10\x01(\x80\bR\bpassword\"l\n" +
+	"\xfaB\ar\x05\x10\x01(\x80\bR\bpassword\"O\n" +
+	"\x0fOperatorAccount\x12\x1a\n" +
+	"\busername\x18\x01 \x01(\tR\busername\x12 \n" +
+	"\vpermissions\x18\x02 \x03(\tR\vpermissions\"l\n" +
 	"\x1aResetTenantPasswordRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01(@R\btenantId\x12&\n" +
 	"\bpassword\x18\x02 \x01(\tB\n" +
@@ -502,12 +558,13 @@ const file_proxycontrol_v1_access_proto_rawDesc = "" +
 	"\x16PERMISSION_UNSPECIFIED\x10\x00\x12 \n" +
 	"\x1cPERMISSION_READ_TENANT_USAGE\x10\x01\x12\x1e\n" +
 	"\x1aPERMISSION_READ_OPERATIONS\x10\x03\x12\x1d\n" +
-	"\x19PERMISSION_MANAGE_BILLING\x10\x04\"\x04\b\x02\x10\x02*#PERMISSION_MANAGE_PROXY_CREDENTIALS2\xd5\a\n" +
+	"\x19PERMISSION_MANAGE_BILLING\x10\x04\"\x04\b\x02\x10\x02*#PERMISSION_MANAGE_PROXY_CREDENTIALS2\xfc\b\n" +
 	"\rAccessService\x12\x94\x01\n" +
 	"\bRegister\x12 .proxycontrol.v1.RegisterRequest\x1a\x1d.proxycontrol.v1.TenantAccess\"G\xbaG&\x12$使用手机号注册租户管理员\x82\xd3\xe4\x93\x02\x18:\x01*\"\x13/v1/access/register\x12\x8b\x01\n" +
 	"\n" +
 	"GetAccount\x12\x1c.proxycontrol.v1.BaseRequest\x1a\x1d.proxycontrol.v1.TenantAccess\"@\xbaG#\x12!查看当前管理员所属租户\x82\xd3\xe4\x93\x02\x14\x12\x12/v1/tenant/account\x12\x98\x01\n" +
-	"\rLoginOperator\x12%.proxycontrol.v1.LoginOperatorRequest\x1a\x1e.proxycontrol.v1.LoginResponse\"@\xbaG\x17\x12\x15登录运营控制台\x82\xd3\xe4\x93\x02 :\x01*\"\x1b/v1/operations/access/login\x12\xd0\x01\n" +
+	"\rLoginOperator\x12%.proxycontrol.v1.LoginOperatorRequest\x1a\x1e.proxycontrol.v1.LoginResponse\"@\xbaG\x17\x12\x15登录运营控制台\x82\xd3\xe4\x93\x02 :\x01*\"\x1b/v1/operations/access/login\x12\xa4\x01\n" +
+	"\x12GetOperatorAccount\x12\x1c.proxycontrol.v1.BaseRequest\x1a .proxycontrol.v1.OperatorAccount\"N\xbaG&\x12$查看当前运营账号及其权限\x82\xd3\xe4\x93\x02\x1f\x12\x1d/v1/operations/access/account\x12\xd0\x01\n" +
 	"\x13ResetTenantPassword\x12+.proxycontrol.v1.ResetTenantPasswordRequest\x1a\x19.proxycontrol.v1.BaseResp\"q\xbaG2\x120运营核实租户归属后重置管理员密码\x82\xd3\xe4\x93\x026:\x01*\"1/v1/operations/tenants/{tenant_id}:reset-password\x12\xa1\x01\n" +
 	"\x0fCheckPermission\x12'.proxycontrol.v1.CheckPermissionRequest\x1a\x19.proxycontrol.v1.BaseResp\"J\xbaG,\x12*检查当前账号是否具备指定权限\x82\xd3\xe4\x93\x02\x15:\x01*\"\x10/v1/access/check\x12\x8c\x01\n" +
 	"\x05Login\x12\x1d.proxycontrol.v1.LoginRequest\x1a\x1e.proxycontrol.v1.LoginResponse\"D\xbaG&\x12$登录控制台并签发访问令牌\x82\xd3\xe4\x93\x02\x15:\x01*\"\x10/v1/access/loginBEZCgithub.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1b\x06proto3"
@@ -525,38 +582,41 @@ func file_proxycontrol_v1_access_proto_rawDescGZIP() []byte {
 }
 
 var file_proxycontrol_v1_access_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_proxycontrol_v1_access_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_proxycontrol_v1_access_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_proxycontrol_v1_access_proto_goTypes = []any{
 	(Permission)(0),                    // 0: proxycontrol.v1.Permission
 	(*TenantAccess)(nil),               // 1: proxycontrol.v1.TenantAccess
 	(*LoginRequest)(nil),               // 2: proxycontrol.v1.LoginRequest
 	(*RegisterRequest)(nil),            // 3: proxycontrol.v1.RegisterRequest
 	(*LoginOperatorRequest)(nil),       // 4: proxycontrol.v1.LoginOperatorRequest
-	(*ResetTenantPasswordRequest)(nil), // 5: proxycontrol.v1.ResetTenantPasswordRequest
-	(*LoginResponse)(nil),              // 6: proxycontrol.v1.LoginResponse
-	(*CheckPermissionRequest)(nil),     // 7: proxycontrol.v1.CheckPermissionRequest
-	(*BaseRequest)(nil),                // 8: proxycontrol.v1.BaseRequest
-	(*BaseResp)(nil),                   // 9: proxycontrol.v1.BaseResp
+	(*OperatorAccount)(nil),            // 5: proxycontrol.v1.OperatorAccount
+	(*ResetTenantPasswordRequest)(nil), // 6: proxycontrol.v1.ResetTenantPasswordRequest
+	(*LoginResponse)(nil),              // 7: proxycontrol.v1.LoginResponse
+	(*CheckPermissionRequest)(nil),     // 8: proxycontrol.v1.CheckPermissionRequest
+	(*BaseRequest)(nil),                // 9: proxycontrol.v1.BaseRequest
+	(*BaseResp)(nil),                   // 10: proxycontrol.v1.BaseResp
 }
 var file_proxycontrol_v1_access_proto_depIdxs = []int32{
-	0, // 0: proxycontrol.v1.CheckPermissionRequest.permission:type_name -> proxycontrol.v1.Permission
-	3, // 1: proxycontrol.v1.AccessService.Register:input_type -> proxycontrol.v1.RegisterRequest
-	8, // 2: proxycontrol.v1.AccessService.GetAccount:input_type -> proxycontrol.v1.BaseRequest
-	4, // 3: proxycontrol.v1.AccessService.LoginOperator:input_type -> proxycontrol.v1.LoginOperatorRequest
-	5, // 4: proxycontrol.v1.AccessService.ResetTenantPassword:input_type -> proxycontrol.v1.ResetTenantPasswordRequest
-	7, // 5: proxycontrol.v1.AccessService.CheckPermission:input_type -> proxycontrol.v1.CheckPermissionRequest
-	2, // 6: proxycontrol.v1.AccessService.Login:input_type -> proxycontrol.v1.LoginRequest
-	1, // 7: proxycontrol.v1.AccessService.Register:output_type -> proxycontrol.v1.TenantAccess
-	1, // 8: proxycontrol.v1.AccessService.GetAccount:output_type -> proxycontrol.v1.TenantAccess
-	6, // 9: proxycontrol.v1.AccessService.LoginOperator:output_type -> proxycontrol.v1.LoginResponse
-	9, // 10: proxycontrol.v1.AccessService.ResetTenantPassword:output_type -> proxycontrol.v1.BaseResp
-	9, // 11: proxycontrol.v1.AccessService.CheckPermission:output_type -> proxycontrol.v1.BaseResp
-	6, // 12: proxycontrol.v1.AccessService.Login:output_type -> proxycontrol.v1.LoginResponse
-	7, // [7:13] is the sub-list for method output_type
-	1, // [1:7] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	0,  // 0: proxycontrol.v1.CheckPermissionRequest.permission:type_name -> proxycontrol.v1.Permission
+	3,  // 1: proxycontrol.v1.AccessService.Register:input_type -> proxycontrol.v1.RegisterRequest
+	9,  // 2: proxycontrol.v1.AccessService.GetAccount:input_type -> proxycontrol.v1.BaseRequest
+	4,  // 3: proxycontrol.v1.AccessService.LoginOperator:input_type -> proxycontrol.v1.LoginOperatorRequest
+	9,  // 4: proxycontrol.v1.AccessService.GetOperatorAccount:input_type -> proxycontrol.v1.BaseRequest
+	6,  // 5: proxycontrol.v1.AccessService.ResetTenantPassword:input_type -> proxycontrol.v1.ResetTenantPasswordRequest
+	8,  // 6: proxycontrol.v1.AccessService.CheckPermission:input_type -> proxycontrol.v1.CheckPermissionRequest
+	2,  // 7: proxycontrol.v1.AccessService.Login:input_type -> proxycontrol.v1.LoginRequest
+	1,  // 8: proxycontrol.v1.AccessService.Register:output_type -> proxycontrol.v1.TenantAccess
+	1,  // 9: proxycontrol.v1.AccessService.GetAccount:output_type -> proxycontrol.v1.TenantAccess
+	7,  // 10: proxycontrol.v1.AccessService.LoginOperator:output_type -> proxycontrol.v1.LoginResponse
+	5,  // 11: proxycontrol.v1.AccessService.GetOperatorAccount:output_type -> proxycontrol.v1.OperatorAccount
+	10, // 12: proxycontrol.v1.AccessService.ResetTenantPassword:output_type -> proxycontrol.v1.BaseResp
+	10, // 13: proxycontrol.v1.AccessService.CheckPermission:output_type -> proxycontrol.v1.BaseResp
+	7,  // 14: proxycontrol.v1.AccessService.Login:output_type -> proxycontrol.v1.LoginResponse
+	8,  // [8:15] is the sub-list for method output_type
+	1,  // [1:8] is the sub-list for method input_type
+	1,  // [1:1] is the sub-list for extension type_name
+	1,  // [1:1] is the sub-list for extension extendee
+	0,  // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_proxycontrol_v1_access_proto_init() }
@@ -571,7 +631,7 @@ func file_proxycontrol_v1_access_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proxycontrol_v1_access_proto_rawDesc), len(file_proxycontrol_v1_access_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   7,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

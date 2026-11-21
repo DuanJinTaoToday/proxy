@@ -1,5 +1,5 @@
 import type { Component } from 'vue'
-import { Box, Connection, CreditCard, House, List, Sort, Tickets, User, UserFilled } from '@element-plus/icons-vue'
+import { Box, Connection, CreditCard, House, Sort, Tickets, User, UserFilled } from '@element-plus/icons-vue'
 
 export interface NavItem { path: string, labelKey: string, icon: Component }
 export interface NavSection { labelKey?: string, items: NavItem[] }
@@ -25,10 +25,14 @@ export const consoleNav: NavSection[] = [
 
 export const opsNav: NavSection[] = [
   {
+    labelKey: 'nav.opsCustomers',
+    items: [{ path: '/ops/tenants', labelKey: 'nav.opsTenants', icon: User }],
+  },
+  {
+    labelKey: 'nav.opsOperations',
     items: [
-      { path: '/ops/tenants', labelKey: 'nav.opsTenants', icon: List },
-      { path: '/ops/products', labelKey: 'nav.opsProducts', icon: Box },
       { path: '/ops/orders', labelKey: 'nav.opsOrders', icon: Tickets },
+      { path: '/ops/products', labelKey: 'nav.opsProducts', icon: Box },
     ],
   },
 ]

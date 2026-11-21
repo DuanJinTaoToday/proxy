@@ -3,11 +3,11 @@ import { expect } from '@playwright/test'
 // 表单标签可能带必填星号，如「*手机号」。
 export const field = (page, label) => page.getByRole('textbox', { name: new RegExp(`^\\*?${label}`) })
 
-export async function login(page, route, label, account) {
+export async function login(page, route, label, account, locale = 'zh-CN') {
   await page.goto(route)
   await field(page, label).fill(account)
-  await field(page, '密码').fill('proxy-local-test')
-  await page.getByRole('button', { name: '登录', exact: true }).click()
+  await field(page, locale === 'en' ? 'Password' : '密码').fill('proxy-local-test')
+  await page.getByRole('button', { name: locale === 'en' ? 'Sign in' : '登录', exact: true }).click()
 }
 
 // 用种子租户 alpha 从登录页登录，等到进入控制台。
@@ -16,25 +16,8 @@ export async function signInTenant(page, phone = '13800000001') {
   await expect(page).toHaveURL(/\/console$/)
 }
 
-export async function findTenant(operator, account) {
-  const walletLink = operator.getByRole('navigation', { name: '运营导航' })
-    .getByRole('link', { name: '租户钱包', exact: true })
-  if (await walletLink.isVisible()) await walletLink.click()
-  await operator.getByLabel('主账号名或手机号').fill(account)
-  await operator.getByRole('button', { name: '查找租户', exact: true }).click()
-}
-
-export async function prepareRecharge(operator, amount, reason) {
-  await operator.getByLabel('充值金额（人民币元）').fill(amount)
-  await operator.getByLabel('充值原因').fill(reason)
-  await operator.getByRole('button', { name: '核对充值', exact: true }).click()
-}
-
-export async function submitRecharge(operator) {
-  await operator.getByRole('button', { name: '确认充值', exact: true }).click()
-  const status = operator.getByRole('region', { name: '钱包充值' }).getByRole('status')
-  await expect(status).toHaveText(/充值已到账。流水 #[^，]+，到账时间/)
-  return /流水 #([^，]+)，/.exec(await status.innerText())[1]
+export async function signInOperator(page, route = '/ops', account = 'operator', locale = 'zh-CN') {
+  await login(page, route, locale === 'en' ? 'Operator username' : '运营账号', account, locale)
 }
 
 export async function screenshot(page, info, name) {

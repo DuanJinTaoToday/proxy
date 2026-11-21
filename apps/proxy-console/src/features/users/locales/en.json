@@ -2,7 +2,21 @@
   "users": {
     "account": "Account",
     "primaryAccount": "Primary account",
-    "phone": "Phone number"
+    "phone": "Phone number",
+    "opsFindTenant": "Find a tenant",
+    "opsSearchHint": "Enter the full primary account name or registered mobile number. The +86 prefix is optional.",
+    "opsSearchLabel": "Primary account name or mobile number",
+    "opsSearchPlaceholder": "For example, chenxl-studio or 13800136021",
+    "opsSearch": "Search",
+    "opsSearchBalance": "Balance {amount}",
+    "opsNoTenant": "No tenant found. Check that the account name or mobile number is complete.",
+    "opsBack": "Back to tenant search",
+    "opsRegisteredAt": "Registered on {date}",
+    "opsWalletBalance": "Available wallet balance",
+    "opsWalletHint": "Purchases and renewals draw from this balance",
+    "opsTrafficBalance": "Rotating traffic balance",
+    "opsTrafficDebt": "A negative balance represents usage to offset",
+    "opsTrafficHint": "1 GB = 10⁹ bytes"
   },
   "accessLocation": {
     "title": "Current IP address and location",

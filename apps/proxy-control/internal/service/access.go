@@ -70,6 +70,15 @@ func (s *Access) LoginOperator(ctx context.Context, req *v1.LoginOperatorRequest
 	return &v1.LoginResponse{AccessToken: token, ExpiresInSeconds: expires}, nil
 }
 
+func (s *Access) GetOperatorAccount(ctx context.Context, _ *v1.BaseRequest) (*v1.OperatorAccount, error) {
+	noStore(ctx)
+	username, permissions, err := s.biz.OperatorAccount(ctx, bearerToken(ctx))
+	if err != nil {
+		return nil, err
+	}
+	return &v1.OperatorAccount{Username: username, Permissions: permissions}, nil
+}
+
 func (s *Access) ResetTenantPassword(ctx context.Context, req *v1.ResetTenantPasswordRequest) (*v1.BaseResp, error) {
 	noStore(ctx)
 	if err := s.biz.ResetTenantPassword(ctx, bearerToken(ctx), req.GetTenantId(), req.GetPassword()); err != nil {

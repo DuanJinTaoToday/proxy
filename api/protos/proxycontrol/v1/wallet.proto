@@ -238,6 +238,10 @@ message WalletTenant {
   string total_recharge_minor = 6;
   // 当前租户累计净实扣，人民币分，以十进制字符串返回。
   string total_spend_minor = 7;
+  // 注册手机号（运营接口）。
+  string phone = 8;
+  // 租户注册时间（运营接口）。
+  google.protobuf.Timestamp registered_at = 9;
 }
 
 message WalletEntry {
