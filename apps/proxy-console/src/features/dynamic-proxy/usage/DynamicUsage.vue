@@ -241,7 +241,11 @@ const unknownAccount = computed(() => accountOptions.value.some(account => accou
 }
 .dynamic-usage__toolbar { justify-content: space-between; }
 .dynamic-usage__filters { flex: 1 1 var(--content-narrow-width); min-inline-size: 0; }
-.dynamic-usage__dates { flex: 0 1 var(--usage-date-range-width); min-inline-size: 0; max-inline-size: 100%; }
+.dynamic-usage__dates {
+  flex: 0 1 var(--usage-date-range-width);
+  min-inline-size: 0;
+  max-inline-size: min(100%, var(--usage-date-range-width));
+}
 .dynamic-usage__accounts { flex: 0 1 var(--usage-account-filter-width); min-inline-size: 0; max-inline-size: 100%; }
 .dynamic-usage__summary {
   display: flex;
@@ -267,6 +271,10 @@ const unknownAccount = computed(() => accountOptions.value.some(account => accou
   border-block-start: var(--border-width) solid var(--color-border);
   padding-block-start: var(--space-3);
 }
-.dynamic-usage :deep(.dynamic-usage__body) { display: grid; gap: var(--space-4); min-width: 0; }
+.dynamic-usage :deep(.dynamic-usage__body) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+}
 .dynamic-usage p { margin-block: var(--space-2); }
 </style>
