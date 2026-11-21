@@ -2,7 +2,7 @@
 import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { ElTag } from 'element-plus'
+import { ElAlert, ElButton, ElTag } from 'element-plus'
 import { getPendingOrderCount } from '@/api/orders'
 import { sessionPhone } from '@/features/auth'
 import RouteTabs from '@/app/RouteTabs.vue'
@@ -10,17 +10,26 @@ import RouteTabs from '@/app/RouteTabs.vue'
 const route = useRoute()
 const { t, n } = useI18n()
 const pendingCount = ref(0)
+const countFailed = ref(false)
+const retry = ref(0)
 
-watch([() => route.name, sessionPhone], async ([, phone], previous, onCleanup) => {
+function applyPendingCount(count: number) {
+  pendingCount.value = count
+}
+
+watch([() => route.name, sessionPhone, retry], async ([name, phone], previous, onCleanup) => {
   if (phone !== previous?.[1]) pendingCount.value = 0
-  if (!phone) return
+  countFailed.value = false
+  if (!phone || name !== 'console-account-profile') return
   const request = new AbortController()
   onCleanup(() => request.abort())
   try {
     const count = await getPendingOrderCount(request.signal)
-    if (!request.signal.aborted) pendingCount.value = count
+    if (!request.signal.aborted) applyPendingCount(count)
   } catch {
-    if (!request.signal.aborted) pendingCount.value = 0
+    if (!request.signal.aborted) {
+      countFailed.value = true
+    }
   }
 }, { immediate: true })
 </script>
@@ -34,9 +43,18 @@ watch([() => route.name, sessionPhone], async ([, phone], previous, onCleanup) =
         {{ n(pendingCount) }}
       </ElTag>
     </template>
+    <ElAlert v-if="countFailed" class="pending-count-alert" type="error" :title="t('orders.pendingCountFailed')"
+      :closable="false" show-icon>
+      <ElButton size="small" @click="retry++">{{ t('orders.retry') }}</ElButton>
+    </ElAlert>
+    <RouterView v-slot="{ Component }">
+      <component :is="Component" v-if="route.name === 'console-account-orders'" @pending-count="applyPendingCount" />
+      <component :is="Component" v-else />
+    </RouterView>
   </RouteTabs>
 </template>
 
 <style scoped>
 .pending-count { margin-inline-start: var(--space-2); }
+.pending-count-alert { margin-bottom: var(--space-4); }
 </style>

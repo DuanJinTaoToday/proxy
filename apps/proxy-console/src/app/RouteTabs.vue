@@ -25,7 +25,7 @@ const active = computed({
       <template #label><slot name="label" :tab="tab">{{ t(tab.labelKey) }}</slot></template>
     </ElTabPane>
   </ElTabs>
-  <RouterView />
+  <slot><RouterView /></slot>
 </template>
 
 <style scoped>

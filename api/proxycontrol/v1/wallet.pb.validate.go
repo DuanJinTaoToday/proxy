@@ -1889,9 +1889,35 @@ func (m *CustomerWalletEntriesRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	// no validation rules for StartDate
+	if m.GetStartDate() != "" {
 
-	// no validation rules for EndDate
+		if !_CustomerWalletEntriesRequest_StartDate_Pattern.MatchString(m.GetStartDate()) {
+			err := CustomerWalletEntriesRequestValidationError{
+				field:  "StartDate",
+				reason: "value does not match regex pattern \"^[0-9]{4}-[0-9]{2}-[0-9]{2}$\"",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if m.GetEndDate() != "" {
+
+		if !_CustomerWalletEntriesRequest_EndDate_Pattern.MatchString(m.GetEndDate()) {
+			err := CustomerWalletEntriesRequestValidationError{
+				field:  "EndDate",
+				reason: "value does not match regex pattern \"^[0-9]{4}-[0-9]{2}-[0-9]{2}$\"",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
 
 	if len(errors) > 0 {
 		return CustomerWalletEntriesRequestMultiError(errors)
@@ -1982,6 +2008,10 @@ var _CustomerWalletEntriesRequest_Kind_InLookup = map[string]struct{}{
 	"release":  {},
 	"refund":   {},
 }
+
+var _CustomerWalletEntriesRequest_StartDate_Pattern = regexp.MustCompile("^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
+
+var _CustomerWalletEntriesRequest_EndDate_Pattern = regexp.MustCompile("^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
 
 // Validate checks the field values on OperatorWalletEntriesRequest with the
 // rules defined in the proto definition for this message. If any rules are
@@ -2174,20 +2204,50 @@ func (m *CustomerPurchaseOrdersRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if m.GetOrderId() < 0 {
-		err := CustomerPurchaseOrdersRequestValidationError{
-			field:  "OrderId",
-			reason: "value must be greater than or equal to 0",
+	if m.GetOrderQuery() != "" {
+
+		if !_CustomerPurchaseOrdersRequest_OrderQuery_Pattern.MatchString(m.GetOrderQuery()) {
+			err := CustomerPurchaseOrdersRequestValidationError{
+				field:  "OrderQuery",
+				reason: "value does not match regex pattern \"^[0-9]{1,19}$\"",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
 		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
+
 	}
 
-	// no validation rules for StartDate
+	if m.GetStartDate() != "" {
 
-	// no validation rules for EndDate
+		if !_CustomerPurchaseOrdersRequest_StartDate_Pattern.MatchString(m.GetStartDate()) {
+			err := CustomerPurchaseOrdersRequestValidationError{
+				field:  "StartDate",
+				reason: "value does not match regex pattern \"^[0-9]{4}-[0-9]{2}-[0-9]{2}$\"",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if m.GetEndDate() != "" {
+
+		if !_CustomerPurchaseOrdersRequest_EndDate_Pattern.MatchString(m.GetEndDate()) {
+			err := CustomerPurchaseOrdersRequestValidationError{
+				field:  "EndDate",
+				reason: "value does not match regex pattern \"^[0-9]{4}-[0-9]{2}-[0-9]{2}$\"",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
 
 	if _, ok := _CustomerPurchaseOrdersRequest_Product_InLookup[m.GetProduct()]; !ok {
 		err := CustomerPurchaseOrdersRequestValidationError{
@@ -2295,6 +2355,12 @@ var _CustomerPurchaseOrdersRequest_Status_InLookup = map[string]struct{}{
 	"partial":   {},
 	"failed":    {},
 }
+
+var _CustomerPurchaseOrdersRequest_OrderQuery_Pattern = regexp.MustCompile("^[0-9]{1,19}$")
+
+var _CustomerPurchaseOrdersRequest_StartDate_Pattern = regexp.MustCompile("^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
+
+var _CustomerPurchaseOrdersRequest_EndDate_Pattern = regexp.MustCompile("^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
 
 var _CustomerPurchaseOrdersRequest_Product_InLookup = map[string]struct{}{
 	"":        {},

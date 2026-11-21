@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strconv"
 	"sync"
 	"testing"
 
@@ -260,6 +261,7 @@ func TestWalletSettlementAndTenantIsolation(t *testing.T) {
 	testfixture.AssertStatus(t, request("GET", "/v1/tenant"+orderPath, "", otherToken), http.StatusNotFound, "WALLET_RECORD_NOT_FOUND")
 	testfixture.AssertStatus(t, request("GET", ops+"/"+other.TenantId+orderPath, "", operator), http.StatusNotFound, "WALLET_RECORD_NOT_FOUND")
 	testfixture.AssertStatus(t, request("GET", path+orderPath, "", token), http.StatusForbidden, "ACCESS_DENIED")
+	var netSpend int64
 	for _, filter := range []string{"kind=static_purchase&status=partial", "kind=traffic_package&status=succeeded", "kind=static_purchase&status=succeeded"} {
 		var customerOrders, operatorOrders v1.PurchaseOrders
 		readProto(t, request("GET", "/v1/tenant/orders?"+filter, "", token), &customerOrders)
@@ -272,6 +274,7 @@ func TestWalletSettlementAndTenantIsolation(t *testing.T) {
 			t.Fatalf("unexpected customer results for %s: %s", filter, &customerOrders)
 		}
 		for _, summary := range customerOrders.GetOrders() {
+			netSpend += summary.GetSettledMinor()
 			if summary.GetItemCount() != 1 || summary.GetSummaryItem().GetPosition() != 1 {
 				t.Fatalf("missing locked summary for %s: %s", filter, summary)
 			}
@@ -280,6 +283,10 @@ func TestWalletSettlementAndTenantIsolation(t *testing.T) {
 		if !proto.Equal(&customerOrders, &operatorOrders) {
 			t.Fatalf("unexpected results for %s: %s / %s", filter, &customerOrders, &operatorOrders)
 		}
+	}
+
+	if totals.GetTotalSpendMinor() != strconv.FormatInt(netSpend, 10) {
+		t.Fatalf("wallet spend %s differs from settled order totals %d", totals.GetTotalSpendMinor(), netSpend)
 	}
 
 	var ownEntries, otherEntries, auditEntries v1.WalletEntries

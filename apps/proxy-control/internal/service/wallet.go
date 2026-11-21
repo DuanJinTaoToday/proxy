@@ -93,7 +93,7 @@ func (s *Wallet) ListOperatorPurchaseOrders(ctx context.Context, req *v1.Operato
 
 func (s *Wallet) ListCustomerPurchaseOrders(ctx context.Context, req *v1.CustomerPurchaseOrdersRequest) (*v1.PurchaseOrders, error) {
 	return s.orders(ctx, "", false, wallet.Filter{
-		BeforeID: req.GetBeforeId(), OrderID: req.GetOrderId(), Kind: req.GetKind(),
+		BeforeID: req.GetBeforeId(), OrderQuery: req.GetOrderQuery(), Kind: req.GetKind(),
 		Status: req.GetStatus(), Product: req.GetProduct(), StartDate: req.GetStartDate(), EndDate: req.GetEndDate(),
 	})
 }

@@ -5,11 +5,12 @@ import { useI18n } from 'vue-i18n'
 import { ElAlert, ElButton, ElCard, ElDatePicker, ElEmpty, ElInput, ElOption, ElSelect, ElSkeleton, ElTable, ElTableColumn, ElTag } from 'element-plus'
 import { Search } from '@element-plus/icons-vue'
 import { listOrders, orderProducts, orderStatuses, type OrderSummary } from '@/api/orders'
-import { readBusinessDate, readBusinessDateBounds } from '@/shared/lib/businessDateQuery'
+import { readBusinessDateBounds, updateBusinessDateBounds } from '@/shared/lib/businessDateQuery'
 import { useErrorMessage } from '@/shared/lib/useErrorMessage'
 import OrderDrawer from './OrderDrawer.vue'
-import { readOrderId, useOrderFormatting } from './format'
+import { readOrderId, readOrderSearch, useOrderFormatting } from './format'
 
+const emit = defineEmits<{ pendingCount: [count: number] }>()
 const route = useRoute()
 const router = useRouter()
 const { t } = useI18n()
@@ -18,17 +19,17 @@ const { dateTime, delivery, itemDescription, money, statusTypes } = useOrderForm
 
 const product = computed(() => orderProducts.find(value => value === route.query.product))
 const status = computed(() => orderStatuses.find(value => value === route.query.status))
-const orderId = computed(() => readOrderId(route.query.order))
+const orderQuery = computed(() => readOrderSearch(route.query.order))
 const dates = computed(() => readBusinessDateBounds(route.query.start, route.query.end))
 const start = computed(() => dates.value.start)
 const end = computed(() => dates.value.end)
 const detailId = computed(() => readOrderId(route.query.detail))
 const orderSearch = ref('')
-const badOrderId = ref(false)
+const invalidSearch = ref(false)
 
-watch(orderId, value => {
+watch(orderQuery, value => {
   orderSearch.value = value ?? ''
-  badOrderId.value = false
+  invalidSearch.value = false
 }, { immediate: true })
 
 function editFilters(changed: LocationQueryRaw) {
@@ -37,9 +38,11 @@ function editFilters(changed: LocationQueryRaw) {
 
 function searchOrders() {
   const searched = orderSearch.value.trim()
-  const id = readOrderId(searched)
-  badOrderId.value = searched !== '' && id === undefined
-  if (!badOrderId.value) editFilters({ order: id })
+  const query = readOrderSearch(searched)
+  invalidSearch.value = searched !== '' && query === undefined
+  if (invalidSearch.value) return
+  orderSearch.value = query ?? ''
+  editFilters({ order: query })
 }
 
 function clearOrderSearch() {
@@ -47,19 +50,13 @@ function clearOrderSearch() {
   searchOrders()
 }
 
-function changeStart(value: unknown) {
-  const date = readBusinessDate(value)
-  editFilters({ start: date, end: date && end.value && date > end.value ? undefined : end.value })
-}
-
-function changeEnd(value: unknown) {
-  const date = readBusinessDate(value)
-  editFilters({ start: date && start.value && date < start.value ? undefined : start.value, end: date })
+function changeDate(field: 'start' | 'end', value: unknown) {
+  editFilters(updateBusinessDateBounds(dates.value, field, value))
 }
 
 function resetFilters() {
   orderSearch.value = ''
-  badOrderId.value = false
+  invalidSearch.value = false
   editFilters({ product: undefined, status: undefined, order: undefined, start: undefined, end: undefined })
 }
 
@@ -80,17 +77,20 @@ type ListState =
   | { kind: 'ready', data: Awaited<ReturnType<typeof listOrders>> }
 const state = shallowRef<ListState>({ kind: 'loading' })
 
-watch([product, status, orderId, start, end], () => {
+watch([product, status, orderQuery, start, end], () => {
   cursorHistory.value = [undefined]
 })
 
-watch([product, status, orderId, start, end, cursor, retry], async ([product, status, orderId, start, end, beforeId], _previous, onCleanup) => {
+watch([product, status, orderQuery, start, end, cursor, retry], async ([product, status, orderQuery, start, end, beforeId], _previous, onCleanup) => {
   const request = new AbortController()
   onCleanup(() => request.abort())
   state.value = { kind: 'loading' }
   try {
-    const data = await listOrders({ product, status, orderId, start, end, beforeId }, request.signal)
-    if (!request.signal.aborted) state.value = { kind: 'ready', data }
+    const data = await listOrders({ product, status, orderQuery, start, end, beforeId }, request.signal)
+    if (!request.signal.aborted) {
+      state.value = { kind: 'ready', data }
+      emit('pendingCount', data.pendingCount)
+    }
   } catch (error) {
     if (!request.signal.aborted) state.value = { kind: 'failed', error }
   }
@@ -101,7 +101,7 @@ function nextPage() {
   cursorHistory.value.push(state.value.data.nextBeforeId)
 }
 
-const hasFilters = computed(() => Boolean(product.value || status.value || orderId.value || start.value || end.value))
+const hasFilters = computed(() => Boolean(product.value || status.value || orderQuery.value || start.value || end.value))
 </script>
 
 <template>
@@ -109,8 +109,8 @@ const hasFilters = computed(() => Boolean(product.value || status.value || order
     <div class="order-filters">
       <form class="order-search" @submit.prevent="searchOrders">
         <ElInput v-model="orderSearch" :prefix-icon="Search" :placeholder="t('orders.orderSearch')"
-          :aria-label="t('orders.orderSearch')" :aria-invalid="badOrderId"
-          :aria-describedby="badOrderId ? 'order-search-error' : undefined"
+          :aria-label="t('orders.orderSearch')" :aria-invalid="invalidSearch"
+          :aria-describedby="invalidSearch ? 'order-search-error' : undefined"
           clearable @clear="clearOrderSearch" />
         <ElButton native-type="submit">{{ t('orders.search') }}</ElButton>
       </form>
@@ -127,13 +127,13 @@ const hasFilters = computed(() => Boolean(product.value || status.value || order
       <div class="order-dates" role="group" :aria-label="t('orders.dateFilter')">
         <ElDatePicker :model-value="start" type="date" value-format="YYYY-MM-DD" class="date-filter"
           :aria-label="t('orders.startDate')" :placeholder="t('orders.startDate')"
-          @update:model-value="changeStart" />
+          @update:model-value="changeDate('start', $event)" />
         <ElDatePicker :model-value="end" type="date" value-format="YYYY-MM-DD" class="date-filter"
           :aria-label="t('orders.endDate')" :placeholder="t('orders.endDate')"
-          @update:model-value="changeEnd" />
+          @update:model-value="changeDate('end', $event)" />
       </div>
     </div>
-    <p v-if="badOrderId" id="order-search-error" class="search-error" role="alert">{{ t('orders.invalidOrderId') }}</p>
+    <p v-if="invalidSearch" id="order-search-error" class="search-error" role="alert">{{ t('orders.invalidOrderId') }}</p>
 
     <div v-if="state.kind === 'loading'" role="status" :aria-label="t('orders.loading')">
       <ElSkeleton animated :rows="5" />

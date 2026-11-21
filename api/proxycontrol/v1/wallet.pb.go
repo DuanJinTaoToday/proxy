@@ -1158,8 +1158,8 @@ type CustomerPurchaseOrdersRequest struct {
 	Kind string `protobuf:"bytes,2,opt,name=kind,proto3" json:"kind,omitempty"`
 	// 交付状态。空值表示全部。
 	Status string `protobuf:"bytes,3,opt,name=status,proto3" json:"status,omitempty"`
-	// 精确匹配订单号，0 表示全部。
-	OrderId int64 `protobuf:"varint,4,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
+	// 按订单号的数字片段筛选，空值表示全部。
+	OrderQuery string `protobuf:"bytes,4,opt,name=order_query,json=orderQuery,proto3" json:"order_query,omitempty"`
 	// 上海业务日起点（YYYY-MM-DD），包含当天。
 	StartDate string `protobuf:"bytes,5,opt,name=start_date,json=startDate,proto3" json:"start_date,omitempty"`
 	// 上海业务日终点（YYYY-MM-DD），包含当天。
@@ -1221,11 +1221,11 @@ func (x *CustomerPurchaseOrdersRequest) GetStatus() string {
 	return ""
 }
 
-func (x *CustomerPurchaseOrdersRequest) GetOrderId() int64 {
+func (x *CustomerPurchaseOrdersRequest) GetOrderQuery() string {
 	if x != nil {
-		return x.OrderId
+		return x.OrderQuery
 	}
-	return 0
+	return ""
 }
 
 func (x *CustomerPurchaseOrdersRequest) GetStartDate() string {
@@ -2831,24 +2831,25 @@ const file_proxycontrol_v1_wallet_proto_rawDesc = "" +
 	"\n" +
 	"unit_minor\x18\x05 \x01(\x03R\tunitMinor\x12\x1a\n" +
 	"\bquantity\x18\x06 \x01(\x05R\bquantity\x12'\n" +
-	"\x0fdelivered_count\x18\a \x01(\x05R\x0edeliveredCount\"\xc3\x01\n" +
+	"\x0fdelivered_count\x18\a \x01(\x05R\x0edeliveredCount\"\x93\x02\n" +
 	"\x1cCustomerWalletEntriesRequest\x12$\n" +
 	"\tbefore_id\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02(\x00R\bbeforeId\x12C\n" +
-	"\x04kind\x18\x02 \x01(\tB/\xfaB,r*R\x00R\brechargeR\x05debitR\x04holdR\areleaseR\x06refundR\x04kind\x12\x1d\n" +
+	"\x04kind\x18\x02 \x01(\tB/\xfaB,r*R\x00R\brechargeR\x05debitR\x04holdR\areleaseR\x06refundR\x04kind\x12E\n" +
 	"\n" +
-	"start_date\x18\x03 \x01(\tR\tstartDate\x12\x19\n" +
-	"\bend_date\x18\x04 \x01(\tR\aendDate\"l\n" +
+	"start_date\x18\x03 \x01(\tB&\xfaB#r!2\x1c^[0-9]{4}-[0-9]{2}-[0-9]{2}$\xd0\x01\x01R\tstartDate\x12A\n" +
+	"\bend_date\x18\x04 \x01(\tB&\xfaB#r!2\x1c^[0-9]{4}-[0-9]{2}-[0-9]{2}$\xd0\x01\x01R\aendDate\"l\n" +
 	"\x1cOperatorWalletEntriesRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01(@R\btenantId\x12$\n" +
-	"\tbefore_id\x18\x02 \x01(\x03B\a\xfaB\x04\"\x02(\x00R\bbeforeId\"\xec\x02\n" +
+	"\tbefore_id\x18\x02 \x01(\x03B\a\xfaB\x04\"\x02(\x00R\bbeforeId\"\xd2\x03\n" +
 	"\x1dCustomerPurchaseOrdersRequest\x12$\n" +
 	"\tbefore_id\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02(\x00R\bbeforeId\x12M\n" +
 	"\x04kind\x18\x02 \x01(\tB9\xfaB6r4R\x00R\x0ftraffic_packageR\x0fstatic_purchaseR\x0estatic_renewalR\x04kind\x12D\n" +
-	"\x06status\x18\x03 \x01(\tB,\xfaB)r'R\x00R\apendingR\tsucceededR\apartialR\x06failedR\x06status\x12\"\n" +
-	"\border_id\x18\x04 \x01(\x03B\a\xfaB\x04\"\x02(\x00R\aorderId\x12\x1d\n" +
+	"\x06status\x18\x03 \x01(\tB,\xfaB)r'R\x00R\apendingR\tsucceededR\apartialR\x06failedR\x06status\x128\n" +
+	"\vorder_query\x18\x04 \x01(\tB\x17\xfaB\x14r\x122\r^[0-9]{1,19}$\xd0\x01\x01R\n" +
+	"orderQuery\x12E\n" +
 	"\n" +
-	"start_date\x18\x05 \x01(\tR\tstartDate\x12\x19\n" +
-	"\bend_date\x18\x06 \x01(\tR\aendDate\x122\n" +
+	"start_date\x18\x05 \x01(\tB&\xfaB#r!2\x1c^[0-9]{4}-[0-9]{2}-[0-9]{2}$\xd0\x01\x01R\tstartDate\x12A\n" +
+	"\bend_date\x18\x06 \x01(\tB&\xfaB#r!2\x1c^[0-9]{4}-[0-9]{2}-[0-9]{2}$\xd0\x01\x01R\aendDate\x122\n" +
 	"\aproduct\x18\a \x01(\tB\x18\xfaB\x15r\x13R\x00R\adynamicR\x06staticR\aproduct\"\x82\x02\n" +
 	"\x1dOperatorPurchaseOrdersRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01(@R\btenantId\x12$\n" +

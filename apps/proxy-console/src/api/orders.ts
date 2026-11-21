@@ -48,7 +48,7 @@ interface OrderDetailWire extends OrderWire {
 interface OrderFilters {
   product?: OrderProduct
   status?: OrderStatus
-  orderId?: string
+  orderQuery?: string
   start?: string
   end?: string
   beforeId?: string
@@ -96,7 +96,7 @@ export async function listOrders(filters: OrderFilters, signal: AbortSignal) {
     query: {
       product: filters.product,
       status: filters.status,
-      order_id: filters.orderId,
+      order_query: filters.orderQuery,
       start_date: filters.start,
       end_date: filters.end,
       before_id: filters.beforeId,
@@ -105,6 +105,7 @@ export async function listOrders(filters: OrderFilters, signal: AbortSignal) {
   })
   return {
     orders: (wire.orders ?? []).map(mapOrder),
+    pendingCount: Number(wire.pending_count ?? 0),
     nextBeforeId: wire.next_before_id && wire.next_before_id !== '0' ? wire.next_before_id : undefined,
   }
 }

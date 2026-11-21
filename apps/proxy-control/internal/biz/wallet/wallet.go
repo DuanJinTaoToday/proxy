@@ -106,10 +106,16 @@ type Command struct {
 }
 
 type Filter struct {
-	BeforeID, OrderID     int64
+	BeforeID              int64
 	Limit                 int
 	Kind, Status, Product string
 	StartDate, EndDate    string
+	OrderQuery            string
+}
+
+func (f Filter) validOrderQuery() bool {
+	return len(f.OrderQuery) <= 19 &&
+		strings.IndexFunc(f.OrderQuery, func(r rune) bool { return r < '0' || r > '9' }) == -1
 }
 
 func (f Filter) validDates() bool {

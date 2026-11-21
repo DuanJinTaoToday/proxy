@@ -43,6 +43,7 @@ function seedHistory() {
     INSERT INTO wallet_entries (tenant_id, request_key, request_hash, kind, actor, reason, before_minor, after_minor, created_at)
       SELECT 'alpha', 'verify-76-history-' || n, '', 'recharge', 'local-operator', 'test fixture',
         900 + n*100, 1000 + n*100, '2026-01-13T16:00:00Z' FROM generate_series(1, 25) n;
+    ALTER TABLE purchase_orders ALTER COLUMN id RESTART WITH 7601;
     CREATE TEMP TABLE verify76_orders AS
       WITH inserted AS (
         INSERT INTO purchase_orders
@@ -70,7 +71,8 @@ function seedHistory() {
         ('static_purchase', 'hold', 'hold', 2800, 1600, '2026-01-14T16:00:00Z'),
         ('static_purchase', 'release', 'release', 1600, 2200, '2026-01-14T16:00:30Z'),
         ('static_renewal', 'renewal', 'hold', 2200, 1700, '2026-01-14T16:01:00Z')
-      ) AS entry(product, event, action, before_minor, after_minor, date) ON kind = product;
+      ) AS entry(product, event, action, before_minor, after_minor, date) ON kind = product
+      ORDER BY date::timestamptz;
     UPDATE wallets SET available_minor = 1700 WHERE tenant_id = 'alpha';
     COMMIT;
     SELECT string_agg(id::text, ',' ORDER BY id) FROM verify76_orders;
@@ -112,11 +114,11 @@ test('钱包到账、筛选、翻页和关联订单，订单详情与账户信�
     await date.press('Enter')
     await expect(page).toHaveURL(new RegExp(query + '=' + businessDay))
   }
-  await expect(page.getByRole('link', { name: '订单 #' + pendingId, exact: true })).toBeVisible()
-  await expect(page.getByRole('link', { name: '订单 #' + dynamicId, exact: true })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: '订单 #' + pendingId, exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: '订单 #' + dynamicId, exact: true })).toHaveCount(0)
   await page.getByRole('radiogroup').getByText('退款', { exact: true }).click()
   await expect(page).toHaveURL(/kind=refund/)
-  const linked = page.getByRole('link', { name: '订单 #' + partialId, exact: true })
+  const linked = page.getByRole('button', { name: '订单 #' + partialId, exact: true })
   await expect(linked).toHaveCount(1)
   await screenshot(page, info, 'wallet-refund-day-filter')
   await linked.click()
@@ -130,15 +132,34 @@ test('钱包到账、筛选、翻页和关联订单，订单详情与账户信�
   await expect(drawer.getByText('¥12.00', { exact: true }).first()).toBeVisible()
   await expect(drawer.getByText('¥6.00', { exact: true }).first()).toBeVisible()
   await screenshot(page, info, 'order-locked-items-refund-ledger')
+  const filteredWallet = /\/console\/wallet\?start=2026-01-15&end=2026-01-15&kind=refund$/
+  await expect(page).toHaveURL(filteredWallet)
+  await page.keyboard.press('Escape')
+  await expect(drawer).toBeHidden()
+  await expect(linked).toHaveCount(1)
   await page.goBack()
-  await expect(page).toHaveURL(/\/console\/wallet\?start=2026-01-15&end=2026-01-15&kind=refund$/)
+  await expect(page).toHaveURL(/end=2026-01-15$/)
+  await expect(page.getByRole('button', { name: '订单 #' + pendingId, exact: true })).toBeVisible()
+  await page.goForward()
+  await expect(page).toHaveURL(filteredWallet)
+  await page.reload()
   await expect(linked).toHaveCount(1)
 
-  await page.getByRole('menuitem', { name: '我的账户', exact: true }).click()
+  await page.route('**/v1/tenant/orders', route => route.fulfill({ status: 503 }), { times: 1 })
+  await page.goto(ordersPath)
+  await expect(page.getByText('无法加载订单记录')).toBeVisible()
+  await page.getByRole('button', { name: '重试', exact: true }).click()
+  const ordersTab = page.getByRole('tab', { name: /订单记录/ })
+  await expect(ordersTab.getByText('1', { exact: true })).toBeVisible()
+  await page.route('**/v1/tenant/orders?status=pending', route => route.fulfill({ status: 503 }), { times: 1 })
+  await page.getByRole('tab', { name: '账户信息', exact: true }).click()
+  const badgeError = page.getByRole('alert').filter({ hasText: '无法加载确认中订单数量' })
+  await expect(badgeError).toBeVisible()
+  await badgeError.getByRole('button', { name: '重试', exact: true }).click()
+  await expect(badgeError).toBeHidden()
   const account = page.getByRole('region', { name: '账户', exact: true })
   await expect(account).toContainText('localalpha')
   await expect(account).toContainText('+86 138 **** 0001')
-  const ordersTab = page.getByRole('tab', { name: /订单记录/ })
   await expect(ordersTab.getByText('1', { exact: true })).toBeVisible()
   await screenshot(page, info, 'profile-and-pending-tab')
   await ordersTab.click()
@@ -152,13 +173,25 @@ test('钱包到账、筛选、翻页和关联订单，订单详情与账户信�
   await page.getByRole('combobox', { name: '按状态筛选' }).press('Enter')
   await page.getByRole('option', { name: '确认中', exact: true }).click()
   await expect(page).toHaveURL(/status=pending/)
-  await page.getByRole('textbox', { name: '搜索订单号' }).fill(partialId)
-  await page.getByRole('button', { name: '搜索', exact: true }).click()
-  await expect(page).toHaveURL(new RegExp('order=' + partialId))
+  const orderSearch = page.getByRole('textbox', { name: '搜索订单号' })
+  const search = page.getByRole('button', { name: '搜索', exact: true })
+  const suffix = partialId.slice(-2)
+  await orderSearch.fill(suffix)
+  await search.click()
+  await expect(page).toHaveURL(new RegExp('order=' + suffix))
   await expect(page.getByText('没有符合条件的订单')).toBeVisible()
   await page.goBack()
-  await expect(page.getByRole('textbox', { name: '搜索订单号' })).toHaveValue('')
+  await expect(orderSearch).toHaveValue('')
   await expect(page).toHaveURL(/status=pending$/)
+  await page.getByRole('combobox', { name: '按状态筛选' }).press('Enter')
+  await page.getByRole('option', { name: '全部状态', exact: true }).click()
+  await orderSearch.fill(suffix)
+  await search.click()
+  await expect(page.getByRole('cell', { name: '#' + partialId, exact: true })).toBeVisible()
+  await expect(page.getByRole('cell', { name: '#' + pendingId, exact: true })).toHaveCount(0)
+  await page.reload()
+  await expect(orderSearch).toHaveValue(suffix)
+  await expect(page.getByRole('cell', { name: '#' + partialId, exact: true })).toBeVisible()
 
   await page.goto(ordersPath + '?start=' + businessDay + '&end=' + businessDay)
   await page.reload()

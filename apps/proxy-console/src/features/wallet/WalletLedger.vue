@@ -7,9 +7,10 @@ import {
   ElTableColumn, ElTag, type TagProps,
 } from 'element-plus'
 import { listWalletEntries, mapWalletEntry, type WalletFilterKind } from '@/api/wallet'
-import { readBusinessDate, readBusinessDateBounds } from '@/shared/lib/businessDateQuery'
+import { readBusinessDateBounds, updateBusinessDateBounds } from '@/shared/lib/businessDateQuery'
 import { formatYuan, shanghaiDateTime } from '@/shared/lib/formatters'
 
+const emit = defineEmits<{ openOrder: [orderId: string] }>()
 const { t, locale } = useI18n()
 const route = useRoute()
 const router = useRouter()
@@ -41,14 +42,9 @@ function setFilters(nextKind?: unknown, nextStart?: string, nextEnd?: string) {
   })
 }
 
-function setStartDate(value: unknown) {
-  const next = readBusinessDate(value)
-  return setFilters(kind.value, next, next && end.value && next > end.value ? undefined : end.value)
-}
-
-function setEndDate(value: unknown) {
-  const next = readBusinessDate(value)
-  return setFilters(kind.value, next && start.value && next < start.value ? undefined : start.value, next)
+function setDate(field: 'start' | 'end', value: unknown) {
+  const { start, end } = updateBusinessDateBounds(dates.value, field, value)
+  return setFilters(kind.value, start, end)
 }
 
 type LedgerState =
@@ -114,12 +110,12 @@ function previousPage() {
       <div class="wallet-ledger__dates" role="group" :aria-label="t('wallet.dateFilter')">
         <ElDatePicker
           class="wallet-ledger__date-input" :model-value="start" type="date" value-format="YYYY-MM-DD"
-          :aria-label="t('wallet.startDate')" :placeholder="t('wallet.startDate')" @update:model-value="setStartDate"
+          :aria-label="t('wallet.startDate')" :placeholder="t('wallet.startDate')" @update:model-value="setDate('start', $event)"
         />
         <span>{{ t('wallet.dateSeparator') }}</span>
         <ElDatePicker
           class="wallet-ledger__date-input" :model-value="end" type="date" value-format="YYYY-MM-DD"
-          :aria-label="t('wallet.endDate')" :placeholder="t('wallet.endDate')" @update:model-value="setEndDate"
+          :aria-label="t('wallet.endDate')" :placeholder="t('wallet.endDate')" @update:model-value="setDate('end', $event)"
         />
       </div>
     </div>
@@ -151,12 +147,12 @@ function previousPage() {
       <ElTableColumn :label="t('wallet.description')" min-width="225">
         <template #default="{ row }">
           <span>{{ t(`wallet.notes.${row.kind}`) }}</span>
-          <RouterLink
-            v-if="row.orderId" class="wallet-ledger__order tabular"
-            :to="{ name: 'console-account-orders', query: { detail: row.orderId } }"
+          <ElButton
+            v-if="row.orderId" class="wallet-ledger__order tabular" link type="primary"
+            @click="emit('openOrder', row.orderId)"
           >
             {{ t('wallet.orderLink', { id: row.orderId }) }}
-          </RouterLink>
+          </ElButton>
         </template>
       </ElTableColumn>
       <!-- @vue-generic {WalletEntry} -->
@@ -224,10 +220,8 @@ function previousPage() {
 }
 .wallet-ledger__date-input { width: min(100%, var(--business-date-filter-width)); }
 .wallet-ledger__order {
-  display: inline-block;
   margin-inline-start: var(--space-2);
-  color: var(--color-primary);
-  text-decoration: underline;
+  white-space: normal;
   overflow-wrap: anywhere;
 }
 .wallet-ledger__amount { font-weight: var(--font-weight-semibold); }

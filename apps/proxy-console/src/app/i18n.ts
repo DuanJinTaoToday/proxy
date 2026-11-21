@@ -9,9 +9,9 @@ import { messages as authMessages } from '@/features/auth'
 import { messages as dynamicProxyMessages } from '@/features/dynamic-proxy'
 import { messages as dashboardMessages } from '@/features/dashboard/messages'
 import { messages as notificationMessages } from '@/features/notifications'
-import { messages as walletMessages } from '@/features/wallet/messages'
-import { messages as orderMessages } from '@/features/orders/messages'
-import { messages as userMessages } from '@/features/users/messages'
+import { messages as walletMessages } from '@/features/wallet'
+import { messages as orderMessages } from '@/features/orders'
+import { messages as userMessages } from '@/features/users'
 
 export const locales = ['zh-CN', 'en'] as const
 export type Locale = (typeof locales)[number]

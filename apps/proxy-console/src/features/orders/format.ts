@@ -13,10 +13,15 @@ const statusTypes = {
 
 const maxOrderId = 9_223_372_036_854_775_807n
 
-export function readOrderId(value: unknown) {
+export function readOrderSearch(value: unknown) {
   if (typeof value !== 'string') return
   const digits = value.trim().replace(/^#/, '')
-  if (!/^\d{1,19}$/.test(digits)) return
+  if (/^\d{1,19}$/.test(digits)) return digits
+}
+
+export function readOrderId(value: unknown) {
+  const digits = readOrderSearch(value)
+  if (!digits) return
   const id = BigInt(digits)
   if (id > 0n && id <= maxOrderId) return id.toString()
 }

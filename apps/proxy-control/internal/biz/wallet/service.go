@@ -135,7 +135,7 @@ func (s *Service) Orders(ctx context.Context, token, tenantID string, operations
 	if err != nil {
 		return OrderPage{}, err
 	}
-	if filter.BeforeID < 0 || filter.OrderID < 0 || !filter.validDates() ||
+	if filter.BeforeID < 0 || !filter.validOrderQuery() || !filter.validDates() ||
 		(filter.Kind != "" && !IsKind(filter.Kind)) ||
 		(filter.Status != "" && !IsStatus(filter.Status)) ||
 		(filter.Product != "" && filter.Product != "dynamic" && filter.Product != "static") {

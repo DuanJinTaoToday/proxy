@@ -850,9 +850,9 @@ paths:
                   description: 交付状态。空值表示全部。
                   schema:
                     type: string
-                - name: orderId
+                - name: orderQuery
                   in: query
-                  description: 精确匹配订单号，0 表示全部。
+                  description: 按订单号的数字片段筛选，空值表示全部。
                   schema:
                     type: string
                 - name: startDate

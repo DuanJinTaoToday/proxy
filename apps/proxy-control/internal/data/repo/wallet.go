@@ -63,7 +63,7 @@ func (r *WalletRepository) CustomerWallet(ctx context.Context, id string) (walle
 	return r.walletTenant(ctx, func(db *gorm.DB) *gorm.DB {
 		return db.Where("t.id = ?", id).Select(walletTenantColumns + `,
    COALESCE((SELECT SUM(e.after_minor - e.before_minor) FROM wallet_entries e
-      WHERE e.tenant_id = w.tenant_id AND e.kind = 'recharge'), 0)::text AS total_recharge_minor,
+      WHERE e.tenant_id = w.tenant_id AND e.kind = 'recharge' AND e.before_minor <> e.after_minor), 0)::text AS total_recharge_minor,
    COALESCE((SELECT SUM(CASE WHEN status = 'pending' THEN (` + confirmedOrderMinor + `) - refunded_minor
       ELSE debited_minor - released_minor - refunded_minor END)
       FROM purchase_orders WHERE tenant_id = w.tenant_id), 0)::text AS total_spend_minor`)
@@ -160,8 +160,8 @@ func readOrders(db *gorm.DB, tenantID string, f wallet.Filter) ([]wallet.Order, 
 	if f.Status != "" {
 		query = query.Where("status = ?", f.Status)
 	}
-	if f.OrderID > 0 {
-		query = query.Where("id = ?", f.OrderID)
+	if f.OrderQuery != "" {
+		query = query.Where("strpos(id::text, ?) > 0", f.OrderQuery)
 	}
 	if f.BeforeID > 0 {
 		query = query.Where("id < ?", f.BeforeID)
