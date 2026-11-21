@@ -26,7 +26,7 @@ type RecheckedLine = StaticPurchaseLine & { currentOffer?: StaticPurchaseOffer }
 type Checkout =
   | { kind: 'closed' }
   | { kind: 'loading' }
-  | { kind: 'confirm', quote: StaticPurchaseQuote, changed?: 'term' | 'priceOrStock' }
+  | { kind: 'confirm', quote: StaticPurchaseQuote, changed?: 'specification' | 'priceOrStock' }
   | { kind: 'blocked', rechecked?: RecheckedLine[], retry?: StaticPurchaseSelection, error: unknown }
   | { kind: 'unresolved', body: StaticPurchaseRequest, error?: unknown }
   | { kind: 'result', order: StaticPurchaseOrder, error?: unknown }
@@ -189,13 +189,16 @@ export function useStaticPurchase(accountKey: string) {
       const quote = await quoteStaticPurchase(review, filter, signal)
       if (signal.aborted) return
       updateOffers(quote.lines)
-      const termChanged = quote.lines.some(({ offer }, index) => offer.termDays !== review.lines[index]?.offer.termDays)
+      const specificationChanged = quote.lines.some(({ offer }, index) => {
+        const previous = review.lines[index]?.offer
+        return offer.termDays !== previous?.termDays || offer.region !== previous?.region || offer.isp !== previous?.isp
+      })
       const priceOrStockChanged = quote.lines.some(({ offer }, index) => {
         const previous = review.lines[index]?.offer
         return offer.unitMinor !== previous?.unitMinor || offer.available !== previous?.available
       })
-      if (!confirm || termChanged || priceOrStockChanged || (balance.value !== undefined && balance.value < staticSelectionTotal(quote.lines))) {
-        checkout.value = { kind: 'confirm', quote, changed: termChanged ? 'term' : priceOrStockChanged ? 'priceOrStock' : undefined }
+      if (!confirm || specificationChanged || priceOrStockChanged || (balance.value !== undefined && balance.value < staticSelectionTotal(quote.lines))) {
+        checkout.value = { kind: 'confirm', quote, changed: specificationChanged ? 'specification' : priceOrStockChanged ? 'priceOrStock' : undefined }
       } else {
         await runPurchase(makeStaticPurchaseRequest(quote, filter), quote)
       }

@@ -13,6 +13,7 @@ const day = 24 * 60 * 60 * 1000
 
 let usPrice = 10
 let usStock = 6
+let detailAvailable = true
 let nextOrderId = 7500
 
 function price(term, amount) {
@@ -129,6 +130,11 @@ async function handle(request, response) {
     usStock = body.stock
     return json(response, 200, { price: usPrice, stock: usStock })
   }
+  if (path === '/fixture/detail') {
+    if (typeof body.available !== 'boolean') return json(response, 400, { error: 'Expected detail availability' })
+    detailAvailable = body.available
+    return json(response, 200, { available: detailAvailable })
+  }
   if (path === '/fixture/renewals/confirm') {
     for (const [id, stoptime] of pendingRenewals) allocations.get(id).stoptime = stoptime
     pendingRenewals.clear()
@@ -146,6 +152,7 @@ async function handle(request, response) {
     case '/open/api/order/place':
       return json(response, 200, place(params))
     case '/open/api/order/detail': {
+      if (!detailAvailable) return json(response, 503, { error: 'Fixture order detail temporarily unavailable' })
       const items = orders.get(String(params.order_id))
       return json(response, 200, items
         ? { code: 0, data: { order_id: params.order_id, proxy_list: items } }

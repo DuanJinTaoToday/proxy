@@ -359,7 +359,11 @@ func (r *WalletRepository) reconcileStaticRenewal(ctx context.Context, tenant st
 		}
 		return existing, nil
 	}
-	return r.saveStaticRenewalOutcomes(ctx, tenant, id, rows, results, actor, resolution)
+	updated, err := r.saveStaticRenewalOutcomes(ctx, tenant, id, rows, results, actor, resolution)
+	if err == nil && detailUnavailable && responses == nil && actor == "" {
+		return wallet.Order{}, wallet.ErrStaticUnavailable
+	}
+	return updated, err
 }
 
 func (r *WalletRepository) renewalOutcomes(ctx context.Context, rows []staticRenewalItem, responses map[string]wallet.SupplierRenewal) (map[string]string, bool) {

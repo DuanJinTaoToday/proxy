@@ -42,7 +42,7 @@ const regions = computed(() => [...new Set(offers.value.map(offer => offer.regio
   .sort((a, b) => a.localeCompare(b, locale.value)))
 const terms = computed(() => [...new Map(offers.value.map(offer => [offer.term, { code: offer.term, days: offer.termDays }])).values()]
   .sort((a, b) => a.days - b.days))
-const currentTerm = computed(() => term.value || terms.value[0]?.code)
+const currentTerm = computed(() => terms.value.find(option => option.code === term.value)?.code ?? terms.value[0]?.code)
 const termOffers = computed(() => offers.value.filter(offer => offer.term === currentTerm.value))
 const visibleOffers = computed(() => {
   const search = keyword.value.trim().toLocaleLowerCase(locale.value)
@@ -91,6 +91,7 @@ function setShareMode(value: string | number | boolean | undefined) {
   filters.value = { shareMode: value }
 }
 function setPurpose(value: number) {
+  region.value = ''
   filters.value = { shareMode: 'shared', purposeId: value || undefined }
 }
 function resetSelection() {
@@ -268,7 +269,7 @@ function checkoutError(error: unknown) {
     <div v-else-if="checkout.kind === 'confirm' || checkout.kind === 'blocked'" class="dialog-content">
       <ElAlert v-if="checkout.kind === 'blocked'" type="warning" :title="checkoutError(checkout.error)" :closable="false" show-icon />
       <ElAlert v-else-if="checkout.changed" type="warning"
-        :title="checkout.changed === 'term' ? t('staticPricing.termChanged') : t('staticPricing.changed')" :closable="false" show-icon />
+        :title="checkout.changed === 'specification' ? t('staticPricing.specificationChanged') : t('staticPricing.changed')" :closable="false" show-icon />
       <p v-if="checkout.kind === 'confirm'">{{ t('staticPricing.confirmHint') }}</p>
       <dl class="summary-list tabular">
         <div><dt>{{ t('staticPricing.product') }}</dt><dd>{{ productLabel }}</dd></div>

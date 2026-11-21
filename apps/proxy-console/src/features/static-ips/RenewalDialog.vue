@@ -117,8 +117,16 @@ function recheck() {
   const id = order.value?.id
   if (!id) return
   return perform('checking', async () => {
-    order.value = await recheckStaticRenewal(id, controller.signal)
-    if (!controller.signal.aborted) emit('changed')
+    try {
+      order.value = await recheckStaticRenewal(id, controller.signal)
+    } catch (error) {
+      if (error instanceof ApiError && error.reason === 'STATIC_SUPPLIER_UNAVAILABLE') {
+        order.value = await getStaticRenewalOrder(id, controller.signal).catch(() => order.value)
+      }
+      throw error
+    } finally {
+      if (!controller.signal.aborted) emit('changed')
+    }
   })
 }
 

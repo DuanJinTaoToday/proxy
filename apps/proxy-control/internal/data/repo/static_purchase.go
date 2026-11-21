@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -71,8 +72,9 @@ func (r *WalletRepository) StaticOffers(ctx context.Context, shareMode string, p
 
 type staticQuotedLine struct {
 	wallet.StaticPurchaseLine
-	Available int32
-	TermDays  int32
+	Available     int32
+	TermDays      int32
+	Specification string
 }
 
 type staticQuoteToken struct {
@@ -87,6 +89,12 @@ type staticQuoteToken struct {
 	Quantity, Available int32 `json:",omitempty"`
 }
 
+func offerSpecification(offer wallet.StaticOffer) string {
+	data, _ := json.Marshal([2]string{offer.Region, offer.IPType})
+	sum := sha256.Sum256(data)
+	return base64.RawStdEncoding.EncodeToString(sum[:])
+}
+
 func (r *WalletRepository) QuoteStatic(ctx context.Context, tenant string, p wallet.StaticPurchaseRequest) (wallet.StaticQuote, error) {
 	lines, err := r.currentStaticQuotes(ctx, p)
 	if err != nil {
@@ -99,7 +107,7 @@ func (r *WalletRepository) QuoteStatic(ctx context.Context, tenant string, p wal
 			StaticPurchaseLine: wallet.StaticPurchaseLine{
 				NodeID: line.Offer.NodeID, Quantity: line.Quantity, UnitMinor: line.Offer.UnitMinor,
 			},
-			Available: line.Offer.Available, TermDays: line.Offer.TermDays,
+			Available: line.Offer.Available, TermDays: line.Offer.TermDays, Specification: offerSpecification(line.Offer),
 		})
 	}
 	content, err := json.Marshal(payload)
@@ -177,7 +185,8 @@ func (r *WalletRepository) staticPurchaseCommand(ctx context.Context, tenant str
 		if err := offer.CheckConfirmedPriceAndStock(confirmed.UnitMinor, confirmed.Available); err != nil {
 			return wallet.Command{}, err
 		}
-		if confirmed.TermDays != 0 && offer.TermDays != confirmed.TermDays {
+		if (confirmed.TermDays != 0 && offer.TermDays != confirmed.TermDays) ||
+			(confirmed.Specification != "" && offerSpecification(offer) != confirmed.Specification) {
 			return wallet.Command{}, wallet.ErrStaticQuoteExpired
 		}
 		if offer.UnitMinor > (math.MaxInt64-command.Amount)/int64(line.Quantity) {

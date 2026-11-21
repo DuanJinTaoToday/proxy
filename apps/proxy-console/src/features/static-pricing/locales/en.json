@@ -49,7 +49,7 @@
     "unresolved": "Purchase result unknown",
     "confirm": "Confirm purchase",
     "changed": "The price or stock has changed. Review the update and confirm again.",
-    "termChanged": "The lease duration has changed. Review the update and confirm again.",
+    "specificationChanged": "The region, ISP, or lease duration has changed. Review the update and confirm again.",
     "confirmHint": "We will check the price and stock again when you confirm payment. Delivered IPs are available immediately. Any confirmed unfulfilled amount returns to your wallet.",
     "afterPayment": "Balance after payment",
     "payable": "Amount due",

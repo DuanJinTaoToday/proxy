@@ -142,7 +142,7 @@ staticSalesTest('跨地区购物车一次下单，逐次复核价格和库存，
   await page.getByRole('button', { name: '立即购买' }).click()
   const dialog = page.getByRole('dialog', { name: '确认购买' })
   const pay = dialog.getByRole('button', { name: '确认支付' })
-  const usQuote = dialog.locator('.quote-line').filter({ has: dialog.getByRole('heading', { name: 'United States', exact: true }) })
+  const usQuote = dialog.locator('.quote-line').filter({ has: page.getByRole('heading', { name: 'United States', exact: true }) })
   await expect(dialog.getByText('¥39.00', { exact: true })).toBeVisible()
 
   await fixture(request, '/fixture/catalog', { price: 12, stock: 6 })
@@ -277,11 +277,53 @@ staticSalesTest('IP 筛选、复制与导出，批量续费逐项结算并从列
 
   await page.reload()
   await expect(rowFor(page, jp[2])).toContainText('续费确认中')
-  await fixture(request, '/fixture/renewals/confirm')
   await rowFor(page, jp[2]).getByRole('button', { name: '重查结果' }).click()
-  await renewDialog.getByRole('button', { name: '重查结果' }).click()
+  const recheck = renewDialog.getByRole('button', { name: '重查结果' })
+  await fixture(request, '/fixture/detail', { available: false })
+  try {
+    await recheck.click()
+    await expect(renewDialog.getByText('暂时无法查询供应商，请稍后重试。')).toBeVisible()
+    await expect(rowFor(renewDialog, jp[2])).toContainText('确认中')
+  } finally {
+    await fixture(request, '/fixture/detail', { available: true })
+  }
+  await fixture(request, '/fixture/renewals/confirm')
+  await recheck.click()
   await expect(rowFor(renewDialog, jp[2])).toContainText('成功')
   const settled = await json(await request.get(`/v1/tenant/orders/${order.id}`, { headers: tenant }))
   expect(settled).toMatchObject({ status: 'partial', delivered_count: '4', refunded_minor: '1500' })
   await screenshot(page, info, 'renewal-rechecked-after-reload')
+  await renewDialog.getByRole('button', { name: '完成' }).click()
+
+  const renewalPath = '/v1/tenant/static-renewal-orders'
+  let singleBody, singleOrder
+  await rowFor(page, jp[1]).getByRole('button', { name: '续费', exact: true }).click()
+  await renewDialog.getByRole('button', { name: '获取报价' }).click()
+  await expect(renewDialog.getByText('¥15.00', { exact: true }).first()).toBeVisible()
+  await page.route(renewalPath, async route => {
+    singleBody = route.request().postDataJSON()
+    singleOrder = await json(await route.fetch())
+    await route.abort()
+  }, { times: 1 })
+  await renewDialog.getByRole('button', { name: '确认续费' }).click()
+  await expect(renewDialog.getByText('暂未取得续费结果。请重试原提交以获取结果。')).toBeVisible()
+  expect(singleOrder).toMatchObject({ status: 'failed', refunded_minor: '1500' })
+  expect(singleBody.supplier_item_ids).toEqual(['20102'])
+
+  await page.reload()
+  await rowFor(page, jp[0]).getByRole('button', { name: '续费', exact: true }).click()
+  await renewDialog.getByRole('button', { name: '获取报价' }).click()
+  await expect(rowFor(renewDialog, jp[0])).toContainText('¥15.00')
+  await expect(rowFor(renewDialog, jp[1])).toHaveCount(0)
+  await renewDialog.getByRole('button', { name: '取消' }).click()
+  await expect(renewDialog).toBeHidden()
+
+  await page.getByRole('button', { name: '重试原提交', exact: true }).click()
+  const retry = page.waitForResponse(response => response.url().endsWith(renewalPath) && response.ok())
+  await renewDialog.getByRole('button', { name: '重试原提交' }).click()
+  const replayed = await retry
+  expect(replayed.request().postDataJSON()).toEqual(singleBody)
+  expect(await replayed.json()).toMatchObject({ id: singleOrder.id, status: 'failed' })
+  await expect(rowFor(renewDialog, jp[1])).toContainText('失败')
+  await screenshot(page, info, 'single-renewal-original-request-replayed')
 })
