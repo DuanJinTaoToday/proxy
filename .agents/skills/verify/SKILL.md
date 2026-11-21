@@ -25,6 +25,7 @@ npm --prefix tests/verify test
 
 | 路径 | 操作与判断依据 | 自动化 |
 | --- | --- | --- |
+| 租户管理代理子账号 | 从客户控制台创建子账号，核对账号名和密码校验、服务端重名提示、SOCKS5 用户名及创建时间。编辑备注、设置和调高上限、取消限制，修改并复制密码，确认启用和禁用后搜索、筛选、刷新核对。禁用账号计入 10 个名额。验证列表加载失败后重试和窄屏布局。 | [console-subaccounts.spec.mjs](../../../tests/verify/scenarios/console-subaccounts.spec.mjs) |
 | 前端骨架 → 路由、双语与版式 | 访问 `/` 进入中文首页，直接打开控制台和运营深链显示对应布局与菜单，页签可后退，未知路径显示未找到页。控制台切换语言保持 URL 并在刷新后保留，官网切换到对应语言路由。在 390 px 与 1280 px 下检查两种语言无横向溢出，窄屏抽屉导航可用。 | [console-skeleton.spec.mjs](../../../tests/verify/scenarios/console-skeleton.spec.mjs) |
 | 注册、登录与会话 | 未登录访问控制台跳到登录页并带回跳；账密错误有提示，登录后回到原页，刷新保持登录。账号菜单显示主账号名和脱敏手机号，退出需确认，退出后控制台再次要求登录。新号码注册后直接进入控制台，站外回跳被拒；同号码（带或不带 +86）重复注册被拒。伪造凭据被拒绝时清理会话并回到登录页。 | [console-auth.spec.mjs](../../../tests/verify/scenarios/console-auth.spec.mjs) |
 | 运营充值 → 租户看到到账 | 租户从钱包流水读取余额。运营查找同一租户，核对租户名、主账号、10.00 元金额、预计余额和本轮唯一原因，确认后获取流水号。租户刷新两次，每次核对余额增量、该编号的唯一流水以及流水上的金额和余额。 | [wallet-recharge.spec.mjs](../../../tests/verify/scenarios/wallet-recharge.spec.mjs) |

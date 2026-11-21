@@ -61,6 +61,7 @@
     "home": "Back to home"
   },
   "errors": {
+    "SUBACCOUNT_LIMIT_REACHED": "All subaccount slots are used, including disabled accounts.",
     "INVALID_PHONE": "Enter a valid mainland China mobile number.",
     "INVALID_PASSWORD": "The password must be at least 12 characters long.",
     "PHONE_ALREADY_REGISTERED": "This phone number is already registered. Sign in instead.",
