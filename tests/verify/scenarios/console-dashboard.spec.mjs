@@ -2,6 +2,8 @@ import { execFileSync } from 'node:child_process'
 import { expect, test } from '@playwright/test'
 import { field, screenshot } from '../support/console.mjs'
 
+test.use({ reducedMotion: 'reduce' })
+
 const dateInShanghai = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Shanghai', dateStyle: 'short' })
 const notificationButton = page => page.getByRole('button', { name: /^通知(?:（有未读提醒）)?$/ })
 const unreadButton = page => page.getByRole('button', { name: '通知（有未读提醒）', exact: true })
