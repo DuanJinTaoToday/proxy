@@ -6,7 +6,6 @@ import { screenshot, signInTenant } from '../support/console.mjs'
 
 const catalogPath = '/v1/public/static-offers'
 const tenantOrderPath = '/v1/tenant/static-orders'
-const opsTenant = '/v1/operations/tenants/alpha'
 const password = 'proxy-local-test'
 
 test.use({ actionTimeout: 7000 })
@@ -21,13 +20,19 @@ async function authenticated(request, path, credentials) {
   return { Authorization: `Bearer ${result.access_token}` }
 }
 
-async function openStaticSales(request, headers) {
+async function registerStaticTenant(request, phone) {
+  const { tenant_id } = await json(await request.post('/v1/access/register', { data: { phone, password } }))
+  const headers = await authenticated(request, '/v1/access/login', { phone })
+  return { id: tenant_id, headers, opsPath: '/v1/operations/tenants/' + tenant_id }
+}
+
+async function openStaticSales(request, headers, tenant) {
   const request_key = randomUUID()
-  const { confirmation_token } = await json(await request.post(`${opsTenant}/wallet/recharge-quotes`, {
-    headers, data: { tenant_id: 'alpha', request_key, amount_minor: '30000', reason: 'Issue #74 verification' },
+  const { confirmation_token } = await json(await request.post(`${tenant.opsPath}/wallet/recharge-quotes`, {
+    headers, data: { tenant_id: tenant.id, request_key, amount_minor: '30000', reason: 'Issue #74 verification' },
   }))
-  await json(await request.post(`${opsTenant}/wallet/recharges`, {
-    headers, data: { tenant_id: 'alpha', request_key, confirmation_token },
+  await json(await request.post(`${tenant.opsPath}/wallet/recharges`, {
+    headers, data: { tenant_id: tenant.id, request_key, confirmation_token },
   }))
   await json(await request.put('/v1/operations/product-sales/static', {
     headers, data: { open: true, quote_ready: true, acceptance_evidence: 'Issue #74 isolated supplier fixture' },
@@ -38,9 +43,9 @@ const staticSalesTest = test.extend({
   openSales: async ({ request }, use) => {
     let headers
     try {
-      await use(async () => {
+      await use(async tenant => {
         headers = await authenticated(request, '/v1/operations/access/login', { username: 'operator' })
-        await openStaticSales(request, headers)
+        await openStaticSales(request, headers, tenant)
         return headers
       })
     } finally {
@@ -98,11 +103,13 @@ test('静态代理教程中英文可完整切换并返回 IP 列表', async ({ p
 })
 
 staticSalesTest('跨地区购物车一次下单，逐次复核价格和库存，部分交付退款', async ({ page, request, openSales }, info) => {
-  await signInTenant(page)
+  const phone = '13900007401'
+  const account = await registerStaticTenant(request, phone)
+  const tenant = account.headers
+  await signInTenant(page, phone)
   await page.goto('/console/static/pricing')
   await expect(page.getByText('静态住宅代理暂未开放购买')).toBeVisible()
-  const ops = await openSales()
-  const tenant = await authenticated(request, '/v1/access/login', { phone: '13800000001' })
+  const ops = await openSales(account)
   const orders = async () => (await json(await request.get('/v1/tenant/orders?kind=static_purchase', { headers: tenant }))).orders ?? []
 
   await page.reload()
@@ -195,7 +202,7 @@ staticSalesTest('跨地区购物车一次下单，逐次复核价格和库存，
   await page.reload()
   const pendingOrder = page.getByRole('button', { name: `查看待确认订单 ${order.id}`, exact: true })
   await expect(pendingOrder).toBeVisible()
-  await json(await request.post(`${opsTenant}/orders/${order.id}/static-resolution`, {
+  await json(await request.post(`${account.opsPath}/orders/${order.id}/static-resolution`, {
     headers: ops,
     data: { evidence: 'Fixture confirmed remaining IP could not be delivered', close_remaining: true, confirmed_undeliverable: true },
   }))
@@ -215,8 +222,10 @@ staticSalesTest('跨地区购物车一次下单，逐次复核价格和库存，
 })
 
 staticSalesTest('IP 筛选、复制与导出，批量续费逐项结算并从列表重查', async ({ page, request, context, openSales }, info) => {
-  const ops = await openSales()
-  const tenant = await authenticated(request, '/v1/access/login', { phone: '13800000001' })
+  const phone = '13900007402'
+  const account = await registerStaticTenant(request, phone)
+  const tenant = account.headers
+  const ops = await openSales(account)
   const jp = ['198.51.100.201', '198.51.100.202', '198.51.100.203']
 
   await fixture(request, '/fixture/catalog', { price: 10, stock: 6 })
@@ -232,7 +241,7 @@ staticSalesTest('IP 筛选、复制与导出，批量续费逐项结算并从列
   const usIP = allocations.find(ip => ip.order_id === us.id).ip
   const sharedIP = allocations.find(ip => ip.order_id === shared.id).ip
 
-  await signInTenant(page)
+  await signInTenant(page, phone)
   await page.goto('/console/static/ips')
   await expect(rowFor(page, jp[0])).toContainText('即将到期')
   const expiringFilter = page.getByRole('button', { name: '即将到期 IP 数' })
@@ -288,7 +297,7 @@ staticSalesTest('IP 筛选、复制与导出，批量续费逐项结算并从列
   const outcomes = order => Object.fromEntries(order.items.map(item => [item.supplier_item_id, item.outcome]))
   expect(outcomes(order)).toMatchObject({ 20101: 'succeeded', 20102: 'pending', 20103: 'pending' })
 
-  await json(await request.post(`${opsTenant}/orders/${order.id}/renewal-resolution`, {
+  await json(await request.post(`${account.opsPath}/orders/${order.id}/renewal-resolution`, {
     headers: ops,
     data: { supplier_item_id: '20102', confirmed_failure: true, evidence: 'Fixture confirmed renewal failed' },
   }))
