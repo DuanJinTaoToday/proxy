@@ -1,0 +1,30 @@
+{
+  "name": "proxy-console",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "typecheck": "vue-tsc --noEmit",
+    "check:i18n": "node scripts/check-i18n.mjs",
+    "build": "npm run typecheck && npm run check:i18n && vite build",
+    "preview": "vite preview"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "dependencies": {
+    "@element-plus/icons-vue": "2.3.2",
+    "dayjs": "1.11.23",
+    "element-plus": "2.14.8",
+    "vue": "3.5.45",
+    "vue-i18n": "11.4.23",
+    "vue-router": "4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "@vitejs/plugin-vue": "6.0.11",
+    "typescript": "6.0.3",
+    "vite": "7.3.8",
+    "vue-tsc": "3.3.14"
+  }
+}

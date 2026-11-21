@@ -18,6 +18,7 @@
 !apps/proxy-console/index.html
 !apps/proxy-console/tsconfig*.json
 !apps/proxy-console/vite.config.ts
+!apps/proxy-console/scripts/**
 !apps/proxy-console/src/**
 !apps/proxy-console/public/**
 apps/proxy-console/node_modules

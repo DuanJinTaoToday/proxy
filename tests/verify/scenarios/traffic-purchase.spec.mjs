@@ -2,7 +2,8 @@ import { test, expect } from '@playwright/test'
 import { findTenant, login, prepareRecharge, screenshot, submitRecharge } from '../support/console.mjs'
 import { expectTrafficPurchaseRecords, openTrafficPackages, openTrafficSale, openWalletOrders, trafficSaleSettings } from '../support/traffic.mjs'
 
-test('流量套餐开售 → 余额不足 → 充值后扣款并到账', async ({ browser, page: tenant, baseURL }, info) => {
+// 旧控制台已在 #77 移除。新控制台交付登录（#69）、动态购买（#72）、钱包（#76）和运营充值页面后，改用新页面恢复本场景。
+test.fixme('流量套餐开售 → 余额不足 → 充值后扣款并到账', async ({ browser, page: tenant, baseURL }, info) => {
   const operatorContext = await browser.newContext({ baseURL, ignoreHTTPSErrors: true })
   const operator = await operatorContext.newPage()
   const nav = tenant.getByRole('navigation', { name: '租户导航' })

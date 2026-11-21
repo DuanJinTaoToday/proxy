@@ -1,0 +1,85 @@
+/* 设计 token。页面只消费这里的语义角色，调整主题时只改本文件。 */
+:root {
+  /* 颜色 */
+  --color-primary: #086950;
+  --color-primary-hover: #177d63;
+  --color-primary-active: #074c3d;
+  --color-primary-soft: #e7f6ef;
+  --color-primary-border: #74ae9e;
+  --color-on-primary: #ffffff;
+  --color-accent: #b3f0d7;
+  --color-canvas: #f4f6f5;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f7faf8;
+  --color-text: #172322;
+  --color-text-secondary: #556562;
+  --color-text-disabled: #9aa7a4;
+  --color-border: #dee5e1;
+  --color-focus: #138467;
+  --color-disabled-bg: #eef2f0;
+
+  --color-shell: #142522;
+  --color-shell-active: #294940;
+  --color-shell-text: #d9e6e2;
+  --color-shell-muted: #9fb3ad;
+  --color-shell-hover: rgba(255, 255, 255, .06);
+
+  --color-success-text: #086950;
+  --color-success-bg: #e7f6ef;
+  --color-success-border: #b8e2cf;
+  --color-warning-text: #865319;
+  --color-warning-bg: #fff2db;
+  --color-warning-border: #f0d4a8;
+  --color-danger-text: #b42318;
+  --color-danger-bg: #fdecea;
+  --color-danger-border: #f5c2bc;
+  --color-info-text: #285a8f;
+  --color-info-bg: #e8f1fb;
+  --color-info-border: #bcd4ef;
+
+  /* 字体 */
+  --font-sans: "Noto Sans SC", "Microsoft YaHei UI", "PingFang SC", "Helvetica Neue", system-ui, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Mono", Consolas, "SFMono-Regular", monospace;
+  --font-size-xs: 12px;
+  --font-size-sm: 13px;
+  --font-size-md: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 18px;
+  --font-size-title: 24px;
+  --font-size-display: 36px;
+  --font-size-brand: 20px;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --line-height-tight: 1.3;
+  --line-height-normal: 1.55;
+
+  /* 间距与密度 */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --control-height: 34px;
+  --control-height-compact: 30px;
+  --nav-item-height: 40px;
+  --tabs-height: 42px;
+  --brand-mark-size: 32px;
+  --icon-size: 16px;
+  --header-height: 64px;
+  --sidebar-width: 232px;
+  --content-max-width: 1440px;
+  --content-narrow-width: 720px;
+  --page-padding: var(--space-5);
+  --focus-ring-width: 2px;
+
+  /* 圆角、边框与阴影 */
+  --radius-control: 6px;
+  --radius-card: 10px;
+  --border-width: 1px;
+  --shadow-card: 0 1px 2px rgba(20, 37, 34, .04);
+  --shadow-overlay: 0 10px 30px rgba(20, 37, 34, .12);
+}

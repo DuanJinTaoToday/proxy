@@ -1,0 +1,78 @@
+{
+  "app": {
+    "name": "Proxy",
+    "consoleTitle": "用户控制台",
+    "opsTitle": "运营控制台",
+    "opsBadge": "运营"
+  },
+  "locale": {
+    "zh-CN": "简体中文",
+    "en": "English"
+  },
+  "nav": {
+    "consoleNav": "控制台导航",
+    "opsNav": "运营导航",
+    "openMenu": "打开导航",
+    "groupProxy": "代理",
+    "groupManage": "管理",
+    "home": "首页",
+    "dashboard": "仪表板",
+    "dynamic": "动态住宅代理-GB",
+    "static": "静态住宅代理",
+    "subAccounts": "代理子账号",
+    "wallet": "钱包",
+    "account": "我的账户",
+    "opsTenants": "租户管理",
+    "opsProducts": "商品管理",
+    "opsOrders": "订单处理"
+  },
+  "tabs": {
+    "dynamicSetup": "代理设置",
+    "dynamicPricing": "价格",
+    "dynamicUsage": "数据统计",
+    "guide": "使用教程",
+    "staticIps": "IP 列表",
+    "staticPricing": "价格",
+    "accountProfile": "账户信息",
+    "accountOrders": "订单记录",
+    "productsDynamic": "动态住宅代理-GB",
+    "productsStatic": "静态住宅代理"
+  },
+  "header": {
+    "notifications": "通知",
+    "noNotifications": "暂无通知",
+    "guestNotifications": "登录后可查看账户通知。",
+    "language": "语言：{name}",
+    "login": "登录",
+    "register": "注册"
+  },
+  "page": {
+    "pending": "这一页正在建设中",
+    "pendingHint": "功能上线后会显示在这里。"
+  },
+  "home": {
+    "title": "稳定的住宅代理，按需购买",
+    "subtitle": "动态住宅代理按 GB 计费，静态住宅 IP 按租期购买，均通过 SOCKS5 接入。",
+    "console": "进入控制台"
+  },
+  "auth": {
+    "loginTitle": "登录",
+    "registerTitle": "注册"
+  },
+  "notFound": {
+    "title": "页面不存在",
+    "description": "请检查地址是否正确，或返回首页。",
+    "home": "返回首页"
+  },
+  "errors": {
+    "INVALID_PHONE": "请输入有效的中国大陆手机号。",
+    "INVALID_PASSWORD": "密码至少需要 12 位。",
+    "PHONE_ALREADY_REGISTERED": "该手机号已注册，请直接登录。",
+    "INVALID_LOGIN": "账号或密码错误。",
+    "AUTHENTICATION_REQUIRED": "登录已失效，请重新登录。",
+    "ACCESS_DENIED": "没有执行该操作的权限。",
+    "LOGIN_BUSY": "请求过于频繁，请稍后再试。",
+    "network": "网络连接失败，请检查网络后重试。",
+    "unknown": "请求失败，请稍后重试。（{status}）"
+  }
+}

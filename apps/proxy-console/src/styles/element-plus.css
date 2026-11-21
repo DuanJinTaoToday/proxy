@@ -1,0 +1,55 @@
+/* 在 Element Plus 默认样式之后加载，把语义 token 映射到 --el-*。挂在根元素上，传送到 body 的浮层同样生效。 */
+:root {
+  --el-color-primary: var(--color-primary);
+  --el-color-primary-light-3: var(--color-primary-hover);
+  --el-color-primary-light-5: var(--color-primary-border);
+  --el-color-primary-light-7: var(--color-success-border);
+  --el-color-primary-light-8: var(--color-success-border);
+  --el-color-primary-light-9: var(--color-primary-soft);
+  --el-color-primary-dark-2: var(--color-primary-active);
+
+  --el-color-success: var(--color-success-text);
+  --el-color-success-light-9: var(--color-success-bg);
+  --el-color-success-light-8: var(--color-success-border);
+  --el-color-warning: var(--color-warning-text);
+  --el-color-warning-light-9: var(--color-warning-bg);
+  --el-color-warning-light-8: var(--color-warning-border);
+  --el-color-danger: var(--color-danger-text);
+  --el-color-danger-light-9: var(--color-danger-bg);
+  --el-color-danger-light-8: var(--color-danger-border);
+  --el-color-error: var(--color-danger-text);
+  --el-color-info: var(--color-info-text);
+  --el-color-info-light-9: var(--color-info-bg);
+  --el-color-info-light-8: var(--color-info-border);
+
+  --el-text-color-primary: var(--color-text);
+  --el-text-color-regular: var(--color-text);
+  --el-text-color-secondary: var(--color-text-secondary);
+  --el-text-color-placeholder: var(--color-text-disabled);
+  --el-text-color-disabled: var(--color-text-disabled);
+  --el-bg-color: var(--color-surface);
+  --el-bg-color-overlay: var(--color-surface);
+  --el-bg-color-page: var(--color-canvas);
+  --el-fill-color-light: var(--color-surface-muted);
+  --el-fill-color-lighter: var(--color-surface-muted);
+  --el-disabled-bg-color: var(--color-disabled-bg);
+  --el-border-color: var(--color-border);
+  --el-border-color-light: var(--color-border);
+  --el-border-color-lighter: var(--color-border);
+
+  --el-font-family: var(--font-sans);
+  --el-font-size-base: var(--font-size-md);
+  --el-font-size-small: var(--font-size-sm);
+  --el-font-size-extra-small: var(--font-size-xs);
+  --el-border-radius-base: var(--radius-control);
+  --el-border-radius-small: var(--radius-control);
+  --el-component-size: var(--control-height);
+  --el-box-shadow-light: var(--shadow-overlay);
+  --el-box-shadow: var(--shadow-overlay);
+  --el-card-border-radius: var(--radius-card);
+}
+
+/* 运营控制台使用紧凑密度。 */
+.density-compact {
+  --el-component-size: var(--control-height-compact);
+}

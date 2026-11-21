@@ -1,0 +1,78 @@
+{
+  "app": {
+    "name": "Proxy",
+    "consoleTitle": "Console",
+    "opsTitle": "Operations Console",
+    "opsBadge": "Ops"
+  },
+  "locale": {
+    "zh-CN": "简体中文",
+    "en": "English"
+  },
+  "nav": {
+    "consoleNav": "Console navigation",
+    "opsNav": "Operations navigation",
+    "openMenu": "Open navigation",
+    "groupProxy": "Proxies",
+    "groupManage": "Manage",
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "dynamic": "Rotating Residential (GB)",
+    "static": "Static Residential",
+    "subAccounts": "Proxy Sub-accounts",
+    "wallet": "Wallet",
+    "account": "My Account",
+    "opsTenants": "Tenants",
+    "opsProducts": "Products",
+    "opsOrders": "Order Handling"
+  },
+  "tabs": {
+    "dynamicSetup": "Proxy Setup",
+    "dynamicPricing": "Pricing",
+    "dynamicUsage": "Usage Statistics",
+    "guide": "Guide",
+    "staticIps": "IP List",
+    "staticPricing": "Pricing",
+    "accountProfile": "Account Details",
+    "accountOrders": "Order History",
+    "productsDynamic": "Rotating Residential (GB)",
+    "productsStatic": "Static Residential"
+  },
+  "header": {
+    "notifications": "Notifications",
+    "noNotifications": "No notifications",
+    "guestNotifications": "Sign in to see notifications for your account.",
+    "language": "Language: {name}",
+    "login": "Sign in",
+    "register": "Sign up"
+  },
+  "page": {
+    "pending": "This page is under construction",
+    "pendingHint": "It will appear here once the feature is available."
+  },
+  "home": {
+    "title": "Reliable residential proxies, bought as you need them",
+    "subtitle": "Rotating residential proxies are billed per GB and static residential IPs by rental period, both over SOCKS5.",
+    "console": "Open console"
+  },
+  "auth": {
+    "loginTitle": "Sign in",
+    "registerTitle": "Sign up"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "description": "Check that the address is correct, or go back to the home page.",
+    "home": "Back to home"
+  },
+  "errors": {
+    "INVALID_PHONE": "Enter a valid mainland China mobile number.",
+    "INVALID_PASSWORD": "The password must be at least 12 characters long.",
+    "PHONE_ALREADY_REGISTERED": "This phone number is already registered. Sign in instead.",
+    "INVALID_LOGIN": "Incorrect account or password.",
+    "AUTHENTICATION_REQUIRED": "Your session has expired. Sign in again.",
+    "ACCESS_DENIED": "You do not have permission to do this.",
+    "LOGIN_BUSY": "Too many requests. Try again later.",
+    "network": "Network connection failed. Check your connection and try again.",
+    "unknown": "The request failed. Try again later. ({status})"
+  }
+}
