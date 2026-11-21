@@ -11,7 +11,7 @@ option go_package = "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxyc
 
 service ProductService {
   rpc ListProducts(BaseRequest) returns (Products) {
-    option (google.api.http) = {get: "/public/products"};
+    option (google.api.http) = {get: "/v1/public/products"};
     option (openapi.v3.operation) = {summary: "查看两类商品的开售状态及公开套餐"};
   }
 

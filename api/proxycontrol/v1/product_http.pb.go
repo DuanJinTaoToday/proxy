@@ -31,7 +31,7 @@ type ProductServiceHTTPServer interface {
 
 func RegisterProductServiceHTTPServer(s *http.Server, srv ProductServiceHTTPServer) {
 	r := s.Route("/")
-	r.Handle("GET", "/public/products", _ProductService_ListProducts0_HTTP_Handler(srv))
+	r.Handle("GET", "/v1/public/products", _ProductService_ListProducts0_HTTP_Handler(srv))
 	r.Handle("GET", "/v1/operations/traffic-packages", _ProductService_ListTrafficPackages0_HTTP_Handler(srv))
 	r.Handle("PATCH", "/v1/operations/traffic-packages/{id}", _ProductService_UpdateTrafficPackage0_HTTP_Handler(srv))
 	r.Handle("PUT", "/v1/operations/product-sales/{kind}", _ProductService_SetProductSale0_HTTP_Handler(srv))
@@ -136,7 +136,7 @@ func NewProductServiceHTTPClient(client *http.Client) ProductServiceHTTPClient {
 
 func (c *ProductServiceHTTPClientImpl) ListProducts(ctx context.Context, in *BaseRequest, opts ...http.CallOption) (*Products, error) {
 	var out Products
-	pattern := "/public/products"
+	pattern := "/v1/public/products"
 	path := http.BuildPath(pattern, in, http.WithQueryParams())
 	opts = append([]http.CallOption{
 		http.Accept("application/protojson"),
