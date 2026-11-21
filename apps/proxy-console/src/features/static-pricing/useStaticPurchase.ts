@@ -54,6 +54,15 @@ function storeRequest(storageKey: string, body?: StaticPurchaseRequest) {
   }
 }
 
+function readPendingOrders(key: string): string[] {
+  try {
+    const saved: unknown = JSON.parse(sessionStorage.getItem(key) ?? '[]')
+    return Array.isArray(saved) ? saved.filter((id): id is string => typeof id === 'string' && /^[1-9]\d*$/.test(id)) : []
+  } catch {
+    return []
+  }
+}
+
 const quoteConflicts = new Set([
   'STATIC_PRICE_CHANGED',
   'STATIC_STOCK_CHANGED',
@@ -73,8 +82,10 @@ function reason(error: unknown) {
   return error instanceof ApiError ? error.reason : ''
 }
 
-export function useStaticPurchase(accountKey: string) {
+export function useStaticPurchase(accountKey: string, onPurchase: () => void) {
   const storageKey = `proxy-console.static-purchase.${accountKey}`
+  const pendingKey = `${storageKey}.pending-orders`
+  const pendingOrderIds = shallowRef(readPendingOrders(pendingKey))
   const restored = restoreRequest(storageKey)
   const filters = ref<StaticCatalogFilter>(restored?.share_mode === 'shared'
     ? { shareMode: 'shared', purposeId: restored.purpose_id }
@@ -152,13 +163,28 @@ export function useStaticPurchase(accountKey: string) {
     checkout.value = { kind: 'blocked', rechecked, retry, error }
   }
 
+  function showOrder(order: StaticPurchaseOrder) {
+    const pending = new Set(pendingOrderIds.value)
+    if (order.status === 'pending') pending.add(order.id)
+    else pending.delete(order.id)
+    pendingOrderIds.value = [...pending]
+    try {
+      if (pending.size) sessionStorage.setItem(pendingKey, JSON.stringify(pendingOrderIds.value))
+      else sessionStorage.removeItem(pendingKey)
+    } catch {
+      // Pending results remain available while the page stays open.
+    }
+    checkout.value = { kind: 'result', order }
+  }
+
   async function runPurchase(body: StaticPurchaseRequest, review?: StaticPurchaseSelection) {
     storeRequest(storageKey, body)
     try {
       const order = await purchaseStaticIP(body, signal)
       if (signal.aborted) return
       storeRequest(storageKey)
-      checkout.value = { kind: 'result', order }
+      showOrder(order)
+      onPurchase()
       void loadWallet()
       void loadCatalog()
     } catch (error) {
@@ -192,6 +218,7 @@ export function useStaticPurchase(accountKey: string) {
       const specificationChanged = quote.lines.some(({ offer }, index) => {
         const previous = review.lines[index]?.offer
         return offer.termDays !== previous?.termDays || offer.region !== previous?.region || offer.isp !== previous?.isp
+          || offer.continent !== previous?.continent || offer.line !== previous?.line
       })
       const priceOrStockChanged = quote.lines.some(({ offer }, index) => {
         const previous = review.lines[index]?.offer
@@ -219,17 +246,25 @@ export function useStaticPurchase(accountKey: string) {
     }
   }
 
-  async function refreshOrder(order: StaticPurchaseOrder) {
+  async function refreshOrder(id: string, previous?: StaticPurchaseOrder) {
     if (busy.value) return
     busy.value = true
+    lastError.value = undefined
+    if (!previous) checkout.value = { kind: 'loading' }
     try {
-      const current = await getStaticPurchaseOrder(order.id, signal)
+      const current = await getStaticPurchaseOrder(id, signal)
       if (!signal.aborted) {
-        checkout.value = { kind: 'result', order: current }
+        showOrder(current)
         void loadWallet()
       }
     } catch (error) {
-      if (!signal.aborted) checkout.value = { kind: 'result', order, error }
+      if (signal.aborted) return
+      if (previous) {
+        checkout.value = { kind: 'result', order: previous, error }
+      } else {
+        checkout.value = { kind: 'closed' }
+        lastError.value = error
+      }
     } finally {
       busy.value = false
     }
@@ -243,7 +278,7 @@ export function useStaticPurchase(accountKey: string) {
   void loadWallet()
 
   return {
-    filters, catalog, wallet, balance, checkout, busy, lastError, loadCatalog, loadWallet,
+    filters, catalog, wallet, balance, checkout, busy, lastError, pendingOrderIds, loadCatalog, loadWallet,
     reviewPurchase, retryPurchase, refreshOrder, closeCheckout,
   }
 }

@@ -8,6 +8,8 @@ interface StaticOfferWire {
   node_id: string
   region?: string
   ip_type?: string
+  continent?: string
+  line?: string
   term: string
   term_days: number
   unit_minor: string
@@ -19,6 +21,8 @@ function toOffer(wire: StaticOfferWire) {
     nodeId: String(wire.node_id),
     region: wire.region ?? '',
     isp: wire.ip_type ?? '',
+    continent: wire.continent ?? '',
+    line: wire.line ?? '',
     term: wire.term,
     termDays: wire.term_days,
     unitMinor: BigInt(wire.unit_minor),

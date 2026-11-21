@@ -2078,6 +2078,12 @@ components:
                     type: integer
                     description: 共享用途。缺省为不指定用途。
                     format: int32
+                continent:
+                    type: string
+                    description: 皇冠返回的大洲显示名，空值表示未提供。
+                line:
+                    type: string
+                    description: 皇冠返回的代理线路，空值表示未提供。
         proxycontrol.v1.StaticOffers:
             type: object
             properties:
@@ -2098,11 +2104,14 @@ components:
             properties:
                 nodeId:
                     type: string
+                    description: 客户已确认的皇冠节点 ID。
                 quantity:
                     type: integer
+                    description: 该节点已确认的 IP 数量。
                     format: int32
                 unitMinor:
                     type: string
+                    description: 该节点每个 IP 的已确认租期总价，单位人民币分。
         proxycontrol.v1.StaticPurchaseQuote:
             type: object
             properties:
@@ -2130,9 +2139,12 @@ components:
             type: object
             properties:
                 offer:
-                    $ref: '#/components/schemas/proxycontrol.v1.StaticOffer'
+                    allOf:
+                        - $ref: '#/components/schemas/proxycontrol.v1.StaticOffer'
+                    description: 该节点的当前价格和库存。
                 quantity:
                     type: integer
+                    description: 该报价对应的请求购买 IP 数量。
                     format: int32
         proxycontrol.v1.StaticPurchaseQuoteRequest:
             type: object
@@ -2164,8 +2176,10 @@ components:
             properties:
                 nodeId:
                     type: string
+                    description: 客户选择的皇冠节点 ID。
                 quantity:
                     type: integer
+                    description: 该节点请求购买的 IP 数量。
                     format: int32
         proxycontrol.v1.StaticRenewalQuote:
             type: object

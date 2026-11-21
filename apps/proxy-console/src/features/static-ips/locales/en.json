@@ -11,6 +11,7 @@
     "filterStatus": "Filter by status",
     "filterRegion": "Filter by region",
     "allStatuses": "All statuses",
+    "availableFilter": "All usable IPs",
     "allRegions": "All regions",
     "unknownRegion": "Unknown region",
     "selection": "{count} selected",

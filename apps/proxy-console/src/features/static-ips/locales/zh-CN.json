@@ -11,6 +11,7 @@
     "filterStatus": "按状态筛选",
     "filterRegion": "按地区筛选",
     "allStatuses": "全部状态",
+    "availableFilter": "全部可用",
     "allRegions": "全部地区",
     "unknownRegion": "地区未知",
     "selection": "已选择 {count} 个",

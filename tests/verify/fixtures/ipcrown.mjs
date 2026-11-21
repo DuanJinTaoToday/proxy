@@ -23,15 +23,15 @@ function price(term, amount) {
 function catalog(cid, pid = 0) {
   if (cid === exclusive) {
     return [
-      { id: 101, title: 'United States', isp: '独享', max: usStock, prices: [price('yp1', usPrice), price('yp3', 27)] },
-      { id: 111, title: 'Canada', isp: '独享', max: 5, prices: [price('yp1', 9)] },
-      { id: 201, title: 'Japan', isp: '独享', max: 6, prices: [price('yp1', 15), price('yp6', 80)] },
+      { id: 101, title: 'United States', continent: 'North America', line: 'Residential', isp: '独享', max: usStock, prices: [price('yp1', usPrice), price('yp3', 27)] },
+      { id: 111, title: 'Canada', continent: 'North America', line: 'Residential', isp: '独享', max: 5, prices: [price('yp1', 9)] },
+      { id: 201, title: 'Japan', continent: 'Asia', line: 'ISP', isp: '独享', max: 6, prices: [price('yp1', 15), price('yp6', 80)] },
     ]
   }
   const monthly = sharedPrices.get(pid)
   if (cid === shared && monthly !== undefined) {
     return [
-      { id: 301, title: 'Singapore', isp: '共享', max: 5, prices: [price('rp', 1), price('zp', 3), price('yp1', monthly)] },
+      { id: 301, title: 'Singapore', continent: 'Asia', line: 'Residential', isp: '共享', max: 5, prices: [price('rp', 1), price('zp', 3), price('yp1', monthly)] },
     ]
   }
   return []

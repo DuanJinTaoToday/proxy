@@ -59,6 +59,8 @@ type node struct {
 	ID        int64   `json:"id"`
 	Title     string  `json:"title"`
 	ISP       string  `json:"isp"`
+	Continent string  `json:"continent"`
+	Line      string  `json:"line"`
 	Available int32   `json:"max"`
 	Prices    []price `json:"prices"`
 }
@@ -86,7 +88,7 @@ func (c *Client) Offers(ctx context.Context, shareMode string, purposeID int32) 
 			}
 			offers = append(offers, wallet.StaticOffer{NodeID: node.ID, Region: node.Title, IPType: node.ISP,
 				Term: price.Term, TermDays: days, UnitMinor: amount, Available: max(0, node.Available),
-				ShareMode: shareMode, PurposeID: purposeID})
+				ShareMode: shareMode, PurposeID: purposeID, Continent: node.Continent, Line: node.Line})
 		}
 	}
 	return offers, nil

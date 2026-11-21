@@ -31,7 +31,8 @@ func (s *Wallet) ListStaticOffers(ctx context.Context, req *v1.StaticOffersReque
 
 func staticOfferMessage(offer wallet.StaticOffer) *v1.StaticOffer {
 	return &v1.StaticOffer{NodeId: offer.NodeID, Region: offer.Region, IpType: offer.IPType, Term: offer.Term,
-		TermDays: offer.TermDays, UnitMinor: offer.UnitMinor, Available: offer.Available, ShareMode: offer.ShareMode, PurposeId: offer.PurposeID}
+		TermDays: offer.TermDays, UnitMinor: offer.UnitMinor, Available: offer.Available, ShareMode: offer.ShareMode, PurposeId: offer.PurposeID,
+		Continent: offer.Continent, Line: offer.Line}
 }
 
 func (s *Wallet) QuoteStaticPurchase(ctx context.Context, req *v1.StaticPurchaseQuoteRequest) (*v1.StaticPurchaseQuote, error) {

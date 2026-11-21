@@ -90,7 +90,7 @@ type staticQuoteToken struct {
 }
 
 func offerSpecification(offer wallet.StaticOffer) string {
-	data, _ := json.Marshal([2]string{offer.Region, offer.IPType})
+	data, _ := json.Marshal([4]string{offer.Region, offer.IPType, offer.Continent, offer.Line})
 	sum := sha256.Sum256(data)
 	return base64.RawStdEncoding.EncodeToString(sum[:])
 }

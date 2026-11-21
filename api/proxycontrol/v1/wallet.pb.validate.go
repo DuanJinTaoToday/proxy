@@ -2779,6 +2779,10 @@ func (m *StaticOffer) validate(all bool) error {
 
 	// no validation rules for PurposeId
 
+	// no validation rules for Continent
+
+	// no validation rules for Line
+
 	if len(errors) > 0 {
 		return StaticOfferMultiError(errors)
 	}

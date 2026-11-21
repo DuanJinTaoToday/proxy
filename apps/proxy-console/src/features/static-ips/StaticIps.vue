@@ -43,7 +43,7 @@ const copying = ref<string>()
 const exporting = ref(false)
 const listError = shallowRef<unknown>()
 const keyword = ref('')
-const statusFilter = ref<Status | ''>('')
+const statusFilter = ref<Status | 'available' | ''>('')
 const regionFilter = ref('')
 const selected = shallowRef<StaticIp[]>([])
 const table = ref<TableInstance>()
@@ -67,7 +67,9 @@ const visibleIps = computed(() => {
   const term = keyword.value.trim().toLocaleLowerCase(locale.value)
   return ips.value.filter(ip => {
     const status = statusOf(ip)
-    const statusMatches = !statusFilter.value || statusFilter.value === status
+    const statusMatches = statusFilter.value === 'available'
+      ? isAvailable(ip)
+      : !statusFilter.value || statusFilter.value === status
     const regionMatches = !regionFilter.value || regionFilter.value === ip.region
     const searchMatches = !term || [endpoint(ip), ip.region].some(value => value.toLocaleLowerCase(locale.value).includes(term))
     return statusMatches && regionMatches && searchMatches
@@ -99,6 +101,10 @@ async function loadIps() {
   } finally {
     loading.value = false
   }
+}
+
+function toggleStatusFilter(status: 'available' | 'expiring') {
+  statusFilter.value = statusFilter.value === status ? '' : status
 }
 
 function clearFilters() {
@@ -222,7 +228,8 @@ onUnmounted(() => {
       <ElCard shadow="never">
         <div class="metric">
           <div>
-            <h2>{{ t('staticIps.active') }}</h2>
+            <h2><ElButton text class="metric-filter" :aria-pressed="statusFilter === 'available'"
+              @click="toggleStatusFilter('available')">{{ t('staticIps.active') }}</ElButton></h2>
             <strong class="metric-value tabular">{{ activeCount }}</strong>
           </div>
           <ElIcon class="metric-icon active"><CircleCheck /></ElIcon>
@@ -231,7 +238,8 @@ onUnmounted(() => {
       <ElCard shadow="never">
         <div class="metric">
           <div>
-            <h2>{{ t('staticIps.expiring') }}</h2>
+            <h2><ElButton text class="metric-filter" :aria-pressed="statusFilter === 'expiring'"
+              @click="toggleStatusFilter('expiring')">{{ t('staticIps.expiring') }}</ElButton></h2>
             <strong class="metric-value tabular">{{ expiring.length }}</strong>
             <p>{{ t('staticIps.expiringHint') }}</p>
           </div>
@@ -254,6 +262,7 @@ onUnmounted(() => {
           />
           <ElSelect v-model="statusFilter" :empty-values="[null, undefined]" :aria-label="t('staticIps.filterStatus')">
             <ElOption :label="t('staticIps.allStatuses')" value="" />
+            <ElOption :label="t('staticIps.availableFilter')" value="available" />
             <ElOption v-for="status in statuses" :key="status" :label="t(`staticIps.status.${status}`)" :value="status" />
           </ElSelect>
           <ElSelect v-model="regionFilter" :empty-values="[null, undefined]" :aria-label="t('staticIps.filterRegion')">
@@ -345,7 +354,8 @@ onUnmounted(() => {
 .page-actions button { margin: 0; }
 .ip-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--subaccount-metric-width)), 1fr)); gap: var(--space-4); }
 .metric { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-3); }
-.metric h2 { font-size: var(--font-size-md); font-weight: var(--font-weight-medium); }
+.metric-filter { font-size: var(--font-size-md); font-weight: var(--font-weight-medium); padding-inline: 0; }
+.metric-filter[aria-pressed='true'] { color: var(--color-primary); }
 .metric p, .secondary, .table-footer { font-size: var(--font-size-xs); color: var(--color-text-secondary); }
 .metric-value { font-size: var(--font-size-title); color: var(--color-text); }
 .metric-icon { border-radius: var(--radius-control); box-sizing: content-box; padding: var(--space-2); font-size: var(--font-size-xl); }

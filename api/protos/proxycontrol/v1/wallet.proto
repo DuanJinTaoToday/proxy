@@ -393,6 +393,10 @@ message StaticOffer {
   string share_mode = 8;
   // 共享用途。缺省为不指定用途。
   int32 purpose_id = 9;
+  // 皇冠返回的大洲显示名，空值表示未提供。
+  string continent = 10;
+  // 皇冠返回的代理线路，空值表示未提供。
+  string line = 11;
 }
 
 message StaticOffers {
@@ -405,18 +409,25 @@ message StaticOffers {
 }
 
 message StaticPurchaseSelection {
+  // 客户选择的皇冠节点 ID。
   int64 node_id = 1 [(validate.rules).int64.gt = 0];
+  // 该节点请求购买的 IP 数量。
   int32 quantity = 2 [(validate.rules).int32.gt = 0];
 }
 
 message StaticPurchaseQuoteLine {
+  // 该节点的当前价格和库存。
   StaticOffer offer = 1;
+  // 该报价对应的请求购买 IP 数量。
   int32 quantity = 2;
 }
 
 message StaticPurchaseLine {
+  // 客户已确认的皇冠节点 ID。
   int64 node_id = 1 [(validate.rules).int64.gt = 0];
+  // 该节点已确认的 IP 数量。
   int32 quantity = 2 [(validate.rules).int32.gt = 0];
+  // 该节点每个 IP 的已确认租期总价，单位人民币分。
   int64 unit_minor = 3 [(validate.rules).int64.gt = 0];
 }
 

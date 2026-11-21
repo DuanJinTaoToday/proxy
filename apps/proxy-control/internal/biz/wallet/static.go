@@ -20,6 +20,7 @@ var (
 type StaticOffer struct {
 	NodeID               int64
 	Region, IPType, Term string
+	Continent, Line      string
 	TermDays, Available  int32
 	ShareMode            string
 	PurposeID            int32

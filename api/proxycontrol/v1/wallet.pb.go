@@ -1394,7 +1394,11 @@ type StaticOffer struct {
 	// 独享 exclusive 或共享 shared。
 	ShareMode string `protobuf:"bytes,8,opt,name=share_mode,json=shareMode,proto3" json:"share_mode,omitempty"`
 	// 共享用途。缺省为不指定用途。
-	PurposeId     int32 `protobuf:"varint,9,opt,name=purpose_id,json=purposeId,proto3" json:"purpose_id,omitempty"`
+	PurposeId int32 `protobuf:"varint,9,opt,name=purpose_id,json=purposeId,proto3" json:"purpose_id,omitempty"`
+	// 皇冠返回的大洲显示名，空值表示未提供。
+	Continent string `protobuf:"bytes,10,opt,name=continent,proto3" json:"continent,omitempty"`
+	// 皇冠返回的代理线路，空值表示未提供。
+	Line          string `protobuf:"bytes,11,opt,name=line,proto3" json:"line,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1492,6 +1496,20 @@ func (x *StaticOffer) GetPurposeId() int32 {
 	return 0
 }
 
+func (x *StaticOffer) GetContinent() string {
+	if x != nil {
+		return x.Continent
+	}
+	return ""
+}
+
+func (x *StaticOffer) GetLine() string {
+	if x != nil {
+		return x.Line
+	}
+	return ""
+}
+
 type StaticOffers struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 目录当次查回的报价。未开售返回空列表。
@@ -1556,9 +1574,11 @@ func (x *StaticOffers) GetQuotedAt() *timestamppb.Timestamp {
 }
 
 type StaticPurchaseSelection struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	NodeId        int64                  `protobuf:"varint,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
-	Quantity      int32                  `protobuf:"varint,2,opt,name=quantity,proto3" json:"quantity,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 客户选择的皇冠节点 ID。
+	NodeId int64 `protobuf:"varint,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
+	// 该节点请求购买的 IP 数量。
+	Quantity      int32 `protobuf:"varint,2,opt,name=quantity,proto3" json:"quantity,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1608,9 +1628,11 @@ func (x *StaticPurchaseSelection) GetQuantity() int32 {
 }
 
 type StaticPurchaseQuoteLine struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Offer         *StaticOffer           `protobuf:"bytes,1,opt,name=offer,proto3" json:"offer,omitempty"`
-	Quantity      int32                  `protobuf:"varint,2,opt,name=quantity,proto3" json:"quantity,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 该节点的当前价格和库存。
+	Offer *StaticOffer `protobuf:"bytes,1,opt,name=offer,proto3" json:"offer,omitempty"`
+	// 该报价对应的请求购买 IP 数量。
+	Quantity      int32 `protobuf:"varint,2,opt,name=quantity,proto3" json:"quantity,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1660,10 +1682,13 @@ func (x *StaticPurchaseQuoteLine) GetQuantity() int32 {
 }
 
 type StaticPurchaseLine struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	NodeId        int64                  `protobuf:"varint,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
-	Quantity      int32                  `protobuf:"varint,2,opt,name=quantity,proto3" json:"quantity,omitempty"`
-	UnitMinor     int64                  `protobuf:"varint,3,opt,name=unit_minor,json=unitMinor,proto3" json:"unit_minor,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 客户已确认的皇冠节点 ID。
+	NodeId int64 `protobuf:"varint,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
+	// 该节点已确认的 IP 数量。
+	Quantity int32 `protobuf:"varint,2,opt,name=quantity,proto3" json:"quantity,omitempty"`
+	// 该节点每个 IP 的已确认租期总价，单位人民币分。
+	UnitMinor     int64 `protobuf:"varint,3,opt,name=unit_minor,json=unitMinor,proto3" json:"unit_minor,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3223,7 +3248,7 @@ const file_proxycontrol_v1_wallet_proto_rawDesc = "" +
 	"\n" +
 	"purpose_id\x18\x02 \x01(\x05B\r\xfaB\n" +
 	"\x1a\b0\x000\b0\t0\n" +
-	"R\tpurposeId\"\x83\x02\n" +
+	"R\tpurposeId\"\xb5\x02\n" +
 	"\vStaticOffer\x12\x17\n" +
 	"\anode_id\x18\x01 \x01(\x03R\x06nodeId\x12\x16\n" +
 	"\x06region\x18\x02 \x01(\tR\x06region\x12\x17\n" +
@@ -3236,7 +3261,10 @@ const file_proxycontrol_v1_wallet_proto_rawDesc = "" +
 	"\n" +
 	"share_mode\x18\b \x01(\tR\tshareMode\x12\x1d\n" +
 	"\n" +
-	"purpose_id\x18\t \x01(\x05R\tpurposeId\"\x91\x01\n" +
+	"purpose_id\x18\t \x01(\x05R\tpurposeId\x12\x1c\n" +
+	"\tcontinent\x18\n" +
+	" \x01(\tR\tcontinent\x12\x12\n" +
+	"\x04line\x18\v \x01(\tR\x04line\"\x91\x01\n" +
 	"\fStaticOffers\x124\n" +
 	"\x06offers\x18\x01 \x03(\v2\x1c.proxycontrol.v1.StaticOfferR\x06offers\x12\x12\n" +
 	"\x04open\x18\x02 \x01(\bR\x04open\x127\n" +
