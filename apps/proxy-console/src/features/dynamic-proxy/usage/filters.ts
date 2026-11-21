@@ -7,7 +7,9 @@ export type UsageRange = { kind: RecentDays } | { kind: 'custom', start: string,
 
 export function customRange(start: unknown, end: unknown): UsageRange | undefined {
   if (typeof start !== 'string' || typeof end !== 'string') return
-  if (validBusinessDate(start) && validBusinessDate(end) && start <= end) return { kind: 'custom', start, end }
+  if (validBusinessDate(start) && validBusinessDate(end) && start <= end && end <= shanghaiToday()) {
+    return { kind: 'custom', start, end }
+  }
 }
 
 export function selectedRange(query: LocationQuery): UsageRange {

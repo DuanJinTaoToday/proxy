@@ -2,6 +2,7 @@
 import { computed, onScopeDispose, shallowRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
+import dayjs from 'dayjs'
 import {
   ElAlert, ElButton, ElCard, ElDatePicker, ElEmpty, ElMessage, ElOption, ElRadioButton,
   ElRadioGroup, ElSelect, ElSkeleton, ElTable, ElTableColumn,
@@ -9,10 +10,10 @@ import {
 import { Download } from '@element-plus/icons-vue'
 import { listSubaccounts, type Subaccount } from '@/api/subaccounts'
 import { exportDailyUsage, getDailyUsage, type DailyUsageDay } from '@/api/usage'
-import { formatGB } from '@/features/dynamic-proxy'
-import { dayNumber, shanghaiDateTime } from '@/shared/lib/businessDates'
+import { dayNumber, shanghaiDateTime, shanghaiToday } from '@/shared/lib/businessDates'
 import { useErrorMessage } from '@/shared/lib/useErrorMessage'
 import DailyUsageChart from '@/shared/ui/DailyUsageChart.vue'
+import { formatGB } from '../trafficUnits'
 import { customRange, selectedAccount, selectedRange, usageFilter, type UsageRange } from './filters'
 
 type LoadState<T> = { kind: 'loading' } | { kind: 'failed', error: unknown } | { kind: 'ready', data: T }
@@ -29,6 +30,7 @@ const pickerValue = computed<[string, string] | null>(() => {
   const selected = range.value
   return selected.kind === 'custom' ? [selected.start, selected.end] : null
 })
+const isFutureDate = (date: Date) => dayjs(date).format('YYYY-MM-DD') > shanghaiToday()
 
 function changeFilters(selected: UsageRange, account: string | undefined) {
   void router.push({
@@ -158,6 +160,7 @@ const unknownAccount = computed(() => accountOptions.value.some(account => accou
           <ElRadioButton value="30">{{ t('dynamicUsage.last30') }}</ElRadioButton>
         </ElRadioGroup>
         <ElDatePicker :model-value="pickerValue" type="daterange" value-format="YYYY-MM-DD" format="YYYY-MM-DD"
+          :disabled-date="isFutureDate"
           class="dynamic-usage__dates" :aria-label="t('dynamicUsage.customDates')" :range-separator="t('dynamicUsage.through')"
           :start-placeholder="t('dynamicUsage.startDate')" :end-placeholder="t('dynamicUsage.endDate')"
           @update:model-value="chooseDates" />

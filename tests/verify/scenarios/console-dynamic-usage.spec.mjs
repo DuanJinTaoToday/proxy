@@ -202,6 +202,12 @@ test('低余额阈值写入、修改和停用后，仪表板和通知按当前�
   await expect(page.getByText('已保存低余额阈值。', { exact: true })).toBeVisible()
   await expect(unreadNotification(page)).toBeVisible()
   await screenshot(page, info, 'traffic-alert-saved')
+  const failOverview = route => route.abort()
+  await page.route('**/v1/tenant/overview', failOverview)
+  await unreadNotification(page).click()
+  await expect(page.getByRole('alert')).toContainText('暂时无法加载通知。')
+  await expect(page.getByRole('link', { name: /动态流量余额偏低/ })).toBeVisible()
+  await page.unroute('**/v1/tenant/overview', failOverview)
   await page.reload()
   await expect(threshold).toHaveValue('0.75')
 

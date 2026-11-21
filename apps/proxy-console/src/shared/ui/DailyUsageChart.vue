@@ -93,15 +93,15 @@ const axisDays = computed(() => {
   display: grid;
   grid-template-rows: repeat(4, 1fr) 0;
   align-items: start;
-  block-size: var(--dashboard-chart-height);
+  block-size: var(--usage-chart-height);
   text-align: end;
   color: var(--color-text-secondary);
   font-size: var(--font-size-xs);
-  max-inline-size: var(--dashboard-chart-axis-width);
+  max-inline-size: var(--usage-chart-axis-width);
   overflow-wrap: anywhere;
 }
 .usage-chart__axes span { transform: translateY(-50%); }
-.usage-chart__plot { position: relative; block-size: var(--dashboard-chart-height); }
+.usage-chart__plot { position: relative; block-size: var(--usage-chart-height); }
 .usage-chart__plot svg { width: 100%; height: 100%; }
 .usage-chart__plot line, .usage-chart__line { vector-effect: non-scaling-stroke; stroke-width: var(--border-width); stroke: var(--color-border); }
 .usage-chart__line { stroke: var(--color-primary); stroke-width: var(--focus-ring-width); fill: none; }
