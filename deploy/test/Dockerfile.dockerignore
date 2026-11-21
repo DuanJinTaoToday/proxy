@@ -35,3 +35,4 @@ apps/proxy-console/.env*
 !deploy/test/supplier.yaml
 !deploy/test/seed.sql
 !deploy/test/Caddyfile
+!deploy/test/ip-country-fixture.csv

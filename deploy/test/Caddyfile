@@ -1,5 +1,21 @@
+(access_location_fixture) {
+    rewrite * /v1/tenant/access-location
+    reverse_proxy control:8000 {
+        header_up X-Forwarded-For {args[0]}
+    }
+}
+
 https://localhost, https://console {
 	tls internal
+    handle /fixture/access-location/cn {
+        import access_location_fixture 223.5.5.5
+    }
+    handle /fixture/access-location/hk {
+        import access_location_fixture 203.0.113.10
+    }
+    handle /fixture/access-location/source {
+        respond "{http.request.remote.host}" 200
+    }
     handle /fixture/* {
         respond "proxy-test" 200
     }

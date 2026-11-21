@@ -27,6 +27,7 @@ RUN curl --fail --silent --show-error --location --retry 3 \
 FROM alpine:3.23 AS control
 COPY --from=go-build /out/proxy-control /usr/local/bin/
 COPY deploy/test/init.yaml /config/init.yaml
+COPY deploy/test/ip-country-fixture.csv /config/ip-country-fixture.csv
 COPY apps/proxy-control/configs/file/test-server.yaml /config/test-server.yaml
 ENTRYPOINT ["proxy-control", "-conf", "/config/init.yaml"]
 

@@ -69,6 +69,7 @@ type Data_Repo struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ProxyAuth     *Data_Repo_PostgreSQL  `protobuf:"bytes,1,opt,name=proxy_auth,json=proxyAuth,proto3" json:"proxy_auth,omitempty"`
 	Usage         *Data_Repo_PostgreSQL  `protobuf:"bytes,2,opt,name=usage,proto3" json:"usage,omitempty"`
+	IpCountryFile string                 `protobuf:"bytes,3,opt,name=ip_country_file,json=ipCountryFile,proto3" json:"ip_country_file,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -115,6 +116,13 @@ func (x *Data_Repo) GetUsage() *Data_Repo_PostgreSQL {
 		return x.Usage
 	}
 	return nil
+}
+
+func (x *Data_Repo) GetIpCountryFile() string {
+	if x != nil {
+		return x.IpCountryFile
+	}
+	return ""
 }
 
 type Data_Repo_PostgreSQL struct {
@@ -166,13 +174,14 @@ var File_data_proto protoreflect.FileDescriptor
 const file_data_proto_rawDesc = "" +
 	"\n" +
 	"\n" +
-	"data.proto\x12\x16proxycontrol.config.v1\"\x88\x02\n" +
+	"data.proto\x12\x16proxycontrol.config.v1\"\xb0\x02\n" +
 	"\x04Data\x125\n" +
-	"\x04repo\x18\x01 \x01(\v2!.proxycontrol.config.v1.Data.RepoR\x04repo\x1a\xc8\x01\n" +
+	"\x04repo\x18\x01 \x01(\v2!.proxycontrol.config.v1.Data.RepoR\x04repo\x1a\xf0\x01\n" +
 	"\x04Repo\x12K\n" +
 	"\n" +
 	"proxy_auth\x18\x01 \x01(\v2,.proxycontrol.config.v1.Data.Repo.PostgreSQLR\tproxyAuth\x12B\n" +
-	"\x05usage\x18\x02 \x01(\v2,.proxycontrol.config.v1.Data.Repo.PostgreSQLR\x05usage\x1a/\n" +
+	"\x05usage\x18\x02 \x01(\v2,.proxycontrol.config.v1.Data.Repo.PostgreSQLR\x05usage\x12&\n" +
+	"\x0fip_country_file\x18\x03 \x01(\tR\ripCountryFile\x1a/\n" +
 	"\n" +
 	"PostgreSQL\x12!\n" +
 	"\fdatabase_dsn\x18\x01 \x01(\tR\vdatabaseDsnBHZFgithub.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/conf;confb\x06proto3"

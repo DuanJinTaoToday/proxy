@@ -9,6 +9,7 @@ import "google/protobuf/duration.proto";
 message Server {
   message HTTP {
     string addr = 1;
+    repeated string trusted_proxy_cidrs = 2;
   }
   message CronTask {
     string name = 1;

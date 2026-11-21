@@ -65,7 +65,10 @@ export const routes: RouteRecordRaw[] = [
       ]),
       { path: 'sub-accounts', name: 'console-sub-accounts', component: () => import('@/pages/console/SubAccountsPage.vue'), meta: { titleKey: 'nav.subAccounts' } },
       page('wallet', 'console-wallet', 'nav.wallet'),
-      tabbed('account', 'console-account', 'nav.account', [{ path: 'profile', labelKey: 'tabs.accountProfile' }, { path: 'orders', labelKey: 'tabs.accountOrders' }]),
+      tabbed('account', 'console-account', 'nav.account', [
+        { path: 'profile', labelKey: 'tabs.accountProfile', component: () => import('@/pages/console/AccountProfilePage.vue') },
+        { path: 'orders', labelKey: 'tabs.accountOrders' },
+      ]),
     ],
   },
   {

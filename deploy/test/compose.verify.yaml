@@ -41,7 +41,7 @@ configs:
         console: true
         level: info
   verify_control_base:
-    file: ../../apps/proxy-control/configs/file/test-server.yaml
+    file: "${PROXY_VERIFY_CONTROL_CONFIG:?Run tests/verify/run.mjs}"
   verify_control_ipcrown:
     content: |
       biz:

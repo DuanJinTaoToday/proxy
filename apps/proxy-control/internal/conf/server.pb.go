@@ -75,10 +75,11 @@ func (x *Server) GetCronTasks() []*Server_CronTask {
 }
 
 type Server_HTTP struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Addr          string                 `protobuf:"bytes,1,opt,name=addr,proto3" json:"addr,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	Addr              string                 `protobuf:"bytes,1,opt,name=addr,proto3" json:"addr,omitempty"`
+	TrustedProxyCidrs []string               `protobuf:"bytes,2,rep,name=trusted_proxy_cidrs,json=trustedProxyCidrs,proto3" json:"trusted_proxy_cidrs,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *Server_HTTP) Reset() {
@@ -116,6 +117,13 @@ func (x *Server_HTTP) GetAddr() string {
 		return x.Addr
 	}
 	return ""
+}
+
+func (x *Server_HTTP) GetTrustedProxyCidrs() []string {
+	if x != nil {
+		return x.TrustedProxyCidrs
+	}
+	return nil
 }
 
 type Server_CronTask struct {
@@ -182,13 +190,14 @@ var File_server_proto protoreflect.FileDescriptor
 
 const file_server_proto_rawDesc = "" +
 	"\n" +
-	"\fserver.proto\x12\x16proxycontrol.config.v1\x1a\x1egoogle/protobuf/duration.proto\"\xa2\x02\n" +
+	"\fserver.proto\x12\x16proxycontrol.config.v1\x1a\x1egoogle/protobuf/duration.proto\"\xd2\x02\n" +
 	"\x06Server\x127\n" +
 	"\x04http\x18\x01 \x01(\v2#.proxycontrol.config.v1.Server.HTTPR\x04http\x12F\n" +
 	"\n" +
-	"cron_tasks\x18\x02 \x03(\v2'.proxycontrol.config.v1.Server.CronTaskR\tcronTasks\x1a\x1a\n" +
+	"cron_tasks\x18\x02 \x03(\v2'.proxycontrol.config.v1.Server.CronTaskR\tcronTasks\x1aJ\n" +
 	"\x04HTTP\x12\x12\n" +
-	"\x04addr\x18\x01 \x01(\tR\x04addr\x1a{\n" +
+	"\x04addr\x18\x01 \x01(\tR\x04addr\x12.\n" +
+	"\x13trusted_proxy_cidrs\x18\x02 \x03(\tR\x11trustedProxyCidrs\x1a{\n" +
 	"\bCronTask\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x12\n" +
 	"\x04spec\x18\x02 \x01(\tR\x04spec\x123\n" +
