@@ -19,19 +19,6 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/proxycontrol.v1.BaseResp'
-    /public/products:
-        get:
-            tags:
-                - ProductService
-            summary: 查看两类商品的开售状态及公开套餐
-            operationId: ProductService_ListProducts
-            responses:
-                "200":
-                    description: OK
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/proxycontrol.v1.Products'
     /v1/access/check:
         post:
             tags:
@@ -712,6 +699,19 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/proxycontrol.v1.QueryUsageResponse'
+    /v1/public/products:
+        get:
+            tags:
+                - ProductService
+            summary: 查看两类商品的开售状态及公开套餐
+            operationId: ProductService_ListProducts
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.Products'
     /v1/public/static-offers:
         get:
             tags:

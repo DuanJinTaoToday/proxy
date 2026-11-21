@@ -32,7 +32,7 @@ func TestProductCatalogAndSales(t *testing.T) {
 	list := func() *v1.Products {
 		t.Helper()
 		var response v1.Products
-		readProto(t, testfixture.Request(f.http, "GET", "/public/products", "", ""), &response)
+		readProto(t, testfixture.Request(f.http, "GET", "/v1/public/products", "", ""), &response)
 		return &response
 	}
 	const packages = "/v1/operations/traffic-packages"

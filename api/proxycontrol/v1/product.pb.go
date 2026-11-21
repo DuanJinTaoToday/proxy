@@ -463,9 +463,9 @@ const file_proxycontrol_v1_product_proto_rawDesc = "" +
 	"\vquote_ready\x18\x03 \x01(\bR\n" +
 	"quoteReady\x129\n" +
 	"\x13acceptance_evidence\x18\x04 \x01(\tB\b\xfaB\x05r\x03\x18\xe8\aR\x12acceptanceEvidenceB\a\n" +
-	"\x05_open2\xcc\x05\n" +
-	"\x0eProductService\x12\x96\x01\n" +
-	"\fListProducts\x12\x1c.proxycontrol.v1.BaseRequest\x1a\x19.proxycontrol.v1.Products\"M\xbaG2\x120查看两类商品的开售状态及公开套餐\x82\xd3\xe4\x93\x02\x12\x12\x10/public/products\x12\xb6\x01\n" +
+	"\x05_open2\xcf\x05\n" +
+	"\x0eProductService\x12\x99\x01\n" +
+	"\fListProducts\x12\x1c.proxycontrol.v1.BaseRequest\x1a\x19.proxycontrol.v1.Products\"P\xbaG2\x120查看两类商品的开售状态及公开套餐\x82\xd3\xe4\x93\x02\x15\x12\x13/v1/public/products\x12\xb6\x01\n" +
 	"\x13ListTrafficPackages\x12\x1c.proxycontrol.v1.BaseRequest\x1a .proxycontrol.v1.TrafficPackages\"_\xbaG5\x123查看运营套餐目录，含未定价及下架项\x82\xd3\xe4\x93\x02!\x12\x1f/v1/operations/traffic-packages\x12\xbc\x01\n" +
 	"\x14UpdateTrafficPackage\x12,.proxycontrol.v1.UpdateTrafficPackageRequest\x1a\x1f.proxycontrol.v1.TrafficPackage\"U\xbaG#\x12!修改流量套餐并记录变更\x82\xd3\xe4\x93\x02):\x01*2$/v1/operations/traffic-packages/{id}\x12\xa8\x01\n" +
 	"\x0eSetProductSale\x12&.proxycontrol.v1.SetProductSaleRequest\x1a\x18.proxycontrol.v1.Product\"T\xbaG#\x12!手动开启或关闭指定商品\x82\xd3\xe4\x93\x02(:\x01*\x1a#/v1/operations/product-sales/{kind}BEZCgithub.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1b\x06proto3"

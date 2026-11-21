@@ -45,7 +45,7 @@ flowchart LR
 
 | RPC / HTTP | 主要请求 → 响应 | 身份与行为 |
 | --- | --- | --- |
-| `ListProducts` GET `/public/products` | 空 → 商品类型、开售状态、购买能力、在售套餐及版本 | 游客可读；未开售返回介绍和状态，报价隐藏。 |
+| `ListProducts` GET `/v1/public/products` | 空 → 商品类型、开售状态、购买能力、在售套餐及版本 | 游客可读；未开售返回介绍和状态，报价隐藏。 |
 | `ListStaticOffers` GET `/public/static-offers` | 地区、类型、租期、分页 → 规格 ID、单价、可购量、查询时间 | 游客可读；静态未开售返回空报价及状态。报价是展示快照。 |
 | `Register` POST `/access/register` | 手机号、密码 → 租户、主账号名 | 归一化 +86，唯一冲突返回手机号已注册；密码至少 12 位。注册完成后走同一登录接口。 |
 | `Login` POST `/access/login` | 手机号、密码 → 客户会话、过期时间 | 不接受代理子账号。运营使用独立登录路由及令牌权限。 |

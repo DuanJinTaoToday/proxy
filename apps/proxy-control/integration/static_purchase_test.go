@@ -108,7 +108,7 @@ func TestStaticPurchaseAndIndependentSales(t *testing.T) {
 		t.Fatalf("overview with only static on sale: %v", &overview)
 	}
 	var products v1.Products
-	readProto(t, req("GET", "/public/products", "", ""), &products)
+	readProto(t, req("GET", "/v1/public/products", "", ""), &products)
 	if len(products.GetProducts()) != 2 || products.Products[0].GetCanPurchase() ||
 		len(products.Products[0].GetPackages()) != 0 || !products.Products[1].GetCanPurchase() {
 		t.Fatalf("unexpected public product state: %v", &products)
