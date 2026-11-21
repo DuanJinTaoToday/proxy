@@ -1,12 +1,14 @@
 server:
   http:
     addr: 0.0.0.0:8000
+    trusted_proxy_cidrs: []
   cron_tasks:
     - name: MaintainUsage
       spec: "0 * * * * *"
       timeout: 0s
 data:
   repo:
+    ip_country_file: /config/ip-country-fixture.csv
     proxy_auth:
       database_dsn: "postgres://proxy:proxy-local-test@db:5432/proxy?sslmode=disable"
     usage:

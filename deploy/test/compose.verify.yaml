@@ -2,6 +2,8 @@ services:
   control:
     container_name: !reset null
     image: !reset null
+    volumes:
+      - "${PROXY_VERIFY_CONTROL_CONFIG:?Run tests/verify/run.mjs}:/config/test-server.yaml:ro"
   console:
     container_name: !reset null
     image: !reset null

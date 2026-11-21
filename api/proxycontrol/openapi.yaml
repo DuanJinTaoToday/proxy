@@ -815,6 +815,19 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/proxycontrol.v1.BaseResp'
+    /v1/tenant/access-location:
+        get:
+            tags:
+                - AccessLocationService
+            summary: 查看本次租户访问的来源 IP 和归属地
+            operationId: AccessLocationService_GetAccessLocation
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.AccessLocation'
     /v1/tenant/account:
         get:
             tags:
@@ -1311,6 +1324,18 @@ paths:
                                 $ref: '#/components/schemas/proxycontrol.v1.WalletEntries'
 components:
     schemas:
+        proxycontrol.v1.AccessLocation:
+            type: object
+            properties:
+                ip:
+                    type: string
+                    description: 本次请求的来源 IP。无法确定来源时为空。
+                location:
+                    type: string
+                    description: 按 Accept-Language 返回的国家或地区名称。无法确定归属地时为空。
+                is_mainland_china:
+                    type: boolean
+                    description: 仅归属地为中国大陆时为 true，未知及香港、澳门、台湾均为 false。
         proxycontrol.v1.AuthQuota:
             type: object
             properties:
@@ -2492,6 +2517,7 @@ components:
                     type: string
                     description: 可用流量字节数。负值为待抵扣的用量。
 tags:
+    - name: AccessLocationService
     - name: AccessService
     - name: GatewayAuthService
     - name: HealthService
