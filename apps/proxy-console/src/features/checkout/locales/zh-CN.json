@@ -1,0 +1,37 @@
+{
+  "trafficPricing": {
+    "closed": "暂未开放购买",
+    "noPackages": "暂无上架套餐",
+    "choose": "选择流量套餐",
+    "package": "{capacity} 流量包",
+    "unitPrice": "{amount} / GB",
+    "savings": "比 5 GB 档每 GB 省 {percent}%",
+    "validity": "长期有效",
+    "validityLabel": "有效期",
+    "shared": "所有子账号共用",
+    "chosen": "套餐",
+    "traffic": "可用流量",
+    "afterTraffic": "到账后可用流量",
+    "wallet": "钱包余额",
+    "afterWallet": "支付后余额",
+    "due": "应付金额",
+    "shortfall": "钱包余额不足，还差 {amount}。请联系运营充值后重新确认。",
+    "buy": "立即购买",
+    "billing": "每笔订单购买一份套餐。按实际计量字节扣减，1 GB = 1,000,000,000 字节。",
+    "confirm": "确认购买流量",
+    "back": "返回修改",
+    "pay": "确认支付",
+    "receipt": "订单 #{id} 成交，到账 {traffic}，实扣 {amount}。",
+    "unknown": "暂时无法确认成交结果，请用原请求重试。",
+    "retryPurchase": "重试原提交",
+    "retryLoad": "重新加载",
+    "rejected": "请求未能成交，请重新确认后再试。",
+    "errors": {
+      "PACKAGE_CHANGED": "套餐报价或开售状态已更新，请重新确认。",
+      "PACKAGE_NOT_FOUND": "该套餐已下架，请选择当前在售套餐。",
+      "PACKAGE_UNAVAILABLE": "该套餐已下架，请选择当前在售套餐。",
+      "PRODUCT_SALE_CLOSED": "购买已关闭，请稍后再试。",
+      "WALLET_INSUFFICIENT_FUNDS": "钱包余额已变化，请核对余额后重新确认。"
+    }
+  }
+}

@@ -61,7 +61,9 @@ func packageMessage(item product.Package) *v1.TrafficPackage {
 func productMessage(item product.Product) *v1.Product {
 	response := &v1.Product{Kind: item.Kind, Description: item.Description, Open: item.Open, CanPurchase: item.CanPurchase}
 	for _, pkg := range item.Packages {
-		response.Packages = append(response.Packages, packageMessage(pkg))
+		message := packageMessage(pkg.Package)
+		message.DiscountPercent = pkg.DiscountPercent
+		response.Packages = append(response.Packages, message)
 	}
 	return response
 }

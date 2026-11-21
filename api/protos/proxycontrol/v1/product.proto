@@ -63,6 +63,8 @@ message TrafficPackage {
   bool listed = 4;
   // 当前配置版本，提交购买时用于确认报价。
   int64 version = 5;
+  // 公开报价相对 5 GB 档节省的每 GB 百分比，四舍五入。没有可用基准或优惠时省略。
+  int32 discount_percent = 6;
 }
 
 message UpdateTrafficPackageRequest {

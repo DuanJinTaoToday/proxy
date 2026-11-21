@@ -204,9 +204,11 @@ type TrafficPackage struct {
 	// 当前是否上架。
 	Listed bool `protobuf:"varint,4,opt,name=listed,proto3" json:"listed,omitempty"`
 	// 当前配置版本，提交购买时用于确认报价。
-	Version       int64 `protobuf:"varint,5,opt,name=version,proto3" json:"version,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Version int64 `protobuf:"varint,5,opt,name=version,proto3" json:"version,omitempty"`
+	// 公开报价相对 5 GB 档节省的每 GB 百分比，四舍五入。没有可用基准或优惠时省略。
+	DiscountPercent int32 `protobuf:"varint,6,opt,name=discount_percent,json=discountPercent,proto3" json:"discount_percent,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *TrafficPackage) Reset() {
@@ -270,6 +272,13 @@ func (x *TrafficPackage) GetListed() bool {
 func (x *TrafficPackage) GetVersion() int64 {
 	if x != nil {
 		return x.Version
+	}
+	return 0
+}
+
+func (x *TrafficPackage) GetDiscountPercent() int32 {
+	if x != nil {
+		return x.DiscountPercent
 	}
 	return 0
 }
@@ -441,14 +450,15 @@ const file_proxycontrol_v1_product_proto_rawDesc = "" +
 	"\fcan_purchase\x18\x04 \x01(\bR\vcanPurchase\x12;\n" +
 	"\bpackages\x18\x05 \x03(\v2\x1f.proxycontrol.v1.TrafficPackageR\bpackages\"N\n" +
 	"\x0fTrafficPackages\x12;\n" +
-	"\bpackages\x18\x01 \x03(\v2\x1f.proxycontrol.v1.TrafficPackageR\bpackages\"\x9a\x01\n" +
+	"\bpackages\x18\x01 \x03(\v2\x1f.proxycontrol.v1.TrafficPackageR\bpackages\"\xc5\x01\n" +
 	"\x0eTrafficPackage\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12%\n" +
 	"\x0ecapacity_bytes\x18\x02 \x01(\x03R\rcapacityBytes\x12\x1f\n" +
 	"\vprice_minor\x18\x03 \x01(\x03R\n" +
 	"priceMinor\x12\x16\n" +
 	"\x06listed\x18\x04 \x01(\bR\x06listed\x12\x18\n" +
-	"\aversion\x18\x05 \x01(\x03R\aversion\"\xdd\x01\n" +
+	"\aversion\x18\x05 \x01(\x03R\aversion\x12)\n" +
+	"\x10discount_percent\x18\x06 \x01(\x05R\x0fdiscountPercent\"\xdd\x01\n" +
 	"\x1bUpdateTrafficPackageRequest\x12\x19\n" +
 	"\x02id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18 R\x02id\x12!\n" +
 	"\aversion\x18\x02 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\aversion\x12.\n" +
