@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
+import { createRouter, createWebHistory, type RouteLocationNormalizedLoaded, type RouteRecordRaw } from 'vue-router'
 import { applyLocale, isLocale, preferredLocale } from './i18n'
 
 declare module 'vue-router' {
@@ -13,20 +13,26 @@ declare module 'vue-router' {
 const PublicLayout = () => import('./layouts/PublicLayout.vue')
 const ConsoleLayout = () => import('./layouts/ConsoleLayout.vue')
 const OpsLayout = () => import('./layouts/OpsLayout.vue')
-const PendingPage = () => import('@/pages/PendingPage.vue')
-const TabbedPage = () => import('@/pages/TabbedPage.vue')
+const RoutePlaceholder = () => import('./RoutePlaceholder.vue')
+const RouteTabs = () => import('./RouteTabs.vue')
 
-function tabbed(path: string, prefix: string, titleKey: string, tabs: [string, string][]): RouteRecordRaw {
+interface Tab { path: string, labelKey: string }
+
+// 页签页：父路由显示标题和页签，第一个页签为默认子页，子路由名为「前缀-路径」。
+function tabbed(path: string, prefix: string, titleKey: string, tabs: Tab[]): RouteRecordRaw {
+  const name = (tab: Tab) => `${prefix}-${tab.path}`
   return {
     path,
-    component: TabbedPage,
-    meta: { titleKey, tabs: tabs.map(([child, labelKey]) => ({ name: `${prefix}-${child}`, labelKey })) },
-    redirect: { name: `${prefix}-${tabs[0][0]}` },
-    children: tabs.map(([child, labelKey]) => ({ path: child, name: `${prefix}-${child}`, component: PendingPage, meta: { titleKey: labelKey } })),
+    component: RouteTabs,
+    meta: { titleKey, tabs: tabs.map(tab => ({ name: name(tab), labelKey: tab.labelKey })) },
+    redirect: { name: name(tabs[0]) },
+    children: tabs.map(tab => ({ path: tab.path, name: name(tab), component: RoutePlaceholder, meta: { titleKey: tab.labelKey } })),
   }
 }
 
-const page = (path: string, name: string, titleKey: string): RouteRecordRaw => ({ path, name, component: PendingPage, meta: { titleKey } })
+export const tabsParent = (route: RouteLocationNormalizedLoaded) => route.matched.find(record => record.meta.tabs)
+
+const page = (path: string, name: string, titleKey: string): RouteRecordRaw => ({ path, name, component: RoutePlaceholder, meta: { titleKey } })
 
 export const routes: RouteRecordRaw[] = [
   { path: '/', redirect: '/zh-CN/' },
@@ -44,11 +50,11 @@ export const routes: RouteRecordRaw[] = [
     component: ConsoleLayout,
     children: [
       page('', 'console-dashboard', 'nav.dashboard'),
-      tabbed('dynamic', 'console-dynamic', 'nav.dynamic', [['setup', 'tabs.dynamicSetup'], ['pricing', 'tabs.dynamicPricing'], ['usage', 'tabs.dynamicUsage'], ['guide', 'tabs.guide']]),
-      tabbed('static', 'console-static', 'nav.static', [['ips', 'tabs.staticIps'], ['pricing', 'tabs.staticPricing'], ['guide', 'tabs.guide']]),
+      tabbed('dynamic', 'console-dynamic', 'nav.dynamic', [{ path: 'setup', labelKey: 'tabs.dynamicSetup' }, { path: 'pricing', labelKey: 'tabs.dynamicPricing' }, { path: 'usage', labelKey: 'tabs.dynamicUsage' }, { path: 'guide', labelKey: 'tabs.guide' }]),
+      tabbed('static', 'console-static', 'nav.static', [{ path: 'ips', labelKey: 'tabs.staticIps' }, { path: 'pricing', labelKey: 'tabs.staticPricing' }, { path: 'guide', labelKey: 'tabs.guide' }]),
       page('sub-accounts', 'console-sub-accounts', 'nav.subAccounts'),
       page('wallet', 'console-wallet', 'nav.wallet'),
-      tabbed('account', 'console-account', 'nav.account', [['profile', 'tabs.accountProfile'], ['orders', 'tabs.accountOrders']]),
+      tabbed('account', 'console-account', 'nav.account', [{ path: 'profile', labelKey: 'tabs.accountProfile' }, { path: 'orders', labelKey: 'tabs.accountOrders' }]),
     ],
   },
   {
@@ -58,11 +64,11 @@ export const routes: RouteRecordRaw[] = [
       { path: '', redirect: { name: 'ops-tenants' } },
       page('tenants', 'ops-tenants', 'nav.opsTenants'),
       page('tenants/:tenantId', 'ops-tenant', 'nav.opsTenants'),
-      tabbed('products', 'ops-products', 'nav.opsProducts', [['dynamic', 'tabs.productsDynamic'], ['static', 'tabs.productsStatic']]),
+      tabbed('products', 'ops-products', 'nav.opsProducts', [{ path: 'dynamic', labelKey: 'tabs.productsDynamic' }, { path: 'static', labelKey: 'tabs.productsStatic' }]),
       page('orders', 'ops-orders', 'nav.opsOrders'),
     ],
   },
-  { path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('@/pages/NotFoundPage.vue'), meta: { titleKey: 'notFound.title' } },
+  { path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('@/pages/public/NotFoundPage.vue'), meta: { titleKey: 'notFound.title' } },
 ]
 
 export const router = createRouter({ history: createWebHistory(), routes })

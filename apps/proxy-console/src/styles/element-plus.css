@@ -53,6 +53,3 @@
 .density-compact {
   --el-component-size: var(--control-height-compact);
 }
-
-/* 以链接渲染的按钮（tag="a"）不显示链接下划线。 */
-a.el-button { text-decoration: none; }

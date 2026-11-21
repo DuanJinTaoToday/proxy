@@ -13,8 +13,9 @@ html {
 body { margin: 0; }
 h1, h2, h3, p { margin: 0; }
 button { font: inherit; }
-a { color: inherit; }
-:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+/* 应用内链接默认不加下划线，正文链接按需自行声明。 */
+a { color: inherit; text-decoration: none; }
+:focus-visible { outline: var(--focus-ring-width) solid var(--color-focus); outline-offset: var(--focus-ring-width); }
 
 .mono { font-family: var(--font-mono); }
 .tabular { font-variant-numeric: tabular-nums; }

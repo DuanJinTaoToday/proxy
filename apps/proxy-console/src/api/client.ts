@@ -6,7 +6,6 @@ export class ApiError extends Error {
     // 控制面返回的稳定错误码，界面按它翻译。网络失败为 NETWORK。
     readonly reason: string,
     message: string,
-    readonly metadata: Record<string, string> = {},
   ) {
     super(message)
     this.name = 'ApiError'
@@ -71,9 +70,9 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
 
   const text = await response.text()
   if (!response.ok) {
-    let payload: { reason?: string, message?: string, metadata?: Record<string, string> } = {}
+    let payload: { reason?: string, message?: string } = {}
     try { payload = text ? parseJson(text) : {} } catch { /* 非 JSON 错误体按状态码处理 */ }
-    const error = new ApiError(response.status, payload.reason || 'UNKNOWN', payload.message || response.statusText, payload.metadata)
+    const error = new ApiError(response.status, payload.reason || 'UNKNOWN', payload.message || response.statusText)
     if (response.status === 401) hooks.onUnauthorized(error)
     throw error
   }

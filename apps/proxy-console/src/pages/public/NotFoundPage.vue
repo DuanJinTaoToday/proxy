@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import { ElButton, ElResult } from 'element-plus'
+import { ElResult } from 'element-plus'
+import LinkButton from '@/shared/ui/LinkButton.vue'
 
 const { t, locale } = useI18n()
 </script>
@@ -9,9 +10,7 @@ const { t, locale } = useI18n()
   <main class="not-found">
     <ElResult icon="warning" :title="t('notFound.title')" :sub-title="t('notFound.description')">
       <template #extra>
-        <RouterLink :to="`/${locale}/`" custom v-slot="{ navigate, href }">
-          <ElButton type="primary" tag="a" :href="href" @click="navigate">{{ t('notFound.home') }}</ElButton>
-        </RouterLink>
+        <LinkButton :to="`/${locale}/`" type="primary">{{ t('notFound.home') }}</LinkButton>
       </template>
     </ElResult>
   </main>

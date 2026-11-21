@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ElButton, ElDropdown, ElDropdownItem, ElDropdownMenu, ElEmpty, ElPopover } from 'element-plus'
 import { ArrowDown, Bell, Check, Menu, Switch } from '@element-plus/icons-vue'
+import LinkButton from '@/shared/ui/LinkButton.vue'
 import { applyLocale, isLocale, locales, rememberLocale, type Locale } from '../i18n'
 
 // 三个入口共用的顶栏。右侧顺序固定为「通知铃铛 → 语言切换 → 用户入口」。
@@ -42,9 +43,7 @@ function switchLocale(next: Locale) {
         <template #reference>
           <ElButton text circle :icon="Bell" :aria-label="t('header.notifications')" />
         </template>
-        <slot name="notifications">
-          <ElEmpty :description="t('header.guestNotifications')" :image-size="56" />
-        </slot>
+        <ElEmpty :description="t('header.guestNotifications')" :image-size="56" />
       </ElPopover>
 
       <ElDropdown trigger="click" placement="bottom-end" @command="switchLocale">
@@ -60,14 +59,8 @@ function switchLocale(next: Locale) {
         </template>
       </ElDropdown>
 
-      <slot name="user">
-        <RouterLink :to="`/${locale}/login`" custom v-slot="{ navigate, href }">
-          <ElButton text tag="a" :href="href" @click="navigate">{{ t('header.login') }}</ElButton>
-        </RouterLink>
-        <RouterLink :to="`/${locale}/register`" custom v-slot="{ navigate, href }">
-          <ElButton type="primary" tag="a" :href="href" @click="navigate">{{ t('header.register') }}</ElButton>
-        </RouterLink>
-      </slot>
+      <LinkButton :to="`/${locale}/login`" text>{{ t('header.login') }}</LinkButton>
+      <LinkButton :to="`/${locale}/register`" type="primary">{{ t('header.register') }}</LinkButton>
     </div>
   </header>
 </template>
@@ -87,7 +80,6 @@ function switchLocale(next: Locale) {
   background: var(--color-surface);
 }
 .app-header__start, .app-header__tools { display: flex; align-items: center; gap: var(--space-2); min-width: 0; }
-.app-header__tools .el-button + .el-button { margin-left: 0; }
 .app-header__brand {
   display: inline-flex;
   align-items: center;
@@ -100,21 +92,22 @@ function switchLocale(next: Locale) {
 .app-header__mark {
   display: inline-grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
+  width: var(--brand-mark-size);
+  height: var(--brand-mark-size);
   border-radius: var(--radius-control);
   background: var(--color-accent);
   color: var(--color-shell);
 }
 .app-header__chevron { margin-left: var(--space-1); width: 1em; }
-.app-header__globe { width: var(--font-size-lg); height: var(--font-size-lg); margin-right: var(--space-1); }
+.app-header__globe { width: var(--icon-size); height: var(--icon-size); margin-right: var(--space-1); }
 .app-header__check { display: inline-flex; width: var(--space-4); margin-right: var(--space-2); color: var(--color-primary); }
 .app-header__menu { display: none; }
 
 @media (max-width: 767px) {
-  .app-header { padding-inline: var(--space-3); }
+  .app-header { padding-inline: var(--space-2); }
   .app-header__menu { display: inline-flex; }
+  .app-header__start { gap: var(--space-1); }
   .app-header__tools { gap: 0; }
-  .app-header__brand-text, .app-header__locale-name { display: none; }
+  .app-header__brand-text, .app-header__locale-name, .app-header__chevron { display: none; }
 }
 </style>

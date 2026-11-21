@@ -39,12 +39,12 @@ const active = computed(() => activeNavPath(props.sections, route.path))
   --el-menu-text-color: var(--color-shell-text);
   --el-menu-hover-bg-color: var(--color-shell-hover);
   --el-menu-active-color: var(--color-on-primary);
-  --el-menu-item-height: 40px;
+  --el-menu-item-height: var(--nav-item-height);
   --el-menu-base-level-padding: var(--space-3);
   --el-text-color-secondary: var(--color-shell-muted);
   border-right: 0;
 }
-.app-sidebar__item { height: auto; min-height: 40px; padding-block: var(--space-2); line-height: var(--line-height-tight); white-space: normal; }
+.app-sidebar__item { height: auto; min-height: var(--nav-item-height); padding-block: var(--space-2); line-height: var(--line-height-tight); white-space: normal; }
 .app-sidebar__current { border-radius: var(--radius-control); background: var(--color-shell-active); }
-.app-sidebar__icon { width: 17px; height: 17px; margin-right: var(--space-2); flex: none; }
+.app-sidebar__icon { width: var(--icon-size); height: var(--icon-size); margin-right: var(--space-2); flex: none; }
 </style>

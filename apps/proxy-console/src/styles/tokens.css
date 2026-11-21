@@ -46,6 +46,7 @@
   --font-size-lg: 16px;
   --font-size-xl: 18px;
   --font-size-title: 24px;
+  --font-size-display: 36px;
   --font-size-brand: 20px;
   --font-weight-regular: 400;
   --font-weight-medium: 500;
@@ -64,10 +65,16 @@
   --space-7: 48px;
   --control-height: 34px;
   --control-height-compact: 30px;
+  --nav-item-height: 40px;
+  --tabs-height: 42px;
+  --brand-mark-size: 32px;
+  --icon-size: 16px;
   --header-height: 64px;
   --sidebar-width: 232px;
   --content-max-width: 1440px;
+  --content-narrow-width: 720px;
   --page-padding: var(--space-5);
+  --focus-ring-width: 2px;
 
   /* 圆角、边框与阴影 */
   --radius-control: 6px;

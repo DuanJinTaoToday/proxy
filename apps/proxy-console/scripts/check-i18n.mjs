@@ -36,9 +36,12 @@ for (const dir of new Set(files.filter(f => f.endsWith(`${path.sep}locales${path
   }
 }
 
-const usage = /\bt\(\s*'([\w.-]+)'/g
+// 源码中引用的翻译键：t('…') 调用，以及路由、导航配置里以翻译命名空间开头的字符串（如 'nav.wallet'）。
+const namespaces = new Set([...keys['zh-CN']].map(key => key.split('.')[0]))
+const usage = /['"`]([A-Za-z][\w-]*(?:\.[\w-]+)+)['"`]/g
 for (const file of files.filter(f => /\.(vue|ts)$/.test(f))) {
   for (const [, key] of readFileSync(file, 'utf8').matchAll(usage)) {
+    if (!namespaces.has(key.split('.')[0])) continue
     for (const locale of locales) if (!keys[locale].has(key)) problems.push(`${path.relative(src, file)}: ${locale} 缺少键 ${key}`)
   }
 }
