@@ -163,7 +163,12 @@ func TestStaticPurchaseAndIndependentSales(t *testing.T) {
 		order.GetSettledMinor() != 1000 || order.GetUnsettledMinor() != 1000 {
 		t.Fatalf("partial delivery settlement: %v", &order)
 	}
-	walletBalance(2500)
+	var walletSummary v1.WalletTenant
+	readProto(t, req("GET", "/v1/tenant/wallet", "", session.GetAccessToken()), &walletSummary)
+	if walletSummary.GetAvailableMinor() != 2500 || walletSummary.GetTotalRechargeMinor() != "4500" ||
+		walletSummary.GetTotalSpendMinor() != "1000" {
+		t.Fatalf("wallet must count the confirmed delivery while excluding the unsettled hold: %v", &walletSummary)
+	}
 	readProto(t, req("PUT", sales+"static", `{"open":false}`, cashier), &sale)
 	direct := strings.Replace(request, "static-purchase", "fresh-key-while-closed", 1)
 	testfixture.AssertStatus(t, req("POST", buy, direct, session.GetAccessToken()), http.StatusConflict, "PRODUCT_SALE_CLOSED")
