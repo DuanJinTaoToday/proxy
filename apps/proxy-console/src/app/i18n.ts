@@ -5,6 +5,7 @@ import zhCnElement from 'element-plus/es/locale/lang/zh-cn'
 import enElement from 'element-plus/es/locale/lang/en'
 import zhCN from './locales/zh-CN.json'
 import en from './locales/en.json'
+import { messages as authMessages } from '@/features/auth'
 
 export const locales = ['zh-CN', 'en'] as const
 export type Locale = (typeof locales)[number]
@@ -19,12 +20,10 @@ export const isLocale = (value: unknown): value is Locale => locales.includes(va
 type Messages = Record<string, unknown>
 type MessageSchema = typeof zhCN
 
-// 应用层文案加上各业务模块 features/<module>/locales/ 下的翻译，模块各自维护自己的命名空间。
-const featureMessages = import.meta.glob<Messages>('../features/*/locales/*.json', { eager: true, import: 'default' })
+// 应用层文案加上各业务模块入口导出的翻译，模块各自维护自己的命名空间。
+const moduleMessages: Record<Locale, Messages>[] = [authMessages]
 function messagesFor(locale: Locale, base: MessageSchema) {
-  return Object.entries(featureMessages)
-    .filter(([file]) => file.endsWith(`/${locale}.json`))
-    .reduce<Messages>((all, [, messages]) => ({ ...all, ...messages }), base) as MessageSchema
+  return moduleMessages.reduce<Messages>((all, module) => ({ ...all, ...module[locale] }), base) as MessageSchema
 }
 
 export const i18n = createI18n({

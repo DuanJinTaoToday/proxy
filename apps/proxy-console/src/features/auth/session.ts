@@ -4,8 +4,8 @@ import * as access from '@/api/access'
 import type { TenantAccess } from '@/api/access'
 import { normalizePhone } from './rules'
 
-// 控制台会话：访问令牌、到期时间和登录手机号保存在本浏览器，刷新后保持登录。
-// 控制面的账号接口不返回手机号，顶栏显示的手机号取自本次登录输入。
+// 控制台会话：访问令牌、到期时间和登录手机号保存在本浏览器 localStorage，刷新和新标签页保持登录。
+// 控制面以 Bearer 令牌鉴权，且账号接口不返回手机号，顶栏显示的手机号取自本次登录输入。
 interface StoredSession { token: string, expiresAt: number, phone: string }
 
 const storageKey = 'proxy-console.session'
@@ -21,15 +21,20 @@ function readStored(): StoredSession | undefined {
 
 const stored = ref(readStored())
 const account = ref<TenantAccess>()
+const accountFailed = ref(false)
+let onExpired = () => {}
 
-// 另一个标签页登录或退出时同步。
+// 另一个标签页登录或退出时同步；会话被清空时当前页面同样回到登录页。
 window.addEventListener('storage', event => {
   if (event.key !== storageKey) return
+  const hadSession = Boolean(stored.value)
   stored.value = readStored()
   account.value = undefined
+  if (hadSession && !stored.value) onExpired()
 })
 
 export const currentAccount = computed(() => account.value)
+export const accountLoadFailed = computed(() => accountFailed.value)
 export const sessionPhone = computed(() => stored.value?.phone ?? '')
 
 export function hasSession() {
@@ -52,27 +57,35 @@ export async function signIn(phone: string, password: string) {
   account.value = undefined
 }
 
-// 注册成功后用同一组账密登录，客户直接进入控制台。
-export async function registerAndSignIn(phone: string, password: string) {
+export async function register(phone: string, password: string) {
   await access.register({ phone: normalizePhone(phone), password })
-  await signIn(phone, password)
 }
 
+// 读取失败（网络等）时记录状态，由顶栏提示并重试；会话失效由请求层统一处理。
 export async function loadAccount() {
-  if (!account.value) account.value = await access.getAccount()
-  return account.value
+  if (account.value) return
+  accountFailed.value = false
+  try {
+    account.value = await access.getAccount()
+  } catch {
+    accountFailed.value = true
+  }
 }
 
-// 退出和会话失效都整页跳转到登录页，内存里各模块缓存的业务数据随之清空。
+// 退出整页跳转到登录页，内存里各模块缓存的业务数据随之清空。
 export function signOut(loginPath: string) {
   clearSession()
   window.location.assign(loginPath)
 }
 
-export function installSession(onExpired: () => void) {
+// expired 在会话失效（当前令牌被拒绝，或在其他标签页退出）时调用。
+export function installSession(expired: () => void) {
+  onExpired = expired
   configureApi({
     accessToken: () => stored.value?.token,
-    onUnauthorized: () => {
+    onUnauthorized: (_error, token) => {
+      // 旧请求在重新登录后才返回 401 时，不影响新会话。
+      if (stored.value?.token !== token) return
       clearSession()
       onExpired()
     },

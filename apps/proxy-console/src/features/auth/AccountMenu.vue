@@ -1,24 +1,22 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ElButton, ElDropdown, ElDropdownItem, ElDropdownMenu, ElMessageBox } from 'element-plus'
 import { ArrowDown, User } from '@element-plus/icons-vue'
 import { maskPhone } from './rules'
-import { currentAccount, loadAccount, sessionPhone, signOut } from './session'
+import { accountLoadFailed, currentAccount, loadAccount, sessionPhone, signOut } from './session'
 
 // 已登录时顶栏的用户入口：显示主账号名和手机号，提供账户信息、订单记录和退出登录。
 const router = useRouter()
 const { t, locale } = useI18n()
 
-// 读取失败时由请求层处理会话失效，这里不重复提示。
-onMounted(() => { loadAccount().catch(() => {}) })
+const accountName = computed(() => currentAccount.value?.primaryAccountName
+  ?? t(accountLoadFailed.value ? 'auth.accountFailed' : 'auth.loadingAccount'))
 
-async function onCommand(command: string) {
-  if (command !== 'logout') {
-    router.push(command)
-    return
-  }
+onMounted(loadAccount)
+
+async function confirmSignOut() {
   const confirmed = await ElMessageBox.confirm(t('auth.logoutBody'), t('auth.logoutTitle'), {
     confirmButtonText: t('auth.logout'),
     cancelButtonText: t('auth.cancel'),
@@ -29,21 +27,22 @@ async function onCommand(command: string) {
 </script>
 
 <template>
-  <ElDropdown trigger="click" placement="bottom-end" @command="onCommand">
+  <ElDropdown trigger="click" placement="bottom-end">
     <ElButton text :aria-label="t('auth.accountMenu')">
       <User class="account-menu__icon" />
-      <span class="account-menu__name">{{ currentAccount?.primaryAccountName ?? t('auth.loadingAccount') }}</span>
+      <span class="account-menu__name">{{ accountName }}</span>
       <ArrowDown class="account-menu__chevron" />
     </ElButton>
     <template #dropdown>
       <div class="account-menu__head">
-        <strong>{{ currentAccount?.primaryAccountName ?? t('auth.loadingAccount') }}</strong>
+        <strong>{{ accountName }}</strong>
         <span class="tabular">{{ maskPhone(sessionPhone) }}</span>
+        <ElButton v-if="accountLoadFailed" link type="primary" size="small" @click="loadAccount">{{ t('auth.retry') }}</ElButton>
       </div>
       <ElDropdownMenu>
-        <ElDropdownItem command="/console/account/profile">{{ t('auth.profile') }}</ElDropdownItem>
-        <ElDropdownItem command="/console/account/orders">{{ t('auth.orders') }}</ElDropdownItem>
-        <ElDropdownItem command="logout" divided>{{ t('auth.logout') }}</ElDropdownItem>
+        <ElDropdownItem @click="router.push({ name: 'console-account-profile' })">{{ t('auth.profile') }}</ElDropdownItem>
+        <ElDropdownItem @click="router.push({ name: 'console-account-orders' })">{{ t('auth.orders') }}</ElDropdownItem>
+        <ElDropdownItem divided @click="confirmSignOut">{{ t('auth.logout') }}</ElDropdownItem>
       </ElDropdownMenu>
     </template>
   </ElDropdown>
@@ -56,6 +55,7 @@ async function onCommand(command: string) {
 .account-menu__head {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: var(--space-1);
   max-width: var(--auth-card-width);
   padding: var(--space-3) var(--space-4);

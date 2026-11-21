@@ -28,6 +28,10 @@
     "logoutTitle": "退出登录？",
     "logoutBody": "退出后需要重新登录才能进入控制台。",
     "cancel": "取消",
-    "loadingAccount": "正在读取账号…"
+    "loadingAccount": "正在读取账号…",
+    "retry": "重试",
+    "accountFailed": "账号读取失败",
+    "passwordTooLong": "密码不能超过 1024 字节",
+    "registeredSignInFailed": "账号已创建，但自动登录失败：{reason}请前往登录。"
   }
 }

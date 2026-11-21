@@ -94,8 +94,8 @@ router.beforeEach(to => {
   if (to.meta.guestOnly && hasSession()) return safeRedirect(to.query.redirect)
 })
 
-// 已登录的请求被拒绝时会话已清理，回到登录页并保留当前地址。
+// 会话失效时（令牌被拒绝或在其他标签页退出），受保护页面整页回到登录页并保留当前地址，内存缓存随之清空。
 installSession(() => {
   const current = router.currentRoute.value
-  if (needsAuth(current)) router.replace(loginLocation(preferredLocale(), current.fullPath))
+  if (needsAuth(current)) window.location.assign(router.resolve(loginLocation(preferredLocale(), current.fullPath)).href)
 })

@@ -4,10 +4,10 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ElAlert, ElButton, ElForm, ElFormItem, ElInput, ElPopover, type FormInstance, type FormRules } from 'element-plus'
 import { ApiError } from '@/api/client'
-import { errorMessage } from '@/app/errors'
+import { useErrorMessage } from '@/shared/lib/useErrorMessage'
 import LinkButton from '@/shared/ui/LinkButton.vue'
 import { normalizePhone, safeRedirect } from './rules'
-import { registerAndSignIn, signIn } from './session'
+import { register, signIn } from './session'
 
 // 登录与注册共用一张表单：手机号加密码。成功后回到登录前访问的站内地址，缺省进入控制台。
 const props = defineProps<{ mode: 'login' | 'register' }>()
@@ -15,11 +15,14 @@ const props = defineProps<{ mode: 'login' | 'register' }>()
 const route = useRoute()
 const router = useRouter()
 const { t, locale } = useI18n()
+const errorMessage = useErrorMessage()
 
 const formRef = ref<FormInstance>()
 const form = reactive({ phone: '', password: '' })
 const submitting = ref(false)
 const failure = ref('')
+// 注册已成功但自动登录失败：提示账号已创建并引导去登录，避免重复注册。
+const registeredOnly = ref(false)
 const fieldErrors = reactive({ phone: '', password: '' })
 
 const isRegister = computed(() => props.mode === 'register')
@@ -32,9 +35,15 @@ const rules = computed<FormRules<typeof form>>(() => ({
     { validator: (_rule, value: string, done) => done(normalizePhone(value) ? undefined : new Error(t('auth.phoneInvalid'))), trigger: 'blur' },
   ],
   password: isRegister.value
-    ? [{ required: true, message: t('auth.passwordRequired'), trigger: 'blur' }, { min: 12, message: t('auth.passwordTooShort'), trigger: 'blur' }]
+    ? [{ required: true, message: t('auth.passwordRequired'), trigger: 'blur' }, { validator: (_rule, value: string, done) => done(passwordProblem(value)), trigger: 'blur' }]
     : [{ required: true, message: t('auth.passwordRequired'), trigger: 'blur' }],
 }))
+
+// 与控制面一致：至少 12 个字符（按字符而非 UTF-16 单元计），最多 1024 字节。
+function passwordProblem(value: string) {
+  if ([...value].length < 12) return new Error(t('auth.passwordTooShort'))
+  if (new TextEncoder().encode(value).length > 1024) return new Error(t('auth.passwordTooLong'))
+}
 
 // 控制面能定位到字段的错误显示在对应输入框下，其余显示在表单顶部。修改输入后清除上次的服务端提示。
 const fieldOf: Record<string, keyof typeof fieldErrors> = { INVALID_PHONE: 'phone', PHONE_ALREADY_REGISTERED: 'phone', INVALID_PASSWORD: 'password' }
@@ -43,20 +52,37 @@ watch(() => form.password, () => { fieldErrors.password = '' })
 
 async function submit() {
   failure.value = ''
+  registeredOnly.value = false
   fieldErrors.phone = ''
   fieldErrors.password = ''
   if (!await formRef.value?.validate().catch(() => false)) return
   submitting.value = true
   try {
-    await (isRegister.value ? registerAndSignIn : signIn)(form.phone, form.password)
+    if (isRegister.value) await register(form.phone, form.password)
+  } catch (error) {
+    showError(error)
+    submitting.value = false
+    return
+  }
+  try {
+    await signIn(form.phone, form.password)
     await router.replace(safeRedirect(route.query.redirect))
   } catch (error) {
-    const field = error instanceof ApiError ? fieldOf[error.reason] : undefined
-    if (field) fieldErrors[field] = errorMessage(error)
-    else failure.value = errorMessage(error)
+    if (isRegister.value) {
+      registeredOnly.value = true
+      failure.value = t('auth.registeredSignInFailed', { reason: errorMessage(error) })
+    } else {
+      showError(error)
+    }
   } finally {
     submitting.value = false
   }
+}
+
+function showError(error: unknown) {
+  const field = error instanceof ApiError ? fieldOf[error.reason] : undefined
+  if (field) fieldErrors[field] = errorMessage(error)
+  else failure.value = errorMessage(error)
 }
 </script>
 
@@ -65,7 +91,9 @@ async function submit() {
     <h1 class="auth-form__title">{{ t(isRegister ? 'auth.registerTitle' : 'auth.loginTitle') }}</h1>
     <p class="auth-form__subtitle">{{ t(isRegister ? 'auth.registerSubtitle' : 'auth.loginSubtitle') }}</p>
 
-    <ElAlert v-if="failure" type="error" :title="failure" :closable="false" show-icon class="auth-form__alert" />
+    <ElAlert v-if="failure" :type="registeredOnly ? 'warning' : 'error'" :title="failure" :closable="false" show-icon class="auth-form__alert">
+      <LinkButton v-if="registeredOnly" :to="otherPage" type="primary" size="small">{{ t('auth.loginLink') }}</LinkButton>
+    </ElAlert>
 
     <ElForm ref="formRef" :model="form" :rules="rules" label-position="top" size="large" @submit.prevent="submit">
       <ElFormItem :label="t('auth.phone')" prop="phone" :error="fieldErrors.phone">

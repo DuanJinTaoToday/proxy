@@ -28,6 +28,10 @@
     "logoutTitle": "Sign out?",
     "logoutBody": "You will need to sign in again to use the console.",
     "cancel": "Cancel",
-    "loadingAccount": "Loading account…"
+    "loadingAccount": "Loading account…",
+    "retry": "Retry",
+    "accountFailed": "Could not load account",
+    "passwordTooLong": "The password must not exceed 1024 bytes",
+    "registeredSignInFailed": "Your account was created, but signing in automatically failed: {reason} Sign in to continue."
   }
 }

@@ -22,7 +22,8 @@ export interface RequestOptions {
 
 interface ApiHooks {
   accessToken: () => string | undefined
-  onUnauthorized: (error: ApiError) => void
+  // token 为被拒绝的那次请求携带的凭据，会话层据此判断是否仍是当前会话。
+  onUnauthorized: (error: ApiError, token: string) => void
 }
 
 const hooks: ApiHooks = { accessToken: () => undefined, onUnauthorized: () => {} }
@@ -74,7 +75,7 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
     try { payload = text ? parseJson(text) : {} } catch { /* 非 JSON 错误体按状态码处理 */ }
     const error = new ApiError(response.status, payload.reason || 'UNKNOWN', payload.message || response.statusText)
     // 只有携带凭据的请求被拒绝才表示会话失效；登录接口的账密错误同为 401，不应触发退出。
-    if (response.status === 401 && token) hooks.onUnauthorized(error)
+    if (response.status === 401 && token) hooks.onUnauthorized(error, token)
     throw error
   }
   return (text ? parseJson(text) : undefined) as T
