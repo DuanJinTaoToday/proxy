@@ -14,7 +14,17 @@ function sql(statement) {
   ], { cwd: new URL('../../../', import.meta.url), encoding: 'utf8' }).trim()
 }
 
-async function recharge(request) {
+async function registerTenant(request, phone) {
+  const response = await request.post('/v1/access/register', {
+    data: { phone, password: 'proxy-local-test' },
+  })
+  await expect(response).toBeOK()
+  const account = await response.json()
+  expect(account.tenant_id).toMatch(/^[a-f0-9]{32}$/)
+  return account
+}
+
+async function recharge(request, tenantId) {
   const login = await request.post('/v1/operations/access/login', {
     data: { username: 'operator', password: 'proxy-local-test' },
   })
@@ -22,7 +32,7 @@ async function recharge(request) {
   const { access_token } = await login.json()
   const headers = { Authorization: 'Bearer ' + access_token }
   const request_key = 'verify-76-' + process.env.VERIFY_ID
-  const endpoint = '/v1/operations/tenants/alpha/wallet'
+  const endpoint = '/v1/operations/tenants/' + tenantId + '/wallet'
   const response = await request.post(endpoint + '/recharge-quotes', {
     headers, data: { request_key, reason: 'Issue 76 verification', amount_minor: '1000' },
   })
@@ -35,28 +45,27 @@ async function recharge(request) {
   return result.id
 }
 
-function seedHistory() {
+function seedHistory(tenantId) {
   // The first order is one second before Shanghai midnight. The other orders
   // belong to the next business day even though both use the same UTC date.
   return sql(`
     BEGIN;
     INSERT INTO wallet_entries (tenant_id, request_key, request_hash, kind, actor, reason, before_minor, after_minor, created_at)
-      SELECT 'alpha', 'verify-76-history-' || n, '', 'recharge', 'local-operator', 'test fixture',
+      SELECT '${tenantId}', 'verify-76-history-' || n, '', 'recharge', 'local-operator', 'test fixture',
         900 + n*100, 1000 + n*100, '2026-01-13T16:00:00Z' FROM generate_series(1, 25) n;
-    ALTER TABLE purchase_orders ALTER COLUMN id RESTART WITH 7601;
     CREATE TEMP TABLE verify76_orders AS
       WITH inserted AS (
         INSERT INTO purchase_orders
-          (tenant_id, kind, status, locked_minor, debited_minor, released_minor, refunded_minor, delivered_bytes, delivered_count, created_at)
-        VALUES
-          ('alpha', 'traffic_package', 'succeeded', 700, 700, 0, 0, 5000000000, 0, '2026-01-14T15:59:59Z'),
-          ('alpha', 'static_purchase', 'partial', 1200, 1200, 600, 0, 0, 1, '2026-01-14T16:00:00Z'),
-          ('alpha', 'static_renewal', 'pending', 500, 500, 0, 0, 0, 0, '2026-01-14T16:01:00Z')
+          (id, tenant_id, kind, status, locked_minor, debited_minor, released_minor, refunded_minor, delivered_bytes, delivered_count, created_at)
+        OVERRIDING SYSTEM VALUE VALUES
+          (7601, '${tenantId}', 'traffic_package', 'succeeded', 700, 700, 0, 0, 5000000000, 0, '2026-01-14T15:59:59Z'),
+          (7602, '${tenantId}', 'static_purchase', 'partial', 1200, 1200, 600, 0, 0, 1, '2026-01-14T16:00:00Z'),
+          (7603, '${tenantId}', 'static_renewal', 'pending', 500, 500, 0, 0, 0, 0, '2026-01-14T16:01:00Z')
         RETURNING id, kind
       ) SELECT * FROM inserted;
     INSERT INTO order_items
       (tenant_id, order_id, position, specification, reference, capacity_bytes, term_days, unit_minor, quantity, delivered_count)
-      SELECT 'alpha', id, 1,
+      SELECT '${tenantId}', id, 1,
         CASE kind WHEN 'static_purchase' THEN 'Singapore' WHEN 'static_renewal' THEN '192.0.2.1' ELSE '5 GB' END, '',
         CASE WHEN kind = 'traffic_package' THEN 5000000000 ELSE 0 END,
         CASE WHEN kind = 'traffic_package' THEN 0 ELSE 30 END,
@@ -65,7 +74,7 @@ function seedHistory() {
         CASE WHEN kind = 'static_renewal' THEN 0 ELSE 1 END
       FROM verify76_orders;
     INSERT INTO wallet_entries (tenant_id, request_key, request_hash, order_id, kind, reason, before_minor, after_minor, created_at)
-      SELECT 'alpha', 'verify-76-' || event, '', id, action, '', before_minor, after_minor, date::timestamptz
+      SELECT '${tenantId}', 'verify-76-' || event, '', id, action, '', before_minor, after_minor, date::timestamptz
       FROM verify76_orders JOIN (VALUES
         ('traffic_package', 'traffic', 'debit', 3500, 2800, '2026-01-14T15:59:59Z'),
         ('static_purchase', 'hold', 'hold', 2800, 1600, '2026-01-14T16:00:00Z'),
@@ -73,22 +82,24 @@ function seedHistory() {
         ('static_renewal', 'renewal', 'hold', 2200, 1700, '2026-01-14T16:01:00Z')
       ) AS entry(product, event, action, before_minor, after_minor, date) ON kind = product
       ORDER BY date::timestamptz;
-    UPDATE wallets SET available_minor = 1700 WHERE tenant_id = 'alpha';
+    UPDATE wallets SET available_minor = 1700 WHERE tenant_id = '${tenantId}';
     COMMIT;
     SELECT string_agg(id::text, ',' ORDER BY id) FROM verify76_orders;
   `).split(/\r?\n/).at(-1).split(',')
 }
 
 test('钱包到账、筛选、翻页和关联订单，订单详情与账户信息可从正常入口查看', async ({ page, request }, info) => {
-  await signInTenant(page)
+  const phone = '13900007601'
+  const { tenant_id: tenantId, primary_account_name: accountName } = await registerTenant(request, phone)
+  await signInTenant(page, phone)
   await page.getByRole('menuitem', { name: '钱包', exact: true }).click()
   await expect(balance(page)).toContainText('¥0.00')
 
-  const rechargeId = await recharge(request)
+  const rechargeId = await recharge(request, tenantId)
   await page.reload()
   await expect(balance(page)).toContainText('¥10.00')
   await expect(page.getByRole('cell', { name: rechargeId, exact: true })).toHaveCount(1)
-  const [dynamicId, partialId, pendingId] = seedHistory()
+  const [dynamicId, partialId, pendingId] = seedHistory(tenantId)
 
   await page.reload()
   await expect(balance(page)).toContainText('¥17.00')
@@ -158,8 +169,8 @@ test('钱包到账、筛选、翻页和关联订单，订单详情与账户信�
   await badgeError.getByRole('button', { name: '重试', exact: true }).click()
   await expect(badgeError).toBeHidden()
   const account = page.getByRole('region', { name: '账户', exact: true })
-  await expect(account).toContainText('localalpha')
-  await expect(account).toContainText('+86 138 **** 0001')
+  await expect(account).toContainText(accountName)
+  await expect(account).toContainText('+86 139 **** 7601')
   await expect(page.getByRole('region', { name: '当前 IP 地址及归属地' })).toBeVisible()
   await expect(ordersTab.getByText('1', { exact: true })).toBeVisible()
   await screenshot(page, info, 'profile-and-pending-tab')
@@ -205,8 +216,10 @@ test('钱包到账、筛选、翻页和关联订单，订单详情与账户信�
   await screenshot(page, info, 'pending-order')
 })
 
-test('钱包和订单详情请求失败后可重试，租户不能读取其他租户的订单', async ({ page, browser, baseURL }, info) => {
-  await signInTenant(page, '13800000002')
+test('钱包和订单详情请求失败后可重试，租户不能读取其他租户的订单', async ({ page, browser, baseURL, request }, info) => {
+  const phone = '13900007602'
+  const { tenant_id: tenantId } = await registerTenant(request, phone)
+  await signInTenant(page, phone)
   await page.route('**/v1/tenant/wallet/ledger', route => route.fulfill({ status: 503 }), { times: 1 })
   await page.goto(walletPath)
   await expect(page.getByText('钱包流水读取失败')).toBeVisible()
@@ -216,7 +229,7 @@ test('钱包和订单详情请求失败后可重试，租户不能读取其他�
   const ownOrder = sql(`
     INSERT INTO purchase_orders
       (tenant_id, kind, status, locked_minor, debited_minor, released_minor, refunded_minor, delivered_bytes, delivered_count)
-    VALUES ('beta', 'traffic_package', 'succeeded', 100, 100, 0, 0, 1000000000, 0) RETURNING id;
+    VALUES ('${tenantId}', 'traffic_package', 'succeeded', 100, 100, 0, 0, 1000000000, 0) RETURNING id;
   `).split(/\r?\n/)[0]
   await page.route('**/v1/tenant/orders/' + ownOrder, route => route.fulfill({ status: 503 }), { times: 1 })
   await page.goto(ordersPath + '?detail=' + ownOrder)

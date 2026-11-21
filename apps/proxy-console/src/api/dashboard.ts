@@ -20,28 +20,6 @@ export async function getOverview(signal: AbortSignal) {
   }
 }
 
-interface DailyUsageWire {
-  date: string
-  billable_bytes: string
-  updated_at?: string
-}
-
-export async function getDailyUsage({ start, end, signal }: { start: string, end: string, signal: AbortSignal }) {
-  const wire = await request<{ days: DailyUsageWire[] }>('/v1/tenant/usage/daily', {
-    query: { start_date: start, end_date: end },
-    signal,
-  })
-  return wire.days.map(day => ({ date: day.date, bytes: BigInt(day.billable_bytes), updatedAt: day.updated_at }))
-}
-
-export async function getTrafficAlert(signal: AbortSignal) {
-  const wire = await request<{ threshold_bytes?: string, occurrence?: string }>('/v1/tenant/traffic-alert', { signal })
-  return {
-    thresholdBytes: wire.threshold_bytes === undefined ? undefined : BigInt(wire.threshold_bytes),
-    occurrence: wire.occurrence === undefined ? undefined : BigInt(wire.occurrence).toString(),
-  }
-}
-
 export async function listActiveStaticExpiries(activeCount: number, signal: AbortSignal) {
   if (activeCount === 0) return []
   const wire = await request<{ allocations?: { supplier_item_id: string, expires_at: string }[] }>('/v1/tenant/static-ips', { signal })

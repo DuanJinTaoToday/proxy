@@ -82,3 +82,15 @@ export async function revealSubaccountPassword(clientId: string, signal?: AbortS
   const wire = await request<{ password: string }>(`${accountPath(clientId)}/password`, { signal })
   return wire.password
 }
+
+interface ProxyConfig {
+  host: string
+  port: number
+  username: string
+  password: string
+  explicit_sid?: boolean
+}
+
+export function getSubaccountProxyConfig(clientId: string, signal: AbortSignal) {
+  return request<ProxyConfig>(`${accountPath(clientId)}/proxy-config`, { signal })
+}

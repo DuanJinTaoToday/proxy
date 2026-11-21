@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { ElAlert, ElButton, ElCard, ElIcon, ElPopover, ElSkeleton } from 'element-plus'
 import { Bottom, Service, Top, Wallet } from '@element-plus/icons-vue'
 import { getWalletSummary } from '@/api/wallet'
-import { formatYuan } from '@/shared/lib/formatters'
+import { formatYuan } from '@/shared/lib/money'
 
 const { t, locale } = useI18n()
 type Summary = Awaited<ReturnType<typeof getWalletSummary>>

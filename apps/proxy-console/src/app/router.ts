@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory, type RouteLocationNormalizedLoaded, type RouteRecordRaw } from 'vue-router'
+import { createRouter, createWebHistory, type RouteLocationNormalizedLoaded, type RouteRecordRaw, type RouteRecordSingleView } from 'vue-router'
 import { hasSession, installSession, safeRedirect } from '@/features/auth'
 import { applyLocale, isLocale, preferredLocale, rememberLocale } from './i18n'
 
@@ -22,11 +22,7 @@ const RoutePlaceholder = () => import('./RoutePlaceholder.vue')
 const RouteTabs = () => import('./RouteTabs.vue')
 const AuthPage = () => import('@/pages/public/AuthPage.vue')
 
-interface Tab {
-  path: string
-  labelKey: string
-  component?: RouteRecordRaw['component']
-}
+interface Tab { path: string, labelKey: string, component?: RouteRecordSingleView['component'] }
 
 // 页签页：父路由显示标题和页签，第一个页签为默认子页，子路由名为「前缀-路径」。
 function tabbed(path: string, prefix: string, titleKey: string, tabs: Tab[], component = RouteTabs): RouteRecordRaw {
@@ -61,7 +57,12 @@ export const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true },
     children: [
       { path: '', name: 'console-dashboard', component: () => import('@/pages/console/DashboardPage.vue'), meta: { titleKey: 'nav.dashboard' } },
-      tabbed('dynamic', 'console-dynamic', 'nav.dynamic', [{ path: 'setup', labelKey: 'tabs.dynamicSetup' }, { path: 'pricing', labelKey: 'tabs.dynamicPricing' }, { path: 'usage', labelKey: 'tabs.dynamicUsage' }, { path: 'guide', labelKey: 'tabs.guide' }]),
+      tabbed('dynamic', 'console-dynamic', 'nav.dynamic', [
+        { path: 'setup', labelKey: 'tabs.dynamicSetup', component: () => import('@/pages/console/DynamicSetupPage.vue') },
+        { path: 'pricing', labelKey: 'tabs.dynamicPricing', component: () => import('@/pages/console/DynamicPricingPage.vue') },
+        { path: 'usage', labelKey: 'tabs.dynamicUsage', component: () => import('@/pages/console/DynamicUsagePage.vue') },
+        { path: 'guide', labelKey: 'tabs.guide', component: () => import('@/pages/console/DynamicGuidePage.vue') },
+      ]),
       tabbed('static', 'console-static', 'nav.static', [{ path: 'ips', labelKey: 'tabs.staticIps' }, { path: 'pricing', labelKey: 'tabs.staticPricing' }, { path: 'guide', labelKey: 'tabs.guide' }]),
       { path: 'sub-accounts', name: 'console-sub-accounts', component: () => import('@/pages/console/SubAccountsPage.vue'), meta: { titleKey: 'nav.subAccounts' } },
       { path: 'wallet', name: 'console-wallet', component: () => import('@/pages/console/WalletPage.vue'), meta: { titleKey: 'nav.wallet' } },

@@ -4,20 +4,29 @@ import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { ElBadge, ElButton, ElEmpty, ElPopover, ElSkeleton } from 'element-plus'
 import { Bell, Check, Close } from '@element-plus/icons-vue'
-import { claimStaticExpiryNotices, getOverview, getTrafficAlert, listActiveStaticExpiries } from '@/api/dashboard'
+import { claimStaticExpiryNotices, getOverview, listActiveStaticExpiries } from '@/api/dashboard'
+import { getTrafficAlert } from '@/api/trafficAlert'
 import LinkButton from '@/shared/ui/LinkButton.vue'
+import { trafficNoticeRevision } from './trafficNotice'
 
 const props = defineProps<{ accountKey: string }>()
 const { t, locale } = useI18n()
 const route = useRoute()
 const bell = ref<InstanceType<typeof ElPopover>>()
-const ready = ref(false)
-const loading = ref(false)
-const failed = ref(false)
+const trafficLoading = ref(false)
+const staticLoading = ref(false)
+const trafficFailed = ref(false)
+const staticFailed = ref(false)
+const loading = computed(() => trafficLoading.value || staticLoading.value)
+const failed = computed(() => trafficFailed.value || staticFailed.value)
 const trafficOccurrence = ref<string>()
 const expiringKeys = ref<string[]>([])
 const controller = new AbortController()
-onScopeDispose(() => controller.abort())
+let trafficRequest: AbortController | undefined
+onScopeDispose(() => {
+  controller.abort()
+  trafficRequest?.abort()
+})
 
 const storageKey = `proxy-console.notifications.${props.accountKey}`
 const claimKey = `${storageKey}.claim-pending`
@@ -70,12 +79,32 @@ if (props.accountKey) {
   onScopeDispose(() => window.removeEventListener('storage', syncReadState))
 }
 
-async function load() {
-  if (!props.accountKey || loading.value) return
-  loading.value = true
-  failed.value = false
+async function loadTraffic() {
+  if (!props.accountKey) return
+  trafficRequest?.abort()
+  const request = new AbortController()
+  trafficRequest = request
+  trafficLoading.value = true
+  trafficFailed.value = false
   try {
-    const [overview, traffic] = await Promise.all([getOverview(controller.signal), getTrafficAlert(controller.signal)])
+    const traffic = await getTrafficAlert(request.signal)
+    if (!request.signal.aborted) trafficOccurrence.value = traffic.occurrence
+  } catch {
+    if (!request.signal.aborted) {
+      trafficOccurrence.value = undefined
+      trafficFailed.value = true
+    }
+  } finally {
+    if (!request.signal.aborted) trafficLoading.value = false
+  }
+}
+
+async function loadStatic() {
+  if (!props.accountKey || staticLoading.value) return
+  staticLoading.value = true
+  staticFailed.value = false
+  try {
+    const overview = await getOverview(controller.signal)
     if (controller.signal.aborted) return
     const active = overview.expiringIpCount > 0
       ? await listActiveStaticExpiries(overview.activeStaticIpCount, controller.signal)
@@ -96,16 +125,23 @@ async function load() {
     setClaimPending(false)
     if (controller.signal.aborted) return
     expiringKeys.value = keys
-    trafficOccurrence.value = traffic.occurrence
-    ready.value = true
   } catch {
-    if (!controller.signal.aborted) failed.value = true
+    if (!controller.signal.aborted) {
+      expiringKeys.value = []
+      staticFailed.value = true
+    }
   } finally {
-    loading.value = false
+    staticLoading.value = false
   }
 }
 
+function load() {
+  if (!trafficLoading.value) void loadTraffic()
+  void loadStatic()
+}
+
 watch(() => route.path, load, { immediate: true })
+watch(trafficNoticeRevision, loadTraffic)
 
 function refreshOnOpen() {
   if (!failed.value) void load()
@@ -134,7 +170,7 @@ function markRead(kind: 'traffic' | 'static' | 'all') {
       <div class="notification-bell__heading">
         <h2>{{ t('header.notifications') }}</h2>
         <div class="notification-bell__actions">
-          <ElButton v-if="ready && !failed && unread" :disabled="loading" :icon="Check" link type="primary" @click="markRead('all')">
+          <ElButton v-if="!failed && unread" :disabled="loading" :icon="Check" link type="primary" @click="markRead('all')">
             {{ t('notifications.markAllRead') }}
           </ElButton>
           <ElButton text circle size="small" :icon="Close" :aria-label="t('notifications.close')" @click="bell?.hide()" />
@@ -143,28 +179,30 @@ function markRead(kind: 'traffic' | 'static' | 'all') {
       <ElEmpty v-if="!accountKey" :description="t('header.guestNotifications')" :image-size="56">
         <LinkButton :to="`/${locale}/login`" size="small">{{ t('header.login') }}</LinkButton>
       </ElEmpty>
-      <div v-else-if="failed" class="notification-bell__failure">
-        <p role="alert">{{ t('notifications.failed') }}</p>
-        <ElButton size="small" @click="load">{{ t('notifications.retry') }}</ElButton>
-      </div>
-      <div v-else-if="!ready" role="status" :aria-label="t('notifications.loading')">
-        <ElSkeleton animated :rows="2" />
-      </div>
-      <ul v-else-if="trafficOccurrence || expiringKeys.length">
-        <li v-if="trafficOccurrence">
-          <RouterLink :to="{ name: 'console-dynamic-pricing' }" @click="markRead('traffic')">
-            <ElBadge is-dot :hidden="!unreadTraffic"><strong>{{ t('notifications.lowTraffic') }}</strong></ElBadge>
-            <span>{{ t('notifications.trafficAction') }}</span>
-          </RouterLink>
-        </li>
-        <li v-if="expiringKeys.length">
-          <RouterLink :to="{ name: 'console-static-ips' }" @click="markRead('static')">
-            <ElBadge is-dot :hidden="!unreadStatic"><strong class="tabular">{{ t('notifications.expiring', expiringKeys.length) }}</strong></ElBadge>
-            <span>{{ t('notifications.staticAction') }}</span>
-          </RouterLink>
-        </li>
-      </ul>
-      <ElEmpty v-else :description="t('notifications.empty')" :image-size="56" />
+      <template v-else>
+        <div v-if="failed" class="notification-bell__failure">
+          <p role="alert">{{ t('notifications.failed') }}</p>
+          <ElButton size="small" @click="load">{{ t('notifications.retry') }}</ElButton>
+        </div>
+        <ul v-if="trafficOccurrence || expiringKeys.length">
+          <li v-if="trafficOccurrence">
+            <RouterLink :to="{ name: 'console-dynamic-pricing' }" @click="markRead('traffic')">
+              <ElBadge is-dot :hidden="!unreadTraffic"><strong>{{ t('notifications.lowTraffic') }}</strong></ElBadge>
+              <span>{{ t('notifications.trafficAction') }}</span>
+            </RouterLink>
+          </li>
+          <li v-if="expiringKeys.length">
+            <RouterLink :to="{ name: 'console-static-ips' }" @click="markRead('static')">
+              <ElBadge is-dot :hidden="!unreadStatic"><strong class="tabular">{{ t('notifications.expiring', expiringKeys.length) }}</strong></ElBadge>
+              <span>{{ t('notifications.staticAction') }}</span>
+            </RouterLink>
+          </li>
+        </ul>
+        <div v-else-if="!failed && loading" role="status" :aria-label="t('notifications.loading')">
+          <ElSkeleton animated :rows="2" />
+        </div>
+        <ElEmpty v-else-if="!failed" :description="t('notifications.empty')" :image-size="56" />
+      </template>
     </div>
   </ElPopover>
 </template>

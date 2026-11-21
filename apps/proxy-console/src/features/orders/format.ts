@@ -1,7 +1,8 @@
 import { useI18n } from 'vue-i18n'
 import type { OrderItem, OrderSummary } from '@/api/orders'
-import { formatGB } from '@/features/dynamic-proxy'
-import { formatYuan, shanghaiDateTime } from '@/shared/lib/formatters'
+import { formatGB } from '@/shared/lib/trafficUnits'
+import { shanghaiDateTime } from '@/shared/lib/businessDates'
+import { formatYuan } from '@/shared/lib/money'
 
 const statusTypes = {
   pending: 'info',

@@ -36,6 +36,21 @@ type Package struct {
 
 func (p Package) Available() bool { return p.Listed && p.PriceMinor > 0 }
 
+func (p Package) discountPercent(base Package) int32 {
+	if base.PriceMinor <= 0 || base.CapacityBytes <= 0 {
+		return 0
+	}
+	original := new(big.Int).Mul(big.NewInt(base.PriceMinor), big.NewInt(p.CapacityBytes))
+	current := new(big.Int).Mul(big.NewInt(p.PriceMinor), big.NewInt(base.CapacityBytes))
+	saving := new(big.Int).Sub(original, current)
+	if saving.Sign() <= 0 {
+		return 0
+	}
+	saving.Mul(saving, big.NewInt(100))
+	saving.Add(saving, new(big.Int).Rsh(new(big.Int).Set(original), 1))
+	return int32(saving.Quo(saving, original).Int64())
+}
+
 // DefaultTierPrice computes the initial total for an untouched tier from the
 // base price per byte. It rounds to the nearest minor unit, with ties rounded up.
 func (p Package) DefaultTierPrice(base Package) (int64, error) {
@@ -79,7 +94,12 @@ type Product struct {
 	Sale
 	Description string
 	CanPurchase bool
-	Packages    []Package
+	Packages    []PublicPackage
+}
+
+type PublicPackage struct {
+	Package
+	DiscountPercent int32
 }
 
 type Repository interface {
@@ -115,9 +135,16 @@ func present(sale Sale, packages []Package) Product {
 	if sale.Kind == Dynamic {
 		item.Description = "通过 SOCKS5 隧道使用动态住宅代理，按实际用量扣减流量。"
 		if sale.Open {
+			var base Package
+			for _, pkg := range packages {
+				if pkg.ID == BaselinePackageID {
+					base = pkg
+					break
+				}
+			}
 			for _, pkg := range packages {
 				if pkg.Available() {
-					item.Packages = append(item.Packages, pkg)
+					item.Packages = append(item.Packages, PublicPackage{Package: pkg, DiscountPercent: pkg.discountPercent(base)})
 				}
 			}
 		}

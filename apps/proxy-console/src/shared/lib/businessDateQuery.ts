@@ -1,7 +1,7 @@
+import { validBusinessDate } from './businessDates'
+
 function readBusinessDate(value: unknown) {
-  if (typeof value !== 'string' || !/^(?!0000)\d{4}-\d{2}-\d{2}$/.test(value)) return undefined
-  const date = new Date(value)
-  return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value ? value : undefined
+  return typeof value === 'string' && validBusinessDate(value) ? value : undefined
 }
 
 type BusinessDateBounds = { start?: string, end?: string }

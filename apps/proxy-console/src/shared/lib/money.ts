@@ -1,9 +1,3 @@
-const shanghai = 'Asia/Shanghai'
-
-export function shanghaiDateTime(date: Date, locale: string) {
-  return new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short', timeZone: shanghai }).format(date)
-}
-
 export function formatYuan(minor: bigint, locale: string) {
   const major = minor / 100n
   const format = new Intl.NumberFormat(locale, { style: 'currency', currency: 'CNY', currencyDisplay: 'narrowSymbol' })

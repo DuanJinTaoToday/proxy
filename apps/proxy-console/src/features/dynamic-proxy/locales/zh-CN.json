@@ -1,4 +1,51 @@
 {
+  "dynamicUsage": {
+    "range": "时间范围",
+    "last7": "近 7 天",
+    "last30": "近 30 天",
+    "customDates": "自定义日期",
+    "through": "至",
+    "startDate": "开始日期",
+    "endDate": "结束日期",
+    "byAccount": "按子账号筛选",
+    "allAccounts": "全部子账号",
+    "selectedAccount": "所选子账号",
+    "disabledAccount": "{name}（已禁用）",
+    "exportCsv": "导出 CSV",
+    "csvSaved": "已导出用量 CSV",
+    "csvFailed": "CSV 导出失败",
+    "loading": "正在加载用量",
+    "loadFailed": "用量加载失败",
+    "accountsFailed": "子账号加载失败",
+    "retry": "重试",
+    "empty": "所选范围内没有数据",
+    "total": "合计扣减",
+    "average": "日均",
+    "peak": "最高一天",
+    "gb": "{value} GB",
+    "chartLabel": "按天扣减流量面积图",
+    "dailyDetails": "按天用量明细",
+    "businessDay": "业务日",
+    "debitedTraffic": "扣减流量",
+    "debitedBytes": "扣减字节",
+    "updated": "数据更新于 {time}",
+    "unknownUpdate": "数据更新时间未知",
+    "usageBasis": "按天展示实际扣减流量 · 业务日按北京时间 · 1 GB = 10⁹ 字节"
+  },
+  "trafficAlert": {
+    "title": "低余额提醒",
+    "hint": "可用流量降到阈值或以下时，控制台会提醒一次。余额回到阈值以上后，下次降到阈值可再次提醒。",
+    "threshold": "提醒阈值（GB）",
+    "invalid": "请输入有效的非负 GB 数值，最多 9 位小数。",
+    "save": "保存阈值",
+    "disable": "停用提醒",
+    "saved": "已保存低余额阈值。",
+    "disabled": "已停用低余额提醒。",
+    "loading": "正在加载低余额提醒",
+    "loadFailed": "无法加载低余额提醒。",
+    "updateFailed": "未能确认提醒设置，请重试。",
+    "retry": "重试"
+  },
   "subaccounts": {
     "intro": "子账号用于动态住宅代理的 SOCKS5 接入，可为各项目分配独立账密和用量上限。",
     "usernameHint": "SOCKS5 用户名格式为 {account}.子账号名，可追加 -sid-会话标识指定会话。静态住宅 IP 使用各自的交付账密。",
@@ -80,6 +127,82 @@
       "INVALID_SUBACCOUNT_REMARK": "备注最多 512 字节。",
       "INVALID_SUBACCOUNT_LIMIT": "上限只能调高或取消。",
       "SUBACCOUNT_LIMIT_BELOW_USAGE": "上限不能低于已用量。"
+    }
+  },
+  "dynamicSetup": {
+    "heading": "SOCKS5 接入信息",
+    "manage": "管理子账号",
+    "account": "子账号",
+    "accountOption": "{name} · {remark}",
+    "empty": "还没有启用的子账号",
+    "emptyHint": "请先创建或启用一个代理子账号。",
+    "create": "去创建子账号",
+    "session": "会话",
+    "defaultSession": "默认会话",
+    "explicitSession": "指定会话标识",
+    "sid": "会话标识（sid）",
+    "sidFormat": "请输入 1–32 位小写字母或数字。",
+    "sidHelp": "同一子账号和会话标识会尝试沿用相同出口。重连时出口 IP 仍可能变化。",
+    "host": "网关地址",
+    "port": "端口",
+    "username": "用户名",
+    "password": "密码",
+    "hide": "隐藏密码",
+    "reveal": "显示密码",
+    "copyField": "复制{field}",
+    "copy": "复制",
+    "copied": "已复制到剪贴板。",
+    "copyFailed": "复制失败，请检查浏览器的剪贴板权限。",
+    "connection": "连接串",
+    "curl": "curl 示例",
+    "retry": "重新加载",
+    "balance": "可用流量",
+    "balanceHint": "流量长期有效，余额大于 0 才能建立新连接。",
+    "buy": "购买流量"
+  },
+  "dynamicGuide": {
+    "heading": "通过 SOCKS5 接入动态住宅代理",
+    "region": "所有代理产品均不支持在中国大陆网络环境下使用。",
+    "openSetup": "去代理设置",
+    "faq": "常见问题",
+    "purchase": {
+      "title": "购买流量",
+      "body": "在「价格」页购买流量包。流量长期有效，可供同一租户下的子账号共用。"
+    },
+    "account": {
+      "title": "创建子账号",
+      "body": "在「代理子账号」中创建并启用子账号。可以为各子账号设置累计用量上限。"
+    },
+    "credentials": {
+      "title": "获取接入信息",
+      "body": "在「代理设置」选择已启用的子账号，复制网关地址、端口、用户名和密码。默认 SOCKS5 用户名格式如下。"
+    },
+    "usernameFormat": "<主账号名>.<子账号名>",
+    "session": {
+      "title": "选择会话",
+      "body": "默认会话使用基础用户名。要指定会话，在用户名末尾加上以下后缀。会话标识须为 1–32 位小写字母或数字。"
+    },
+    "sessionFormat": "<主账号名>.<子账号名>-sid-<会话标识>",
+    "connect": {
+      "title": "配置客户端并测试",
+      "body": "在客户端选择 SOCKS5 并填写接入信息。若客户端支持 socks5h，可让代理解析目标域名。也可以从「代理设置」复制 curl 命令查询出口 IP。"
+    },
+    "command": "curl -x 'socks5h://<用户名>:<密码>{'@'}<网关地址>:<端口>' https://api.ipify.org",
+    "usage": {
+      "title": "查看用量",
+      "body": "系统按实际计量字节扣减流量。1 GB = 1,000,000,000 字节。"
+    },
+    "authentication": {
+      "title": "为什么身份验证失败？",
+      "body": "请检查子账号是否启用、用户名是否含主账号名前缀，以及密码是否为当前子账号的最新密码。指定会话时也要检查 sid 的格式。"
+    },
+    "quota": {
+      "title": "为什么账密正确却连不上？",
+      "body": "请检查网关地址、端口和 SOCKS5 协议设置。租户流量余额须大于 0，子账号也须低于已设定的累计用量上限。"
+    },
+    "rotation": {
+      "title": "同一个会话的出口 IP 会变化吗？",
+      "body": "同一子账号的同一会话会尝试使用相同出口。实际会话时长与出口由上游决定，重连后出口 IP 可能变化。"
     }
   }
 }

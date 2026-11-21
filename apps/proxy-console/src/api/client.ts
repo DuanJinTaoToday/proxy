@@ -51,8 +51,8 @@ function parseJson(text: string) {
     typeof value === 'number' && Number.isInteger(value) && !Number.isSafeInteger(value) && context?.source ? context.source : value)
 }
 
-export async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const headers: Record<string, string> = { Accept: 'application/json' }
+async function send(path: string, options: RequestOptions, accept: string) {
+  const headers: Record<string, string> = { Accept: accept }
   if (options.acceptLanguage) headers['Accept-Language'] = options.acceptLanguage
   const token = hooks.accessToken()
   if (token) headers.Authorization = `Bearer ${token}`
@@ -80,5 +80,14 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
     if (response.status === 401 && token) hooks.onUnauthorized(error, token)
     throw error
   }
+  return text
+}
+
+export async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  const text = await send(path, options, 'application/json')
   return (text ? parseJson(text) : undefined) as T
+}
+
+export function requestText(path: string, options: RequestOptions, accept: string) {
+  return send(path, options, accept)
 }

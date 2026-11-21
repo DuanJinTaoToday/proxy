@@ -1,4 +1,4 @@
-const bytesPerGB = 1_000_000_000n
+export const bytesPerGB = 1_000_000_000n
 const maxInt64 = 9_223_372_036_854_775_807n
 
 export function parseLimitGB(value: string) {
@@ -10,7 +10,8 @@ export function parseLimitGB(value: string) {
 
 export function formatGB(bytes: bigint, locale: string, useGrouping = true) {
   const format = new Intl.NumberFormat(locale, { useGrouping })
-  const whole = format.format(bytes / bytesPerGB)
-  const fraction = (bytes % bytesPerGB).toString().padStart(9, '0').replace(/0+$/, '')
+  const wholeGB = bytes / bytesPerGB
+  const whole = format.format(bytes < 0n && wholeGB === 0n ? -0 : wholeGB)
+  const fraction = ((bytes < 0n ? -bytes : bytes) % bytesPerGB).toString().padStart(9, '0').replace(/0+$/, '')
   return fraction ? `${whole}.${fraction}` : whole
 }
