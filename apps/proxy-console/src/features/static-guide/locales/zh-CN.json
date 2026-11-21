@@ -1,0 +1,13 @@
+{
+  "staticGuide": {
+    "title": "使用静态住宅 IP",
+    "connectionTitle": "查看接入信息",
+    "connectionDescription": "在「IP 列表」查看 IP 地址、端口和到期时间。点击对应行的「复制」获取完整接入信息。",
+    "clientTitle": "配置你的代理客户端",
+    "clientDescription": "将 IP 地址、端口、用户名和密码填入代理客户端的对应字段。需要配置多个 IP 时，勾选可用的 IP 并导出 TXT，每行格式为 {format}。",
+    "credentialFormat": "IP:端口:用户名:密码",
+    "renewalTitle": "到期前续费",
+    "renewalDescription": "点击 IP 对应行的「续费」，或勾选多个 IP 后点击「批量续费」。如果未在到期前提交续费，到期后需重新购买。",
+    "backToIps": "返回 IP 列表"
+  }
+}

@@ -64,7 +64,7 @@ func setupUsageWithSubaccounts(t *testing.T, enableSubaccounts bool, suppliers .
 		"00001_proxy_auth.sql", "00002_usage.sql", "00003_gateway_lifecycle.sql", "00004_usage_gaps.sql",
 		"00007_tenant_accounts.sql", "00008_wallet_orders.sql", "00009_products.sql", "00010_proxy_subaccounts.sql",
 		"00011_traffic_metering.sql", "00012_traffic_alerts.sql", "00013_static_purchases.sql", "00014_static_renewals.sql",
-		"00015_subaccount_created_at.sql",
+		"00015_subaccount_created_at.sql", "00016_static_purchase_allocation_positions.sql",
 	} {
 		migration, err := os.ReadFile("../migrations/" + path)
 		if err != nil {

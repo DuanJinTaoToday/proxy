@@ -18,6 +18,8 @@ type OrderItem struct {
 	UnitMinor      int64  `gorm:"column:unit_minor;type:bigint;not null" json:"unit_minor"`
 	Quantity       int32  `gorm:"column:quantity;type:integer;not null" json:"quantity"`
 	DeliveredCount int32  `gorm:"column:delivered_count;type:integer;not null" json:"delivered_count"`
+	StaticRegion   string `gorm:"column:static_region;type:text;not null" json:"static_region"`
+	StaticIPType   string `gorm:"column:static_ip_type;type:text;not null" json:"static_ip_type"`
 }
 
 // TableName OrderItem's table name

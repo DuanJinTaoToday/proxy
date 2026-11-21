@@ -1,0 +1,13 @@
+{
+  "staticGuide": {
+    "title": "Use static residential IPs",
+    "connectionTitle": "Find your connection details",
+    "connectionDescription": "Open the IP list to see the IP address, port, and expiry date. Select Copy on the IP's row to get the full connection details.",
+    "clientTitle": "Configure your proxy client",
+    "clientDescription": "Enter the IP address, port, username, and password in the corresponding fields in your proxy client. To configure multiple IPs, select the available IPs and export them as TXT. Each line uses the format {format}.",
+    "credentialFormat": "IP:port:username:password",
+    "renewalTitle": "Renew before expiry",
+    "renewalDescription": "Select Renew on an IP's row, or select several IPs and choose Bulk renew. If you miss the renewal deadline, you'll need to buy a new IP.",
+    "backToIps": "Back to IP list"
+  }
+}

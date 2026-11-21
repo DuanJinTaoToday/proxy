@@ -8,6 +8,19 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+func (s *Wallet) ListStaticRenewalTerms(ctx context.Context, req *v1.StaticRenewalTermsRequest) (*v1.StaticRenewalTerms, error) {
+	noStore(ctx)
+	terms, err := s.biz.ListStaticRenewalTerms(ctx, bearerToken(ctx), req.GetSupplierItemIds())
+	if err != nil {
+		return nil, wallet.PublicError(err)
+	}
+	result := &v1.StaticRenewalTerms{}
+	for _, term := range terms {
+		result.Terms = append(result.Terms, &v1.StaticRenewalTerm{Term: term.Term, TermDays: term.TermDays})
+	}
+	return result, nil
+}
+
 func (s *Wallet) QuoteStaticRenewal(ctx context.Context, req *v1.StaticRenewalQuoteRequest) (*v1.StaticRenewalQuote, error) {
 	noStore(ctx)
 	quote, err := s.biz.QuoteStaticRenewal(ctx, bearerToken(ctx), wallet.StaticRenewalRequest{IDs: req.GetSupplierItemIds(), Term: req.GetTerm()})

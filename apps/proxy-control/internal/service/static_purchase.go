@@ -13,9 +13,9 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func (s *Wallet) ListStaticOffers(ctx context.Context, _ *v1.BaseRequest) (*v1.StaticOffers, error) {
+func (s *Wallet) ListStaticOffers(ctx context.Context, req *v1.StaticOffersRequest) (*v1.StaticOffers, error) {
 	noStore(ctx)
-	offers, err := s.biz.StaticOffers(ctx)
+	offers, err := s.biz.StaticOffers(ctx, req.GetShareMode(), req.GetPurposeId())
 	if errors.Is(err, product.ErrSaleClosed) {
 		return &v1.StaticOffers{}, nil
 	}
@@ -31,26 +31,53 @@ func (s *Wallet) ListStaticOffers(ctx context.Context, _ *v1.BaseRequest) (*v1.S
 
 func staticOfferMessage(offer wallet.StaticOffer) *v1.StaticOffer {
 	return &v1.StaticOffer{NodeId: offer.NodeID, Region: offer.Region, IpType: offer.IPType, Term: offer.Term,
-		TermDays: offer.TermDays, UnitMinor: offer.UnitMinor, Available: offer.Available}
+		TermDays: offer.TermDays, UnitMinor: offer.UnitMinor, Available: offer.Available, ShareMode: offer.ShareMode, PurposeId: offer.PurposeID,
+		Continent: offer.Continent, Line: offer.Line}
 }
 
 func (s *Wallet) QuoteStaticPurchase(ctx context.Context, req *v1.StaticPurchaseQuoteRequest) (*v1.StaticPurchaseQuote, error) {
 	noStore(ctx)
-	quote, err := s.biz.QuoteStatic(ctx, bearerToken(ctx), wallet.StaticPurchaseRequest{
+	selection := wallet.StaticPurchaseRequest{
 		NodeID: req.GetNodeId(), Term: req.GetTerm(), Quantity: req.GetQuantity(),
-	})
+		ShareMode: req.GetShareMode(), PurposeID: req.GetPurposeId(),
+	}
+	for _, line := range req.GetLines() {
+		selection.Lines = append(selection.Lines, wallet.StaticPurchaseLine{
+			NodeID: line.GetNodeId(), Quantity: line.GetQuantity(),
+		})
+	}
+	quote, err := s.biz.QuoteStatic(ctx, bearerToken(ctx), selection)
 	if err != nil {
 		return nil, wallet.PublicError(err)
 	}
-	return &v1.StaticPurchaseQuote{Offer: staticOfferMessage(quote.Offer), Quantity: quote.Quantity,
-		ConfirmationToken: quote.ConfirmationToken, ExpiresAt: timestamppb.New(quote.ExpiresAt)}, nil
+	response := &v1.StaticPurchaseQuote{
+		ConfirmationToken: quote.ConfirmationToken, ExpiresAt: timestamppb.New(quote.ExpiresAt),
+	}
+	if len(req.GetLines()) == 0 {
+		response.Offer = staticOfferMessage(quote.Lines[0].Offer)
+		response.Quantity = quote.Lines[0].Quantity
+		return response, nil
+	}
+	for _, line := range quote.Lines {
+		response.Lines = append(response.Lines, &v1.StaticPurchaseQuoteLine{
+			Offer: staticOfferMessage(line.Offer), Quantity: line.Quantity,
+		})
+	}
+	return response, nil
 }
 
 func (s *Wallet) PurchaseStaticIP(ctx context.Context, req *v1.PurchaseStaticIPRequest) (*v1.PurchaseOrder, error) {
 	noStore(ctx)
-	order, err := s.biz.PurchaseStatic(ctx, bearerToken(ctx), wallet.StaticPurchaseRequest{
-		NodeID: req.GetNodeId(), Term: req.GetTerm(), Quantity: req.GetQuantity(), UnitMinor: req.GetUnitMinor(), Key: req.GetRequestKey(), ConfirmationToken: req.GetConfirmationToken(),
-	})
+	purchase := wallet.StaticPurchaseRequest{
+		NodeID: req.GetNodeId(), Term: req.GetTerm(), Quantity: req.GetQuantity(), UnitMinor: req.GetUnitMinor(),
+		Key: req.GetRequestKey(), ConfirmationToken: req.GetConfirmationToken(), ShareMode: req.GetShareMode(), PurposeID: req.GetPurposeId(),
+	}
+	for _, line := range req.GetLines() {
+		purchase.Lines = append(purchase.Lines, wallet.StaticPurchaseLine{
+			NodeID: line.GetNodeId(), Quantity: line.GetQuantity(), UnitMinor: line.GetUnitMinor(),
+		})
+	}
+	order, err := s.biz.PurchaseStatic(ctx, bearerToken(ctx), purchase)
 	return orderMessage(order), wallet.PublicError(err)
 }
 
@@ -69,7 +96,8 @@ func (s *Wallet) ListStaticIPs(ctx context.Context, _ *v1.BaseRequest) (*v1.Stat
 
 func staticIPMessage(ip wallet.StaticAllocation) *v1.StaticIP {
 	return &v1.StaticIP{SupplierItemId: ip.SupplierItemID, OrderId: ip.OrderID, Ip: ip.IP, Port: ip.Port,
-		Username: ip.Username, Password: ip.Password, ExpiresAt: timestamppb.New(ip.ExpiresAt)}
+		Username: ip.Username, Password: ip.Password, ExpiresAt: timestamppb.New(ip.ExpiresAt),
+		Region: ip.Region, IpType: ip.IPType, PendingRenewalOrderId: ip.PendingRenewalOrderID}
 }
 
 func (s *Wallet) GetStaticIPConfig(ctx context.Context, req *v1.StaticIPConfigRequest) (*v1.StaticIP, error) {

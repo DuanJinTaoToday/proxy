@@ -1,0 +1,173 @@
+import { createHash } from 'node:crypto'
+import { createServer } from 'node:http'
+
+const exclusive = 200001
+const shared = 28
+const sharedPrices = new Map([[0, 8], [8, 9], [9, 10], [10, 11]])
+const termDays = new Map([['rp', 1], ['zp', 7], ['yp1', 30], ['yp3', 90], ['yp6', 180]])
+const allocations = new Map()
+const orders = new Map()
+const pendingRenewals = new Map()
+const sequenceByNode = new Map()
+const day = 24 * 60 * 60 * 1000
+
+let usPrice = 10
+let usStock = 6
+let detailAvailable = true
+let nextOrderId = 7500
+
+function price(term, amount) {
+  return { price_type: term, buytime: Math.floor(termDays.get(term) / 30), price: amount }
+}
+
+function catalog(cid, pid = 0) {
+  if (cid === exclusive) {
+    return [
+      { id: 101, title: 'United States', continent: 'North America', line: 'Residential', isp: '独享', max: usStock, prices: [price('yp1', usPrice), price('yp3', 27)] },
+      { id: 111, title: 'Canada', continent: 'North America', line: 'Residential', isp: '独享', max: 5, prices: [price('yp1', 9)] },
+      { id: 201, title: 'Japan', continent: 'Asia', line: 'ISP', isp: '独享', max: 6, prices: [price('yp1', 15), price('yp6', 80)] },
+    ]
+  }
+  const monthly = sharedPrices.get(pid)
+  if (cid === shared && monthly !== undefined) {
+    return [
+      { id: 301, title: 'Singapore', continent: 'Asia', line: 'Residential', isp: '共享', max: 5, prices: [price('rp', 1), price('zp', 3), price('yp1', monthly)] },
+    ]
+  }
+  return []
+}
+
+function supplierTime(ms) {
+  return new Date(ms + 8 * 60 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ')
+}
+
+function allocate(node, days, position) {
+  const sequence = (sequenceByNode.get(node.id) ?? 0) + 1
+  sequenceByNode.set(node.id, sequence)
+  const id = node.id * 100 + sequence
+  const expiresAt = Date.now() + day * (node.id === 201 && position === 0 ? 3 : days)
+  const prefix = node.id === 301 ? '203.0.113' : node.id === 201 ? '198.51.100' : '192.0.2'
+  const suffix = node.id === 301 ? sequence : node.id + sequence - 1
+  const item = {
+    id, nid: node.id, ip: `${prefix}.${suffix}`, port: 43000,
+    p_user: 'fixture-user', p_pass: 'fixture-pass', stoptime: supplierTime(expiresAt), status: 1,
+  }
+  allocations.set(id, item)
+  return item
+}
+
+function place({ cid, pid, time, list }) {
+  const unavailable = { code: -5, msg: 'Fixture stock or specification unavailable' }
+  if (!Array.isArray(list) || list.length === 0) return unavailable
+  const nodes = new Map(catalog(cid, pid).map(node => [node.id, node]))
+  const selections = new Map()
+  for (const { nid, number } of list) {
+    const node = nodes.get(nid)
+    if (!node || selections.has(node) || !Number.isInteger(number) || number <= 0 ||
+        number > node.max || !node.prices.some(price => price.price_type === time)) return unavailable
+    selections.set(node, node.id === 101 && number === 3 ? 2 : number)
+  }
+  const items = [...selections].flatMap(([node, count]) =>
+    Array.from({ length: count }, (_, position) => allocate(node, termDays.get(time), position)))
+  const orderId = nextOrderId++
+  orders.set(String(orderId), items)
+  return { code: 0, data: { order_id: orderId, list: items } }
+}
+
+function renew({ cid, ids, time }) {
+  if (!Array.isArray(ids) || !termDays.has(time) || ids.some(id => {
+    const item = allocations.get(id)
+    return !item || cid !== (item.nid === 301 ? shared : exclusive)
+  })) {
+    return { code: -5, msg: 'Fixture renewal specification unavailable' }
+  }
+  if (ids.length === 1 && ids[0] === 20102) return { code: -4, data: [] }
+  const results = []
+  for (const id of ids) {
+    const allocation = allocations.get(id)
+    const original = Date.parse(allocation.stoptime.replace(' ', 'T') + '+08:00')
+    const stoptime = supplierTime(original + termDays.get(time) * day)
+    // Item 20102 remains unresolved until the operator records a confirmed failure.
+    if (id === 20102) continue
+    // Item 20103 is visible in detail only after the test releases the delayed confirmation.
+    if (id === 20103) {
+      pendingRenewals.set(id, stoptime)
+      continue
+    }
+    allocation.stoptime = stoptime
+    results.push({ id, stoptime })
+  }
+  return { code: 0, data: results }
+}
+
+function json(response, status, data) {
+  response.writeHead(status, { 'Content-Type': 'application/json' })
+  response.end(JSON.stringify(data))
+}
+
+function supplierSignature(params) {
+  const parts = Object.keys(params).sort().map(key => {
+    const value = params[key]
+    return `${key}=${typeof value === 'string' ? value : JSON.stringify(value)}`
+  })
+  parts.push('key=verify-supplier-secret')
+  return createHash('md5').update(parts.join('&')).digest('hex').toUpperCase()
+}
+
+async function handle(request, response) {
+  const path = request.url
+  if (request.method === 'GET' && path === '/healthz') return json(response, 200, { ok: true })
+  if (request.method !== 'POST') return json(response, 404, { error: 'Unknown fixture route' })
+  const chunks = []
+  for await (const chunk of request) chunks.push(chunk)
+  const body = JSON.parse(Buffer.concat(chunks).toString() || '{}')
+
+  if (path === '/fixture/catalog') {
+    if (!Number.isFinite(body.price) || body.price <= 0 || !Number.isSafeInteger(body.stock) || body.stock < 0) {
+      return json(response, 400, { error: 'Expected a positive price and nonnegative stock' })
+    }
+    usPrice = body.price
+    usStock = body.stock
+    return json(response, 200, { price: usPrice, stock: usStock })
+  }
+  if (path === '/fixture/detail') {
+    if (typeof body.available !== 'boolean') return json(response, 400, { error: 'Expected detail availability' })
+    detailAvailable = body.available
+    return json(response, 200, { available: detailAvailable })
+  }
+  if (path === '/fixture/renewals/confirm') {
+    for (const [id, stoptime] of pendingRenewals) allocations.get(id).stoptime = stoptime
+    pendingRenewals.clear()
+    return json(response, 200, { ok: true })
+  }
+
+  const { sign, ...params } = body
+  if (request.headers['x-partner-id'] !== 'verify' || sign !== supplierSignature(params)) {
+    return json(response, 401, { error: 'Invalid fixture supplier signature' })
+  }
+
+  switch (path) {
+    case '/open/api/nodes-and-continents':
+      return json(response, 200, { code: 0, data: { nodes: catalog(params.cid, params.pid) } })
+    case '/open/api/order/place':
+      return json(response, 200, place(params))
+    case '/open/api/order/detail': {
+      if (!detailAvailable) return json(response, 503, { error: 'Fixture order detail temporarily unavailable' })
+      const items = orders.get(String(params.order_id))
+      return json(response, 200, items
+        ? { code: 0, data: { order_id: params.order_id, proxy_list: items } }
+        : { code: -5, msg: 'Fixture order not found' })
+    }
+    case '/open/api/order/renew':
+      return json(response, 200, renew(params))
+    default:
+      return json(response, 404, { error: 'Unknown fixture route' })
+  }
+}
+
+createServer((request, response) => {
+  handle(request, response).catch(error => {
+    console.error(error)
+    json(response, 400, { error: 'Invalid fixture request' })
+  })
+}).listen(8080, '0.0.0.0')

@@ -39,6 +39,11 @@ type StaticRenewalLine struct {
 	OriginalExpiry time.Time
 }
 
+type StaticRenewalTerm struct {
+	Term     string
+	TermDays int32
+}
+
 type StaticRenewalQuote struct {
 	Lines             []StaticRenewalLine
 	Term              string
@@ -56,10 +61,23 @@ type StaticRenewalResolution struct {
 }
 
 type StaticRenewalRepository interface {
+	ListStaticRenewalTerms(context.Context, string, []string) ([]StaticRenewalTerm, error)
 	QuoteStaticRenewal(context.Context, string, StaticRenewalRequest) (StaticRenewalQuote, error)
 	RenewStatic(context.Context, string, StaticRenewalRequest) (Order, error)
 	RecheckStaticRenewal(context.Context, string, int64) (Order, error)
 	ResolveStaticRenewal(context.Context, string, StaticRenewalResolution) (Order, error)
+}
+
+func (s *Service) ListStaticRenewalTerms(ctx context.Context, token string, ids []string) ([]StaticRenewalTerm, error) {
+	tenant, err := s.scope(ctx, token, "", false)
+	if err != nil {
+		return nil, err
+	}
+	ids, err = normalizeRenewalIDs(ids)
+	if err != nil {
+		return nil, err
+	}
+	return s.store.ListStaticRenewalTerms(ctx, tenant, ids)
 }
 
 func (s *Service) QuoteStaticRenewal(ctx context.Context, token string, p StaticRenewalRequest) (StaticRenewalQuote, error) {
@@ -110,18 +128,27 @@ func (s *Service) ResolveStaticRenewal(ctx context.Context, token string, p Stat
 }
 
 func (p *StaticRenewalRequest) normalize() error {
-	if len(p.IDs) == 0 || len(p.IDs) > MaxStaticRenewalItems || p.Term == "" || len(p.Term) > 16 || strings.ContainsRune(p.Term, 0) {
+	if p.Term == "" || len(p.Term) > 16 || strings.ContainsRune(p.Term, 0) {
 		return ErrInvalid
 	}
-	p.IDs = slices.Clone(p.IDs)
-	slices.Sort(p.IDs)
-	for i, id := range p.IDs {
+	var err error
+	p.IDs, err = normalizeRenewalIDs(p.IDs)
+	return err
+}
+
+func normalizeRenewalIDs(ids []string) ([]string, error) {
+	if len(ids) == 0 || len(ids) > MaxStaticRenewalItems {
+		return nil, ErrInvalid
+	}
+	ids = slices.Clone(ids)
+	slices.Sort(ids)
+	for i, id := range ids {
 		numericID, err := strconv.ParseInt(id, 10, 64)
-		if err != nil || numericID <= 0 || (i > 0 && p.IDs[i-1] == id) {
-			return ErrInvalid
+		if err != nil || numericID <= 0 || (i > 0 && ids[i-1] == id) {
+			return nil, ErrInvalid
 		}
 	}
-	return nil
+	return ids, nil
 }
 
 func (o Order) SettleRenewal(before int64, outcomes []string) (Settlement, error) {

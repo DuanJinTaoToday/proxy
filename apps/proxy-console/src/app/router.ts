@@ -63,7 +63,11 @@ export const routes: RouteRecordRaw[] = [
         { path: 'usage', labelKey: 'tabs.dynamicUsage', component: () => import('@/pages/console/DynamicUsagePage.vue') },
         { path: 'guide', labelKey: 'tabs.guide', component: () => import('@/pages/console/DynamicGuidePage.vue') },
       ]),
-      tabbed('static', 'console-static', 'nav.static', [{ path: 'ips', labelKey: 'tabs.staticIps' }, { path: 'pricing', labelKey: 'tabs.staticPricing' }, { path: 'guide', labelKey: 'tabs.guide' }]),
+      tabbed('static', 'console-static', 'nav.static', [
+        { path: 'ips', labelKey: 'tabs.staticIps', component: () => import('@/pages/console/StaticIpsPage.vue') },
+        { path: 'pricing', labelKey: 'tabs.staticPricing', component: () => import('@/pages/console/StaticPricingPage.vue') },
+        { path: 'guide', labelKey: 'tabs.guide', component: () => import('@/pages/console/StaticGuidePage.vue') },
+      ]),
       { path: 'sub-accounts', name: 'console-sub-accounts', component: () => import('@/pages/console/SubAccountsPage.vue'), meta: { titleKey: 'nav.subAccounts' } },
       { path: 'wallet', name: 'console-wallet', component: () => import('@/pages/console/WalletPage.vue'), meta: { titleKey: 'nav.wallet' } },
       tabbed('account', 'console-account', 'nav.account', [

@@ -25,6 +25,13 @@ function compose(args, capture = false) {
   })
 }
 
+function hostPort(service, containerPort) {
+  const endpoint = compose(['port', service, String(containerPort)], true).trim()
+  const port = /^127\.0\.0\.1:(\d+)$/.exec(endpoint)?.[1]
+  if (!port) throw new Error(`Unexpected ${service} address: ${endpoint}`)
+  return port
+}
+
 const run = { project, startedAt: new Date().toISOString(), result: 'failed' }
 try {
   run.commit = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim()
@@ -48,16 +55,14 @@ try {
   run.trustedProxyCIDR = proxyIP + '/32'
   compose(['up', '-d', '--wait', '--wait-timeout', '120', 'console'])
   run.images = compose(['images'], true).trim()
-  const endpoint = compose(['port', 'console', '443'], true).trim()
-  const port = /^127\.0\.0\.1:(\d+)$/.exec(endpoint)?.[1]
-  if (!port) throw new Error('Unexpected console address: ' + endpoint)
-  run.baseURL = 'https://localhost:' + port
+  run.baseURL = 'https://localhost:' + hostPort('console', 443)
+  const supplierURL = 'http://127.0.0.1:' + hostPort('ipcrown', 8080)
   run.stage = 'browser'
   execFileSync(process.execPath, [
     fileURLToPath(import.meta.resolve('@playwright/test/cli')), 'test',
   ], {
     cwd: suite, stdio: 'inherit',
-    env: { ...process.env, VERIFY_URL: run.baseURL, VERIFY_OUTPUT: evidence, VERIFY_ID: runId },
+    env: { ...process.env, VERIFY_URL: run.baseURL, VERIFY_OUTPUT: evidence, VERIFY_ID: runId, VERIFY_IPCROWN_URL: supplierURL },
   })
   run.result = 'passed'
 } catch (error) {

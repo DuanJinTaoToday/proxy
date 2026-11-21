@@ -718,6 +718,18 @@ paths:
                 - WalletService
             summary: 查询公开静态 IP 报价及开售状态
             operationId: WalletService_ListStaticOffers
+            parameters:
+                - name: shareMode
+                  in: query
+                  description: 独享 exclusive（缺省）或共享 shared。
+                  schema:
+                    type: string
+                - name: purposeId
+                  in: query
+                  description: 共享用途。缺省为不指定用途。
+                  schema:
+                    type: integer
+                    format: int32
             responses:
                 "200":
                     description: OK
@@ -1126,6 +1138,25 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/proxycontrol.v1.StaticRenewalQuote'
+    /v1/tenant/static-renewal-terms:
+        post:
+            tags:
+                - WalletService
+            summary: 查询所选静态 IP 共同支持的续费租期
+            operationId: WalletService_ListStaticRenewalTerms
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.StaticRenewalTermsRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.StaticRenewalTerms'
     /v1/tenant/subaccounts:
         get:
             tags:
@@ -1750,6 +1781,12 @@ components:
                     type: integer
                     description: 实际到账的套餐数量，或实际交付、续费的 IP 数量。
                     format: int32
+                supplierItemId:
+                    type: string
+                    description: 静态续费的皇冠明细 ID。其他订单省略。
+                outcome:
+                    type: string
+                    description: 静态续费的逐项结果 pending、succeeded 或 failed。其他订单省略。
         proxycontrol.v1.PurchaseOrders:
             type: object
             properties:
@@ -1769,7 +1806,7 @@ components:
             properties:
                 nodeId:
                     type: string
-                    description: 已确认的皇冠节点 ID。
+                    description: 单节点购买使用 node_id、quantity、unit_minor；多节点购买使用 lines。
                 term:
                     type: string
                     description: 已确认的租期代码。
@@ -1786,6 +1823,18 @@ components:
                 confirmationToken:
                     type: string
                     description: 报价确认凭证。
+                shareMode:
+                    type: string
+                    description: 独享 exclusive（缺省）或共享 shared。
+                purposeId:
+                    type: integer
+                    description: 共享用途。缺省为不指定用途。
+                    format: int32
+                lines:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/proxycontrol.v1.StaticPurchaseLine'
+                    description: 统一确认的节点、数量及各节点单价。
         proxycontrol.v1.PurchaseTrafficPackageRequest:
             type: object
             properties:
@@ -2022,6 +2071,15 @@ components:
                     type: string
                     description: 皇冠返回的逐 IP 到期时间。
                     format: date-time
+                region:
+                    type: string
+                    description: 购买时锁定的节点地区。
+                ipType:
+                    type: string
+                    description: 购买时锁定的节点类型描述。
+                pendingRenewalOrderId:
+                    type: string
+                    description: 仍待确认的续费订单编号。无待确认续费时省略。
         proxycontrol.v1.StaticIPExpiryNotices:
             type: object
             properties:
@@ -2063,6 +2121,19 @@ components:
                     type: integer
                     description: 当前可购 IP 数量，缺省为零。
                     format: int32
+                shareMode:
+                    type: string
+                    description: 独享 exclusive 或共享 shared。
+                purposeId:
+                    type: integer
+                    description: 共享用途。缺省为不指定用途。
+                    format: int32
+                continent:
+                    type: string
+                    description: 皇冠返回的大洲显示名，空值表示未提供。
+                line:
+                    type: string
+                    description: 皇冠返回的代理线路，空值表示未提供。
         proxycontrol.v1.StaticOffers:
             type: object
             properties:
@@ -2078,6 +2149,19 @@ components:
                     type: string
                     description: 报价查询完成时间。未开售时省略。
                     format: date-time
+        proxycontrol.v1.StaticPurchaseLine:
+            type: object
+            properties:
+                nodeId:
+                    type: string
+                    description: 客户已确认的皇冠节点 ID。
+                quantity:
+                    type: integer
+                    description: 该节点已确认的 IP 数量。
+                    format: int32
+                unitMinor:
+                    type: string
+                    description: 该节点每个 IP 的已确认租期总价，单位人民币分。
         proxycontrol.v1.StaticPurchaseQuote:
             type: object
             properties:
@@ -2096,18 +2180,56 @@ components:
                     type: string
                     description: 新订单可使用该凭证的截止时间。
                     format: date-time
+                lines:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/proxycontrol.v1.StaticPurchaseQuoteLine'
+                    description: 多节点申请的当前报价。单节点申请返回 offer 字段。
+        proxycontrol.v1.StaticPurchaseQuoteLine:
+            type: object
+            properties:
+                offer:
+                    allOf:
+                        - $ref: '#/components/schemas/proxycontrol.v1.StaticOffer'
+                    description: 该节点的当前价格和库存。
+                quantity:
+                    type: integer
+                    description: 该报价对应的请求购买 IP 数量。
+                    format: int32
         proxycontrol.v1.StaticPurchaseQuoteRequest:
             type: object
             properties:
                 nodeId:
                     type: string
-                    description: 客户选中的皇冠节点 ID。
+                    description: 单节点查询使用 node_id、quantity；多节点查询使用 lines。
                 term:
                     type: string
                     description: 客户选中的租期代码。
                 quantity:
                     type: integer
                     description: 请求购买的 IP 数量。
+                    format: int32
+                shareMode:
+                    type: string
+                    description: 独享 exclusive（缺省）或共享 shared。
+                purposeId:
+                    type: integer
+                    description: 共享用途。缺省为不指定用途。
+                    format: int32
+                lines:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/proxycontrol.v1.StaticPurchaseSelection'
+                    description: 合并核对的节点和各节点数量。一次最多 25 个节点。
+        proxycontrol.v1.StaticPurchaseSelection:
+            type: object
+            properties:
+                nodeId:
+                    type: string
+                    description: 客户选择的皇冠节点 ID。
+                quantity:
+                    type: integer
+                    description: 该节点请求购买的 IP 数量。
                     format: int32
         proxycontrol.v1.StaticRenewalQuote:
             type: object
@@ -2193,6 +2315,32 @@ components:
                 confirmedFailure:
                     type: boolean
                     description: 有明确失败证据时释放预扣，默认仅查单。
+        proxycontrol.v1.StaticRenewalTerm:
+            type: object
+            properties:
+                term:
+                    type: string
+                    description: 皇冠续费租期代码。
+                termDays:
+                    type: integer
+                    description: 从原到期时间顺延的天数。
+                    format: int32
+        proxycontrol.v1.StaticRenewalTerms:
+            type: object
+            properties:
+                terms:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/proxycontrol.v1.StaticRenewalTerm'
+                    description: 所选 IP 均支持的续费租期。不受新购库存或开售状态影响。
+        proxycontrol.v1.StaticRenewalTermsRequest:
+            type: object
+            properties:
+                supplierItemIds:
+                    type: array
+                    items:
+                        type: string
+                    description: 属于当前租户且可续费的皇冠明细 ID，单个为长度 1。
         proxycontrol.v1.StickySession:
             type: object
             properties:

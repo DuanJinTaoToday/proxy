@@ -2,10 +2,51 @@ services:
   control:
     container_name: !reset null
     image: !reset null
-    volumes:
-      - "${PROXY_VERIFY_CONTROL_CONFIG:?Run tests/verify/run.mjs}:/config/test-server.yaml:ro"
+    depends_on:
+      ipcrown:
+        condition: service_healthy
+    configs:
+      - source: verify_control_init
+        target: /config/init.yaml
+      - source: verify_control_base
+        target: /config/verify.d/00-base.yaml
+      - source: verify_control_ipcrown
+        target: /config/verify.d/10-ipcrown.yaml
   console:
     container_name: !reset null
     image: !reset null
     ports: !override
       - "127.0.0.1::443"
+  ipcrown:
+    image: node:24-alpine
+    user: node
+    read_only: true
+    command: ["node", "/fixture/ipcrown.mjs"]
+    volumes:
+      - ../../tests/verify/fixtures/ipcrown.mjs:/fixture/ipcrown.mjs:ro
+    ports:
+      - "127.0.0.1::8080"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/healthz"]
+      interval: 2s
+      timeout: 2s
+      retries: 20
+
+configs:
+  verify_control_init:
+    content: |
+      source:
+        file: /config/verify.d
+      zap:
+        console: true
+        level: info
+  verify_control_base:
+    file: "${PROXY_VERIFY_CONTROL_CONFIG:?Run tests/verify/run.mjs}"
+  verify_control_ipcrown:
+    content: |
+      biz:
+        ipcrown:
+          base_url: http://ipcrown:8080
+          partner_id: verify
+          api_secret: verify-supplier-secret
+          password_key: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA

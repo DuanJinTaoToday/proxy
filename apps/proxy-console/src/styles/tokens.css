@@ -88,6 +88,9 @@
   --recharge-panel-width: 280px;
   --wallet-summary-card-width: 240px;
   --business-date-filter-width: 145px;
+  --static-catalog-width: 520px;
+  --static-checkout-width: 280px;
+  --static-offer-width: 200px;
   --page-padding: var(--space-5);
   --focus-ring-width: 2px;
 

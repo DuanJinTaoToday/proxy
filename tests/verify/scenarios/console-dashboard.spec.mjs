@@ -63,6 +63,9 @@ test('仪表板展示余额、上海业务日用量和待处理事项，通知�
       RETURNING tenant_id, id
     )
     INSERT INTO static_purchases (tenant_id, order_id) SELECT tenant_id, id FROM orders;
+    INSERT INTO order_items
+      (tenant_id, order_id, position, specification, reference, capacity_bytes, term_days, unit_minor, quantity, delivered_count)
+      SELECT tenant_id, order_id, 1, 'Test region', '1/yp1', 0, 30, 25, 4, 3 FROM static_purchases JOIN dashboard_tenant USING (tenant_id);
     INSERT INTO static_ip_allocations (supplier_item_id, tenant_id, order_id, ip, port, username, password_ciphertext, expires_at)
       SELECT item, tenant_id, order_id, '192.0.2.1', 1080, '', '', now() + offset_from_now
       FROM static_purchases JOIN dashboard_tenant USING (tenant_id)
@@ -142,7 +145,7 @@ test('仪表板展示余额、上海业务日用量和待处理事项，通知�
   }, { times: 1 })
   await page.reload()
   await notificationButton(page).click()
-  await expect(page.getByRole('alert')).toContainText('暂时无法加载通知。')
+  await expect(page.getByRole('alert').filter({ hasText: /^暂时无法加载通知。$/ })).toBeVisible()
   await page.getByRole('button', { name: '重试', exact: true }).click()
   await expect(unreadButton(page)).toBeVisible()
   await expect(page.getByRole('link', { name: /2 个静态 IP 即将到期/ })).toBeVisible()

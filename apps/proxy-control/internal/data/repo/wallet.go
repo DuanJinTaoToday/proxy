@@ -261,8 +261,12 @@ func findPurchaseOrder(db *gorm.DB, tenantID string, id int64, lock bool) (walle
 	if err := scanWalletRecord(db.Raw(query, tenantID, id), &order); err != nil {
 		return wallet.Order{}, err
 	}
-	err := db.Table("order_items").Where("tenant_id = ? AND order_id = ?", tenantID, id).
-		Order("position").Scan(&order.Items).Error
+	items := db.Table("order_items AS i").Where("i.tenant_id = ? AND i.order_id = ?", tenantID, id)
+	if order.Kind == wallet.StaticRenewal {
+		items = items.Select("i.*, r.outcome").
+			Joins("JOIN static_renewal_items r ON r.tenant_id=i.tenant_id AND r.order_id=i.order_id AND r.position=i.position")
+	}
+	err := items.Order("i.position").Scan(&order.Items).Error
 	return order, err
 }
 
