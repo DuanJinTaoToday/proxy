@@ -23,6 +23,8 @@
 
 ### 控制台技术栈
 
+控制台的页面结构、目录、组件、主题与双语规则见 [Proxy Console 前端规范](proxy-console-frontend.md)。实施顺序与验收见 [前端设计与实施计划](../features/proxy-first-release/proxy-console-frontend-design.md)。
+
 - 一期控制台采用 Vue 3、TypeScript、Vite 和 Vue Router。租户和运营功能共用 `proxy-console`。
 - `proxy-console` 独立构建和发布 `dist` 静态产物。HTTPS 入口在同一域名下托管静态文件、支持直接访问前端路由，并按路由转发控制台所需的 API 给 `proxy-control`。正式环境复用哪个 HTTPS 入口，在部署时确认。
 - 一期在 `src/api/` 手写集中封装的 TypeScript `fetch` 客户端，统一处理 Bearer token、错误响应和响应映射。64 位字节字段按接口的 JSON 字符串读取，保留精度后再比较或换算显示单位。
