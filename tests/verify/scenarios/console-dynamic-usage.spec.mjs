@@ -157,6 +157,13 @@ test('数据统计使用上海业务日，可查询禁用账号历史并导出�
   const emptyCsv = await readFile(await (await emptyDownloadPromise).path(), 'utf8')
   expect(emptyCsv).toBe('date,billable_gb,updated_at\n')
   await info.attach('daily-usage-empty-csv', { body: emptyCsv, contentType: 'text/csv' })
+
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.addInitScript(() => localStorage.setItem('proxy-console.locale', 'en'))
+  await page.goto(filteredUrl)
+  await expect(page.getByText('oldacct (disabled)', { exact: true })).toBeVisible()
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390)
+  await screenshot(page, info, 'daily-usage-en-mobile')
 })
 
 test('低余额阈值写入、修改和停用后，仪表板和通知按当前阈值展示', async ({ page }, info) => {

@@ -240,8 +240,9 @@ const unknownAccount = computed(() => accountOptions.value.some(account => accou
   gap: var(--space-3);
 }
 .dynamic-usage__toolbar { justify-content: space-between; }
-.dynamic-usage__dates { inline-size: min(100%, var(--usage-date-range-width)); }
-.dynamic-usage__accounts { inline-size: min(100%, var(--usage-account-filter-width)); }
+.dynamic-usage__filters { flex: 1 1 var(--content-narrow-width); min-inline-size: 0; }
+.dynamic-usage__dates { flex: 0 1 var(--usage-date-range-width); min-inline-size: 0; max-inline-size: 100%; }
+.dynamic-usage__accounts { flex: 0 1 var(--usage-account-filter-width); min-inline-size: 0; max-inline-size: 100%; }
 .dynamic-usage__summary {
   display: flex;
   flex-wrap: wrap;
