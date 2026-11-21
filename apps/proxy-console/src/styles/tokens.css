@@ -75,12 +75,15 @@
   --content-narrow-width: 720px;
   --auth-card-width: 440px;
   --form-dialog-width: 520px;
+  --order-drawer-width: 560px;
   --subaccount-metric-width: 200px;
   --account-name-width: 160px;
   --dashboard-chart-height: 200px;
   --dashboard-chart-axis-width: 100px;
   --notification-panel-width: 360px;
-  --dashboard-recharge-panel-width: 280px;
+  --recharge-panel-width: 280px;
+  --wallet-summary-card-width: 240px;
+  --business-date-filter-width: 145px;
   --page-padding: var(--space-5);
   --focus-ring-width: 2px;
 

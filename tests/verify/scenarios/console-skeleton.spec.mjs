@@ -26,7 +26,7 @@ test('默认入口、深链和未找到页', async ({ page }, info) => {
   await expect(nav.getByText('代理', { exact: true })).toBeVisible()
   await expect(nav.getByText('管理', { exact: true })).toBeVisible()
   await expect(heading(page)).toHaveText('钱包')
-  await expect(page.getByText('这一页正在建设中')).toBeVisible()
+  await expect(page.getByRole('heading', { name: '钱包流水', exact: true })).toBeVisible()
   await screenshot(page, info, 'console-wallet-desktop')
 
   await page.goto('/console/static')

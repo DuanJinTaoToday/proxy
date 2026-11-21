@@ -978,6 +978,10 @@ func (m *WalletTenant) validate(all bool) error {
 
 	// no validation rules for AvailableTrafficBytes
 
+	// no validation rules for TotalRechargeMinor
+
+	// no validation rules for TotalSpendMinor
+
 	if len(errors) > 0 {
 		return WalletTenantMultiError(errors)
 	}
@@ -1393,6 +1397,8 @@ func (m *PurchaseOrders) validate(all bool) error {
 
 	// no validation rules for NextBeforeId
 
+	// no validation rules for PendingCount
+
 	if len(errors) > 0 {
 		return PurchaseOrdersMultiError(errors)
 	}
@@ -1579,6 +1585,71 @@ func (m *PurchaseOrder) validate(all bool) error {
 		}
 
 	}
+
+	for idx, item := range m.GetWalletEntries() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, PurchaseOrderValidationError{
+						field:  fmt.Sprintf("WalletEntries[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, PurchaseOrderValidationError{
+						field:  fmt.Sprintf("WalletEntries[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return PurchaseOrderValidationError{
+					field:  fmt.Sprintf("WalletEntries[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if all {
+		switch v := interface{}(m.GetSummaryItem()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, PurchaseOrderValidationError{
+					field:  "SummaryItem",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, PurchaseOrderValidationError{
+					field:  "SummaryItem",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetSummaryItem()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return PurchaseOrderValidationError{
+				field:  "SummaryItem",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	// no validation rules for ItemCount
 
 	if len(errors) > 0 {
 		return PurchaseOrderMultiError(errors)
@@ -1807,6 +1878,21 @@ func (m *CustomerWalletEntriesRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	if _, ok := _CustomerWalletEntriesRequest_Kind_InLookup[m.GetKind()]; !ok {
+		err := CustomerWalletEntriesRequestValidationError{
+			field:  "Kind",
+			reason: "value must be in list [ recharge debit hold release refund]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for StartDate
+
+	// no validation rules for EndDate
+
 	if len(errors) > 0 {
 		return CustomerWalletEntriesRequestMultiError(errors)
 	}
@@ -1887,6 +1973,15 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = CustomerWalletEntriesRequestValidationError{}
+
+var _CustomerWalletEntriesRequest_Kind_InLookup = map[string]struct{}{
+	"":         {},
+	"recharge": {},
+	"debit":    {},
+	"hold":     {},
+	"release":  {},
+	"refund":   {},
+}
 
 // Validate checks the field values on OperatorWalletEntriesRequest with the
 // rules defined in the proto definition for this message. If any rules are
@@ -2079,6 +2174,32 @@ func (m *CustomerPurchaseOrdersRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	if m.GetOrderId() < 0 {
+		err := CustomerPurchaseOrdersRequestValidationError{
+			field:  "OrderId",
+			reason: "value must be greater than or equal to 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for StartDate
+
+	// no validation rules for EndDate
+
+	if _, ok := _CustomerPurchaseOrdersRequest_Product_InLookup[m.GetProduct()]; !ok {
+		err := CustomerPurchaseOrdersRequestValidationError{
+			field:  "Product",
+			reason: "value must be in list [ dynamic static]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if len(errors) > 0 {
 		return CustomerPurchaseOrdersRequestMultiError(errors)
 	}
@@ -2173,6 +2294,12 @@ var _CustomerPurchaseOrdersRequest_Status_InLookup = map[string]struct{}{
 	"succeeded": {},
 	"partial":   {},
 	"failed":    {},
+}
+
+var _CustomerPurchaseOrdersRequest_Product_InLookup = map[string]struct{}{
+	"":        {},
+	"dynamic": {},
+	"static":  {},
 }
 
 // Validate checks the field values on OperatorPurchaseOrdersRequest with the

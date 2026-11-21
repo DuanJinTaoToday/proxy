@@ -8,7 +8,8 @@ import { formatGB } from '@/features/dynamic-proxy'
 import LinkButton from '@/shared/ui/LinkButton.vue'
 import PageHeader from '@/shared/ui/PageHeader.vue'
 import UsageChart from './UsageChart.vue'
-import { formatYuan, shanghaiDateTime, usageWeek } from './format'
+import { formatYuan, shanghaiDateTime } from '@/shared/lib/formatters'
+import { usageWeek } from './format'
 
 const { t, locale } = useI18n()
 const showTable = ref(false)
@@ -83,7 +84,7 @@ const staticIps = { name: 'console-static-ips' }
         <p class="dashboard__value tabular">{{ formatYuan(data.walletMinor, locale) }}</p>
         <p class="dashboard__muted">{{ t('dashboard.walletDetail') }}</p>
         <div class="dashboard__actions">
-          <ElPopover placement="bottom-start" trigger="click" width="min(var(--dashboard-recharge-panel-width), calc(100vw - var(--space-5)))">
+          <ElPopover placement="bottom-start" trigger="click" width="min(var(--recharge-panel-width), calc(100vw - var(--space-5)))">
             <template #reference>
               <ElButton :icon="Service" size="small" type="primary">{{ t('dashboard.recharge') }}</ElButton>
             </template>

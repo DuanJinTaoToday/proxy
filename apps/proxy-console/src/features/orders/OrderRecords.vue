@@ -1,0 +1,234 @@
+<script setup lang="ts">
+import { computed, ref, shallowRef, watch } from 'vue'
+import { useRoute, useRouter, type LocationQueryRaw } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import { ElAlert, ElButton, ElCard, ElDatePicker, ElEmpty, ElInput, ElOption, ElSelect, ElSkeleton, ElTable, ElTableColumn, ElTag } from 'element-plus'
+import { Search } from '@element-plus/icons-vue'
+import { listOrders, orderProducts, orderStatuses, type OrderSummary } from '@/api/orders'
+import { readBusinessDate, readBusinessDateBounds } from '@/shared/lib/businessDateQuery'
+import { useErrorMessage } from '@/shared/lib/useErrorMessage'
+import OrderDrawer from './OrderDrawer.vue'
+import { readOrderId, useOrderFormatting } from './format'
+
+const route = useRoute()
+const router = useRouter()
+const { t } = useI18n()
+const errorMessage = useErrorMessage()
+const { dateTime, delivery, itemDescription, money, statusTypes } = useOrderFormatting()
+
+const product = computed(() => orderProducts.find(value => value === route.query.product))
+const status = computed(() => orderStatuses.find(value => value === route.query.status))
+const orderId = computed(() => readOrderId(route.query.order))
+const dates = computed(() => readBusinessDateBounds(route.query.start, route.query.end))
+const start = computed(() => dates.value.start)
+const end = computed(() => dates.value.end)
+const detailId = computed(() => readOrderId(route.query.detail))
+const orderSearch = ref('')
+const badOrderId = ref(false)
+
+watch(orderId, value => {
+  orderSearch.value = value ?? ''
+  badOrderId.value = false
+}, { immediate: true })
+
+function editFilters(changed: LocationQueryRaw) {
+  void router.push({ query: { ...route.query, ...changed } })
+}
+
+function searchOrders() {
+  const searched = orderSearch.value.trim()
+  const id = readOrderId(searched)
+  badOrderId.value = searched !== '' && id === undefined
+  if (!badOrderId.value) editFilters({ order: id })
+}
+
+function clearOrderSearch() {
+  orderSearch.value = ''
+  searchOrders()
+}
+
+function changeStart(value: unknown) {
+  const date = readBusinessDate(value)
+  editFilters({ start: date, end: date && end.value && date > end.value ? undefined : end.value })
+}
+
+function changeEnd(value: unknown) {
+  const date = readBusinessDate(value)
+  editFilters({ start: date && start.value && date < start.value ? undefined : start.value, end: date })
+}
+
+function resetFilters() {
+  orderSearch.value = ''
+  badOrderId.value = false
+  editFilters({ product: undefined, status: undefined, order: undefined, start: undefined, end: undefined })
+}
+
+function openOrder(order: OrderSummary) {
+  void router.push({ query: { ...route.query, detail: order.id } })
+}
+
+function closeOrder() {
+  void router.replace({ query: { ...route.query, detail: undefined } })
+}
+
+const cursorHistory = ref<(string | undefined)[]>([undefined])
+const cursor = computed(() => cursorHistory.value.at(-1))
+const retry = ref(0)
+type ListState =
+  | { kind: 'loading' }
+  | { kind: 'failed', error: unknown }
+  | { kind: 'ready', data: Awaited<ReturnType<typeof listOrders>> }
+const state = shallowRef<ListState>({ kind: 'loading' })
+
+watch([product, status, orderId, start, end], () => {
+  cursorHistory.value = [undefined]
+})
+
+watch([product, status, orderId, start, end, cursor, retry], async ([product, status, orderId, start, end, beforeId], _previous, onCleanup) => {
+  const request = new AbortController()
+  onCleanup(() => request.abort())
+  state.value = { kind: 'loading' }
+  try {
+    const data = await listOrders({ product, status, orderId, start, end, beforeId }, request.signal)
+    if (!request.signal.aborted) state.value = { kind: 'ready', data }
+  } catch (error) {
+    if (!request.signal.aborted) state.value = { kind: 'failed', error }
+  }
+}, { immediate: true })
+
+function nextPage() {
+  if (state.value.kind !== 'ready' || !state.value.data.nextBeforeId) return
+  cursorHistory.value.push(state.value.data.nextBeforeId)
+}
+
+const hasFilters = computed(() => Boolean(product.value || status.value || orderId.value || start.value || end.value))
+</script>
+
+<template>
+  <ElCard shadow="never" role="region" :aria-label="t('tabs.accountOrders')">
+    <div class="order-filters">
+      <form class="order-search" @submit.prevent="searchOrders">
+        <ElInput v-model="orderSearch" :prefix-icon="Search" :placeholder="t('orders.orderSearch')"
+          :aria-label="t('orders.orderSearch')" :aria-invalid="badOrderId"
+          :aria-describedby="badOrderId ? 'order-search-error' : undefined"
+          clearable @clear="clearOrderSearch" />
+        <ElButton native-type="submit">{{ t('orders.search') }}</ElButton>
+      </form>
+      <ElSelect :model-value="product ?? 'all'" class="select-filter" :aria-label="t('orders.productFilter')"
+        @update:model-value="editFilters({ product: $event === 'all' ? undefined : $event })">
+        <ElOption value="all" :label="t('orders.allProducts')" />
+        <ElOption v-for="value in orderProducts" :key="value" :value="value" :label="t(`orders.products.${value}`)" />
+      </ElSelect>
+      <ElSelect :model-value="status ?? 'all'" class="select-filter" :aria-label="t('orders.statusFilter')"
+        @update:model-value="editFilters({ status: $event === 'all' ? undefined : $event })">
+        <ElOption value="all" :label="t('orders.allStatuses')" />
+        <ElOption v-for="value in orderStatuses" :key="value" :value="value" :label="t(`orders.status.${value}`)" />
+      </ElSelect>
+      <div class="order-dates" role="group" :aria-label="t('orders.dateFilter')">
+        <ElDatePicker :model-value="start" type="date" value-format="YYYY-MM-DD" class="date-filter"
+          :aria-label="t('orders.startDate')" :placeholder="t('orders.startDate')"
+          @update:model-value="changeStart" />
+        <ElDatePicker :model-value="end" type="date" value-format="YYYY-MM-DD" class="date-filter"
+          :aria-label="t('orders.endDate')" :placeholder="t('orders.endDate')"
+          @update:model-value="changeEnd" />
+      </div>
+    </div>
+    <p v-if="badOrderId" id="order-search-error" class="search-error" role="alert">{{ t('orders.invalidOrderId') }}</p>
+
+    <div v-if="state.kind === 'loading'" role="status" :aria-label="t('orders.loading')">
+      <ElSkeleton animated :rows="5" />
+    </div>
+    <ElAlert v-else-if="state.kind === 'failed'" type="error" :title="t('orders.listFailed')" show-icon :closable="false">
+      <p>{{ errorMessage(state.error) }}</p>
+      <ElButton size="small" @click="retry++">{{ t('orders.retry') }}</ElButton>
+    </ElAlert>
+    <template v-else>
+      <ElTable :data="state.data.orders" row-key="id" @row-click="openOrder">
+        <!-- @vue-generic {OrderSummary} -->
+        <ElTableColumn :label="t('orders.number')" min-width="130">
+          <template #default="{ row }">
+            <span class="mono">{{ t('orders.orderNumber', { id: row.id }) }}</span>
+          </template>
+        </ElTableColumn>
+        <!-- @vue-generic {OrderSummary} -->
+        <ElTableColumn :label="t('orders.type')" min-width="135">
+          <template #default="{ row }">{{ t(`orders.kinds.${row.kind}`) }}</template>
+        </ElTableColumn>
+        <!-- @vue-generic {OrderSummary} -->
+        <ElTableColumn :label="t('orders.contents')" min-width="180">
+          <template #default="{ row }">
+            <template v-if="row.summaryItem">
+              <span class="tabular">{{ row.itemCount > 1
+                ? t('orders.itemSummary', { first: itemDescription(row.summaryItem), count: row.itemCount }, row.itemCount)
+                : itemDescription(row.summaryItem) }}</span>
+              <span v-if="row.summaryItem.termDays" class="order-note tabular">
+                {{ t('orders.termDays', row.summaryItem.termDays) }}
+              </span>
+            </template>
+            <span v-else>{{ t('orders.unavailable') }}</span>
+          </template>
+        </ElTableColumn>
+        <!-- @vue-generic {OrderSummary} -->
+        <ElTableColumn :label="t('orders.delivery')" min-width="135">
+          <template #default="{ row }"><span class="tabular">{{ delivery(row) }}</span></template>
+        </ElTableColumn>
+        <!-- @vue-generic {OrderSummary} -->
+        <ElTableColumn :label="t('orders.paid')" min-width="145" align="right">
+          <template #default="{ row }">
+            <span class="tabular">{{ money(row.settledMinor) }}</span>
+            <span v-if="row.refundedMinor > 0n" class="order-note tabular">
+              {{ t('orders.refundNote', { amount: money(row.refundedMinor) }) }}
+            </span>
+          </template>
+        </ElTableColumn>
+        <!-- @vue-generic {OrderSummary} -->
+        <ElTableColumn :label="t('orders.state')" min-width="140">
+          <template #default="{ row }">
+            <ElTag :type="statusTypes[row.status]" size="small" disable-transitions>{{ t(`orders.status.${row.status}`) }}</ElTag>
+          </template>
+        </ElTableColumn>
+        <!-- @vue-generic {OrderSummary} -->
+        <ElTableColumn :label="t('orders.placedAt')" min-width="175">
+          <template #default="{ row }">
+            <time :datetime="row.createdAt.toISOString()">{{ dateTime(row.createdAt) }}</time>
+          </template>
+        </ElTableColumn>
+        <!-- @vue-generic {OrderSummary} -->
+        <ElTableColumn min-width="85" align="right">
+          <template #default="{ row }">
+            <ElButton link type="primary" @click.stop="openOrder(row)">{{ t('orders.details') }}</ElButton>
+          </template>
+        </ElTableColumn>
+        <template #empty>
+          <ElEmpty :description="t(hasFilters ? 'orders.noneMatching' : 'orders.emptyOrders')">
+            <ElButton v-if="hasFilters" @click="resetFilters">{{ t('orders.clearFilters') }}</ElButton>
+          </ElEmpty>
+        </template>
+      </ElTable>
+      <nav v-if="cursorHistory.length > 1 || state.data.nextBeforeId" class="order-pagination" :aria-label="t('orders.pagination')">
+        <ElButton :disabled="cursorHistory.length < 2" @click="cursorHistory.pop()">{{ t('orders.previous') }}</ElButton>
+        <ElButton :disabled="!state.data.nextBeforeId" @click="nextPage">{{ t('orders.next') }}</ElButton>
+      </nav>
+    </template>
+  </ElCard>
+  <OrderDrawer :order-id="detailId" @close="closeOrder" />
+</template>
+
+<style scoped>
+.order-filters, .order-search, .order-dates, .order-pagination {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.order-filters {
+  flex-wrap: wrap;
+  margin-bottom: var(--space-4);
+}
+.order-search, .order-dates { flex-wrap: wrap; }
+.order-search .el-input { width: calc(var(--account-name-width) + var(--space-5)); max-width: 100%; }
+.select-filter { width: calc(var(--account-name-width) + var(--space-5)); max-width: 100%; }
+.date-filter { width: var(--business-date-filter-width); max-width: 100%; }
+.search-error { color: var(--color-danger-text); margin-bottom: var(--space-4); }
+.order-note { display: block; color: var(--color-text-secondary); font-size: var(--font-size-xs); }
+.order-pagination { justify-content: flex-end; margin-top: var(--space-4); }
+</style>

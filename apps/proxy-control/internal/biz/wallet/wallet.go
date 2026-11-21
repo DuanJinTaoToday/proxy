@@ -42,9 +42,10 @@ var (
 )
 
 type Tenant struct {
-	ID, Name, PrimaryAccountName string
-	AvailableMinor               int64
-	AvailableTrafficBytes        int64
+	ID, Name, PrimaryAccountName        string
+	AvailableMinor                      int64
+	AvailableTrafficBytes               int64
+	TotalRechargeMinor, TotalSpendMinor string
 }
 
 type RechargeQuote struct {
@@ -66,6 +67,9 @@ type Order struct {
 	DeliveredBytes, DeliveredCount, ConfirmedMinor          int64
 	CreatedAt                                               time.Time
 	Items                                                   []OrderItem `gorm:"-"`
+	Entries                                                 []Entry     `gorm:"-"`
+	SummaryItem                                             *OrderItem  `gorm:"-"`
+	ItemCount                                               int64       `gorm:"-"`
 }
 
 type OrderItem struct {
@@ -102,9 +106,27 @@ type Command struct {
 }
 
 type Filter struct {
-	BeforeID     int64
-	Limit        int
-	Kind, Status string
+	BeforeID, OrderID     int64
+	Limit                 int
+	Kind, Status, Product string
+	StartDate, EndDate    string
+}
+
+func (f Filter) validDates() bool {
+	for _, date := range []string{f.StartDate, f.EndDate} {
+		if date != "" {
+			parsed, err := time.Parse(time.DateOnly, date)
+			if err != nil || parsed.Year() == 0 || parsed.Format(time.DateOnly) != date {
+				return false
+			}
+		}
+	}
+	return f.StartDate == "" || f.EndDate == "" || f.StartDate <= f.EndDate
+}
+
+type OrderPage struct {
+	Orders       []Order
+	PendingCount int64
 }
 
 type PackagePurchase struct {
@@ -124,9 +146,11 @@ type Repository interface {
 	StaticRepository
 	FindTenant(context.Context, string, string) (Tenant, error)
 	Tenant(context.Context, string) (Tenant, error)
+	CustomerWallet(context.Context, string) (Tenant, error)
 	Entries(context.Context, string, Filter) ([]Entry, error)
-	Orders(context.Context, string, Filter) ([]Order, error)
+	Orders(context.Context, string, Filter, bool) (OrderPage, error)
 	Order(context.Context, string, int64) (Order, error)
+	CustomerOrder(context.Context, string, int64) (Order, error)
 	CreateRechargeQuote(context.Context, RechargeQuote) error
 	RechargeQuote(context.Context, string, string, string, string) (RechargeQuote, error)
 	ApplyRecharge(context.Context, Command) (Entry, error)

@@ -198,6 +198,12 @@ func TestWalletSettlementAndTenantIsolation(t *testing.T) {
 		t.Fatalf("unexpected concurrent holds: %+v, %v", held, failures)
 	}
 	checkBalance(200)
+	var pendingCount v1.PurchaseOrders
+	readProto(t, request("GET", "/v1/tenant/orders?status=succeeded", "", token), &pendingCount)
+	if pendingCount.GetPendingCount() != 1 || len(pendingCount.GetOrders()) != 1 ||
+		pendingCount.GetOrders()[0].GetId() != debit.OrderID {
+		t.Fatalf("pending count should include orders excluded by the filters: %s", &pendingCount)
+	}
 	release := wallet.Command{
 		TenantID: customer.TenantId, Key: "release-1", Action: wallet.Release, Amount: 300,
 		OrderID: winning.OrderID, ItemDeliveries: []int32{1},
@@ -228,6 +234,11 @@ func TestWalletSettlementAndTenantIsolation(t *testing.T) {
 		t.Fatalf("over-refund should fail: %v", err)
 	}
 	checkBalance(800)
+	var totals v1.WalletTenant
+	readProto(t, request("GET", "/v1/tenant/wallet", "", token), &totals)
+	if totals.GetTotalRechargeMinor() != "1000" || totals.GetTotalSpendMinor() != "200" {
+		t.Fatalf("unexpected wallet totals after refunds: %s", &totals)
+	}
 	if got := balance(otherToken); got != 0 {
 		t.Fatalf("unrelated wallet changed: %d", got)
 	}
@@ -241,6 +252,11 @@ func TestWalletSettlementAndTenantIsolation(t *testing.T) {
 		len(order.Items) != 1 || order.Items[0].UnitMinor != 300 || order.Items[0].TermDays != 30 || order.Items[0].DeliveredCount != 1 {
 		t.Fatalf("wrong order settlement snapshot: %s", &order)
 	}
+	entries := order.GetWalletEntries()
+	if len(entries) != 3 || entries[0].GetKind() != string(wallet.Refund) ||
+		entries[1].GetKind() != string(wallet.Release) || entries[2].GetKind() != string(wallet.Hold) {
+		t.Fatalf("unexpected linked wallet entries: %v", entries)
+	}
 	testfixture.AssertStatus(t, request("GET", "/v1/tenant"+orderPath, "", otherToken), http.StatusNotFound, "WALLET_RECORD_NOT_FOUND")
 	testfixture.AssertStatus(t, request("GET", ops+"/"+other.TenantId+orderPath, "", operator), http.StatusNotFound, "WALLET_RECORD_NOT_FOUND")
 	testfixture.AssertStatus(t, request("GET", path+orderPath, "", token), http.StatusForbidden, "ACCESS_DENIED")
@@ -252,7 +268,16 @@ func TestWalletSettlementAndTenantIsolation(t *testing.T) {
 		if filter == "kind=static_purchase&status=succeeded" {
 			want = 0
 		}
-		if len(customerOrders.Orders) != want || !proto.Equal(&customerOrders, &operatorOrders) {
+		if len(customerOrders.GetOrders()) != want {
+			t.Fatalf("unexpected customer results for %s: %s", filter, &customerOrders)
+		}
+		for _, summary := range customerOrders.GetOrders() {
+			if summary.GetItemCount() != 1 || summary.GetSummaryItem().GetPosition() != 1 {
+				t.Fatalf("missing locked summary for %s: %s", filter, summary)
+			}
+			summary.SummaryItem, summary.ItemCount = nil, 0
+		}
+		if !proto.Equal(&customerOrders, &operatorOrders) {
 			t.Fatalf("unexpected results for %s: %s / %s", filter, &customerOrders, &operatorOrders)
 		}
 	}
