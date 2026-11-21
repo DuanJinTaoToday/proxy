@@ -11,6 +11,7 @@ message Data {
     }
     PostgreSQL proxy_auth = 1;
     PostgreSQL usage = 2;
+    string ip_country_file = 3;
   }
   Repo repo = 1;
 }

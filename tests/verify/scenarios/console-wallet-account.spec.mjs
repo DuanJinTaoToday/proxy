@@ -160,6 +160,7 @@ test('钱包到账、筛选、翻页和关联订单，订单详情与账户信�
   const account = page.getByRole('region', { name: '账户', exact: true })
   await expect(account).toContainText('localalpha')
   await expect(account).toContainText('+86 138 **** 0001')
+  await expect(page.getByRole('region', { name: '当前 IP 地址及归属地' })).toBeVisible()
   await expect(ordersTab.getByText('1', { exact: true })).toBeVisible()
   await screenshot(page, info, 'profile-and-pending-tab')
   await ordersTab.click()

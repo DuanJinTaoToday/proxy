@@ -14,6 +14,16 @@
 
 网关认证和商业计量等待首版子账号与流量链路接入。当前可验证开户、Recorder 水位、生命周期和回放。
 
+## 当前访问 IP 归属地
+
+租户登录后可请求 `GET /v1/tenant/access-location`。返回本次请求的 `ip`、国家或地区名称 `location` 和 `is_mainland_china`。`Accept-Language: zh-CN` 返回中文，默认返回英文。只有国家代码为 `CN` 时标记为中国大陆，`HK`、`MO` 和 `TW` 独立识别。归属地未知时 `location` 为空、`is_mainland_china` 为 `false`，来源 IP 无法确定时 `ip` 也为空。
+
+在 `server.http.trusted_proxy_cidrs` 中配置直接 HTTPS 入口及转发链路中由部署方控制的代理地址，固定 IPv4 和 IPv6 地址分别使用 `/32` 和 `/128`。限制对控制面监听端口的访问，避免其他容器或主机使用这些地址。公网入口必须丢弃客户传入的 `X-Forwarded-For` 并用直接对端 IP 写入新值，后续可信代理把各自的直接对端附加到列表右侧。控制面先验证连接对端，再从右往左跳过可信代理，以第一个非可信地址为来源。连接对端不可信时仅使用直接对端 IP。可信入口未提供可识别的来源时，接口返回未知。
+
+将 [DB-IP IP to Country Lite](https://db-ip.com/db/download/ip-to-country-lite) 的 CSV 或 `.csv.gz` 文件以只读方式挂载给控制面，将 `data.repo.ip_country_file` 指向挂载后的路径。库包含 IPv4 和 IPv6 的国家或地区范围，按 IP 顺序存放。控制面在启动时加载到内存，请求期间只查询内存。路径为空、文件无法读取或解析时，接口继续返回来源 IP，归属地显示未知。DB-IP Lite 每月更新，数据以 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) 发布，控制台在卡片上保留归属链接。
+
+每次更新从 DB-IP 下载新月份的完整 CSV 归档，解压后按下载页发布的校验值核对 CSV，保存为新版本文件。将挂载和配置切换到新文件，再重启控制面。用已登录租户会话核对接口及启动日志，必要时把配置切回已验证的文件并重启。
+
 ## Recorder 上报与租户用量
 
 在 `server.local.yaml` 中填写 `data.repo.usage.database_dsn`，并按需调整 `biz.usage` 的上报限制。
