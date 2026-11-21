@@ -75,7 +75,7 @@ const staticIps = { name: 'console-static-ips' }
   </ElAlert>
   <div v-else-if="data" class="dashboard">
     <div class="dashboard__stats">
-      <ElCard tag="section" shadow="never" body-class="dashboard__stat" aria-labelledby="wallet-balance-title">
+      <ElCard role="region" shadow="never" body-class="dashboard__stat" aria-labelledby="wallet-balance-title">
         <header class="dashboard__card-heading">
           <h2 id="wallet-balance-title">{{ t('dashboard.walletTitle') }}</h2>
           <ElIcon class="dashboard__icon"><CreditCard /></ElIcon>
@@ -87,7 +87,7 @@ const staticIps = { name: 'console-static-ips' }
         </div>
       </ElCard>
 
-      <ElCard tag="section" shadow="never" body-class="dashboard__stat" aria-labelledby="traffic-balance-title">
+      <ElCard role="region" shadow="never" body-class="dashboard__stat" aria-labelledby="traffic-balance-title">
         <header class="dashboard__card-heading">
           <h2 id="traffic-balance-title">{{ t('dashboard.trafficTitle') }}</h2>
           <ElIcon class="dashboard__icon"><Sort /></ElIcon>
@@ -100,7 +100,7 @@ const staticIps = { name: 'console-static-ips' }
         </div>
       </ElCard>
 
-      <ElCard tag="section" shadow="never" body-class="dashboard__stat" aria-labelledby="static-count-title">
+      <ElCard role="region" shadow="never" body-class="dashboard__stat" aria-labelledby="static-count-title">
         <header class="dashboard__card-heading">
           <h2 id="static-count-title">{{ t('dashboard.staticTitle') }}</h2>
           <ElIcon class="dashboard__icon"><Connection /></ElIcon>
@@ -119,7 +119,7 @@ const staticIps = { name: 'console-static-ips' }
     </div>
 
     <div class="dashboard__details">
-      <ElCard tag="section" shadow="never" aria-labelledby="dashboard-usage-title">
+      <ElCard role="region" shadow="never" aria-labelledby="dashboard-usage-title">
         <div class="dashboard__card-heading">
           <h2 id="dashboard-usage-title">{{ t('dashboard.usageTitle') }}</h2>
           <ElButton v-if="data.days.length" link type="primary" size="small" @click="showTable = !showTable">
@@ -149,7 +149,7 @@ const staticIps = { name: 'console-static-ips' }
         </footer>
       </ElCard>
 
-      <ElCard tag="section" shadow="never" aria-labelledby="dashboard-todo-title">
+      <ElCard role="region" shadow="never" aria-labelledby="dashboard-todo-title">
         <div class="dashboard__card-heading"><h2 id="dashboard-todo-title">{{ t('dashboard.todoTitle') }}</h2></div>
         <ul v-if="data.trafficBytes < 0n || data.lowTraffic || data.expiringIpCount || data.pending" class="dashboard__todos">
           <li v-if="data.trafficBytes < 0n || data.lowTraffic">
