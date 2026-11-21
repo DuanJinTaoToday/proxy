@@ -8,7 +8,7 @@ import {
 import { Search } from '@element-plus/icons-vue'
 import { ApiError } from '@/api/client'
 import { maxStaticPurchaseLines, maxStaticPurchaseQuantity, type StaticPurchaseLine, type StaticPurchaseOffer } from '@/api/staticPricing'
-import { formatYuan } from '@/shared/lib/formatYuan'
+import { formatYuan } from '@/shared/lib/money'
 import { useErrorMessage } from '@/shared/lib/useErrorMessage'
 import LinkButton from '@/shared/ui/LinkButton.vue'
 import { offerKey, staticSelectionTotal, useStaticPurchase } from './useStaticPurchase'

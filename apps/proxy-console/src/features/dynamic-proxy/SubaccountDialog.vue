@@ -6,7 +6,7 @@ import { Refresh } from '@element-plus/icons-vue'
 import { ApiError } from '@/api/client'
 import { createSubaccount, updateSubaccount, type Subaccount } from '@/api/subaccounts'
 import { useErrorMessage } from '@/shared/lib/useErrorMessage'
-import { formatGB, parseLimitGB } from './trafficUnits'
+import { formatGB, parseLimitGB } from '@/shared/lib/trafficUnits'
 
 export type SubaccountAction = { kind: 'create' } | { kind: 'edit' | 'password' | 'status', account: Subaccount }
 

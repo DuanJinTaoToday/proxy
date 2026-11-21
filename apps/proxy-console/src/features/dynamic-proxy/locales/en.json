@@ -1,4 +1,51 @@
 {
+  "dynamicUsage": {
+    "range": "Date range",
+    "last7": "Last 7 days",
+    "last30": "Last 30 days",
+    "customDates": "Custom date range",
+    "through": "to",
+    "startDate": "Start date",
+    "endDate": "End date",
+    "byAccount": "Filter by subaccount",
+    "allAccounts": "All subaccounts",
+    "selectedAccount": "Selected subaccount",
+    "disabledAccount": "{name} (disabled)",
+    "exportCsv": "Export CSV",
+    "csvSaved": "Usage CSV exported",
+    "csvFailed": "CSV export failed",
+    "loading": "Loading usage",
+    "loadFailed": "Could not load usage",
+    "accountsFailed": "Could not load subaccounts",
+    "retry": "Retry",
+    "empty": "No usage in this range",
+    "total": "Total debited",
+    "average": "Daily average",
+    "peak": "Highest day",
+    "gb": "{value} GB",
+    "chartLabel": "Daily traffic debits area chart",
+    "dailyDetails": "Daily usage details",
+    "businessDay": "Business date",
+    "debitedTraffic": "Traffic debited",
+    "debitedBytes": "Bytes debited",
+    "updated": "Data updated {time}",
+    "unknownUpdate": "Last update time unavailable",
+    "usageBasis": "Daily traffic debited · Business dates use Shanghai time · 1 GB = 10⁹ bytes"
+  },
+  "trafficAlert": {
+    "title": "Low balance alerts",
+    "hint": "The console alerts you once when available traffic falls to or below your threshold. When the balance rises above the threshold, it can trigger a new alert the next time it falls.",
+    "threshold": "Alert threshold (GB)",
+    "invalid": "Enter a valid non-negative value in GB with up to 9 decimal places.",
+    "save": "Save threshold",
+    "disable": "Disable alerts",
+    "saved": "Low balance threshold saved.",
+    "disabled": "Low balance alerts disabled.",
+    "loading": "Loading low balance alerts",
+    "loadFailed": "Could not load low balance alerts.",
+    "updateFailed": "Could not confirm the alert settings. Try again.",
+    "retry": "Retry"
+  },
   "subaccounts": {
     "intro": "Use subaccounts to give each project its own SOCKS5 credentials and usage limit for dynamic residential proxies.",
     "usernameHint": "Use a SOCKS5 username such as {account}.shop01. Append -sid- followed by a session ID to select a session. Each static residential IP has its own credentials.",
@@ -80,6 +127,82 @@
       "INVALID_SUBACCOUNT_REMARK": "The note can be up to 512 bytes.",
       "INVALID_SUBACCOUNT_LIMIT": "You can raise or remove the current limit.",
       "SUBACCOUNT_LIMIT_BELOW_USAGE": "The limit must be at least the current usage."
+    }
+  },
+  "dynamicSetup": {
+    "heading": "SOCKS5 credentials",
+    "manage": "Manage subaccounts",
+    "account": "Subaccount",
+    "accountOption": "{name} · {remark}",
+    "empty": "No enabled subaccounts",
+    "emptyHint": "Create or enable a proxy subaccount to connect.",
+    "create": "Create a subaccount",
+    "session": "Session",
+    "defaultSession": "Default session",
+    "explicitSession": "Specify a session ID",
+    "sid": "Session ID (sid)",
+    "sidFormat": "Enter 1–32 lowercase letters or digits.",
+    "sidHelp": "Connections using the same subaccount and session ID try to reuse the same exit. The exit IP may change on reconnect.",
+    "host": "Gateway host",
+    "port": "Port",
+    "username": "Username",
+    "password": "Password",
+    "hide": "Hide password",
+    "reveal": "Show password",
+    "copyField": "Copy {field}",
+    "copy": "Copy",
+    "copied": "Copied to the clipboard.",
+    "copyFailed": "Copy failed. Check the browser clipboard permissions.",
+    "connection": "Connection string",
+    "curl": "curl example",
+    "retry": "Reload",
+    "balance": "Available traffic",
+    "balanceHint": "Traffic does not expire. A positive traffic balance is required for new connections.",
+    "buy": "Buy traffic"
+  },
+  "dynamicGuide": {
+    "heading": "Connect to dynamic residential proxies over SOCKS5",
+    "region": "Proxy products are unavailable from networks in mainland China.",
+    "openSetup": "Open proxy setup",
+    "faq": "Frequently asked questions",
+    "purchase": {
+      "title": "Buy traffic",
+      "body": "Buy a traffic package from Pricing. Traffic does not expire and is shared among the tenant’s subaccounts."
+    },
+    "account": {
+      "title": "Create a subaccount",
+      "body": "Create and enable an account in Proxy Subaccounts. Each subaccount can have its own usage limit."
+    },
+    "credentials": {
+      "title": "Get connection details",
+      "body": "Select an enabled subaccount in Proxy Setup and copy its gateway host, port, username, and password. The default SOCKS5 username uses this format."
+    },
+    "usernameFormat": "<primary-account>.<subaccount>",
+    "session": {
+      "title": "Choose a session",
+      "body": "For the default session, use the base username. To specify a session, append the suffix below. The session ID must contain 1–32 lowercase letters or digits."
+    },
+    "sessionFormat": "<primary-account>.<subaccount>-sid-<session-id>",
+    "connect": {
+      "title": "Configure and test the client",
+      "body": "Choose SOCKS5 in your client and enter the connection details. Use socks5h where supported to resolve the destination hostname through the proxy. You can also copy the curl command from Proxy Setup to check the exit IP."
+    },
+    "command": "curl -x 'socks5h://<username>:<password>{'@'}<gateway-host>:<port>' https://api.ipify.org",
+    "usage": {
+      "title": "Check your usage",
+      "body": "Traffic is deducted by metered bytes. One GB is 1,000,000,000 bytes."
+    },
+    "authentication": {
+      "title": "Why did authentication fail?",
+      "body": "Check that the subaccount is enabled, the username includes the primary account prefix, and the password is current. If you specified a session, check the sid format."
+    },
+    "quota": {
+      "title": "Why can’t I connect with valid credentials?",
+      "body": "Check the gateway host, port, and SOCKS5 settings. The tenant must have a positive traffic balance, and the subaccount must be below its usage limit if one is set."
+    },
+    "rotation": {
+      "title": "Can the exit IP change within a session?",
+      "body": "A session on the same subaccount tries to reuse the same exit. The upstream provider determines session duration and exit assignment. The exit IP can change on reconnect."
     }
   }
 }

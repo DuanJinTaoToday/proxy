@@ -2453,6 +2453,10 @@ components:
                 version:
                     type: string
                     description: 当前配置版本，提交购买时用于确认报价。
+                discountPercent:
+                    type: integer
+                    description: 公开报价相对 5 GB 档节省的每 GB 百分比，四舍五入。没有可用基准或优惠时省略。
+                    format: int32
         proxycontrol.v1.TrafficPackages:
             type: object
             properties:

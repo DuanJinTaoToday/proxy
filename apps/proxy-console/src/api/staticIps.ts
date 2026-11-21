@@ -58,7 +58,7 @@ export async function getStaticIpCredentials(id: string, signal: AbortSignal) {
 }
 
 export function exportStaticIps(ids: string[], signal: AbortSignal) {
-  return requestText(`${ipsPath}:export`, { body: { supplier_item_ids: ids }, signal })
+  return requestText(`${ipsPath}:export`, { body: { supplier_item_ids: ids }, signal }, 'text/plain')
 }
 
 export async function listRenewalTerms(ids: string[], signal: AbortSignal) {

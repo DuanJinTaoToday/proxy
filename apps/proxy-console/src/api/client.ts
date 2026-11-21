@@ -51,7 +51,7 @@ function parseJson(text: string) {
     typeof value === 'number' && Number.isInteger(value) && !Number.isSafeInteger(value) && context?.source ? context.source : value)
 }
 
-async function readResponse(path: string, options: RequestOptions, accept: string): Promise<string> {
+async function send(path: string, options: RequestOptions, accept: string) {
   const headers: Record<string, string> = { Accept: accept }
   if (options.acceptLanguage) headers['Accept-Language'] = options.acceptLanguage
   const token = hooks.accessToken()
@@ -84,10 +84,10 @@ async function readResponse(path: string, options: RequestOptions, accept: strin
 }
 
 export async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const text = await readResponse(path, options, 'application/json')
+  const text = await send(path, options, 'application/json')
   return (text ? parseJson(text) : undefined) as T
 }
 
-export function requestText(path: string, options: RequestOptions = {}): Promise<string> {
-  return readResponse(path, options, 'text/plain')
+export function requestText(path: string, options: RequestOptions, accept: string) {
+  return send(path, options, accept)
 }

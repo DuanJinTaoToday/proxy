@@ -7,7 +7,7 @@ import {
   getStaticRenewalOrder, listRenewalTerms, quoteStaticRenewal, recheckStaticRenewal, submitStaticRenewal,
   type RenewalOrder, type RenewalOutcome, type RenewalSubmission,
 } from '@/api/staticIps'
-import { formatYuan } from '@/shared/lib/formatYuan'
+import { formatYuan } from '@/shared/lib/money'
 import { useStaticIpPresentation } from './presentation'
 import type { RenewalIntent } from './renewalIntent'
 

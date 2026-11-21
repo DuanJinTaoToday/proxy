@@ -1,84 +1,87 @@
-import { test, expect } from '@playwright/test'
-import { findTenant, login, prepareRecharge, screenshot, submitRecharge } from '../support/console.mjs'
-import { expectTrafficPurchaseRecords, openTrafficPackages, openTrafficSale, openWalletOrders, trafficSaleSettings } from '../support/traffic.mjs'
+import { expect, test } from '@playwright/test'
+import { screenshot, signInTenant } from '../support/console.mjs'
+import { authenticatedApi, expectSettled, purchasePath, recharge, setSale, setTier, trafficRecords } from '../support/traffic.mjs'
 
-// 旧控制台已在 #77 移除。新控制台交付登录（#69）、动态购买（#72）、钱包（#76）和运营充值页面后，改用新页面恢复本场景。
-test.fixme('流量套餐开售 → 余额不足 → 充值后扣款并到账', async ({ browser, page: tenant, baseURL }, info) => {
-  const operatorContext = await browser.newContext({ baseURL, ignoreHTTPSErrors: true })
-  const operator = await operatorContext.newPage()
-  const nav = tenant.getByRole('navigation', { name: '租户导航' })
-  const packages = nav.getByRole('link', { name: '流量套餐', exact: true })
-  const submit = tenant.getByRole('button', { name: '确认并扣款', exact: true })
-  const package5GB = tenant.getByRole('radio', { name: '5 GB ¥15.00', exact: true })
-  let orderId
+test('动态套餐开售、余额不足、报价变化与成交对账', async ({ page, playwright, baseURL }, info) => {
+  const phone = '13800000002'
+  const operator = await authenticatedApi(playwright, baseURL)
+  const tenant = await authenticatedApi(playwright, baseURL, { phone })
 
   try {
-    await test.step('运营定价并单独开启动态套餐购买', async () => {
-      await login(operator, '/operations', '运营账号', 'operator')
-      const sale = await trafficSaleSettings(operator)
-      const close = sale.getByRole('button', { name: '关闭购买', exact: true })
-      if (await close.isVisible()) {
-        await close.click()
-        await expect(sale.getByRole('heading', { name: /^动态.* · 未开售$/ })).toBeVisible()
-      }
+    await setSale(operator, false)
+    await signInTenant(page, phone)
+    await page.getByRole('menuitem', { name: '动态住宅代理-GB' }).click()
+    await page.getByRole('tab', { name: '价格', exact: true }).click()
+    await expect(page.getByText('暂未开放购买', { exact: true })).toBeVisible()
+    await expect(page.getByRole('radio')).toHaveCount(0)
+    await screenshot(page, info, 'closed')
 
-      await login(tenant, '/console', '手机号', '13800000002')
-      await expect(tenant.getByRole('heading', { name: '快捷操作', exact: true })).toBeVisible()
-      await nav.getByRole('button', { name: '动态住宅代理-GB', exact: true }).click()
-      await expect(packages).toHaveCount(0)
+    await setTier(operator, '5gb', '1500')
+    await setTier(operator, '50gb', '13500')
+    await setTier(operator, '200gb', '48000', false)
+    await setSale(operator, true)
 
-      await openTrafficSale(operator, sale)
-      await expect(operator.getByRole('heading', { name: /^静态.* · 未开售$/ })).toBeVisible()
-      await screenshot(operator, info, '01-dynamic-on-sale')
-    })
+    await page.route('**/v1/public/products', route => route.abort(), { times: 1 })
+    await page.reload()
+    await page.getByRole('button', { name: '重新加载' }).click()
+    await expect(page.getByRole('radio')).toHaveCount(2)
+    await expect(page.getByText('比 5 GB 档每 GB 省 10%', { exact: true })).toBeVisible()
+    await expect(page.getByText('¥3.00 / GB', { exact: true })).toBeVisible()
+    await expect(page.getByText('¥2.70 / GB', { exact: true })).toBeVisible()
+    await screenshot(page, info, 'listed-packages')
 
-    await test.step('租户购买时提示差额，刷新后仍无订单、余额或流量变化', async () => {
-      await tenant.reload()
-      await openTrafficPackages(nav)
-      await package5GB.check()
-      await submit.click()
-      await expect(tenant.getByRole('alert')).toHaveText('钱包余额不足，还差 ¥15.00。请联系运营充值后重新确认。')
-      await screenshot(tenant, info, '02-insufficient-wallet')
-      await tenant.reload()
-      await openWalletOrders(tenant, nav)
-      await expect(tenant.getByText('暂无符合条件的订单。', { exact: true })).toBeVisible()
-      await nav.getByRole('link', { name: '仪表板', exact: true }).click()
-      await expect(tenant.getByRole('main').getByText('¥0.00', { exact: true })).toBeVisible()
-      await expect(tenant.getByRole('main').getByText(/^0(?:\.0+)? (?:B|GB)$/)).toBeVisible()
-    })
+    await setTier(operator, '5gb', '1500', false)
+    await page.reload()
+    await expect(page.getByRole('radio')).toHaveCount(1)
+    await expect(page.getByText('比 5 GB 档每 GB 省 10%', { exact: true })).toBeVisible()
+    await screenshot(page, info, 'discount-with-reference-tier-unlisted')
+    await setTier(operator, '5gb', '1500')
+    await page.reload()
 
-    await test.step('运营给同一租户充值 ¥20.00，租户重新确认购买', async () => {
-      await findTenant(operator, '13800000002')
-      await expect(operator.getByRole('region', { name: 'Beta', exact: true }).getByText('localbeta', { exact: true })).toBeVisible()
-      await prepareRecharge(operator, '20.00', 'verify-traffic-' + process.env.VERIFY_ID)
-      await submitRecharge(operator)
+    const buy = page.getByRole('button', { name: '立即购买' })
+    const dialog = page.getByRole('dialog', { name: '确认购买流量' })
+    const pay = dialog.getByRole('button', { name: '确认支付' })
+    const fiveGB = page.getByRole('radio', { name: '5 GB 流量包', exact: true })
+    await fiveGB.press('Space')
+    await expect(fiveGB).toBeChecked()
+    await buy.click()
+    await expect(dialog.getByText(/还差 ¥15\.00/)).toBeVisible()
+    await expect(pay).toBeDisabled()
+    expect(await trafficRecords(tenant)).toEqual({ wallet: '0', traffic: '0', orders: [], debits: [] })
+    await screenshot(page, info, 'insufficient')
+    await dialog.getByRole('button', { name: '返回修改' }).click()
 
-      await tenant.reload()
-      await openTrafficPackages(nav)
-      await expect(tenant.getByText(/钱包余额 ¥20\.00 · 可用流量/)).toBeVisible()
-      await package5GB.check()
-      await submit.click()
-      const receipt = tenant.getByRole('status').filter({ hasText: /订单 #/ })
-      const completedOrder = /订单 #(\d+) 成交，到账 5 GB，实扣 ¥15\.00。/
-      await expect(receipt).toHaveText(completedOrder)
-      orderId = completedOrder.exec(await receipt.innerText())[1]
-      await screenshot(tenant, info, '03-purchase-receipt')
-    })
+    await recharge(operator, tenant, '2000')
+    await buy.click()
+    await expect(dialog.getByText('¥5.00', { exact: true })).toBeVisible()
+    await expect(dialog.getByText('¥15.00', { exact: true })).toBeVisible()
+    await screenshot(page, info, 'confirmation')
 
-    await test.step('刷新后核对余额、唯一订单和关联扣款流水', async () => {
-      await nav.getByRole('link', { name: '仪表板', exact: true }).click()
-      await tenant.reload()
-      await expect(tenant.getByRole('main').getByText('¥5.00', { exact: true })).toBeVisible()
-      await expect(tenant.getByRole('main').getByText('5 GB', { exact: true })).toBeVisible()
-      await screenshot(tenant, info, '04-balances-after-refresh')
+    await setTier(operator, '5gb', '1600')
+    await pay.click()
+    await expect(page.getByText('套餐报价或开售状态已更新，请重新确认。')).toBeVisible()
+    expect(await trafficRecords(tenant)).toEqual({ wallet: '2000', traffic: '0', orders: [], debits: [] })
+    await setTier(operator, '5gb', '1500')
+    await buy.click()
+    await expect(page.getByText('套餐报价或开售状态已更新，请重新确认。')).toBeVisible()
+    await expect(buy).toBeEnabled()
+    await buy.click()
+    await expect(dialog.getByText('¥5.00', { exact: true })).toBeVisible()
+    const response = page.waitForResponse(value => new URL(value.url()).pathname === purchasePath && value.ok())
+    await pay.click()
+    const { id } = await (await response).json()
+    await expect(page.getByRole('status').filter({ hasText: '订单 #' + id })).toContainText('到账 5 GB，实扣 ¥15.00')
+    await expect(page.getByText('¥5.00', { exact: true })).toBeVisible()
+    await screenshot(page, info, 'purchase-receipt')
 
-      await expectTrafficPurchaseRecords(tenant, nav, orderId, '¥5.00')
-      await screenshot(tenant, info, '05-linked-wallet-debit')
-    })
-  } catch (error) {
-    if (!operator.isClosed()) await screenshot(operator, info, 'operator-at-failure')
-    throw error
+    await page.getByRole('menuitem', { name: '仪表板', exact: true }).click()
+    await expect(page.getByRole('region', { name: '动态代理可用流量' })).toContainText('5 GB')
+    await expect(page.getByRole('region', { name: '钱包余额' })).toContainText('¥5.00')
+    await screenshot(page, info, 'updated-balances')
+    const records = await expectSettled(tenant, id, '500')
+    await info.attach('settlement.json', { body: JSON.stringify(records, null, 2), contentType: 'application/json' })
   } finally {
-    await operatorContext.close()
+    await operator.dispose()
+    await tenant.dispose()
   }
 })

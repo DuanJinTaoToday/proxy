@@ -1,15 +1,19 @@
 <script setup lang="ts">
-import { computed, onScopeDispose, ref, shallowRef } from 'vue'
+import { computed, onScopeDispose, ref, shallowRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElAlert, ElButton, ElCard, ElEmpty, ElIcon, ElPopover, ElSkeleton, ElTable, ElTableColumn } from 'element-plus'
 import { Clock, Connection, CreditCard, Service, Sort, Tickets } from '@element-plus/icons-vue'
-import { getDailyUsage, getOverview, getTrafficAlert, hasPendingOrders, listActiveStaticExpiries } from '@/api/dashboard'
-import { formatGB } from '@/features/dynamic-proxy'
+import { getOverview, hasPendingOrders, listActiveStaticExpiries } from '@/api/dashboard'
+import { getTrafficAlert } from '@/api/trafficAlert'
+import { getDailyUsage } from '@/api/usage'
+import { trafficNoticeRevision } from '@/features/notifications'
+import { shanghaiDateTime } from '@/shared/lib/businessDates'
+import { formatYuan } from '@/shared/lib/money'
+import { formatGB } from '@/shared/lib/trafficUnits'
+import DailyUsageChart from '@/shared/ui/DailyUsageChart.vue'
 import LinkButton from '@/shared/ui/LinkButton.vue'
 import PageHeader from '@/shared/ui/PageHeader.vue'
-import UsageChart from './UsageChart.vue'
-import { formatYuan } from '@/shared/lib/formatYuan'
-import { shanghaiDateTime, usageWeek } from './format'
+import { usageWeek } from './format'
 
 const { t, locale } = useI18n()
 const showTable = ref(false)
@@ -20,7 +24,7 @@ async function readDashboard(signal: AbortSignal) {
   const dates = usageWeek()
   const overview = await getOverview(signal)
   const [usage, alert, activeExpiries, pending] = await Promise.all([
-    getDailyUsage({ start: dates[0], end: dates[6], signal }),
+    getDailyUsage({ start: dates[0], end: dates[6] }, signal),
     getTrafficAlert(signal),
     listActiveStaticExpiries(overview.activeStaticIpCount, signal),
     hasPendingOrders(signal),
@@ -28,7 +32,7 @@ async function readDashboard(signal: AbortSignal) {
   const usageByDate = new Map(usage.map(day => [day.date, day]))
   return {
     ...overview,
-    lowTraffic: alert.thresholdBytes !== undefined && overview.trafficBytes <= alert.thresholdBytes,
+    lowTraffic: alert.thresholdBytes !== undefined && alert.availableBytes <= alert.thresholdBytes,
     expiry: activeExpiries[0]?.expiresAt,
     pending,
     days: usage.length ? dates.map(date => ({ date, bytes: usageByDate.get(date)?.bytes ?? 0n })) : [],
@@ -57,7 +61,7 @@ async function load() {
   }
 }
 
-void load()
+watch(trafficNoticeRevision, load, { immediate: true })
 
 const data = computed(() => state.value.kind === 'ready' ? state.value.data : undefined)
 const usageTotal = computed(() => data.value?.days.reduce((total, day) => total + day.bytes, 0n) ?? 0n)
@@ -148,7 +152,7 @@ const staticIps = { name: 'console-static-ips' }
               <template #default="{ row }">{{ gb(row.bytes) }}</template>
             </ElTableColumn>
           </ElTable>
-          <UsageChart v-else :days="data.days" />
+          <DailyUsageChart v-else :days="data.days" :label="t('dashboard.chartLabel')" :format-bytes="gb" />
         </template>
         <ElEmpty v-else :description="t('dashboard.noUsage')" :image-size="56" />
         <footer class="dashboard__usage-footer">
