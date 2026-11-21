@@ -3,7 +3,7 @@
     "name": "Proxy",
     "consoleTitle": "Console",
     "opsTitle": "Operations Console",
-    "opsBadge": "Ops"
+    "opsBadge": "Operations"
   },
   "locale": {
     "zh-CN": "简体中文",
@@ -23,8 +23,10 @@
     "wallet": "Wallet",
     "account": "My Account",
     "opsTenants": "Tenants",
-    "opsProducts": "Products",
-    "opsOrders": "Order Handling"
+    "opsProducts": "Products and pricing",
+    "opsOrders": "Order Handling",
+    "opsCustomers": "Customers",
+    "opsOperations": "Operations"
   },
   "tabs": {
     "dynamicSetup": "Proxy Setup",
@@ -44,7 +46,8 @@
     "guestNotifications": "Sign in to see notifications for your account.",
     "language": "Language: {name}",
     "login": "Sign in",
-    "register": "Sign up"
+    "register": "Sign up",
+    "customerConsole": "Open customer console"
   },
   "page": {
     "pending": "This page is under construction",
@@ -71,6 +74,13 @@
     "LOGIN_BUSY": "Too many requests. Try again later.",
     "ACCESS_UNAVAILABLE": "The account service is temporarily unavailable. Try again later.",
     "network": "Network connection failed. Check your connection and try again.",
-    "unknown": "The request failed. Try again later. ({status})"
+    "unknown": "The request failed. Try again later. ({status})",
+    "WALLET_RECORD_NOT_FOUND": "The tenant or wallet record was not found.",
+    "WALLET_BALANCE_CHANGED": "The wallet balance changed. Review the updated balance before confirming.",
+    "WALLET_QUOTE_EXPIRED": "The confirmation expired. Review the recharge again.",
+    "WALLET_REQUEST_CONFLICT": "This recharge conflicts with an earlier request.",
+    "WALLET_BALANCE_LIMIT": "The amount exceeds the wallet balance limit.",
+    "WALLET_UNAVAILABLE": "The wallet service is temporarily unavailable. Try again shortly.",
+    "INVALID_WALLET_REQUEST": "Check the request details and try again."
   }
 }

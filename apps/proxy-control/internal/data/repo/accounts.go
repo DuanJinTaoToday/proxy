@@ -80,16 +80,16 @@ func (r *AccountRepository) CustomerByTenant(ctx context.Context, v string) (acc
 
 func (r *AccountRepository) operator(ctx context.Context, field, value string) (access.Principal, error) {
 	var rows []struct {
-		ID, PasswordHash, Permission string
-		Version                      int64
+		ID, Username, PasswordHash, Permission string
+		Version                                int64
 	}
-	err := r.db.WithContext(ctx).Raw(`SELECT o.id,o.password_hash,o.session_version AS version,p.permission
+	err := r.db.WithContext(ctx).Raw(`SELECT o.id,o.username,o.password_hash,o.session_version AS version,p.permission
  FROM operators o LEFT JOIN operator_permissions p ON p.operator_id=o.id WHERE `+field+" = ?", value).Scan(&rows).Error
 	if err != nil || len(rows) == 0 {
 		return access.Principal{}, err
 	}
 	first := rows[0]
-	result := access.Principal{ID: first.ID, PasswordHash: first.PasswordHash, Version: first.Version, Permissions: make(map[access.Permission]bool)}
+	result := access.Principal{ID: first.ID, Username: first.Username, PasswordHash: first.PasswordHash, Version: first.Version, Permissions: make(map[access.Permission]bool)}
 	for _, row := range rows {
 		switch row.Permission {
 		case "read_operations":

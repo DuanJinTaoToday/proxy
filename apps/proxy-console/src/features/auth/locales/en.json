@@ -32,6 +32,9 @@
     "retry": "Retry",
     "accountFailed": "Could not load account",
     "passwordTooLong": "The password must not exceed 1024 bytes",
-    "registeredSignInFailed": "Your account was created, but signing in automatically failed: {reason} Sign in to continue."
+    "registeredSignInFailed": "Your account was created, but signing in automatically failed: {reason} Sign in to continue.",
+    "opsLoginTitle": "Operations sign-in",
+    "opsUsername": "Operator username",
+    "opsLogoutHint": "Sign in again to continue using the operations console."
   }
 }

@@ -171,6 +171,19 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/proxycontrol.v1.BaseResp'
+    /v1/operations/access/account:
+        get:
+            tags:
+                - AccessService
+            summary: 查看当前运营账号及其权限
+            operationId: AccessService_GetOperatorAccount
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.OperatorAccount'
     /v1/operations/access/login:
         post:
             tags:
@@ -1580,6 +1593,16 @@ components:
                     type: integer
                     description: 令牌从签发起的有效时长，单位为秒。
                     format: int32
+        proxycontrol.v1.OperatorAccount:
+            type: object
+            properties:
+                username:
+                    type: string
+                permissions:
+                    type: array
+                    items:
+                        type: string
+                    description: 独立授权项：read_operations、manage_billing、manage_tenant_accounts。
         proxycontrol.v1.Overview:
             type: object
             properties:
@@ -2720,6 +2743,13 @@ components:
                 totalSpendMinor:
                     type: string
                     description: 当前租户累计净实扣，人民币分，以十进制字符串返回。
+                phone:
+                    type: string
+                    description: 注册手机号（运营接口）。
+                registeredAt:
+                    type: string
+                    description: 租户注册时间（运营接口）。
+                    format: date-time
 tags:
     - name: AccessLocationService
     - name: AccessService

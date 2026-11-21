@@ -27,12 +27,18 @@ INSERT INTO tenant_balances (tenant_id, updated_at) VALUES ('alpha', now()), ('b
 ON CONFLICT (tenant_id) DO NOTHING;
 
 INSERT INTO operators (id, username, password_hash)
-VALUES ('local-operator', 'operator', '06e55b633481f7bb072957eabcf110c9:53683f816375ff5369a9d2b7d62b18d3d790341b14b425f87422353219d5c229')
+VALUES ('local-operator', 'operator', '06e55b633481f7bb072957eabcf110c9:53683f816375ff5369a9d2b7d62b18d3d790341b14b425f87422353219d5c229'),
+       ('local-operator-readonly', 'operator-readonly', '06e55b633481f7bb072957eabcf110c9:53683f816375ff5369a9d2b7d62b18d3d790341b14b425f87422353219d5c229'),
+       ('local-operator-billing', 'operator-billing', '06e55b633481f7bb072957eabcf110c9:53683f816375ff5369a9d2b7d62b18d3d790341b14b425f87422353219d5c229'),
+       ('local-operator-support', 'operator-support', '06e55b633481f7bb072957eabcf110c9:53683f816375ff5369a9d2b7d62b18d3d790341b14b425f87422353219d5c229')
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO operator_permissions (operator_id, permission)
 VALUES ('local-operator', 'read_operations'), ('local-operator', 'manage_billing'),
-       ('local-operator', 'manage_tenant_accounts')
+       ('local-operator', 'manage_tenant_accounts'),
+       ('local-operator-readonly', 'read_operations'),
+       ('local-operator-billing', 'read_operations'), ('local-operator-billing', 'manage_billing'),
+       ('local-operator-support', 'read_operations'), ('local-operator-support', 'manage_tenant_accounts')
 ON CONFLICT DO NOTHING;
 
 COMMIT;

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { screenshot, signInTenant } from '../support/console.mjs'
+import { screenshot, signInOperator, signInTenant } from '../support/console.mjs'
 
 // #68 前端工程骨架：三套布局、默认入口、深链回退、双语偏好和窄屏版式。控制台自 #69 起需要登录。
 
@@ -38,8 +38,10 @@ test('默认入口、深链和未找到页', async ({ page }, info) => {
   await expect(page).toHaveURL(/\/console\/static\/ips$/)
 
   await page.goto('/ops')
+  await expect(page).toHaveURL(/\/ops\/login\?redirect=/)
+  await signInOperator(page)
   await expect(page).toHaveURL(/\/ops\/tenants$/)
-  await expect(page.getByRole('navigation', { name: '运营导航' }).getByRole('menuitem')).toHaveText(['租户管理', '商品管理', '订单处理'])
+  await expect(page.getByRole('navigation', { name: '运营导航' }).getByRole('menuitem')).toHaveText(['租户', '订单处理', '商品与定价'])
 
   await page.goto('/no-such-page/deeper')
   await expect(page.getByText('页面不存在')).toBeVisible()
@@ -71,6 +73,8 @@ for (const width of [390, 1280]) {
       await page.setViewportSize({ width, height: 844 })
       await signInTenant(page)
       await page.addInitScript(value => localStorage.setItem('proxy-console.locale', value), locale)
+      await signInOperator(page, '/ops', 'operator', locale)
+      await expect(page).toHaveURL(/\/ops\/tenants$/)
       for (const path of [`/${locale}/`, '/console/dynamic/setup', '/ops/products/dynamic']) {
         await page.goto(path)
         await expect(heading(page)).toBeVisible()

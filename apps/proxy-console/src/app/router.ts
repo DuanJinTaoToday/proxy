@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory, type RouteLocationNormalizedLoaded, type RouteRecordRaw, type RouteRecordSingleView } from 'vue-router'
-import { hasSession, installSession, safeRedirect } from '@/features/auth'
+import { hasOperatorSession, hasSession, installOperatorSession, installSession, loadOperator, safeOperatorRedirect, safeRedirect } from '@/features/auth'
 import { applyLocale, isLocale, preferredLocale, rememberLocale } from './i18n'
 
 declare module 'vue-router' {
@@ -10,6 +10,8 @@ declare module 'vue-router' {
     requiresAuth?: boolean
     // 仅游客访问：已登录时直接去回跳地址。
     guestOnly?: boolean
+    requiresOperator?: boolean
+    operatorGuestOnly?: boolean
     // 带页签的页面：子路由各自独立，可直接访问、刷新和后退。
     tabs?: { name: string, labelKey: string }[]
   }
@@ -76,13 +78,15 @@ export const routes: RouteRecordRaw[] = [
       ], () => import('@/pages/console/AccountPage.vue')),
     ],
   },
+  { path: '/ops/login', name: 'ops-login', component: () => import('@/pages/ops/OpsLoginPage.vue'), meta: { titleKey: 'auth.opsLoginTitle', operatorGuestOnly: true } },
   {
     path: '/ops',
     component: OpsLayout,
+    meta: { requiresOperator: true },
     children: [
       { path: '', redirect: { name: 'ops-tenants' } },
-      page('tenants', 'ops-tenants', 'nav.opsTenants'),
-      page('tenants/:tenantId', 'ops-tenant', 'nav.opsTenants'),
+      { path: 'tenants', name: 'ops-tenants', component: () => import('@/pages/ops/OpsTenantsPage.vue'), meta: { titleKey: 'nav.opsTenants' } },
+      { path: 'tenants/:tenantId', name: 'ops-tenant', component: () => import('@/pages/ops/OpsTenantPage.vue'), meta: { titleKey: 'nav.opsTenants' } },
       tabbed('products', 'ops-products', 'nav.opsProducts', [{ path: 'dynamic', labelKey: 'tabs.productsDynamic' }, { path: 'static', labelKey: 'tabs.productsStatic' }]),
       page('orders', 'ops-orders', 'nav.opsOrders'),
     ],
@@ -97,11 +101,13 @@ const needsAuth = (route: RouteLocationNormalizedLoaded) => route.matched.some(r
 
 // 官网以 URL 的语言为准，并记为偏好，从英文官网注册或登录后控制台沿用英文；控制台和其他页面使用记住的偏好。
 // 未登录访问控制台时跳到登录页并带上回跳地址；已登录访问登录注册页时直接去回跳地址。
-router.beforeEach(to => {
+router.beforeEach(async to => {
   const urlLocale = isLocale(to.params.locale) ? to.params.locale : undefined
   if (urlLocale) rememberLocale(urlLocale)
   const locale = urlLocale ?? preferredLocale()
   applyLocale(locale)
+  if (to.meta.requiresOperator && !(await loadOperator())) return { name: 'ops-login', query: { redirect: to.fullPath } }
+  if (to.meta.operatorGuestOnly && hasOperatorSession() && await loadOperator()) return safeOperatorRedirect(to.query.redirect)
   if (needsAuth(to) && !hasSession()) return loginLocation(locale, to.fullPath)
   if (to.meta.guestOnly && hasSession()) return safeRedirect(to.query.redirect)
 })
@@ -110,4 +116,11 @@ router.beforeEach(to => {
 installSession(() => {
   const current = router.currentRoute.value
   if (needsAuth(current)) window.location.assign(router.resolve(loginLocation(preferredLocale(), current.fullPath)).href)
+})
+
+installOperatorSession(() => {
+  const current = router.currentRoute.value
+  if (current.meta.requiresOperator) {
+    window.location.assign(router.resolve({ name: 'ops-login', query: { redirect: current.fullPath } }).href)
+  }
 })

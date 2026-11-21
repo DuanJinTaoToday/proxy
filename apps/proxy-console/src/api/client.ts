@@ -19,6 +19,7 @@ export interface RequestOptions {
   body?: unknown
   signal?: AbortSignal
   acceptLanguage?: string
+  anonymous?: boolean
 }
 
 interface ApiHooks {
@@ -27,11 +28,16 @@ interface ApiHooks {
   onUnauthorized: (error: ApiError, token: string) => void
 }
 
-const hooks: ApiHooks = { accessToken: () => undefined, onUnauthorized: () => {} }
+const tenantHooks: ApiHooks = { accessToken: () => undefined, onUnauthorized: () => {} }
+const operatorHooks: ApiHooks = { ...tenantHooks }
 
 // 认证模块注册凭据来源和失效处理，API 层本身不依赖页面或会话实现。
 export function configureApi(next: Partial<ApiHooks>) {
-  Object.assign(hooks, next)
+  Object.assign(tenantHooks, next)
+}
+
+export function configureOperatorApi(next: ApiHooks) {
+  Object.assign(operatorHooks, next)
 }
 
 function buildUrl(path: string, query: RequestOptions['query']) {
@@ -54,7 +60,8 @@ function parseJson(text: string) {
 async function send(path: string, options: RequestOptions, accept: string) {
   const headers: Record<string, string> = { Accept: accept }
   if (options.acceptLanguage) headers['Accept-Language'] = options.acceptLanguage
-  const token = hooks.accessToken()
+  const hooks = path.startsWith('/v1/operations/') ? operatorHooks : tenantHooks
+  const token = options.anonymous ? undefined : hooks.accessToken()
   if (token) headers.Authorization = `Bearer ${token}`
   if (options.body !== undefined) headers['Content-Type'] = 'application/json'
 

@@ -6,12 +6,12 @@ import AppSidebar from './AppSidebar.vue'
 import type { NavSection } from '../navigation'
 
 // 用户控制台和运营控制台共用的工作区框架：顶栏、侧栏和内容区。窄屏时侧栏收进抽屉。
-defineProps<{ sections: NavSection[], navLabel: string }>()
+defineProps<{ sections: NavSection[], navLabel: string, ops?: boolean }>()
 const drawerOpen = ref(false)
 </script>
 
 <template>
-  <AppHeader menu-button @open-menu="drawerOpen = true">
+  <AppHeader menu-button :ops="ops" @open-menu="drawerOpen = true">
     <template #brand-extra><slot name="brand-extra" /></template>
   </AppHeader>
   <div class="workspace">

@@ -49,7 +49,7 @@ var errWalletUnavailable = errors.ServiceUnavailable("WALLET_UNAVAILABLE", "wall
 func (r *WalletRepository) FindTenant(ctx context.Context, account, phone string) (wallet.Tenant, error) {
 	return r.walletTenant(ctx, func(db *gorm.DB) *gorm.DB {
 		if phone != "" {
-			return db.Joins("JOIN tenant_admins a ON a.tenant_id=t.id").Where("a.phone_e164 = ?", phone)
+			return db.Where("a.phone_e164 = ?", phone)
 		}
 		return db.Where("t.primary_account_name = ?", account)
 	})
@@ -70,7 +70,7 @@ func (r *WalletRepository) CustomerWallet(ctx context.Context, id string) (walle
 	})
 }
 
-const walletTenantColumns = "t.id, t.name, t.primary_account_name, w.available_minor, b.available_bytes AS available_traffic_bytes"
+const walletTenantColumns = "t.id, t.name, t.primary_account_name, w.available_minor, b.available_bytes AS available_traffic_bytes, t.created_at AS registered_at, COALESCE(a.phone_e164, '') AS phone"
 
 func (r *WalletRepository) walletTenant(ctx context.Context, match func(*gorm.DB) *gorm.DB) (wallet.Tenant, error) {
 	var tenant wallet.Tenant
@@ -80,7 +80,8 @@ func (r *WalletRepository) walletTenant(ctx context.Context, match func(*gorm.DB
 	db := r.db.WithContext(ctx).Table("wallets w").
 		Select(walletTenantColumns).
 		Joins("JOIN tenants t ON t.id=w.tenant_id").
-		Joins("JOIN tenant_balances b ON b.tenant_id=w.tenant_id")
+		Joins("JOIN tenant_balances b ON b.tenant_id=w.tenant_id").
+		Joins("LEFT JOIN tenant_admins a ON a.tenant_id=t.id")
 	err := scanWalletRecord(match(db), &tenant)
 	return tenant, err
 }
