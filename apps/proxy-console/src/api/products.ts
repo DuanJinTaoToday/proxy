@@ -6,6 +6,7 @@ interface TrafficPackageWire {
   price_minor?: string
   listed?: boolean
   version: string
+  discount_percent?: number
 }
 
 interface ProductWire {
@@ -20,6 +21,7 @@ export interface TrafficPackage {
   capacityBytes: bigint
   priceMinor: bigint
   version: string
+  discountPercent: number
 }
 
 export async function getTrafficCatalog(signal: AbortSignal) {
@@ -32,6 +34,7 @@ export async function getTrafficCatalog(signal: AbortSignal) {
       capacityBytes: BigInt(tier.capacity_bytes),
       priceMinor: BigInt(tier.price_minor ?? 0),
       version: String(tier.version),
+      discountPercent: tier.discount_percent ?? 0,
     }))
   return { open: dynamic?.open === true, canPurchase: dynamic?.can_purchase === true, packages }
 }

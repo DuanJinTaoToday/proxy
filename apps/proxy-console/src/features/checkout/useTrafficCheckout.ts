@@ -4,6 +4,7 @@ import { ApiError } from '@/api/client'
 import { getOverview } from '@/api/dashboard'
 import { getTrafficCatalog, type TrafficPackage } from '@/api/products'
 import { purchaseTraffic, type TrafficPurchaseRequest } from '@/api/trafficPurchase'
+import { sessionPhone } from '@/features/auth'
 import { pendingTrafficPurchase } from './pendingTrafficPurchase'
 
 const rejectedReasons = new Set([
@@ -12,6 +13,7 @@ const rejectedReasons = new Set([
 ])
 
 export function useTrafficCheckout(initialPackageId: string | undefined) {
+  const phone = sessionPhone.value
   const selectedId = ref(initialPackageId)
   const data = ref<{
     catalog: Awaited<ReturnType<typeof getTrafficCatalog>>
@@ -77,18 +79,26 @@ export function useTrafficCheckout(initialPackageId: string | undefined) {
   }
 
   async function submit() {
-    if (loading.value || submitting.value || !storage) return
+    if (loading.value || submitting.value || !storage || sessionPhone.value !== phone) return
     const attemptStorage = storage
     let payload = pending.value
     if (!payload) {
       const tier = confirmedTier.value
       if (!tier || !data.value || data.value.walletMinor < tier.priceMinor) return
       payload = { package_id: tier.id, package_version: tier.version, request_key: crypto.randomUUID() }
+      submitting.value = true
       try {
-        attemptStorage.save(payload)
+        const existing = await attemptStorage.reserve(payload)
+        if (existing) {
+          pending.value = existing
+          confirmedTier.value = undefined
+          submitting.value = false
+          return
+        }
       } catch (error) {
         loadError.value = error
         confirmedTier.value = undefined
+        submitting.value = false
         return
       }
       pending.value = payload
@@ -98,15 +108,18 @@ export function useTrafficCheckout(initialPackageId: string | undefined) {
     rejection.value = undefined
     receipt.value = undefined
     try {
-      const order = await purchaseTraffic(payload)
-      attemptStorage.clear(payload)
-      pending.value = undefined
-      receipt.value = order
-    } catch (error) {
-      if (error instanceof ApiError && rejectedReasons.has(error.reason)) {
-        attemptStorage.clear(payload)
-        pending.value = undefined
+      if (disposed || sessionPhone.value !== phone) return
+      try {
+        receipt.value = await purchaseTraffic(payload)
+      } catch (error) {
+        if (!(error instanceof ApiError) || !rejectedReasons.has(error.reason)) return
         rejection.value = error.reason
+      }
+      try {
+        await attemptStorage.clear(payload)
+        pending.value = undefined
+      } catch {
+        // Keep the original request available if the browser cannot clear it.
       }
     } finally {
       confirmedTier.value = undefined

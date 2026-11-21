@@ -30,6 +30,14 @@ test('动态套餐开售、余额不足、报价变化与成交对账', async ({
     await expect(page.getByText('¥2.70 / GB', { exact: true })).toBeVisible()
     await screenshot(page, info, 'listed-packages')
 
+    await setTier(operator, '5gb', '1500', false)
+    await page.reload()
+    await expect(page.getByRole('radio')).toHaveCount(1)
+    await expect(page.getByText('比 5 GB 档每 GB 省 10%', { exact: true })).toBeVisible()
+    await screenshot(page, info, 'discount-with-reference-tier-unlisted')
+    await setTier(operator, '5gb', '1500')
+    await page.reload()
+
     const buy = page.getByRole('button', { name: '立即购买' })
     const dialog = page.getByRole('dialog', { name: '确认购买流量' })
     const pay = dialog.getByRole('button', { name: '确认支付' })

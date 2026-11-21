@@ -3,8 +3,8 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ElAlert, ElButton, ElCard, ElDialog, ElEmpty, ElRadio, ElRadioGroup, ElSkeleton } from 'element-plus'
-import { savingsPercent, unitPrice } from '@/features/catalog/trafficQuotes'
-import { useTrafficCheckout } from '@/features/checkout/useTrafficCheckout'
+import { unitPrice } from '@/features/catalog'
+import { useTrafficCheckout } from '@/features/checkout'
 import { formatYuan } from '@/shared/lib/money'
 import { formatGB } from '@/shared/lib/trafficUnits'
 import { useErrorMessage } from '@/shared/lib/useErrorMessage'
@@ -17,11 +17,9 @@ const { confirmedTier, data, loadError, loading, openConfirmation, pending, rece
 
 const money = (minor: bigint) => formatYuan(minor, locale.value)
 const gb = (bytes: bigint) => t('subaccounts.gb', { value: formatGB(bytes, locale.value) })
-const base = computed(() => data.value?.catalog.packages.find(tier => tier.id === '5gb'))
 const offerCards = computed(() => data.value?.catalog.packages.map(tier => ({
   ...tier,
   unitMinor: unitPrice(tier),
-  savings: base.value ? savingsPercent(tier, base.value) : 0n,
 })) ?? [])
 const shortfall = computed(() => {
   const tier = confirmedTier.value ?? selected.value
@@ -47,8 +45,8 @@ const rejectionMessage = computed(() => {
       <ElAlert type="success" :closable="false" show-icon
         :title="t('trafficPricing.receipt', { id: receipt.id, traffic: gb(receipt.deliveredBytes), amount: money(receipt.debitedMinor) })" />
     </div>
-    <ElAlert v-if="pending && !submitting" type="warning" :closable="false" show-icon :title="t('trafficPricing.unknown')">
-      <ElButton type="primary" :disabled="loading" @click="submit">{{ t('trafficPricing.retryPurchase') }}</ElButton>
+    <ElAlert v-if="pending && !confirmedTier" type="warning" :closable="false" show-icon :title="t('trafficPricing.unknown')">
+      <ElButton type="primary" :loading="submitting" :disabled="loading" @click="submit">{{ t('trafficPricing.retryPurchase') }}</ElButton>
     </ElAlert>
     <ElAlert v-if="rejectionMessage && !submitting" type="warning" :closable="false" show-icon :title="rejectionMessage" />
     <ElAlert v-if="loadError" :title="errorMessage(loadError)" type="error" :closable="false" show-icon>
@@ -68,8 +66,8 @@ const rejectionMessage = computed(() => {
             </ElRadio>
             <strong class="price">{{ money(tier.priceMinor) }}</strong>
             <p>{{ t('trafficPricing.unitPrice', { amount: money(tier.unitMinor) }) }}</p>
-            <p v-if="tier.savings > 0n" class="savings">
-              {{ t('trafficPricing.savings', { percent: tier.savings.toString() }) }}
+            <p v-if="tier.discountPercent > 0" class="savings">
+              {{ t('trafficPricing.savings', { percent: tier.discountPercent }) }}
             </p>
             <p>{{ t('trafficPricing.validity') }} · {{ t('trafficPricing.shared') }}</p>
           </ElCard>

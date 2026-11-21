@@ -4,7 +4,7 @@ import { authenticatedApi, expectSettled, purchasePath, recharge, setSale, setTi
 
 const purchaseURL = url => url.pathname === purchasePath
 
-test('成交回执丢失，刷新后重试原请求只扣款和到账一次', async ({ page, playwright, baseURL }, info) => {
+test('成交回执丢失，关闭标签页后重试原请求只扣款和到账一次', async ({ page, context, playwright, baseURL }, info) => {
   const phone = '13800000001'
   const operator = await authenticatedApi(playwright, baseURL)
   const tenant = await authenticatedApi(playwright, baseURL, { phone })
@@ -43,21 +43,24 @@ test('成交回执丢失，刷新后重试原请求只扣款和到账一次', as
 
     // Replay must work even when the original quote is no longer available.
     await setSale(operator, false)
-    await page.reload()
-    await expect(page.getByText('暂未开放购买')).toBeVisible()
-    await expect(retry).toBeEnabled()
-    const response = page.waitForResponse(value => purchaseURL(new URL(value.url())))
-    await retry.click()
+    await page.close()
+    const reopened = await context.newPage()
+    await reopened.goto('/console/dynamic/pricing')
+    const retryOriginal = reopened.getByRole('button', { name: '重试原提交' })
+    await expect(reopened.getByText('暂未开放购买')).toBeVisible()
+    await expect(retryOriginal).toBeEnabled()
+    const response = reopened.waitForResponse(value => purchaseURL(new URL(value.url())))
+    await retryOriginal.click()
     const replay = await response
     expect(replay.request().postDataJSON()).toEqual(first.payload)
     expect(replay.status()).toBe(200)
     expect(await replay.json()).toEqual(first.order)
-    await expect(page.getByRole('status').filter({ hasText: '订单 #' + id })).toContainText('到账 5 GB，实扣 ¥15.00')
-    await expect(retry).toHaveCount(0)
-    await screenshot(page, info, 'replayed-receipt')
-    await page.reload()
-    await expect(page.getByText('暂未开放购买')).toBeVisible()
-    await expect(retry).toHaveCount(0)
+    await expect(reopened.getByRole('status').filter({ hasText: '订单 #' + id })).toContainText('到账 5 GB，实扣 ¥15.00')
+    await expect(retryOriginal).toHaveCount(0)
+    await screenshot(reopened, info, 'replayed-receipt')
+    await reopened.reload()
+    await expect(reopened.getByText('暂未开放购买')).toBeVisible()
+    await expect(retryOriginal).toHaveCount(0)
     const afterReplay = await expectSettled(tenant, id, '2500')
     expect(afterReplay).toEqual(beforeReplay)
     await info.attach('idempotency.json', {

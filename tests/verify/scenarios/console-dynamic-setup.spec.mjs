@@ -25,9 +25,8 @@ test('租户从代理设置获取 SOCKS5 凭据并使用双语教程', async ({ 
     await expect(create).toBeHidden()
     const second = await json(await tenant.post('/v1/tenant/subaccounts', { data: { name: 'next72', password: 'Another72', active: true } }))
 
-    await page.getByRole('menuitem', { name: '动态住宅代理-GB' }).click()
     await page.route('**/v1/tenant/subaccounts/*/proxy-config', route => route.abort(), { times: 1 })
-    await page.reload()
+    await page.getByRole('menuitem', { name: '动态住宅代理-GB' }).click()
     const setup = page.getByRole('main')
     await setup.getByRole('button', { name: '重新加载' }).click()
 
