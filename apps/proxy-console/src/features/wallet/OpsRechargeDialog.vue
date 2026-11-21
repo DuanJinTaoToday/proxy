@@ -85,13 +85,14 @@ async function submit() {
 
 <template>
   <ElDialog v-model="open" :title="step.kind === 'confirm' ? t('wallet.opsReviewTitle') : t('wallet.opsRecharge')"
-    width="min(var(--ops-dialog-width), calc(100vw - var(--space-6)))" align-center :close-on-click-modal="mayClose"
+    width="min(var(--ops-dialog-width), calc(100vw - var(--space-6)))" align-center
+    class="recharge-dialog" :close-on-click-modal="mayClose"
     :close-on-press-escape="mayClose" :show-close="mayClose">
     <ElAlert v-if="failure" type="error" :title="uncertain ? t('wallet.opsUncertain') : errorMessage(failure)" :closable="false" show-icon class="recharge-error" />
     <ElForm v-if="step.kind === 'form'" label-position="top" @submit.prevent="prepare">
       <ElFormItem :label="t('wallet.opsTenant')"><span>{{ tenant.name }} · <span class="mono">{{ tenant.account }}</span></span></ElFormItem>
       <ElFormItem :label="t('wallet.opsAmount')" for="recharge-amount" required>
-        <ElInputNumber id="recharge-amount" v-model="amount" :min="0.01" :max="100000" :precision="2" :controls="false" placeholder="0.00" />
+        <ElInputNumber id="recharge-amount" v-model="amount" :min="0.01" :max="100000" :precision="2" :controls="false" placeholder="0.00" class="recharge-amount" />
       </ElFormItem>
       <ElFormItem :label="t('wallet.opsReason')" for="recharge-reason" required>
         <ElInput id="recharge-reason" v-model="reason" type="textarea" :rows="2" maxlength="200" show-word-limit :placeholder="t('wallet.opsReasonExample')" />
@@ -144,7 +145,13 @@ async function submit() {
 
 <style scoped>
 .recharge-error { margin-block-end: var(--space-4); }
-.recharge-hint { margin-block-start: var(--space-2); color: var(--color-text-secondary); font-size: var(--font-size-sm); }
+.recharge-dialog {
+  --el-dialog-padding-primary: var(--space-5);
+  --el-dialog-border-radius: var(--ops-card-radius);
+  --el-border-radius-base: var(--ops-control-radius);
+}
+.recharge-amount { width: 100%; }
+.recharge-hint { margin-block-start: var(--space-1); color: var(--color-text-secondary); font-size: var(--font-size-xs); }
 .recharge-summary {
   display: flex;
   flex-direction: column;

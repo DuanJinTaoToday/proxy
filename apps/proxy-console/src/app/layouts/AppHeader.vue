@@ -30,7 +30,7 @@ function switchLocale(next: Locale) {
 </script>
 
 <template>
-  <header class="app-header">
+  <header class="app-header" :class="{ 'app-header--ops': ops }">
     <div class="app-header__start">
       <ElButton v-if="menuButton" class="app-header__menu" text :icon="Menu" :aria-label="t('nav.openMenu')" @click="$emit('openMenu')" />
       <RouterLink :to="ops ? '/ops' : homePath" class="app-header__brand">
@@ -106,6 +106,8 @@ function switchLocale(next: Locale) {
 .app-header__globe { width: var(--icon-size); height: var(--icon-size); margin-right: var(--space-1); }
 .app-header__check { display: inline-flex; width: var(--space-4); margin-right: var(--space-2); color: var(--color-primary); }
 .app-header__menu { display: none; }
+.app-header--ops .app-header__brand { gap: var(--ops-brand-gap); font-size: var(--ops-brand-size); font-weight: var(--font-weight-heavy); }
+.app-header--ops .app-header__mark { border-radius: var(--ops-brand-mark-radius); }
 .app-header__customer-link {
   display: inline-flex;
   align-items: center;
