@@ -31,7 +31,7 @@ test('租户维护子账号账密、备注、状态和用量上限，刷新后�
   await dialog.getByLabel(/子账号名/).fill('shop01')
   await dialog.getByLabel(/^\*?密码$/).fill('Start123')
   await dialog.getByLabel('备注', { exact: true }).fill('站点采集')
-  await dialog.getByRole('switch', { name: '累计用量上限' }).click()
+  await dialog.getByRole('switch', { name: '累计用量上限' }).press('Enter')
   await dialog.getByRole('textbox', { name: '上限（GB）' }).fill('1.25')
   await submitCreate(dialog)
   await expect(dialog).toBeHidden()
@@ -74,7 +74,7 @@ test('租户维护子账号账密、备注、状态和用量上限，刷新后�
   await expect(row.getByText('0 GB / 9,223,372,036.854775807 GB')).toBeVisible()
   await row.getByRole('button', { name: '编辑', exact: true }).click()
   await expect(limit).toHaveValue('9223372036.854775807')
-  await dialog.getByRole('switch', { name: '累计用量上限' }).click()
+  await dialog.getByRole('switch', { name: '累计用量上限' }).press('Enter')
   await dialog.getByRole('button', { name: '保存', exact: true }).click()
   await expect(row.getByText('0 GB / 不限')).toBeVisible()
 
@@ -85,7 +85,7 @@ test('租户维护子账号账密、备注、状态和用量上限，刷新后�
     'exec', '-T', 'db', 'psql', '-U', 'proxy', '-d', 'proxy', '-v', 'ON_ERROR_STOP=1', '-c',
     "UPDATE proxy_subaccounts SET used_bytes=2000000000 WHERE tenant_id='alpha' AND name='shop01'",
   ], { cwd: new URL('../../../', import.meta.url) })
-  await dialog.getByRole('switch', { name: '累计用量上限' }).click()
+  await dialog.getByRole('switch', { name: '累计用量上限' }).press('Enter')
   await limit.fill('1')
   await dialog.getByRole('button', { name: '保存', exact: true }).click()
   await expect(dialog.getByText('上限不能低于已用量。', { exact: true })).toBeVisible()
@@ -93,11 +93,11 @@ test('租户维护子账号账密、备注、状态和用量上限，刷新后�
   await dialog.getByRole('button', { name: '保存', exact: true }).click()
   await expect(row.getByText('2 GB / 2.5 GB')).toBeVisible()
 
-  await row.getByRole('switch', { name: '禁用 shop01？' }).click()
+  await row.getByRole('switch', { name: '禁用 shop01？' }).press('Enter')
   await expect(dialog.getByText(/已有连接会继续到正常结束/)).toBeVisible()
   await dialog.getByRole('button', { name: '取消', exact: true }).click()
   await expect(row.getByRole('switch')).toBeChecked()
-  await row.getByRole('switch', { name: '禁用 shop01？' }).click()
+  await row.getByRole('switch', { name: '禁用 shop01？' }).press('Enter')
   await dialog.getByRole('button', { name: '禁用', exact: true }).click()
   await expect(row.getByRole('switch')).not.toBeChecked()
   await page.getByRole('combobox', { name: '按状态筛选' }).click()
@@ -120,7 +120,7 @@ test('租户维护子账号账密、备注、状态和用量上限，刷新后�
   await row.getByRole('button', { name: '显示密码' }).click()
   await expect(row.getByText('Next456', { exact: true })).toBeVisible()
   await row.getByRole('button', { name: '隐藏密码' }).click()
-  await row.getByRole('switch', { name: '启用 shop01？' }).click()
+  await row.getByRole('switch', { name: '启用 shop01？' }).press('Enter')
   await expect(dialog.getByText(/已有连接不会断开/)).toBeVisible()
   await dialog.getByRole('button', { name: '启用', exact: true }).click()
   await page.reload()
@@ -134,7 +134,7 @@ test('禁用账号继续占用名额，达到 10 个后禁用创建', async ({ p
   await expect(page.getByText('0 / 10', { exact: true })).toBeVisible()
   for (let i = 1; i <= 10; i++) {
     const dialog = await openCreate(page, 'slot' + i, 'Quota123')
-    if (i === 1) await dialog.getByRole('switch', { checked: true }).click()
+    if (i === 1) await dialog.getByRole('switch', { name: '状态', checked: true }).press('Enter')
     await submitCreate(dialog)
     await expect(dialog).toBeHidden()
     await expect(page.getByText(i + ' / 10', { exact: true })).toBeVisible()
