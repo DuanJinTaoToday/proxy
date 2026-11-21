@@ -6,7 +6,8 @@ import { expectTrafficPurchaseRecords, openTrafficPackages, openTrafficSale, tra
 const purchasePath = '/v1/tenant/orders/traffic-packages'
 const purchaseURL = url => url.pathname === purchasePath
 
-test('购买结果未知 → 重试原提交 → 只扣款和到账一次', async ({ browser, page: tenant, baseURL }, info) => {
+// 旧控制台已在 #77 移除。新控制台交付登录（#69）、动态购买（#72）、钱包（#76）和运营充值页面后，改用新页面恢复本场景。
+test.fixme('购买结果未知 → 重试原提交 → 只扣款和到账一次', async ({ browser, page: tenant, baseURL }, info) => {
   const operatorContext = await browser.newContext({ baseURL, ignoreHTTPSErrors: true })
   const nav = tenant.getByRole('navigation', { name: '租户导航' })
   const wallet = tenant.getByText(/^钱包余额 .* · 可用流量 /)

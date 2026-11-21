@@ -2,7 +2,8 @@ import { test, expect } from '@playwright/test'
 import { writeFile } from 'node:fs/promises'
 import { findTenant, login, prepareRecharge, screenshot, submitRecharge } from '../support/console.mjs'
 
-test('运营充值 → 租户看到到账', async ({ browser, page: tenant, baseURL }, info) => {
+// 旧控制台已在 #77 移除。新控制台交付登录（#69）、动态购买（#72）、钱包（#76）和运营充值页面后，改用新页面恢复本场景。
+test.fixme('运营充值 → 租户看到到账', async ({ browser, page: tenant, baseURL }, info) => {
   const operatorContext = await browser.newContext({ baseURL, ignoreHTTPSErrors: true })
   const operator = await operatorContext.newPage()
   const reason = 'verify-' + process.env.VERIFY_ID

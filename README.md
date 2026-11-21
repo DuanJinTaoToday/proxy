@@ -14,7 +14,7 @@
 | --- | --- |
 | [apps/proxy-control](apps/proxy-control/README.md) | 控制面：租户登录与授权、Recorder 上报、回放与归档 |
 | [apps/proxy-gateway](apps/proxy-gateway/README.md) | 网关：基于原版 GOST 的 SOCKS5 接入、认证中继、Recorder 采集与上报 |
-| [apps/proxy-console](apps/proxy-console/README.md) | 控制台：手机号注册、登录与租户信息，商业页面待实现 |
+| [apps/proxy-console](apps/proxy-console/README.md) | 官网、用户控制台和运营控制台前端：Vue 3 + Element Plus，按 Spec #36 的前端工单逐页实现 |
 | `api/protos/proxycontrol` | 控制面 Protobuf 接口定义 |
 | `api/proxycontrol` | 生成的 Go 绑定与 OpenAPI 文档 |
 | `pkg` | 公共库：`client`、`cron`、`log` |

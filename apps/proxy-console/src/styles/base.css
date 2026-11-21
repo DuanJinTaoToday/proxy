@@ -1,0 +1,25 @@
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  font-family: var(--font-sans);
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-normal);
+  color: var(--color-text);
+  background: var(--color-canvas);
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+body { margin: 0; }
+h1, h2, h3, p { margin: 0; }
+button { font: inherit; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+
+.mono { font-family: var(--font-mono); }
+.tabular { font-variant-numeric: tabular-nums; }
+
+/* 响应式断点集中在布局样式中：窄屏 ≤ 767px，侧栏改为抽屉。 */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}
