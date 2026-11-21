@@ -1,0 +1,33 @@
+{
+  "auth": {
+    "loginTitle": "Sign in",
+    "registerTitle": "Sign up",
+    "loginSubtitle": "Sign in to the console with your registered phone number and password.",
+    "registerSubtitle": "Sign up with a mainland China mobile number. Your account is created right away.",
+    "phone": "Phone number",
+    "phonePlaceholder": "e.g. 13800138000",
+    "password": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "passwordHint": "At least 12 characters",
+    "submitLogin": "Sign in",
+    "submitRegister": "Sign up and sign in",
+    "noAccount": "No account yet?",
+    "registerLink": "Sign up",
+    "haveAccount": "Already have an account?",
+    "loginLink": "Sign in",
+    "forgot": "Forgot password?",
+    "forgotDetail": "Self-service password recovery is not available yet. Contact operations; they will verify your account and help reset the password.",
+    "phoneRequired": "Enter your phone number",
+    "phoneInvalid": "Enter a valid mainland China mobile number",
+    "passwordRequired": "Enter your password",
+    "passwordTooShort": "The password must be at least 12 characters long",
+    "accountMenu": "Account menu",
+    "profile": "Account details",
+    "orders": "Order history",
+    "logout": "Sign out",
+    "logoutTitle": "Sign out?",
+    "logoutBody": "You will need to sign in again to use the console.",
+    "cancel": "Cancel",
+    "loadingAccount": "Loading account…"
+  }
+}

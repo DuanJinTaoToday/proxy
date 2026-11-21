@@ -12,6 +12,7 @@
 | --- | --- |
 | `src/app/` | 应用装配、路由（含页签容器和建设中占位）、导航配置、语言注册、错误翻译和三套布局 |
 | `src/pages/` | 路由页面，`public/`、`console/`、`ops/` 分别归属三个入口 |
+| `src/features/<module>/` | 业务模块：组件、会话等状态、业务规则和本模块的 `locales/` 翻译。`auth` 负责登录注册、会话、路由守卫所需的判断和账号菜单 |
 | `src/api/` | 统一请求入口 `request()` 与各端点调用 |
 | `src/shared/ui/` | 跨业务复用的界面组件 |
 | `src/styles/` | 设计 token、Element Plus 映射和基础样式 |

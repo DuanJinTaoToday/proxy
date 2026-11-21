@@ -1,10 +1,15 @@
 import { createRouter, createWebHistory, type RouteLocationNormalizedLoaded, type RouteRecordRaw } from 'vue-router'
-import { applyLocale, isLocale, preferredLocale } from './i18n'
+import { hasSession, installSession, safeRedirect } from '@/features/auth'
+import { applyLocale, isLocale, preferredLocale, rememberLocale } from './i18n'
 
 declare module 'vue-router' {
   interface RouteMeta {
     // 页面标题和菜单使用的翻译键。
     titleKey?: string
+    // 需要租户登录的入口，子路由继承。
+    requiresAuth?: boolean
+    // 仅游客访问：已登录时直接去回跳地址。
+    guestOnly?: boolean
     // 带页签的页面：子路由各自独立，可直接访问、刷新和后退。
     tabs?: { name: string, labelKey: string }[]
   }
@@ -15,6 +20,7 @@ const ConsoleLayout = () => import('./layouts/ConsoleLayout.vue')
 const OpsLayout = () => import('./layouts/OpsLayout.vue')
 const RoutePlaceholder = () => import('./RoutePlaceholder.vue')
 const RouteTabs = () => import('./RouteTabs.vue')
+const AuthPage = () => import('@/pages/public/AuthPage.vue')
 
 interface Tab { path: string, labelKey: string }
 
@@ -41,13 +47,14 @@ export const routes: RouteRecordRaw[] = [
     component: PublicLayout,
     children: [
       { path: '', name: 'home', component: () => import('@/pages/public/HomePage.vue'), meta: { titleKey: 'nav.home' } },
-      page('login', 'login', 'auth.loginTitle'),
-      page('register', 'register', 'auth.registerTitle'),
+      { path: 'login', name: 'login', component: AuthPage, props: { mode: 'login' }, meta: { titleKey: 'auth.loginTitle', guestOnly: true } },
+      { path: 'register', name: 'register', component: AuthPage, props: { mode: 'register' }, meta: { titleKey: 'auth.registerTitle', guestOnly: true } },
     ],
   },
   {
     path: '/console',
     component: ConsoleLayout,
+    meta: { requiresAuth: true },
     children: [
       page('', 'console-dashboard', 'nav.dashboard'),
       tabbed('dynamic', 'console-dynamic', 'nav.dynamic', [{ path: 'setup', labelKey: 'tabs.dynamicSetup' }, { path: 'pricing', labelKey: 'tabs.dynamicPricing' }, { path: 'usage', labelKey: 'tabs.dynamicUsage' }, { path: 'guide', labelKey: 'tabs.guide' }]),
@@ -73,8 +80,22 @@ export const routes: RouteRecordRaw[] = [
 
 export const router = createRouter({ history: createWebHistory(), routes })
 
-// 官网以 URL 的语言为准；控制台和其他页面使用浏览器记住的偏好。
+const loginLocation = (locale: string, redirect: string) => ({ path: `/${locale}/login`, query: { redirect } })
+const needsAuth = (route: RouteLocationNormalizedLoaded) => route.matched.some(record => record.meta.requiresAuth)
+
+// 官网以 URL 的语言为准，并记为偏好，从英文官网注册或登录后控制台沿用英文；控制台和其他页面使用记住的偏好。
+// 未登录访问控制台时跳到登录页并带上回跳地址；已登录访问登录注册页时直接去回跳地址。
 router.beforeEach(to => {
-  const locale = to.params.locale
-  applyLocale(isLocale(locale) ? locale : preferredLocale())
+  const urlLocale = isLocale(to.params.locale) ? to.params.locale : undefined
+  if (urlLocale) rememberLocale(urlLocale)
+  const locale = urlLocale ?? preferredLocale()
+  applyLocale(locale)
+  if (needsAuth(to) && !hasSession()) return loginLocation(locale, to.fullPath)
+  if (to.meta.guestOnly && hasSession()) return safeRedirect(to.query.redirect)
+})
+
+// 已登录的请求被拒绝时会话已清理，回到登录页并保留当前地址。
+installSession(() => {
+  const current = router.currentRoute.value
+  if (needsAuth(current)) router.replace(loginLocation(preferredLocale(), current.fullPath))
 })

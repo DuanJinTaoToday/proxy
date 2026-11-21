@@ -73,6 +73,8 @@
   --sidebar-width: 232px;
   --content-max-width: 1440px;
   --content-narrow-width: 720px;
+  --auth-card-width: 440px;
+  --account-name-width: 160px;
   --page-padding: var(--space-5);
   --focus-ring-width: 2px;
 

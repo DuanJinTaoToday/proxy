@@ -16,11 +16,22 @@ const dayjsLocales = { 'zh-CN': 'zh-cn', en: 'en' }
 
 export const isLocale = (value: unknown): value is Locale => locales.includes(value as Locale)
 
+type Messages = Record<string, unknown>
+type MessageSchema = typeof zhCN
+
+// 应用层文案加上各业务模块 features/<module>/locales/ 下的翻译，模块各自维护自己的命名空间。
+const featureMessages = import.meta.glob<Messages>('../features/*/locales/*.json', { eager: true, import: 'default' })
+function messagesFor(locale: Locale, base: MessageSchema) {
+  return Object.entries(featureMessages)
+    .filter(([file]) => file.endsWith(`/${locale}.json`))
+    .reduce<Messages>((all, [, messages]) => ({ ...all, ...messages }), base) as MessageSchema
+}
+
 export const i18n = createI18n({
   legacy: false,
   locale: defaultLocale,
   fallbackLocale: defaultLocale,
-  messages: { 'zh-CN': zhCN, en },
+  messages: { 'zh-CN': messagesFor('zh-CN', zhCN), en: messagesFor('en', en) },
 })
 
 export const elementLocaleOf = (locale: string) => elementLocales[isLocale(locale) ? locale : defaultLocale]

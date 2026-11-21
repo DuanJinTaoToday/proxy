@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { ElButton, ElDropdown, ElDropdownItem, ElDropdownMenu, ElEmpty, ElPopover } from 'element-plus'
 import { ArrowDown, Bell, Check, Menu, Switch } from '@element-plus/icons-vue'
 import LinkButton from '@/shared/ui/LinkButton.vue'
+import { AccountMenu, hasSession } from '@/features/auth'
 import { applyLocale, isLocale, locales, rememberLocale, type Locale } from '../i18n'
 
 // 三个入口共用的顶栏。右侧顺序固定为「通知铃铛 → 语言切换 → 用户入口」。
@@ -59,8 +60,11 @@ function switchLocale(next: Locale) {
         </template>
       </ElDropdown>
 
-      <LinkButton :to="`/${locale}/login`" text>{{ t('header.login') }}</LinkButton>
-      <LinkButton :to="`/${locale}/register`" type="primary">{{ t('header.register') }}</LinkButton>
+      <AccountMenu v-if="hasSession()" />
+      <template v-else>
+        <LinkButton :to="`/${locale}/login`" text>{{ t('header.login') }}</LinkButton>
+        <LinkButton :to="`/${locale}/register`" type="primary">{{ t('header.register') }}</LinkButton>
+      </template>
     </div>
   </header>
 </template>

@@ -1,0 +1,33 @@
+{
+  "auth": {
+    "loginTitle": "登录",
+    "registerTitle": "注册",
+    "loginSubtitle": "使用注册手机号和密码登录控制台。",
+    "registerSubtitle": "用中国大陆手机号注册，注册后自动创建账户。",
+    "phone": "手机号",
+    "phonePlaceholder": "例如 13800138000",
+    "password": "密码",
+    "passwordPlaceholder": "输入密码",
+    "passwordHint": "至少 12 位",
+    "submitLogin": "登录",
+    "submitRegister": "注册并登录",
+    "noAccount": "还没有账号？",
+    "registerLink": "立即注册",
+    "haveAccount": "已有账号？",
+    "loginLink": "去登录",
+    "forgot": "忘记密码？",
+    "forgotDetail": "暂不支持自助找回密码。请联系运营，运营核实账户归属后协助重置。",
+    "phoneRequired": "请输入手机号",
+    "phoneInvalid": "请输入有效的中国大陆手机号",
+    "passwordRequired": "请输入密码",
+    "passwordTooShort": "密码至少需要 12 位",
+    "accountMenu": "账号菜单",
+    "profile": "账户信息",
+    "orders": "订单记录",
+    "logout": "退出登录",
+    "logoutTitle": "退出登录？",
+    "logoutBody": "退出后需要重新登录才能进入控制台。",
+    "cancel": "取消",
+    "loadingAccount": "正在读取账号…"
+  }
+}
