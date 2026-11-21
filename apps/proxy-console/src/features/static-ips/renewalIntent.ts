@@ -5,25 +5,22 @@ export type RenewalIntent =
   | { kind: 'order', id: string }
   | { kind: 'resume', submission: RenewalSubmission }
 
-export function readRenewalSubmission(key: string): RenewalSubmission | undefined {
+export function readRenewalSubmissions(key: string): RenewalSubmission[] {
   try {
     const value: unknown = JSON.parse(sessionStorage.getItem(key) ?? 'null')
-    if (typeof value !== 'object' || value === null) return
-    if (!('supplier_item_ids' in value) || !isStringList(value.supplier_item_ids)) return
-    if (!('term' in value) || typeof value.term !== 'string') return
-    if (!('request_key' in value) || typeof value.request_key !== 'string') return
-    if (!('confirmation_token' in value) || typeof value.confirmation_token !== 'string') return
-    return {
-      supplier_item_ids: value.supplier_item_ids,
-      term: value.term,
-      request_key: value.request_key,
-      confirmation_token: value.confirmation_token,
-    }
+    const candidates = Array.isArray(value) ? value : [value]
+    return candidates.filter(isRenewalSubmission)
   } catch {
-    return undefined
+    return []
   }
 }
 
-function isStringList(value: unknown): value is string[] {
-  return Array.isArray(value) && value.length > 0 && value.every(item => typeof item === 'string')
+function isRenewalSubmission(value: unknown): value is RenewalSubmission {
+  return typeof value === 'object' && value !== null
+    && 'supplier_item_ids' in value && Array.isArray(value.supplier_item_ids)
+    && value.supplier_item_ids.length > 0 && value.supplier_item_ids.length <= 25
+    && value.supplier_item_ids.every(item => typeof item === 'string' && /^[1-9]\d*$/.test(item))
+    && 'term' in value && typeof value.term === 'string' && value.term.length > 0
+    && 'request_key' in value && typeof value.request_key === 'string' && value.request_key.length > 0
+    && 'confirmation_token' in value && typeof value.confirmation_token === 'string' && value.confirmation_token.length > 0
 }

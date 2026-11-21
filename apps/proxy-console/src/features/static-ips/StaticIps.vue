@@ -9,7 +9,7 @@ import {
 import { CircleCheck, Clock, CopyDocument, Download, Search } from '@element-plus/icons-vue'
 import { exportStaticIps, getStaticIpCredentials, listStaticIps, type RenewalSubmission, type StaticIp } from '@/api/staticIps'
 import { endpoint, useStaticIpPresentation } from './presentation'
-import { readRenewalSubmission, type RenewalIntent } from './renewalIntent'
+import { readRenewalSubmissions, type RenewalIntent } from './renewalIntent'
 import RenewalDialog from './RenewalDialog.vue'
 
 const props = defineProps<{ accountPhone: string }>()
@@ -49,7 +49,7 @@ const selected = shallowRef<StaticIp[]>([])
 const table = ref<TableInstance>()
 const now = ref(Date.now())
 const intent = shallowRef<RenewalIntent>()
-const savedSubmission = shallowRef(readRenewalSubmission(storageKey))
+const savedSubmissions = shallowRef(readRenewalSubmissions(storageKey))
 
 const hasExpiry = (ip: StaticIp) => Number.isFinite(ip.expiry.getTime())
 const isAvailable = (ip: StaticIp) => ip.expiry.getTime() > now.value
@@ -112,8 +112,9 @@ function canRenew(ip: StaticIp) {
 }
 
 function openRenewal(targets: StaticIp[]) {
-  if (savedSubmission.value) {
-    resumeRenewal()
+  const affected = savedSubmissions.value.find(submission => targets.some(ip => submission.supplier_item_ids.includes(ip.id)))
+  if (affected) {
+    resumeRenewal(affected)
     return
   }
   if (targets.length && targets.length <= maxRenewalItems && targets.every(canRenew)) {
@@ -125,18 +126,28 @@ function openPendingOrder(id: string | undefined) {
   if (id) intent.value = { kind: 'order', id }
 }
 
-function resumeRenewal() {
-  if (savedSubmission.value) intent.value = { kind: 'resume', submission: savedSubmission.value }
+function resumeRenewal(submission: RenewalSubmission) {
+  intent.value = { kind: 'resume', submission }
 }
 
-function recordSubmission(value: RenewalSubmission | undefined) {
-  savedSubmission.value = value
+function recordSubmission(payload: RenewalSubmission, unresolved: boolean) {
+  const submissions = savedSubmissions.value.filter(submission => submission.request_key !== payload.request_key)
+  if (unresolved) submissions.push(payload)
+  savedSubmissions.value = submissions
   try {
-    if (value) sessionStorage.setItem(storageKey, JSON.stringify(value))
+    if (submissions.length) sessionStorage.setItem(storageKey, JSON.stringify(submissions))
     else sessionStorage.removeItem(storageKey)
   } catch {
     // Vue state still supports retry if the browser disables session storage.
   }
+}
+
+function retryLabel(submission: RenewalSubmission, index: number) {
+  if (savedSubmissions.value.length === 1) return t('staticIps.retryOriginal')
+  const firstIp = ips.value.find(ip => submission.supplier_item_ids.includes(ip.id))
+  return firstIp
+    ? t('staticIps.retryOriginalIp', { ip: endpoint(firstIp) })
+    : t('staticIps.retryOriginalIndex', { index: index + 1 })
 }
 
 async function copyLine(ip: StaticIp) {
@@ -191,7 +202,10 @@ onUnmounted(() => {
 <template>
   <section class="ip-workspace">
     <div class="page-actions">
-      <ElButton v-if="savedSubmission" type="warning" @click="resumeRenewal">{{ t('staticIps.retryOriginal') }}</ElButton>
+      <ElButton
+        v-for="(submission, index) in savedSubmissions" :key="submission.request_key" type="warning"
+        @click="resumeRenewal(submission)"
+      >{{ retryLabel(submission, index) }}</ElButton>
       <ElButton type="primary" @click="router.push({ name: 'console-static-pricing' })">{{ t('staticIps.buy') }}</ElButton>
     </div>
 

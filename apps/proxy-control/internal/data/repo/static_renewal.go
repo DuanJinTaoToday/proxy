@@ -122,7 +122,7 @@ func (r *WalletRepository) renewalPrices(ctx context.Context, tenant string, ids
 		if _, found := nodes[node]; !found {
 			offers, found := catalogs[product]
 			if !found {
-				offers, err = wallet.SupplierStaticOffers(ctx, r.static, shareMode, purposeID)
+				offers, err = r.static.Offers(ctx, shareMode, purposeID)
 				if err != nil {
 					return nil, nil, wallet.ErrStaticUnavailable
 				}
@@ -146,7 +146,7 @@ func renewalAllocations(tx *gorm.DB, tenant string, ids []string, lock bool) ([]
         EXISTS (SELECT 1 FROM static_renewal_items r WHERE r.supplier_item_id=a.supplier_item_id AND r.outcome='pending') AS pending
         FROM static_ip_allocations a
         JOIN static_purchases p ON p.tenant_id=a.tenant_id AND p.order_id=a.order_id
-        JOIN order_items i ON i.tenant_id=a.tenant_id AND i.order_id=a.order_id AND i.position=1
+        JOIN order_items i ON i.tenant_id=a.tenant_id AND i.order_id=a.order_id AND i.position=a.order_item_position
         WHERE a.tenant_id=? AND a.supplier_item_id IN ? ORDER BY a.supplier_item_id`
 	if lock {
 		query += " FOR UPDATE OF a"
@@ -278,7 +278,7 @@ func (r *WalletRepository) RenewStatic(ctx context.Context, tenant string, p wal
 	responses := make(map[string]wallet.SupplierRenewal, len(allocations))
 	for _, shareMode := range slices.Sorted(maps.Keys(groups)) {
 		ids := groups[shareMode]
-		response, err := wallet.SupplierStaticRenew(process, r.static, ids, p.Term, shareMode)
+		response, err := r.static.Renew(process, ids, p.Term, shareMode)
 		if err != nil {
 			slog.WarnContext(process, "static renewal response requires reconciliation", "order_id", accepted.ID)
 			continue
@@ -349,19 +349,23 @@ func (r *WalletRepository) reconcileStaticRenewal(ctx context.Context, tenant st
 	if actor != "" && !slices.ContainsFunc(rows, func(item staticRenewalItem) bool { return item.SupplierItemID == resolution.ItemID }) {
 		return wallet.Order{}, wallet.ErrMissing
 	}
-	results := r.renewalOutcomes(ctx, rows, responses)
+	results, detailUnavailable := r.renewalOutcomes(ctx, rows, responses)
 	if (resolution.CloseUnknown || resolution.ConfirmedFailure) && results[resolution.ItemID] != wallet.Succeeded {
 		results[resolution.ItemID] = wallet.Failed
 	}
 	if len(results) == 0 {
+		if detailUnavailable {
+			return wallet.Order{}, wallet.ErrStaticUnavailable
+		}
 		return existing, nil
 	}
 	return r.saveStaticRenewalOutcomes(ctx, tenant, id, rows, results, actor, resolution)
 }
 
-func (r *WalletRepository) renewalOutcomes(ctx context.Context, rows []staticRenewalItem, responses map[string]wallet.SupplierRenewal) map[string]string {
+func (r *WalletRepository) renewalOutcomes(ctx context.Context, rows []staticRenewalItem, responses map[string]wallet.SupplierRenewal) (map[string]string, bool) {
 	details := make(map[string]wallet.StaticDelivery)
 	results := make(map[string]string)
+	detailUnavailable := false
 	for _, row := range rows {
 		if row.Outcome != wallet.Pending {
 			continue
@@ -372,6 +376,7 @@ func (r *WalletRepository) renewalOutcomes(ctx context.Context, rows []staticRen
 			continue
 		}
 		if r.static == nil {
+			detailUnavailable = true
 			continue
 		}
 		if expiry, found := response.Expiries[row.SupplierItemID]; found && !expiry.Equal(row.ExpectedExpiry) {
@@ -379,7 +384,12 @@ func (r *WalletRepository) renewalOutcomes(ctx context.Context, rows []staticRen
 		}
 		detail, ok := details[row.SupplierOrderID]
 		if !ok {
-			detail, _ = r.static.Detail(ctx, row.SupplierOrderID)
+			var err error
+			detail, err = r.static.Detail(ctx, row.SupplierOrderID)
+			if err != nil {
+				detailUnavailable = true
+				detail = wallet.StaticDelivery{}
+			}
 			details[row.SupplierOrderID] = detail
 		}
 		for _, a := range detail.Allocations {
@@ -388,5 +398,5 @@ func (r *WalletRepository) renewalOutcomes(ctx context.Context, rows []staticRen
 			}
 		}
 	}
-	return results
+	return results, detailUnavailable
 }

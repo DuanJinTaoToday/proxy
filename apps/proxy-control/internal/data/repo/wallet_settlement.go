@@ -146,9 +146,10 @@ func saveSettlementOrder(tx *gorm.DB, tenantID string, order wallet.Order) (int6
 	}
 	for index, item := range order.Items {
 		err := tx.Exec(`INSERT INTO order_items (tenant_id, order_id, position, specification, reference, capacity_bytes,
-			term_days, unit_minor, quantity, delivered_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			term_days, unit_minor, quantity, delivered_count, static_region, static_ip_type)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			tenantID, id, index+1, item.Specification, item.Reference, item.CapacityBytes, item.TermDays,
-			item.UnitMinor, item.Quantity, item.DeliveredCount).Error
+			item.UnitMinor, item.Quantity, item.DeliveredCount, item.StaticRegion, item.StaticIPType).Error
 		if err != nil {
 			return 0, err
 		}

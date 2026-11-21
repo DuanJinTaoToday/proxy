@@ -41,6 +41,8 @@
     "renew": "Renew",
     "check": "Check again",
     "retryOriginal": "Retry original submission",
+    "retryOriginalIp": "Retry renewal for {ip}",
+    "retryOriginalIndex": "Retry renewal {index}",
     "empty": "No IP allocations",
     "noMatch": "No matching IPs",
     "clear": "Clear filters",

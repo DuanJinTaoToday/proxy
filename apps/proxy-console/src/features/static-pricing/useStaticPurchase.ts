@@ -9,9 +9,12 @@ import {
   purchaseStaticIP,
   quoteStaticPurchase,
   type StaticCatalogFilter,
+  type StaticPurchaseLine,
   type StaticPurchaseOffer,
   type StaticPurchaseOrder,
   type StaticPurchaseQuote,
+  type StaticPurchaseRequest,
+  type StaticPurchaseSelection,
 } from '@/api/staticPricing'
 
 type CatalogState =
@@ -19,17 +22,19 @@ type CatalogState =
   | { kind: 'failed', error: unknown }
   | { kind: 'open', offers: StaticPurchaseOffer[] }
 
-type PurchaseRequest = ReturnType<typeof makeStaticPurchaseRequest>
-type Review = { offer: StaticPurchaseOffer, quantity: number }
+type RecheckedLine = StaticPurchaseLine & { currentOffer?: StaticPurchaseOffer }
 type Checkout =
   | { kind: 'closed' }
   | { kind: 'loading' }
-  | { kind: 'confirm', quote: StaticPurchaseQuote, changed: boolean }
-  | { kind: 'blocked', currentOffer?: StaticPurchaseOffer, review: Review, error: unknown }
-  | { kind: 'unresolved', body: PurchaseRequest, error?: unknown }
+  | { kind: 'confirm', quote: StaticPurchaseQuote, changed?: 'term' | 'priceOrStock' }
+  | { kind: 'blocked', rechecked?: RecheckedLine[], retry?: StaticPurchaseSelection, error: unknown }
+  | { kind: 'unresolved', body: StaticPurchaseRequest, error?: unknown }
   | { kind: 'result', order: StaticPurchaseOrder, error?: unknown }
 
 export const offerKey = (offer: StaticPurchaseOffer) => JSON.stringify([offer.nodeId, offer.term])
+export const staticSelectionTotal = (lines: StaticPurchaseLine[]) => lines.reduce(
+  (total, { offer, quantity }) => total + offer.unitMinor * BigInt(quantity), 0n,
+)
 
 function restoreRequest(storageKey: string) {
   try {
@@ -40,7 +45,7 @@ function restoreRequest(storageKey: string) {
   }
 }
 
-function storeRequest(storageKey: string, body?: PurchaseRequest) {
+function storeRequest(storageKey: string, body?: StaticPurchaseRequest) {
   try {
     if (body) sessionStorage.setItem(storageKey, JSON.stringify(body))
     else sessionStorage.removeItem(storageKey)
@@ -117,29 +122,37 @@ export function useStaticPurchase(accountKey: string) {
     }
   }
 
-  function updateOffer(offer: StaticPurchaseOffer) {
+  function updateOffers(lines: StaticPurchaseLine[]) {
     if (catalog.value.kind !== 'open') return
-    const key = offerKey(offer)
-    catalog.value = { kind: 'open', offers: catalog.value.offers.map(old => offerKey(old) === key ? offer : old) }
+    const updates = new Map(lines.map(({ offer }) => [offerKey(offer), offer]))
+    catalog.value = { kind: 'open', offers: catalog.value.offers.map(offer => updates.get(offerKey(offer)) ?? offer) }
   }
 
-  async function refreshBlockedOffer(review: Review, error: unknown, filter: StaticCatalogFilter) {
-    let currentOffer: StaticPurchaseOffer | undefined
+  async function refreshBlockedOffer(review: StaticPurchaseSelection, error: unknown, filter: StaticCatalogFilter) {
+    let rechecked: RecheckedLine[] | undefined
+    let retry: StaticPurchaseSelection | undefined = review
     if (quoteConflicts.has(reason(error))) {
       try {
         const current = await listStaticOffers(filter, signal)
         if (signal.aborted) return
         catalog.value = current.open ? { kind: 'open', offers: current.offers } : { kind: 'closed' }
-        currentOffer = current.offers.find(offer => offerKey(offer) === offerKey(review.offer))
+        const offers = new Map(current.offers.map(offer => [offerKey(offer), offer]))
+        rechecked = review.lines.map(line => ({ ...line, currentOffer: offers.get(offerKey(line.offer)) }))
+        const valid = rechecked.flatMap(({ currentOffer, quantity }) => currentOffer && currentOffer.available >= quantity
+          ? [{ offer: currentOffer, quantity }] : [])
+        retry = valid.length === review.lines.length ? { term: review.term, lines: valid } : undefined
       } catch {
         if (signal.aborted) return
       }
     }
-    if (reason(error) === 'PRODUCT_SALE_CLOSED') catalog.value = { kind: 'closed' }
-    checkout.value = { kind: 'blocked', review, currentOffer, error }
+    if (reason(error) === 'PRODUCT_SALE_CLOSED') {
+      catalog.value = { kind: 'closed' }
+      retry = undefined
+    }
+    checkout.value = { kind: 'blocked', rechecked, retry, error }
   }
 
-  async function runPurchase(body: PurchaseRequest, review?: Review) {
+  async function runPurchase(body: StaticPurchaseRequest, review?: StaticPurchaseSelection) {
     storeRequest(storageKey, body)
     try {
       const order = await purchaseStaticIP(body, signal)
@@ -166,21 +179,23 @@ export function useStaticPurchase(accountKey: string) {
     }
   }
 
-  async function reviewPurchase(review: Review, confirm = false) {
+  async function reviewPurchase(review: StaticPurchaseSelection, confirm = false) {
     if (busy.value) return
     const filter = filters.value
     lastError.value = undefined
     busy.value = true
     if (!confirm) checkout.value = { kind: 'loading' }
     try {
-      const quote = await quoteStaticPurchase({ ...review, filter, signal })
+      const quote = await quoteStaticPurchase(review, filter, signal)
       if (signal.aborted) return
-      updateOffer(quote.offer)
-      const changed = quote.offer.unitMinor !== review.offer.unitMinor || quote.offer.available !== review.offer.available
-      if (!confirm || changed) {
-        checkout.value = { kind: 'confirm', quote, changed }
-      } else if (balance.value !== undefined && balance.value < quote.offer.unitMinor * BigInt(quote.quantity)) {
-        checkout.value = { kind: 'confirm', quote, changed: false }
+      updateOffers(quote.lines)
+      const termChanged = quote.lines.some(({ offer }, index) => offer.termDays !== review.lines[index]?.offer.termDays)
+      const priceOrStockChanged = quote.lines.some(({ offer }, index) => {
+        const previous = review.lines[index]?.offer
+        return offer.unitMinor !== previous?.unitMinor || offer.available !== previous?.available
+      })
+      if (!confirm || termChanged || priceOrStockChanged || (balance.value !== undefined && balance.value < staticSelectionTotal(quote.lines))) {
+        checkout.value = { kind: 'confirm', quote, changed: termChanged ? 'term' : priceOrStockChanged ? 'priceOrStock' : undefined }
       } else {
         await runPurchase(makeStaticPurchaseRequest(quote, filter), quote)
       }
@@ -191,7 +206,7 @@ export function useStaticPurchase(accountKey: string) {
     }
   }
 
-  async function retryPurchase(body: PurchaseRequest) {
+  async function retryPurchase(body: StaticPurchaseRequest) {
     if (busy.value) return
     busy.value = true
     try {

@@ -36,23 +36,47 @@ func staticOfferMessage(offer wallet.StaticOffer) *v1.StaticOffer {
 
 func (s *Wallet) QuoteStaticPurchase(ctx context.Context, req *v1.StaticPurchaseQuoteRequest) (*v1.StaticPurchaseQuote, error) {
 	noStore(ctx)
-	quote, err := s.biz.QuoteStatic(ctx, bearerToken(ctx), wallet.StaticPurchaseRequest{
+	selection := wallet.StaticPurchaseRequest{
 		NodeID: req.GetNodeId(), Term: req.GetTerm(), Quantity: req.GetQuantity(),
 		ShareMode: req.GetShareMode(), PurposeID: req.GetPurposeId(),
-	})
+	}
+	for _, line := range req.GetLines() {
+		selection.Lines = append(selection.Lines, wallet.StaticPurchaseLine{
+			NodeID: line.GetNodeId(), Quantity: line.GetQuantity(),
+		})
+	}
+	quote, err := s.biz.QuoteStatic(ctx, bearerToken(ctx), selection)
 	if err != nil {
 		return nil, wallet.PublicError(err)
 	}
-	return &v1.StaticPurchaseQuote{Offer: staticOfferMessage(quote.Offer), Quantity: quote.Quantity,
-		ConfirmationToken: quote.ConfirmationToken, ExpiresAt: timestamppb.New(quote.ExpiresAt)}, nil
+	response := &v1.StaticPurchaseQuote{
+		ConfirmationToken: quote.ConfirmationToken, ExpiresAt: timestamppb.New(quote.ExpiresAt),
+	}
+	if len(req.GetLines()) == 0 {
+		response.Offer = staticOfferMessage(quote.Lines[0].Offer)
+		response.Quantity = quote.Lines[0].Quantity
+		return response, nil
+	}
+	for _, line := range quote.Lines {
+		response.Lines = append(response.Lines, &v1.StaticPurchaseQuoteLine{
+			Offer: staticOfferMessage(line.Offer), Quantity: line.Quantity,
+		})
+	}
+	return response, nil
 }
 
 func (s *Wallet) PurchaseStaticIP(ctx context.Context, req *v1.PurchaseStaticIPRequest) (*v1.PurchaseOrder, error) {
 	noStore(ctx)
-	order, err := s.biz.PurchaseStatic(ctx, bearerToken(ctx), wallet.StaticPurchaseRequest{
-		NodeID: req.GetNodeId(), Term: req.GetTerm(), Quantity: req.GetQuantity(), UnitMinor: req.GetUnitMinor(), Key: req.GetRequestKey(), ConfirmationToken: req.GetConfirmationToken(),
-		ShareMode: req.GetShareMode(), PurposeID: req.GetPurposeId(),
-	})
+	purchase := wallet.StaticPurchaseRequest{
+		NodeID: req.GetNodeId(), Term: req.GetTerm(), Quantity: req.GetQuantity(), UnitMinor: req.GetUnitMinor(),
+		Key: req.GetRequestKey(), ConfirmationToken: req.GetConfirmationToken(), ShareMode: req.GetShareMode(), PurposeID: req.GetPurposeId(),
+	}
+	for _, line := range req.GetLines() {
+		purchase.Lines = append(purchase.Lines, wallet.StaticPurchaseLine{
+			NodeID: line.GetNodeId(), Quantity: line.GetQuantity(), UnitMinor: line.GetUnitMinor(),
+		})
+	}
+	order, err := s.biz.PurchaseStatic(ctx, bearerToken(ctx), purchase)
 	return orderMessage(order), wallet.PublicError(err)
 }
 

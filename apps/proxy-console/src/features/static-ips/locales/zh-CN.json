@@ -41,6 +41,8 @@
     "renew": "续费",
     "check": "重查结果",
     "retryOriginal": "重试原提交",
+    "retryOriginalIp": "重试 {ip} 的续费",
+    "retryOriginalIndex": "重试第 {index} 笔续费",
     "empty": "没有 IP 分配记录",
     "noMatch": "没有符合条件的 IP",
     "clear": "清除筛选",

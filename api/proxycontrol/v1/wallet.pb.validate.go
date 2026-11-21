@@ -3020,6 +3020,398 @@ var _ interface {
 	ErrorName() string
 } = StaticOffersValidationError{}
 
+// Validate checks the field values on StaticPurchaseSelection with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *StaticPurchaseSelection) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on StaticPurchaseSelection with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// StaticPurchaseSelectionMultiError, or nil if none found.
+func (m *StaticPurchaseSelection) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *StaticPurchaseSelection) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetNodeId() <= 0 {
+		err := StaticPurchaseSelectionValidationError{
+			field:  "NodeId",
+			reason: "value must be greater than 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetQuantity() <= 0 {
+		err := StaticPurchaseSelectionValidationError{
+			field:  "Quantity",
+			reason: "value must be greater than 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return StaticPurchaseSelectionMultiError(errors)
+	}
+
+	return nil
+}
+
+// StaticPurchaseSelectionMultiError is an error wrapping multiple validation
+// errors returned by StaticPurchaseSelection.ValidateAll() if the designated
+// constraints aren't met.
+type StaticPurchaseSelectionMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m StaticPurchaseSelectionMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m StaticPurchaseSelectionMultiError) AllErrors() []error { return m }
+
+// StaticPurchaseSelectionValidationError is the validation error returned by
+// StaticPurchaseSelection.Validate if the designated constraints aren't met.
+type StaticPurchaseSelectionValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e StaticPurchaseSelectionValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e StaticPurchaseSelectionValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e StaticPurchaseSelectionValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e StaticPurchaseSelectionValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e StaticPurchaseSelectionValidationError) ErrorName() string {
+	return "StaticPurchaseSelectionValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e StaticPurchaseSelectionValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sStaticPurchaseSelection.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = StaticPurchaseSelectionValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = StaticPurchaseSelectionValidationError{}
+
+// Validate checks the field values on StaticPurchaseQuoteLine with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *StaticPurchaseQuoteLine) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on StaticPurchaseQuoteLine with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// StaticPurchaseQuoteLineMultiError, or nil if none found.
+func (m *StaticPurchaseQuoteLine) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *StaticPurchaseQuoteLine) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetOffer()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, StaticPurchaseQuoteLineValidationError{
+					field:  "Offer",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, StaticPurchaseQuoteLineValidationError{
+					field:  "Offer",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetOffer()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return StaticPurchaseQuoteLineValidationError{
+				field:  "Offer",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	// no validation rules for Quantity
+
+	if len(errors) > 0 {
+		return StaticPurchaseQuoteLineMultiError(errors)
+	}
+
+	return nil
+}
+
+// StaticPurchaseQuoteLineMultiError is an error wrapping multiple validation
+// errors returned by StaticPurchaseQuoteLine.ValidateAll() if the designated
+// constraints aren't met.
+type StaticPurchaseQuoteLineMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m StaticPurchaseQuoteLineMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m StaticPurchaseQuoteLineMultiError) AllErrors() []error { return m }
+
+// StaticPurchaseQuoteLineValidationError is the validation error returned by
+// StaticPurchaseQuoteLine.Validate if the designated constraints aren't met.
+type StaticPurchaseQuoteLineValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e StaticPurchaseQuoteLineValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e StaticPurchaseQuoteLineValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e StaticPurchaseQuoteLineValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e StaticPurchaseQuoteLineValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e StaticPurchaseQuoteLineValidationError) ErrorName() string {
+	return "StaticPurchaseQuoteLineValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e StaticPurchaseQuoteLineValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sStaticPurchaseQuoteLine.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = StaticPurchaseQuoteLineValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = StaticPurchaseQuoteLineValidationError{}
+
+// Validate checks the field values on StaticPurchaseLine with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *StaticPurchaseLine) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on StaticPurchaseLine with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// StaticPurchaseLineMultiError, or nil if none found.
+func (m *StaticPurchaseLine) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *StaticPurchaseLine) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetNodeId() <= 0 {
+		err := StaticPurchaseLineValidationError{
+			field:  "NodeId",
+			reason: "value must be greater than 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetQuantity() <= 0 {
+		err := StaticPurchaseLineValidationError{
+			field:  "Quantity",
+			reason: "value must be greater than 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetUnitMinor() <= 0 {
+		err := StaticPurchaseLineValidationError{
+			field:  "UnitMinor",
+			reason: "value must be greater than 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return StaticPurchaseLineMultiError(errors)
+	}
+
+	return nil
+}
+
+// StaticPurchaseLineMultiError is an error wrapping multiple validation errors
+// returned by StaticPurchaseLine.ValidateAll() if the designated constraints
+// aren't met.
+type StaticPurchaseLineMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m StaticPurchaseLineMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m StaticPurchaseLineMultiError) AllErrors() []error { return m }
+
+// StaticPurchaseLineValidationError is the validation error returned by
+// StaticPurchaseLine.Validate if the designated constraints aren't met.
+type StaticPurchaseLineValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e StaticPurchaseLineValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e StaticPurchaseLineValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e StaticPurchaseLineValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e StaticPurchaseLineValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e StaticPurchaseLineValidationError) ErrorName() string {
+	return "StaticPurchaseLineValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e StaticPurchaseLineValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sStaticPurchaseLine.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = StaticPurchaseLineValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = StaticPurchaseLineValidationError{}
+
 // Validate checks the field values on StaticPurchaseQuoteRequest with the
 // rules defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
@@ -3042,10 +3434,10 @@ func (m *StaticPurchaseQuoteRequest) validate(all bool) error {
 
 	var errors []error
 
-	if m.GetNodeId() <= 0 {
+	if m.GetNodeId() < 0 {
 		err := StaticPurchaseQuoteRequestValidationError{
 			field:  "NodeId",
-			reason: "value must be greater than 0",
+			reason: "value must be greater than or equal to 0",
 		}
 		if !all {
 			return err
@@ -3075,10 +3467,10 @@ func (m *StaticPurchaseQuoteRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if m.GetQuantity() <= 0 {
+	if m.GetQuantity() < 0 {
 		err := StaticPurchaseQuoteRequestValidationError{
 			field:  "Quantity",
-			reason: "value must be greater than 0",
+			reason: "value must be greater than or equal to 0",
 		}
 		if !all {
 			return err
@@ -3106,6 +3498,51 @@ func (m *StaticPurchaseQuoteRequest) validate(all bool) error {
 			return err
 		}
 		errors = append(errors, err)
+	}
+
+	if len(m.GetLines()) > 25 {
+		err := StaticPurchaseQuoteRequestValidationError{
+			field:  "Lines",
+			reason: "value must contain no more than 25 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetLines() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, StaticPurchaseQuoteRequestValidationError{
+						field:  fmt.Sprintf("Lines[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, StaticPurchaseQuoteRequestValidationError{
+						field:  fmt.Sprintf("Lines[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return StaticPurchaseQuoteRequestValidationError{
+					field:  fmt.Sprintf("Lines[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
 	}
 
 	if len(errors) > 0 {
@@ -3285,6 +3722,40 @@ func (m *StaticPurchaseQuote) validate(all bool) error {
 		}
 	}
 
+	for idx, item := range m.GetLines() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, StaticPurchaseQuoteValidationError{
+						field:  fmt.Sprintf("Lines[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, StaticPurchaseQuoteValidationError{
+						field:  fmt.Sprintf("Lines[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return StaticPurchaseQuoteValidationError{
+					field:  fmt.Sprintf("Lines[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
 	if len(errors) > 0 {
 		return StaticPurchaseQuoteMultiError(errors)
 	}
@@ -3387,10 +3858,10 @@ func (m *PurchaseStaticIPRequest) validate(all bool) error {
 
 	var errors []error
 
-	if m.GetNodeId() <= 0 {
+	if m.GetNodeId() < 0 {
 		err := PurchaseStaticIPRequestValidationError{
 			field:  "NodeId",
-			reason: "value must be greater than 0",
+			reason: "value must be greater than or equal to 0",
 		}
 		if !all {
 			return err
@@ -3420,10 +3891,10 @@ func (m *PurchaseStaticIPRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if m.GetQuantity() <= 0 {
+	if m.GetQuantity() < 0 {
 		err := PurchaseStaticIPRequestValidationError{
 			field:  "Quantity",
-			reason: "value must be greater than 0",
+			reason: "value must be greater than or equal to 0",
 		}
 		if !all {
 			return err
@@ -3431,10 +3902,10 @@ func (m *PurchaseStaticIPRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if m.GetUnitMinor() <= 0 {
+	if m.GetUnitMinor() < 0 {
 		err := PurchaseStaticIPRequestValidationError{
 			field:  "UnitMinor",
-			reason: "value must be greater than 0",
+			reason: "value must be greater than or equal to 0",
 		}
 		if !all {
 			return err
@@ -3475,10 +3946,10 @@ func (m *PurchaseStaticIPRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if len(m.GetConfirmationToken()) > 1024 {
+	if len(m.GetConfirmationToken()) > 8192 {
 		err := PurchaseStaticIPRequestValidationError{
 			field:  "ConfirmationToken",
-			reason: "value length must be at most 1024 bytes",
+			reason: "value length must be at most 8192 bytes",
 		}
 		if !all {
 			return err
@@ -3506,6 +3977,51 @@ func (m *PurchaseStaticIPRequest) validate(all bool) error {
 			return err
 		}
 		errors = append(errors, err)
+	}
+
+	if len(m.GetLines()) > 25 {
+		err := PurchaseStaticIPRequestValidationError{
+			field:  "Lines",
+			reason: "value must contain no more than 25 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetLines() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, PurchaseStaticIPRequestValidationError{
+						field:  fmt.Sprintf("Lines[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, PurchaseStaticIPRequestValidationError{
+						field:  fmt.Sprintf("Lines[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return PurchaseStaticIPRequestValidationError{
+					field:  fmt.Sprintf("Lines[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
 	}
 
 	if len(errors) > 0 {

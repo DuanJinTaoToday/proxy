@@ -23,6 +23,7 @@ function catalog(cid, pid = 0) {
   if (cid === exclusive) {
     return [
       { id: 101, title: 'United States', isp: '独享', max: usStock, prices: [price('yp1', usPrice), price('yp3', 27)] },
+      { id: 111, title: 'Canada', isp: '独享', max: 5, prices: [price('yp1', 9)] },
       { id: 201, title: 'Japan', isp: '独享', max: 6, prices: [price('yp1', 15), price('yp6', 80)] },
     ]
   }
@@ -44,7 +45,7 @@ function allocate(node, days, position) {
   sequenceByNode.set(node.id, sequence)
   const id = node.id * 100 + sequence
   const expiresAt = Date.now() + day * (node.id === 201 && position === 0 ? 3 : days)
-  const prefix = node.id === 101 ? '192.0.2' : node.id === 201 ? '198.51.100' : '203.0.113'
+  const prefix = node.id === 301 ? '203.0.113' : node.id === 201 ? '198.51.100' : '192.0.2'
   const suffix = node.id === 301 ? sequence : node.id + sequence - 1
   const item = {
     id, nid: node.id, ip: `${prefix}.${suffix}`, port: 43000,
@@ -55,14 +56,18 @@ function allocate(node, days, position) {
 }
 
 function place({ cid, pid, time, list }) {
-  const selection = list?.[0]
-  const node = catalog(cid, pid).find(node => node.id === selection?.nid)
-  if (!node || !Number.isInteger(selection.number) || selection.number <= 0 ||
-      selection.number > node.max || !node.prices.some(price => price.price_type === time)) {
-    return { code: -5, msg: 'Fixture stock or specification unavailable' }
+  const unavailable = { code: -5, msg: 'Fixture stock or specification unavailable' }
+  if (!Array.isArray(list) || list.length === 0) return unavailable
+  const nodes = new Map(catalog(cid, pid).map(node => [node.id, node]))
+  const selections = new Map()
+  for (const { nid, number } of list) {
+    const node = nodes.get(nid)
+    if (!node || selections.has(node) || !Number.isInteger(number) || number <= 0 ||
+        number > node.max || !node.prices.some(price => price.price_type === time)) return unavailable
+    selections.set(node, node.id === 101 && number === 3 ? 2 : number)
   }
-  const count = node.id === 101 && selection.number === 3 ? 2 : selection.number
-  const items = Array.from({ length: count }, (_, position) => allocate(node, termDays.get(time), position))
+  const items = [...selections].flatMap(([node, count]) =>
+    Array.from({ length: count }, (_, position) => allocate(node, termDays.get(time), position)))
   const orderId = nextOrderId++
   orders.set(String(orderId), items)
   return { code: 0, data: { order_id: orderId, list: items } }

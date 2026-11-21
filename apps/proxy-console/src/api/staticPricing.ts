@@ -47,53 +47,76 @@ export async function getStaticWalletBalance(signal: AbortSignal) {
   return BigInt(wire.available_minor ?? 0)
 }
 
-interface StaticPurchaseQuoteWire {
-  offer: StaticOfferWire
+export const maxStaticPurchaseLines = 25
+export const maxStaticPurchaseQuantity = 2_147_483_647
+
+export interface StaticPurchaseLine {
+  offer: StaticPurchaseOffer
   quantity: number
+}
+
+export interface StaticPurchaseSelection {
+  term: string
+  lines: StaticPurchaseLine[]
+}
+
+interface StaticPurchaseQuoteWire {
+  lines?: { offer: StaticOfferWire, quantity: number }[]
   confirmation_token: string
 }
 
-export async function quoteStaticPurchase({
-  filter, offer, quantity, signal,
-}: {
-  filter: StaticCatalogFilter
-  offer: StaticPurchaseOffer
-  quantity: number
-  signal: AbortSignal
-}) {
+export async function quoteStaticPurchase(selection: StaticPurchaseSelection, filter: StaticCatalogFilter, signal: AbortSignal) {
+  const { term, lines } = selection
   const wire = await request<StaticPurchaseQuoteWire>('/v1/tenant/static-purchase-quotes', {
-    body: { node_id: offer.nodeId, term: offer.term, quantity, ...catalogParams(filter) },
+    body: { term, lines: lines.map(({ offer, quantity }) => ({ node_id: offer.nodeId, quantity })), ...catalogParams(filter) },
     signal,
   })
-  return { offer: toOffer(wire.offer), quantity: wire.quantity, confirmationToken: wire.confirmation_token }
+  const quoted = new Map(wire.lines?.map(line => [String(line.offer.node_id), line]))
+  const confirmedLines = lines.map(({ offer, quantity }) => {
+    const line = quoted.get(offer.nodeId)
+    if (!line || line.quantity !== quantity || line.offer.term !== term) throw new Error('Unexpected static purchase quote line')
+    return { offer: toOffer(line.offer), quantity }
+  })
+  if (wire.lines?.length !== lines.length || !wire.confirmation_token) throw new Error('Unexpected static purchase quote')
+  return { term, lines: confirmedLines, confirmationToken: wire.confirmation_token }
 }
 
 export type StaticPurchaseQuote = Awaited<ReturnType<typeof quoteStaticPurchase>>
 
 export function makeStaticPurchaseRequest(quote: StaticPurchaseQuote, filter: StaticCatalogFilter) {
   return {
-    node_id: quote.offer.nodeId,
-    term: quote.offer.term,
-    quantity: quote.quantity,
-    unit_minor: quote.offer.unitMinor.toString(),
+    term: quote.term,
+    lines: quote.lines.map(({ offer, quantity }) => ({ node_id: offer.nodeId, quantity, unit_minor: offer.unitMinor.toString() })),
     confirmation_token: quote.confirmationToken,
     request_key: crypto.randomUUID(),
     ...catalogParams(filter),
   }
 }
 
-type StaticPurchaseRequest = ReturnType<typeof makeStaticPurchaseRequest>
+type StaticPurchaseBatchRequest = ReturnType<typeof makeStaticPurchaseRequest>
+type StaticPurchaseOrderLine = StaticPurchaseBatchRequest['lines'][number]
+type StaticPurchaseSingleRequest = Omit<StaticPurchaseBatchRequest, 'lines'> & StaticPurchaseOrderLine
+export type StaticPurchaseRequest = StaticPurchaseBatchRequest | StaticPurchaseSingleRequest
+
+function isPurchaseLine(value: unknown): value is StaticPurchaseOrderLine {
+  if (!value || typeof value !== 'object') return false
+  return 'node_id' in value && typeof value.node_id === 'string' && /^[1-9]\d*$/.test(value.node_id)
+    && 'quantity' in value && typeof value.quantity === 'number' && Number.isInteger(value.quantity)
+    && value.quantity > 0 && value.quantity <= maxStaticPurchaseQuantity
+    && 'unit_minor' in value && typeof value.unit_minor === 'string' && /^[1-9]\d*$/.test(value.unit_minor)
+}
 
 export function isStaticPurchaseRequest(value: unknown): value is StaticPurchaseRequest {
   if (!value || typeof value !== 'object') return false
-  return 'node_id' in value && typeof value.node_id === 'string' && /^[1-9]\d*$/.test(value.node_id)
-    && 'term' in value && typeof value.term === 'string' && value.term.length > 0
-    && 'quantity' in value && typeof value.quantity === 'number' && Number.isInteger(value.quantity) && value.quantity > 0
-    && 'unit_minor' in value && typeof value.unit_minor === 'string' && /^[1-9]\d*$/.test(value.unit_minor)
+  const validEnvelope = 'term' in value && typeof value.term === 'string' && value.term.length > 0
     && 'confirmation_token' in value && typeof value.confirmation_token === 'string' && value.confirmation_token.length > 0
     && 'request_key' in value && typeof value.request_key === 'string' && value.request_key.length > 0
     && (!('share_mode' in value) || value.share_mode === 'shared')
     && (!('purpose_id' in value) || (typeof value.purpose_id === 'number' && Number.isInteger(value.purpose_id)))
+  if (!validEnvelope) return false
+  if (!('lines' in value)) return isPurchaseLine(value)
+  return Array.isArray(value.lines) && value.lines.length > 0 && value.lines.length <= maxStaticPurchaseLines
+    && value.lines.every(isPurchaseLine)
 }
 
 interface StaticPurchaseOrderWire {

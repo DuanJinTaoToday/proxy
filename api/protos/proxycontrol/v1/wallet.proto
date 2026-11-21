@@ -404,17 +404,35 @@ message StaticOffers {
   google.protobuf.Timestamp quoted_at = 3;
 }
 
-message StaticPurchaseQuoteRequest {
-  // 客户选中的皇冠节点 ID。
+message StaticPurchaseSelection {
   int64 node_id = 1 [(validate.rules).int64.gt = 0];
+  int32 quantity = 2 [(validate.rules).int32.gt = 0];
+}
+
+message StaticPurchaseQuoteLine {
+  StaticOffer offer = 1;
+  int32 quantity = 2;
+}
+
+message StaticPurchaseLine {
+  int64 node_id = 1 [(validate.rules).int64.gt = 0];
+  int32 quantity = 2 [(validate.rules).int32.gt = 0];
+  int64 unit_minor = 3 [(validate.rules).int64.gt = 0];
+}
+
+message StaticPurchaseQuoteRequest {
+  // 单节点查询使用 node_id、quantity；多节点查询使用 lines。
+  int64 node_id = 1 [(validate.rules).int64.gte = 0];
   // 客户选中的租期代码。
   string term = 2 [(validate.rules).string = {min_len: 1, max_bytes: 16}];
   // 请求购买的 IP 数量。
-  int32 quantity = 3 [(validate.rules).int32.gt = 0];
+  int32 quantity = 3 [(validate.rules).int32.gte = 0];
   // 独享 exclusive（缺省）或共享 shared。
   string share_mode = 4 [(validate.rules).string = {in: ["", "exclusive", "shared"]}];
   // 共享用途。缺省为不指定用途。
   int32 purpose_id = 5 [(validate.rules).int32 = {in: [0, 8, 9, 10]}];
+  // 合并核对的节点和各节点数量。一次最多 25 个节点。
+  repeated StaticPurchaseSelection lines = 6 [(validate.rules).repeated.max_items = 25];
 }
 
 message StaticPurchaseQuote {
@@ -426,25 +444,29 @@ message StaticPurchaseQuote {
   string confirmation_token = 3;
   // 新订单可使用该凭证的截止时间。
   google.protobuf.Timestamp expires_at = 4;
+  // 多节点申请的当前报价。单节点申请返回 offer 字段。
+  repeated StaticPurchaseQuoteLine lines = 5;
 }
 
 message PurchaseStaticIPRequest {
-  // 已确认的皇冠节点 ID。
-  int64 node_id = 1 [(validate.rules).int64.gt = 0];
+  // 单节点购买使用 node_id、quantity、unit_minor；多节点购买使用 lines。
+  int64 node_id = 1 [(validate.rules).int64.gte = 0];
   // 已确认的租期代码。
   string term = 2 [(validate.rules).string = {min_len: 1, max_bytes: 16}];
   // 已确认的 IP 数量。
-  int32 quantity = 3 [(validate.rules).int32.gt = 0];
+  int32 quantity = 3 [(validate.rules).int32.gte = 0];
   // 已确认的租期单价，人民币分。
-  int64 unit_minor = 4 [(validate.rules).int64.gt = 0];
+  int64 unit_minor = 4 [(validate.rules).int64.gte = 0];
   // 单次购买的幂等键。结果未知时保留原凭证并用同键重试。
   string request_key = 5 [(validate.rules).string = {min_len: 1, max_bytes: 128}];
   // 报价确认凭证。
-  string confirmation_token = 6 [(validate.rules).string = {min_len: 1, max_bytes: 1024}];
+  string confirmation_token = 6 [(validate.rules).string = {min_len: 1, max_bytes: 8192}];
   // 独享 exclusive（缺省）或共享 shared。
   string share_mode = 7 [(validate.rules).string = {in: ["", "exclusive", "shared"]}];
   // 共享用途。缺省为不指定用途。
   int32 purpose_id = 8 [(validate.rules).int32 = {in: [0, 8, 9, 10]}];
+  // 统一确认的节点、数量及各节点单价。
+  repeated StaticPurchaseLine lines = 9 [(validate.rules).repeated.max_items = 25];
 }
 
 message StaticIP {

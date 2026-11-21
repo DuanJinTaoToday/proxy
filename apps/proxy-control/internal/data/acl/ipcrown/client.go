@@ -63,11 +63,10 @@ type node struct {
 	Prices    []price `json:"prices"`
 }
 
-func (c *Client) Offers(ctx context.Context) ([]wallet.StaticOffer, error) {
-	return c.OffersFor(ctx, "exclusive", 0)
-}
-
-func (c *Client) OffersFor(ctx context.Context, shareMode string, purposeID int32) ([]wallet.StaticOffer, error) {
+func (c *Client) Offers(ctx context.Context, shareMode string, purposeID int32) ([]wallet.StaticOffer, error) {
+	if shareMode == "" {
+		shareMode = "exclusive"
+	}
 	params := map[string]any{"cid": categoryFor(shareMode)}
 	if purposeID != 0 {
 		params["pid"] = int(purposeID)
@@ -148,10 +147,17 @@ type delivery struct {
 }
 
 func (c *Client) Place(ctx context.Context, p wallet.StaticPurchaseRequest) (wallet.StaticDelivery, error) {
-	var result delivery
-	params := map[string]any{
-		"cid": categoryFor(p.ShareMode), "time": p.Term, "list": []map[string]any{{"nid": p.NodeID, "number": p.Quantity}},
+	type supplierPurchaseLine struct {
+		NodeID   int64 `json:"nid"`
+		Quantity int32 `json:"number"`
 	}
+	lines := p.LineItems()
+	list := make([]supplierPurchaseLine, 0, len(lines))
+	for _, line := range lines {
+		list = append(list, supplierPurchaseLine{NodeID: line.NodeID, Quantity: line.Quantity})
+	}
+	var result delivery
+	params := map[string]any{"cid": categoryFor(p.ShareMode), "time": p.Term, "list": list}
 	if p.PurposeID != 0 {
 		params["pid"] = int(p.PurposeID)
 	}

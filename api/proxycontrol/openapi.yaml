@@ -1731,7 +1731,7 @@ components:
             properties:
                 nodeId:
                     type: string
-                    description: 已确认的皇冠节点 ID。
+                    description: 单节点购买使用 node_id、quantity、unit_minor；多节点购买使用 lines。
                 term:
                     type: string
                     description: 已确认的租期代码。
@@ -1755,6 +1755,11 @@ components:
                     type: integer
                     description: 共享用途。缺省为不指定用途。
                     format: int32
+                lines:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/proxycontrol.v1.StaticPurchaseLine'
+                    description: 统一确认的节点、数量及各节点单价。
         proxycontrol.v1.PurchaseTrafficPackageRequest:
             type: object
             properties:
@@ -2063,6 +2068,16 @@ components:
                     type: string
                     description: 报价查询完成时间。未开售时省略。
                     format: date-time
+        proxycontrol.v1.StaticPurchaseLine:
+            type: object
+            properties:
+                nodeId:
+                    type: string
+                quantity:
+                    type: integer
+                    format: int32
+                unitMinor:
+                    type: string
         proxycontrol.v1.StaticPurchaseQuote:
             type: object
             properties:
@@ -2081,12 +2096,25 @@ components:
                     type: string
                     description: 新订单可使用该凭证的截止时间。
                     format: date-time
+                lines:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/proxycontrol.v1.StaticPurchaseQuoteLine'
+                    description: 多节点申请的当前报价。单节点申请返回 offer 字段。
+        proxycontrol.v1.StaticPurchaseQuoteLine:
+            type: object
+            properties:
+                offer:
+                    $ref: '#/components/schemas/proxycontrol.v1.StaticOffer'
+                quantity:
+                    type: integer
+                    format: int32
         proxycontrol.v1.StaticPurchaseQuoteRequest:
             type: object
             properties:
                 nodeId:
                     type: string
-                    description: 客户选中的皇冠节点 ID。
+                    description: 单节点查询使用 node_id、quantity；多节点查询使用 lines。
                 term:
                     type: string
                     description: 客户选中的租期代码。
@@ -2100,6 +2128,19 @@ components:
                 purposeId:
                     type: integer
                     description: 共享用途。缺省为不指定用途。
+                    format: int32
+                lines:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/proxycontrol.v1.StaticPurchaseSelection'
+                    description: 合并核对的节点和各节点数量。一次最多 25 个节点。
+        proxycontrol.v1.StaticPurchaseSelection:
+            type: object
+            properties:
+                nodeId:
+                    type: string
+                quantity:
+                    type: integer
                     format: int32
         proxycontrol.v1.StaticRenewalQuote:
             type: object

@@ -2,6 +2,7 @@ package wallet
 
 import (
 	"context"
+	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -29,13 +30,23 @@ type StaticPurchaseRequest struct {
 	NodeID, UnitMinor            int64
 	Term, Key, ConfirmationToken string
 	Quantity                     int32
-	ShareMode                    string `json:",omitempty"`
-	PurposeID                    int32  `json:",omitempty"`
+	ShareMode                    string               `json:",omitempty"`
+	PurposeID                    int32                `json:",omitempty"`
+	Lines                        []StaticPurchaseLine `json:",omitempty"`
+}
+
+type StaticPurchaseLine struct {
+	NodeID, UnitMinor int64
+	Quantity          int32
+}
+
+type StaticQuoteLine struct {
+	Offer    StaticOffer
+	Quantity int32
 }
 
 type StaticQuote struct {
-	Offer             StaticOffer
-	Quantity          int32
+	Lines             []StaticQuoteLine
 	ConfirmationToken string
 	ExpiresAt         time.Time
 }
@@ -59,8 +70,8 @@ type StaticDelivery struct {
 }
 
 type StaticSupplier interface {
-	Renew(context.Context, []string, string) (SupplierRenewal, error)
-	Offers(context.Context) ([]StaticOffer, error)
+	Renew(context.Context, []string, string, string) (SupplierRenewal, error)
+	Offers(context.Context, string, int32) ([]StaticOffer, error)
 	Place(context.Context, StaticPurchaseRequest) (StaticDelivery, error)
 	Detail(context.Context, string) (StaticDelivery, error)
 }
@@ -96,18 +107,29 @@ type StaticRepository interface {
 	ResolveStatic(context.Context, string, int64, string, string, string, bool, bool) (Order, error)
 }
 
-func (p StaticPurchaseRequest) CheckOffer(offer StaticOffer) error {
-	if offer.Available < p.Quantity {
-		return errors.Conflict("STATIC_STOCK_INSUFFICIENT", "insufficient stock").WithMetadata(map[string]string{
-			"available": strconv.FormatInt(int64(offer.Available), 10),
-		})
+func (offer StaticOffer) CheckAvailability(quantity int32) error {
+	if offer.Available >= quantity {
+		return nil
 	}
-	if offer.UnitMinor != p.UnitMinor {
-		return errors.Conflict("STATIC_PRICE_CHANGED", "confirm the current price").WithMetadata(map[string]string{
-			"unit_minor": strconv.FormatInt(offer.UnitMinor, 10),
-		})
+	return offer.catalogConflict("STATIC_STOCK_INSUFFICIENT", "insufficient stock")
+}
+
+func (offer StaticOffer) CheckConfirmedPriceAndStock(unitMinor int64, available int32) error {
+	if offer.UnitMinor != unitMinor {
+		return offer.catalogConflict("STATIC_PRICE_CHANGED", "confirm the current price")
+	}
+	if available != 0 && offer.Available != available {
+		return offer.catalogConflict("STATIC_STOCK_CHANGED", "confirm the current stock")
 	}
 	return nil
+}
+
+func (offer StaticOffer) catalogConflict(reason, message string) error {
+	return errors.Conflict(reason, message).WithMetadata(map[string]string{
+		"node_id":    strconv.FormatInt(offer.NodeID, 10),
+		"unit_minor": strconv.FormatInt(offer.UnitMinor, 10),
+		"available":  strconv.FormatInt(int64(offer.Available), 10),
+	})
 }
 
 func (s *Service) StaticOffers(ctx context.Context, shareMode string, purposeID int32) ([]StaticOffer, error) {
@@ -125,15 +147,37 @@ func (s *Service) QuoteStatic(ctx context.Context, token string, request StaticP
 	if request.ShareMode == "exclusive" {
 		request.ShareMode = ""
 	}
-	if !request.validSpec() {
+	if !request.validSpec(false) {
 		return StaticQuote{}, ErrInvalid
 	}
 	return s.store.QuoteStatic(ctx, tenant, request)
 }
 
-func (p StaticPurchaseRequest) validSpec() bool {
-	return p.NodeID > 0 && p.Quantity > 0 && p.Term != "" && len(p.Term) <= 16 && !strings.ContainsRune(p.Term, 0) &&
-		validStaticCatalog(p.ShareMode, p.PurposeID)
+func (p StaticPurchaseRequest) LineItems() []StaticPurchaseLine {
+	if len(p.Lines) > 0 {
+		return p.Lines
+	}
+	return []StaticPurchaseLine{{NodeID: p.NodeID, Quantity: p.Quantity, UnitMinor: p.UnitMinor}}
+}
+
+func (p StaticPurchaseRequest) validSpec(requirePrice bool) bool {
+	if p.Term == "" || len(p.Term) > 16 || strings.ContainsAny(p.Term, "/\x00") ||
+		!validStaticCatalog(p.ShareMode, p.PurposeID) || len(p.Lines) > 25 {
+		return false
+	}
+	if len(p.Lines) > 0 && (p.NodeID != 0 || p.Quantity != 0 || p.UnitMinor != 0) {
+		return false
+	}
+	seen := make(map[int64]bool, len(p.Lines))
+	var quantity int64
+	for _, line := range p.LineItems() {
+		if line.NodeID <= 0 || line.Quantity <= 0 || seen[line.NodeID] || (requirePrice && line.UnitMinor <= 0) {
+			return false
+		}
+		seen[line.NodeID] = true
+		quantity += int64(line.Quantity)
+	}
+	return quantity <= math.MaxInt32
 }
 
 func (s *Service) PurchaseStatic(ctx context.Context, token string, request StaticPurchaseRequest) (Order, error) {
@@ -144,8 +188,8 @@ func (s *Service) PurchaseStatic(ctx context.Context, token string, request Stat
 	if request.ShareMode == "exclusive" {
 		request.ShareMode = ""
 	}
-	if !request.validSpec() || request.UnitMinor <= 0 || request.Key == "" || len(request.Key) > 128 ||
-		len(request.ConfirmationToken) > 1024 || strings.ContainsRune(request.Key, 0) {
+	if !request.validSpec(true) || request.Key == "" || len(request.Key) > 128 ||
+		len(request.ConfirmationToken) > 8192 || strings.ContainsRune(request.Key, 0) {
 		return Order{}, ErrInvalid
 	}
 	return s.store.PurchaseStatic(ctx, tenant, request)

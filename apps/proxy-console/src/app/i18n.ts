@@ -9,9 +9,9 @@ import { messages as authMessages } from '@/features/auth'
 import { messages as dynamicProxyMessages } from '@/features/dynamic-proxy'
 import { messages as dashboardMessages } from '@/features/dashboard/messages'
 import { messages as notificationMessages } from '@/features/notifications'
-import { messages as staticIpsMessages } from '@/features/static-ips/messages'
-import { messages as staticPricingMessages } from '@/features/static-pricing/messages'
-import { messages as staticGuideMessages } from '@/features/static-guide/messages'
+import { messages as staticIpsMessages } from '@/features/static-ips'
+import { messages as staticPricingMessages } from '@/features/static-pricing'
+import { messages as staticGuideMessages } from '@/features/static-guide'
 
 export const locales = ['zh-CN', 'en'] as const
 export type Locale = (typeof locales)[number]

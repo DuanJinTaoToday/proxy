@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
   ElAlert, ElButton, ElCard, ElDialog, ElEmpty, ElInput, ElInputNumber, ElOption,
@@ -7,10 +7,11 @@ import {
 } from 'element-plus'
 import { Search } from '@element-plus/icons-vue'
 import { ApiError } from '@/api/client'
+import { maxStaticPurchaseLines, maxStaticPurchaseQuantity, type StaticPurchaseLine, type StaticPurchaseOffer } from '@/api/staticPricing'
 import { formatYuan } from '@/shared/lib/formatYuan'
 import { useErrorMessage } from '@/shared/lib/useErrorMessage'
 import LinkButton from '@/shared/ui/LinkButton.vue'
-import { offerKey, useStaticPurchase } from './useStaticPurchase'
+import { offerKey, staticSelectionTotal, useStaticPurchase } from './useStaticPurchase'
 
 const props = defineProps<{ accountKey: string }>()
 const { t, te, locale } = useI18n()
@@ -34,29 +35,42 @@ const purposeLabel = computed(() => {
 const region = ref('')
 const keyword = ref('')
 const term = ref('')
-const nodeId = ref('')
-const quantity = ref(1)
+const cart = ref(new Map<string, StaticPurchaseLine>())
 
 const offers = computed(() => catalog.value.kind === 'open' ? catalog.value.offers : [])
 const regions = computed(() => [...new Set(offers.value.map(offer => offer.region).filter(Boolean))]
   .sort((a, b) => a.localeCompare(b, locale.value)))
 const terms = computed(() => [...new Map(offers.value.map(offer => [offer.term, { code: offer.term, days: offer.termDays }])).values()]
   .sort((a, b) => a.days - b.days))
-const currentTerm = computed(() => terms.value.find(option => option.code === term.value) ?? terms.value[0])
-const termOffers = computed(() => offers.value.filter(offer => offer.term === currentTerm.value?.code))
+const currentTerm = computed(() => term.value || terms.value[0]?.code)
+const termOffers = computed(() => offers.value.filter(offer => offer.term === currentTerm.value))
 const visibleOffers = computed(() => {
   const search = keyword.value.trim().toLocaleLowerCase(locale.value)
   return termOffers.value.filter(offer => (!region.value || offer.region === region.value)
     && (!search || [offer.region, offer.isp].some(label => label.toLocaleLowerCase(locale.value).includes(search))))
     .sort((first, second) => Number(second.available > 0) - Number(first.available > 0))
 })
-const selected = computed(() => termOffers.value.find(offer => offer.nodeId === nodeId.value))
-const selectedTotal = computed(() => selected.value ? selected.value.unitMinor * BigInt(quantity.value) : 0n)
+const cartLines = computed(() => {
+  const current = new Map(termOffers.value.map(offer => [offer.nodeId, offer]))
+  return [...cart.value.values()].map(({ offer, quantity }) => {
+    const available = current.get(offer.nodeId)
+    return { offer: available ?? offer, quantity, available: available?.available }
+  })
+})
+const missingOffers = computed(() => cartLines.value.some(line => line.available === undefined))
+const insufficientStock = computed(() => cartLines.value.some(line => line.quantity > (line.available ?? 0)))
+const quantityExceeded = computed(() => cartLines.value.reduce((total, line) => total + line.quantity, 0) > maxStaticPurchaseQuantity)
+const selectedTotal = computed(() => staticSelectionTotal(cartLines.value))
 const selectedShortfall = computed(() => shortfall(selectedTotal.value))
-const canReview = computed(() => selected.value && quantity.value > 0 && quantity.value <= selected.value.available
+const canReview = computed(() => cartLines.value.length > 0 && !insufficientStock.value && !quantityExceeded.value
   && selectedShortfall.value === 0n && !busy.value)
+const reviewLines = computed(() => {
+  const state = checkout.value
+  if (state.kind === 'confirm') return state.quote.lines.map(line => ({ ...line, currentOffer: line.offer }))
+  return state.kind === 'blocked' ? state.rechecked ?? [] : []
+})
 const confirmTotal = computed(() => checkout.value.kind === 'confirm'
-  ? checkout.value.quote.offer.unitMinor * BigInt(checkout.value.quote.quantity) : 0n)
+  ? staticSelectionTotal(checkout.value.quote.lines) : 0n)
 const confirmShortfall = computed(() => shortfall(confirmTotal.value))
 const dialogTitle = computed(() => {
   if (checkout.value.kind === 'result') return t('staticPricing.result')
@@ -64,6 +78,12 @@ const dialogTitle = computed(() => {
   return t('staticPricing.confirm')
 })
 const dismissible = computed(() => !busy.value && checkout.value.kind !== 'unresolved')
+const requestConflict = computed(() => checkout.value.kind === 'unresolved' && checkout.value.error instanceof ApiError
+  && checkout.value.error.reason === 'WALLET_REQUEST_CONFLICT')
+
+watch(() => checkout.value.kind, kind => {
+  if (kind === 'result') cart.value.clear()
+})
 
 function setShareMode(value: string | number | boolean | undefined) {
   if (value !== 'exclusive' && value !== 'shared') return
@@ -71,29 +91,30 @@ function setShareMode(value: string | number | boolean | undefined) {
   filters.value = { shareMode: value }
 }
 function setPurpose(value: number) {
-  resetSelection()
   filters.value = { shareMode: 'shared', purposeId: value || undefined }
 }
 function resetSelection() {
   region.value = ''
   keyword.value = ''
   term.value = ''
-  nodeId.value = ''
-  quantity.value = 1
+  cart.value.clear()
 }
 function changeTerm(value: string) {
   term.value = value
-  if (selected.value?.available) quantity.value = Math.min(quantity.value, selected.value.available)
 }
-function selectNode(value: string) {
-  if (nodeId.value !== value) quantity.value = 1
-  nodeId.value = value
+function selectNode(offer: StaticPurchaseOffer) {
+  if (cart.value.delete(offer.nodeId)) return
+  if (cart.value.size >= maxStaticPurchaseLines || offer.available <= 0) return
+  term.value = offer.term
+  cart.value.set(offer.nodeId, { offer, quantity: 1 })
 }
-function changeQuantity(value: number | undefined) {
-  if (value !== undefined && Number.isInteger(value) && value > 0) quantity.value = value
+function changeQuantity(line: StaticPurchaseLine, value: number | undefined) {
+  if (value !== undefined && Number.isInteger(value) && value > 0 && line.offer.available > 0) {
+    cart.value.set(line.offer.nodeId, { offer: line.offer, quantity: Math.min(value, line.offer.available) })
+  }
 }
 function startReview() {
-  if (selected.value && canReview.value) void reviewPurchase({ offer: selected.value, quantity: quantity.value })
+  if (currentTerm.value && canReview.value) void reviewPurchase({ term: currentTerm.value, lines: cartLines.value })
 }
 function shortfall(total: bigint) {
   return balance.value !== undefined && balance.value < total ? total - balance.value : 0n
@@ -101,6 +122,7 @@ function shortfall(total: bigint) {
 const money = (value: bigint) => formatYuan(value, locale.value)
 const count = (value: number | bigint) => new Intl.NumberFormat(locale.value).format(value)
 const termDays = (days: number) => t('staticPricing.termDays', { days: count(days) }, days)
+const offerRegion = (offer: StaticPurchaseOffer) => offer.region || t('staticPricing.unknownRegion')
 function checkoutError(error: unknown) {
   if (error instanceof ApiError) {
     const key = `staticPricing.errors.${error.reason}`
@@ -156,10 +178,10 @@ function checkoutError(error: unknown) {
       <ElEmpty v-else-if="!visibleOffers.length" :description="t('staticPricing.empty')" />
       <div v-else class="offers">
         <ElCard v-for="offer in visibleOffers" :key="offerKey(offer)" shadow="never"
-          class="offer" :class="{ 'offer--selected': nodeId === offer.nodeId }">
+          class="offer" :class="{ 'offer--selected': cart.has(offer.nodeId) }">
           <div class="offer-heading">
             <div>
-              <h3>{{ offer.region || t('staticPricing.unknownRegion') }}</h3>
+              <h3>{{ offerRegion(offer) }}</h3>
               <p v-if="offer.isp" class="muted">{{ offer.isp }}</p>
             </div>
             <ElTag v-if="!offer.available" type="info">{{ t('staticPricing.soldOut') }}</ElTag>
@@ -168,40 +190,61 @@ function checkoutError(error: unknown) {
             <div><dt>{{ t('staticPricing.unitPrice') }}</dt><dd>{{ money(offer.unitMinor) }}</dd></div>
             <div><dt>{{ t('staticPricing.stock') }}</dt><dd>{{ count(offer.available) }}</dd></div>
           </dl>
-          <ElButton :type="nodeId === offer.nodeId ? 'primary' : 'default'" plain
-            :disabled="offer.available <= 0" :aria-pressed="nodeId === offer.nodeId"
-            :aria-label="t('staticPricing.selectOffer', { region: offer.region || t('staticPricing.unknownRegion') })"
-            @click="selectNode(offer.nodeId)">
-            {{ nodeId === offer.nodeId ? t('staticPricing.selected') : t('staticPricing.select') }}
+          <ElButton :type="cart.has(offer.nodeId) ? 'primary' : 'default'" plain
+            :disabled="!cart.has(offer.nodeId) && (offer.available <= 0 || cart.size >= maxStaticPurchaseLines)"
+            :aria-pressed="cart.has(offer.nodeId)"
+            :aria-label="t('staticPricing.selectOffer', { region: offerRegion(offer) })"
+            @click="selectNode(offer)">
+            {{ cart.has(offer.nodeId) ? t('staticPricing.selected') : t('staticPricing.select') }}
           </ElButton>
         </ElCard>
       </div>
     </ElCard>
 
     <ElCard shadow="never" class="pricing-summary">
-      <template #header><h2>{{ t('staticPricing.summary') }}</h2></template>
+      <template #header>
+        <div class="selection">
+          <h2>{{ t('staticPricing.summary') }}</h2>
+          <ElButton v-if="cart.size" text @click="cart.clear()">{{ t('staticPricing.clear') }}</ElButton>
+        </div>
+      </template>
       <div class="catalog-feedback">
         <label class="filter">
           <span>{{ t('staticPricing.term') }}</span>
-          <ElSelect :model-value="currentTerm?.code" :aria-label="t('staticPricing.term')" :disabled="!terms.length" @change="changeTerm">
+          <ElSelect :model-value="currentTerm" :aria-label="t('staticPricing.term')" :disabled="!terms.length" @change="changeTerm">
             <ElOption v-for="option in terms" :key="option.code" :value="option.code"
               :label="termDays(option.days)" />
           </ElSelect>
         </label>
         <p v-if="filters.shareMode === 'shared'" class="muted">{{ t('staticPricing.summaryPurpose', { purpose: purposeLabel }) }}</p>
-        <template v-if="selected">
+        <section v-for="line in cartLines" :key="line.offer.nodeId" class="cart-line">
           <div class="selection">
-            <strong>{{ selected.region || t('staticPricing.unknownRegion') }}</strong>
-            <ElButton text @click="nodeId = ''">{{ t('staticPricing.clear') }}</ElButton>
+            <div>
+              <h3>{{ offerRegion(line.offer) }}</h3>
+              <p v-if="line.offer.isp" class="muted">{{ line.offer.isp }}</p>
+            </div>
+            <ElButton text :aria-label="t('staticPricing.removeOffer', { region: offerRegion(line.offer) })"
+              @click="cart.delete(line.offer.nodeId)">{{ t('staticPricing.remove') }}</ElButton>
           </div>
           <label class="filter">
             <span>{{ t('staticPricing.quantity') }}</span>
-            <ElInputNumber :model-value="quantity" :min="1" :max="Math.max(1, selected.available)"
-              :disabled="selected.available <= 0" :precision="0" :aria-label="t('staticPricing.quantity')"
-              @change="changeQuantity" />
+            <ElInputNumber :model-value="line.quantity" :min="1" :max="Math.max(line.quantity, line.available ?? 0)"
+              :disabled="!line.available" :precision="0"
+              :aria-label="cart.size === 1 ? t('staticPricing.quantity') : t('staticPricing.regionQuantity', { region: offerRegion(line.offer) })"
+              @change="changeQuantity(line, $event)" />
           </label>
-        </template>
-        <p v-else class="muted">{{ t('staticPricing.selectRegion') }}</p>
+          <dl v-if="line.available !== undefined" class="summary-list tabular">
+            <div><dt>{{ t('staticPricing.subtotal') }}</dt><dd>{{ money(line.offer.unitMinor * BigInt(line.quantity)) }}</dd></div>
+          </dl>
+          <p v-if="catalog.kind === 'open' && line.available === undefined" class="muted">{{ t('staticPricing.unavailableLine') }}</p>
+          <p v-else-if="line.available !== undefined && line.quantity > line.available" class="muted">
+            {{ t('staticPricing.adjustQuantity', { stock: count(line.available) }) }}
+          </p>
+        </section>
+        <p v-if="!cart.size" class="muted">{{ t('staticPricing.selectRegion') }}</p>
+        <p v-else-if="cart.size === maxStaticPurchaseLines" class="muted">{{ t('staticPricing.lineLimit', { count: count(maxStaticPurchaseLines) }) }}</p>
+        <ElAlert v-if="quantityExceeded" type="warning" :closable="false" show-icon
+          :title="t('staticPricing.quantityLimit', { count: count(maxStaticPurchaseQuantity) })" />
         <dl class="summary-list tabular">
           <div>
             <dt>{{ t('staticPricing.balance') }}</dt>
@@ -209,9 +252,9 @@ function checkoutError(error: unknown) {
             <dd v-else-if="wallet.kind === 'loading'" role="status">{{ t('staticPricing.loading') }}</dd>
             <dd v-else><ElButton link @click="loadWallet">{{ t('staticPricing.reloadBalance') }}</ElButton></dd>
           </div>
-          <div><dt>{{ t('staticPricing.total') }}</dt><dd class="grand-total">{{ money(selectedTotal) }}</dd></div>
+          <div v-if="!missingOffers"><dt>{{ t('staticPricing.total') }}</dt><dd class="grand-total">{{ money(selectedTotal) }}</dd></div>
         </dl>
-        <ElAlert v-if="selectedShortfall > 0n" class="tabular" type="warning" :closable="false" show-icon
+        <ElAlert v-if="selectedShortfall > 0n && !insufficientStock" class="tabular" type="warning" :closable="false" show-icon
           :title="t('staticPricing.shortfall', { amount: money(selectedShortfall) })" />
         <ElButton type="primary" :disabled="!canReview" @click="startReview">{{ t('staticPricing.buy') }}</ElButton>
       </div>
@@ -222,39 +265,44 @@ function checkoutError(error: unknown) {
     class="static-purchase-dialog" align-center :show-close="dismissible" :close-on-press-escape="dismissible"
     :close-on-click-modal="false" @close="closeCheckout">
     <ElSkeleton v-if="checkout.kind === 'loading'" animated :rows="3" />
-    <div v-else-if="checkout.kind === 'confirm'" class="dialog-content">
-      <ElAlert v-if="checkout.changed" type="warning" :title="t('staticPricing.changed')" :closable="false" show-icon />
-      <p>{{ t('staticPricing.confirmHint') }}</p>
-      <div>
-        <strong>{{ checkout.quote.offer.region || t('staticPricing.unknownRegion') }}</strong>
-        <p v-if="checkout.quote.offer.isp" class="muted">{{ checkout.quote.offer.isp }}</p>
-      </div>
+    <div v-else-if="checkout.kind === 'confirm' || checkout.kind === 'blocked'" class="dialog-content">
+      <ElAlert v-if="checkout.kind === 'blocked'" type="warning" :title="checkoutError(checkout.error)" :closable="false" show-icon />
+      <ElAlert v-else-if="checkout.changed" type="warning"
+        :title="checkout.changed === 'term' ? t('staticPricing.termChanged') : t('staticPricing.changed')" :closable="false" show-icon />
+      <p v-if="checkout.kind === 'confirm'">{{ t('staticPricing.confirmHint') }}</p>
       <dl class="summary-list tabular">
         <div><dt>{{ t('staticPricing.product') }}</dt><dd>{{ productLabel }}</dd></div>
         <div v-if="filters.shareMode === 'shared'"><dt>{{ t('staticPricing.purpose') }}</dt><dd>{{ purposeLabel }}</dd></div>
-        <div><dt>{{ t('staticPricing.term') }}</dt><dd>{{ termDays(checkout.quote.offer.termDays) }}</dd></div>
-        <div><dt>{{ t('staticPricing.quantity') }}</dt><dd>{{ count(checkout.quote.quantity) }}</dd></div>
-        <div><dt>{{ t('staticPricing.stock') }}</dt><dd>{{ count(checkout.quote.offer.available) }}</dd></div>
-        <div><dt>{{ t('staticPricing.unitPrice') }}</dt><dd>{{ money(checkout.quote.offer.unitMinor) }}</dd></div>
-        <div v-if="balance !== undefined && confirmShortfall === 0n">
-          <dt>{{ t('staticPricing.afterPayment') }}</dt><dd>{{ money(balance - confirmTotal) }}</dd>
-        </div>
-        <div><dt>{{ t('staticPricing.payable') }}</dt><dd class="grand-total">{{ money(confirmTotal) }}</dd></div>
       </dl>
-      <ElAlert v-if="confirmShortfall > 0n" type="warning" class="tabular" :closable="false" show-icon
-        :title="t('staticPricing.shortfall', { amount: money(confirmShortfall) })" />
-    </div>
-    <div v-else-if="checkout.kind === 'blocked'" class="dialog-content">
-      <ElAlert type="warning" :title="checkoutError(checkout.error)" :closable="false" show-icon />
-      <dl v-if="checkout.currentOffer" class="summary-list tabular">
-        <div><dt>{{ t('staticPricing.stock') }}</dt><dd>{{ count(checkout.currentOffer.available) }}</dd></div>
-        <div><dt>{{ t('staticPricing.unitPrice') }}</dt><dd>{{ money(checkout.currentOffer.unitMinor) }}</dd></div>
-        <div><dt>{{ t('staticPricing.payable') }}</dt><dd>{{ money(checkout.currentOffer.unitMinor * BigInt(checkout.review.quantity)) }}</dd></div>
-      </dl>
+      <section v-for="line in reviewLines" :key="line.offer.nodeId" class="quote-line">
+        <h3>{{ offerRegion(line.offer) }}</h3>
+        <p v-if="line.offer.isp" class="muted">{{ line.offer.isp }}</p>
+        <dl v-if="line.currentOffer" class="summary-list tabular">
+          <div><dt>{{ t('staticPricing.term') }}</dt><dd>{{ termDays(line.currentOffer.termDays) }}</dd></div>
+          <div><dt>{{ t('staticPricing.quantity') }}</dt><dd>{{ count(line.quantity) }}</dd></div>
+          <div><dt>{{ t('staticPricing.stock') }}</dt><dd>{{ count(line.currentOffer.available) }}</dd></div>
+          <div><dt>{{ t('staticPricing.unitPrice') }}</dt><dd>{{ money(line.currentOffer.unitMinor) }}</dd></div>
+          <div v-if="reviewLines.length > 1">
+            <dt>{{ t('staticPricing.subtotal') }}</dt><dd>{{ money(line.currentOffer.unitMinor * BigInt(line.quantity)) }}</dd>
+          </div>
+        </dl>
+        <p v-else class="muted">{{ t('staticPricing.unavailableLine') }}</p>
+      </section>
+      <template v-if="checkout.kind === 'confirm'">
+        <dl class="summary-list tabular">
+          <div v-if="balance !== undefined && confirmShortfall === 0n">
+            <dt>{{ t('staticPricing.afterPayment') }}</dt><dd>{{ money(balance - confirmTotal) }}</dd>
+          </div>
+          <div><dt>{{ t('staticPricing.payable') }}</dt><dd class="grand-total">{{ money(confirmTotal) }}</dd></div>
+        </dl>
+        <ElAlert v-if="confirmShortfall > 0n" type="warning" class="tabular" :closable="false" show-icon
+          :title="t('staticPricing.shortfall', { amount: money(confirmShortfall) })" />
+      </template>
     </div>
     <div v-else-if="checkout.kind === 'unresolved'" class="dialog-content">
-      <ElAlert type="warning" :title="t('staticPricing.unresolvedHint')" :closable="false" show-icon />
-      <p v-if="checkout.error">{{ checkoutError(checkout.error) }}</p>
+      <ElAlert type="warning" :title="requestConflict ? t('staticPricing.requestConflict') : t('staticPricing.unresolvedHint')"
+        :closable="false" show-icon />
+      <p v-if="checkout.error && !requestConflict">{{ checkoutError(checkout.error) }}</p>
     </div>
     <div v-else-if="checkout.kind === 'result'" class="dialog-content tabular">
       <h3>{{ t(`staticPricing.status.${checkout.order.status}`) }}</h3>
@@ -273,14 +321,16 @@ function checkoutError(error: unknown) {
           @click="reviewPurchase(checkout.quote, true)">
           {{ t('staticPricing.pay') }}
         </ElButton>
-        <ElButton v-if="checkout.kind === 'blocked'" type="primary" :loading="busy"
-          :disabled="checkout.currentOffer !== undefined && checkout.currentOffer.available < checkout.review.quantity"
-          @click="reviewPurchase({ offer: checkout.currentOffer ?? checkout.review.offer, quantity: checkout.review.quantity })">
+        <ElButton v-if="checkout.kind === 'blocked' && checkout.retry" type="primary" :loading="busy"
+          @click="reviewPurchase(checkout.retry)">
           {{ t('staticPricing.retryQuote') }}
         </ElButton>
-        <ElButton v-if="checkout.kind === 'unresolved'" type="primary" :loading="busy" @click="retryPurchase(checkout.body)">
-          {{ t('staticPricing.retryPurchase') }}
-        </ElButton>
+        <template v-if="checkout.kind === 'unresolved'">
+          <LinkButton v-if="requestConflict" :to="{ name: 'console-static-ips' }" type="primary">{{ t('staticPricing.viewIps') }}</LinkButton>
+          <ElButton v-else type="primary" :loading="busy" @click="retryPurchase(checkout.body)">
+            {{ t('staticPricing.retryPurchase') }}
+          </ElButton>
+        </template>
         <template v-if="checkout.kind === 'result'">
           <ElButton :disabled="busy" @click="closeCheckout">{{ t('staticPricing.done') }}</ElButton>
           <ElButton v-if="checkout.order.status === 'pending'" :loading="busy" @click="refreshOrder(checkout.order)">
@@ -327,6 +377,12 @@ h3 { font-size: var(--font-size-md); }
   --el-card-bg-color: var(--color-primary-soft);
 }
 .summary-list, .catalog-feedback, .dialog-content { display: grid; gap: var(--space-3); }
+.cart-line, .quote-line {
+  display: grid;
+  gap: var(--space-2);
+  border-top: var(--border-width) solid var(--color-border);
+  padding-block: var(--space-3);
+}
 .summary-list { margin: 0; }
 .offer .summary-list { margin-block: var(--space-3); }
 .summary-list div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-2); }

@@ -21,6 +21,7 @@ type StaticIPAllocation struct {
 	PasswordCiphertext []uint8    `gorm:"column:password_ciphertext;type:bytea;not null" json:"password_ciphertext"`
 	ExpiresAt          time.Time  `gorm:"column:expires_at;type:timestamp with time zone;not null" json:"expires_at"`
 	RemindedExpiry     *time.Time `gorm:"column:reminded_expiry;type:timestamp with time zone" json:"reminded_expiry"`
+	OrderItemPosition  *int32     `gorm:"column:order_item_position;type:integer;not null;default:1" json:"order_item_position"`
 }
 
 // TableName StaticIPAllocation's table name

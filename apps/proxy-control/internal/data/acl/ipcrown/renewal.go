@@ -13,15 +13,7 @@ type renewedAllocation struct {
 	Expires string     `json:"stoptime"`
 }
 
-func (c *Client) Renew(ctx context.Context, ids []string, term string) (wallet.SupplierRenewal, error) {
-	return c.renew(ctx, staticCategory, ids, term)
-}
-
-func (c *Client) RenewShared(ctx context.Context, ids []string, term string) (wallet.SupplierRenewal, error) {
-	return c.renew(ctx, sharedCategory, ids, term)
-}
-
-func (c *Client) renew(ctx context.Context, category int, ids []string, term string) (wallet.SupplierRenewal, error) {
+func (c *Client) Renew(ctx context.Context, ids []string, term, shareMode string) (wallet.SupplierRenewal, error) {
 	numericIDs := make([]int64, 0, len(ids))
 	for _, id := range ids {
 		value, err := strconv.ParseInt(id, 10, 64)
@@ -32,7 +24,7 @@ func (c *Client) renew(ctx context.Context, category int, ids []string, term str
 	}
 	var rows []renewedAllocation
 	code, err := c.call(ctx, "/order/renew", map[string]any{
-		"cid": category, "ids": numericIDs, "time": term,
+		"cid": categoryFor(shareMode), "ids": numericIDs, "time": term,
 	}, &rows)
 	if err != nil {
 		return wallet.SupplierRenewal{}, err

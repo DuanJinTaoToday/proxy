@@ -12,7 +12,11 @@ import { useStaticIpPresentation } from './presentation'
 import type { RenewalIntent } from './renewalIntent'
 
 const props = defineProps<{ intent: RenewalIntent }>()
-const emit = defineEmits<{ closed: [], submission: [value: RenewalSubmission | undefined], changed: [] }>()
+const emit = defineEmits<{
+  closed: []
+  submission: [payload: RenewalSubmission, unresolved: boolean]
+  changed: []
+}>()
 
 const { t, locale } = useI18n()
 const { formatDate, errorMessage } = useStaticIpPresentation()
@@ -69,9 +73,9 @@ function refreshQuote() {
   return perform('quote', async () => { quote.value = await quoteStaticRenewal(ids, selected, controller.signal) })
 }
 
-function publishSubmission(value: RenewalSubmission | undefined) {
-  submission.value = value
-  emit('submission', value)
+function publishSubmission(payload: RenewalSubmission, unresolved: boolean) {
+  submission.value = unresolved ? payload : undefined
+  emit('submission', payload, unresolved)
 }
 
 function hasDefiniteFailure(error: unknown): error is ApiError {
@@ -90,15 +94,15 @@ function submit() {
       request_key: crypto.randomUUID(),
       confirmation_token: quote.value?.token ?? '',
     }
-    publishSubmission(payload)
+    publishSubmission(payload, true)
     try {
       order.value = await submitStaticRenewal(payload, controller.signal)
       if (controller.signal.aborted) return
-      publishSubmission(undefined)
+      publishSubmission(payload, false)
       emit('changed')
     } catch (error) {
       if (hasDefiniteFailure(error) && !controller.signal.aborted) {
-        publishSubmission(undefined)
+        publishSubmission(payload, false)
         completedResume.value = props.intent.kind === 'resume'
         if (error.reason !== 'WALLET_INSUFFICIENT_FUNDS') quote.value = undefined
         if (error.reason === 'STATIC_RENEWAL_PRICE_UNAVAILABLE') terms.value = undefined

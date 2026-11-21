@@ -20,8 +20,10 @@ func ReportingDecoder(maxBytes int64) http.DecodeRequestFunc {
 		switch body.(type) {
 		case *v1.StickySessionRequest, *v1.CreateSubaccountRequest, *v1.UpdateSubaccountRequest:
 			return decodeLimitedProto(req, message, "SUBACCOUNT_REQUEST", "subaccount request", "invalid subaccount body")
-		case *v1.QuoteWalletRechargeRequest, *v1.RechargeWalletRequest, *v1.PurchaseTrafficPackageRequest, *v1.PurchaseStaticIPRequest, *v1.StaticPurchaseQuoteRequest, *v1.ResolveStaticPurchaseRequest:
+		case *v1.QuoteWalletRechargeRequest, *v1.RechargeWalletRequest, *v1.PurchaseTrafficPackageRequest, *v1.StaticPurchaseQuoteRequest, *v1.ResolveStaticPurchaseRequest:
 			return decodeLimitedProto(req, message, "WALLET_REQUEST", "wallet request", "invalid wallet body")
+		case *v1.PurchaseStaticIPRequest:
+			return decodeBoundedProto(req, message, 16<<10, "WALLET_REQUEST", "wallet request", "invalid wallet body")
 		case *v1.StaticRenewalRequest:
 			return decodeBoundedProto(req, message, 48<<10, "STATIC_RENEWAL", "static renewal request", "invalid static renewal body")
 		case *v1.StaticRenewalTermsRequest, *v1.StaticRenewalQuoteRequest, *v1.StaticRenewalResolutionRequest, *v1.CustomerPurchaseOrderRequest:
