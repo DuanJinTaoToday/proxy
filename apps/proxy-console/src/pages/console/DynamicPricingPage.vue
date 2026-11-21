@@ -115,6 +115,7 @@ const rejectionMessage = computed(() => {
 <style scoped>
 .pricing { display: grid; gap: var(--space-4); }
 .offers { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--subaccount-metric-width)), 1fr)); gap: var(--space-4); align-items: stretch; }
+.offer { font-size: var(--font-size-md); }
 .offer-label { white-space: normal; height: auto; margin: 0 0 var(--space-3); font-weight: var(--font-weight-semibold); }
 .offer.selected { border-color: var(--color-primary-border); background: var(--color-primary-soft); }
 .price { display: block; font-size: var(--font-size-title); }

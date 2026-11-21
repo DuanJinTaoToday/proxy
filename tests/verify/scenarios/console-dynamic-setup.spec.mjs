@@ -3,7 +3,7 @@ import { screenshot, signInTenant } from '../support/console.mjs'
 import { authenticatedApi, json } from '../support/traffic.mjs'
 
 test('租户从代理设置获取 SOCKS5 凭据并使用双语教程', async ({ page, context, playwright, request, baseURL }, info) => {
-  const phone = '13900000072'
+  const phone = '13900007201'
   const account = await json(await request.post('/v1/access/register', { data: { phone, password: 'proxy-local-test' } }))
   const username = account.primary_account_name + '.test72'
   const tenant = await authenticatedApi(playwright, baseURL, { phone })
@@ -63,7 +63,9 @@ test('租户从代理设置获取 SOCKS5 凭据并使用双语教程', async ({ 
     await copy('连接串', defaultConnection)
     await copy('curl 示例', `curl -x "${defaultConnection}" https://api.ipify.org`)
 
-    await setup.getByRole('radio', { name: '指定会话标识' }).check()
+    const sticky = setup.getByRole('radio', { name: '指定会话标识' })
+    await sticky.press('Space')
+    await expect(sticky).toBeChecked()
     const sid = setup.getByRole('textbox', { name: '会话标识（sid）' })
     for (const invalid of ['Invalid-', 'a'.repeat(33)]) {
       await sid.fill(invalid)
