@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { formatGB } from '@/features/dynamic-proxy'
+import { formatGB } from '@/shared/lib/trafficUnits'
 
 const props = defineProps<{ days: { date: string, bytes: bigint }[] }>()
 const { t, locale } = useI18n()

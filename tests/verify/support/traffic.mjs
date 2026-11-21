@@ -1,61 +1,71 @@
+import { randomUUID } from 'node:crypto'
 import { expect } from '@playwright/test'
 
-export async function trafficSaleSettings(operator) {
-  await operator.getByRole('navigation', { name: '运营导航' })
-    .getByRole('link', { name: '商品与套餐', exact: true }).click()
-  const sale = operator.locator('form').filter({
-    has: operator.getByRole('heading', { name: /^动态.* · (已开售|未开售)$/ }),
-  })
-  await expect(sale).toBeVisible()
-  return sale
+export const purchasePath = '/v1/tenant/orders/traffic-packages'
+
+export async function json(response) {
+  expect(response.ok(), `${response.status()} ${new URL(response.url()).pathname}`).toBe(true)
+  return response.json()
 }
 
-export async function openTrafficSale(operator, sale) {
-  const tariff = operator.locator('form').filter({
-    has: operator.getByRole('heading', { name: '5gb', exact: true }),
-  })
-  const price = tariff.getByLabel('总价（分，0 表示未定价）')
-  if (await price.inputValue() !== '1500') {
-    await price.fill('1500')
-    await tariff.getByRole('button', { name: '保存套餐', exact: true }).click()
+export async function authenticatedApi(playwright, baseURL, { phone } = {}) {
+  const caller = await playwright.request.newContext({ baseURL, ignoreHTTPSErrors: true })
+  try {
+    const login = await json(await caller.post(phone ? '/v1/access/login' : '/v1/operations/access/login', {
+      data: { ...(phone ? { phone } : { username: 'operator' }), password: 'proxy-local-test' },
+    }))
+    return await playwright.request.newContext({
+      baseURL, ignoreHTTPSErrors: true, extraHTTPHeaders: { Authorization: 'Bearer ' + login.access_token },
+    })
+  } finally {
+    await caller.dispose()
   }
+}
 
-  const open = sale.getByRole('button', { name: '确认开售', exact: true })
-  if (await open.isVisible()) {
-    await sale.getByLabel('验收依据').fill('本地 Playwright 验收 ' + process.env.VERIFY_ID)
-    await sale.getByRole('checkbox', { name: '已确认报价就绪' }).check()
-    await open.click()
+export const setSale = (operator, open) => operator.put('/v1/operations/product-sales/dynamic', {
+  data: { open, ...(open ? { quote_ready: true, acceptance_evidence: 'verify: dynamic pricing #72' } : {}) },
+}).then(json)
+
+export async function setTier(operator, id, price, listed = true) {
+  const { packages } = await json(await operator.get('/v1/operations/traffic-packages'))
+  const tier = packages.find(record => record.id === id)
+  return json(await operator.patch('/v1/operations/traffic-packages/' + id, {
+    data: { version: tier.version, capacity_bytes: tier.capacity_bytes, price_minor: price, listed },
+  }))
+}
+
+export async function recharge(operator, tenant, amount_minor) {
+  const { tenant_id } = await json(await tenant.get('/v1/tenant/account'))
+  const path = '/v1/operations/tenants/' + tenant_id + '/wallet'
+  const request_key = randomUUID()
+  const { confirmation_token } = await json(await operator.post(path + '/recharge-quotes', {
+    data: { request_key, amount_minor, reason: 'verify #72 ' + process.env.VERIFY_ID },
+  }))
+  await json(await operator.post(path + '/recharges', { data: { request_key, confirmation_token } }))
+}
+
+export async function trafficRecords(tenant) {
+  const [overview, orders, ledger] = await Promise.all([
+    tenant.get('/v1/tenant/overview').then(json),
+    tenant.get('/v1/tenant/orders?kind=traffic_package').then(json),
+    tenant.get('/v1/tenant/wallet/ledger').then(json),
+  ])
+  return {
+    wallet: overview.wallet_minor ?? '0',
+    traffic: overview.traffic_bytes ?? '0',
+    orders: orders.orders ?? [],
+    debits: (ledger.entries ?? []).filter(entry => entry.kind === 'debit'),
   }
-  await expect(sale.getByRole('heading', { name: /^动态.* · 已开售$/ })).toBeVisible()
 }
 
-export async function openTrafficPackages(nav) {
-  const group = nav.getByRole('button', { name: '动态住宅代理-GB', exact: true })
-  if (await group.getAttribute('aria-expanded') === 'false') await group.click()
-  await nav.getByRole('link', { name: '流量套餐', exact: true }).click()
-}
-
-export async function openWalletOrders(tenant, nav) {
-  await nav.getByRole('link', { name: '鲲星钱包', exact: true }).click()
-  await tenant.getByRole('tab', { name: '订单记录', exact: true }).click()
-}
-
-export async function expectTrafficPurchaseRecords(tenant, nav, orderId, remaining) {
-  await openWalletOrders(tenant, nav)
-  const orders = tenant.getByRole('region', { name: '订单记录', exact: true })
-  const orderIds = orders.getByRole('rowheader')
-  await expect(orderIds).toHaveText(['#' + orderId])
-  const order = orders.getByRole('row').filter({
-    has: tenant.getByRole('rowheader', { name: '#' + orderId, exact: true }),
+export async function expectSettled(tenant, orderId, balance) {
+  const result = await trafficRecords(tenant)
+  expect(result).toMatchObject({ wallet: balance, traffic: '5000000000' })
+  expect(result.orders).toHaveLength(1)
+  expect(result.orders[0]).toMatchObject({
+    id: orderId, kind: 'traffic_package', status: 'succeeded', debited_minor: '1500', delivered_bytes: '5000000000',
   })
-  await expect(order.getByRole('cell', { name: '¥15.00', exact: true })).toBeVisible()
-
-  await tenant.getByRole('tab', { name: '钱包流水', exact: true }).click()
-  const debit = tenant.getByRole('region', { name: '钱包流水', exact: true }).getByRole('row').filter({
-    has: tenant.getByRole('cell', { name: '扣款', exact: true }),
-  })
-  await expect(debit).toHaveCount(1)
-  await expect(debit.getByRole('button', { name: '#' + orderId, exact: true })).toBeVisible()
-  await expect(debit.getByRole('cell', { name: '−¥15.00', exact: true })).toBeVisible()
-  await expect(debit.getByRole('cell', { name: remaining, exact: true })).toBeVisible()
+  expect(result.debits).toHaveLength(1)
+  expect(result.debits[0]).toMatchObject({ order_id: orderId, before_minor: String(Number(balance) + 1500), after_minor: balance })
+  return result
 }

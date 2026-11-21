@@ -1,0 +1,37 @@
+{
+  "trafficPricing": {
+    "closed": "Purchasing is currently unavailable",
+    "noPackages": "No packages are currently listed",
+    "choose": "Choose a traffic package",
+    "package": "{capacity} traffic package",
+    "unitPrice": "{amount} / GB",
+    "savings": "Save {percent}% per GB vs. the 5 GB tier",
+    "validity": "No expiration",
+    "validityLabel": "Validity",
+    "shared": "Shared across subaccounts",
+    "chosen": "Package",
+    "traffic": "Available traffic",
+    "afterTraffic": "Traffic after purchase",
+    "wallet": "Wallet balance",
+    "afterWallet": "Balance after payment",
+    "due": "Amount due",
+    "shortfall": "Your wallet is {amount} short. Contact an operator to add funds, then confirm again.",
+    "buy": "Buy now",
+    "billing": "Each order buys one package. Traffic is deducted by metered bytes. One GB is 1,000,000,000 bytes.",
+    "confirm": "Confirm traffic purchase",
+    "back": "Back to packages",
+    "pay": "Confirm payment",
+    "receipt": "Order #{id} completed. Added {traffic} and charged {amount}.",
+    "unknown": "We couldn’t confirm the purchase result. Retry the original submission.",
+    "retryPurchase": "Retry original submission",
+    "retryLoad": "Reload",
+    "rejected": "The purchase was rejected. Review the details and try again.",
+    "errors": {
+      "PACKAGE_CHANGED": "The quote or availability changed. Review the current offer and confirm again.",
+      "PACKAGE_NOT_FOUND": "This package was removed. Choose a currently listed package.",
+      "PACKAGE_UNAVAILABLE": "This package is unavailable. Choose a currently listed package.",
+      "PRODUCT_SALE_CLOSED": "Purchasing has closed. Try again later.",
+      "WALLET_INSUFFICIENT_FUNDS": "Your wallet balance changed. Check it and confirm again."
+    }
+  }
+}

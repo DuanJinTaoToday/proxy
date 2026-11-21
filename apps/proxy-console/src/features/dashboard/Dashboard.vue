@@ -4,11 +4,12 @@ import { useI18n } from 'vue-i18n'
 import { ElAlert, ElButton, ElCard, ElEmpty, ElIcon, ElPopover, ElSkeleton, ElTable, ElTableColumn } from 'element-plus'
 import { Clock, Connection, CreditCard, Service, Sort, Tickets } from '@element-plus/icons-vue'
 import { getDailyUsage, getOverview, getTrafficAlert, hasPendingOrders, listActiveStaticExpiries } from '@/api/dashboard'
-import { formatGB } from '@/features/dynamic-proxy'
+import { formatGB } from '@/shared/lib/trafficUnits'
 import LinkButton from '@/shared/ui/LinkButton.vue'
 import PageHeader from '@/shared/ui/PageHeader.vue'
 import UsageChart from './UsageChart.vue'
-import { formatYuan, shanghaiDateTime, usageWeek } from './format'
+import { formatYuan } from '@/shared/lib/money'
+import { shanghaiDateTime, usageWeek } from './format'
 
 const { t, locale } = useI18n()
 const showTable = ref(false)

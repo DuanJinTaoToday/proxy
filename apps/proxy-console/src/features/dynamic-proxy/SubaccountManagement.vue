@@ -9,7 +9,7 @@ import { listSubaccounts, revealSubaccountPassword, type Subaccount } from '@/ap
 import { useErrorMessage } from '@/shared/lib/useErrorMessage'
 import PageHeader from '@/shared/ui/PageHeader.vue'
 import SubaccountDialog, { type SubaccountAction } from './SubaccountDialog.vue'
-import { formatGB } from './trafficUnits'
+import { formatGB } from '@/shared/lib/trafficUnits'
 
 const { t, locale } = useI18n()
 const errorMessage = useErrorMessage()
