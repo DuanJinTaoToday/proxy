@@ -32,7 +32,7 @@ watch(locale, load, { immediate: true })
 </script>
 
 <template>
-  <ElCard role="region" shadow="never" :aria-labelledby="headingId">
+  <ElCard class="access-location-card" role="region" shadow="never" :aria-labelledby="headingId">
     <div class="access-location">
       <h2 :id="headingId" class="access-location__heading">{{ t('accessLocation.title') }}</h2>
       <div v-if="state.kind === 'loading'" role="status" :aria-label="t('accessLocation.loading')">
@@ -68,13 +68,15 @@ watch(locale, load, { immediate: true })
 </template>
 
 <style scoped>
+.access-location-card { --el-card-padding: var(--space-5); border-radius: var(--dashboard-card-radius); }
 .access-location {
   display: grid;
   gap: var(--space-4);
 }
 
 .access-location__heading {
-  font-size: var(--font-size-lg);
+  font-size: var(--font-size-xl);
+  line-height: var(--tenant-profile-heading-height);
   font-weight: var(--font-weight-semibold);
 }
 

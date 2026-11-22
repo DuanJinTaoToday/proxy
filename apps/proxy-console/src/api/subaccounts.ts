@@ -29,9 +29,8 @@ interface CreateSubaccount {
 }
 
 export type SubaccountChanges =
-  | { kind: 'details', remark?: string, limit?: { bytes: bigint | undefined } }
+  | { kind: 'details', remark?: string, active?: boolean, limit?: { bytes: bigint | undefined } }
   | { kind: 'password', password: string }
-  | { kind: 'status', active: boolean }
 
 const path = '/v1/tenant/subaccounts'
 const accountPath = (clientId: string) => `${path}/${encodeURIComponent(clientId)}`
@@ -68,12 +67,12 @@ export async function updateSubaccount(clientId: string, changes: SubaccountChan
 function updateBody(changes: SubaccountChanges) {
   switch (changes.kind) {
     case 'password': return { update_mask: 'password', password: changes.password }
-    case 'status': return { update_mask: 'active', active: changes.active }
     case 'details': {
       const mask = []
       if (changes.remark !== undefined) mask.push('remark')
+      if (changes.active !== undefined) mask.push('active')
       if (changes.limit) mask.push('limitBytes')
-      return { update_mask: mask.join(','), remark: changes.remark, limit_bytes: changes.limit?.bytes?.toString() }
+      return { update_mask: mask.join(','), remark: changes.remark, active: changes.active, limit_bytes: changes.limit?.bytes?.toString() }
     }
   }
 }

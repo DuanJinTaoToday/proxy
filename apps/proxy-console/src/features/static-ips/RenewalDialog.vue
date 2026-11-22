@@ -8,7 +8,7 @@ import {
   type RenewalOrder, type RenewalOutcome, type RenewalSubmission,
 } from '@/api/staticIps'
 import { formatYuan } from '@/shared/lib/money'
-import { useStaticIpPresentation } from './presentation'
+import { endpoint, useStaticIpPresentation } from './presentation'
 import type { RenewalIntent } from './renewalIntent'
 
 const props = defineProps<{ intent: RenewalIntent }>()
@@ -31,7 +31,12 @@ const submission = shallowRef<RenewalSubmission | undefined>(props.intent.kind =
 const completedResume = ref(false)
 const busy = ref<'loadingTerms' | 'loadingOrder' | 'submitting' | 'checking' | 'quote'>()
 const failure = shallowRef<unknown>()
-const ids = props.intent.kind === 'renew' ? props.intent.ips.map(ip => ip.id) : []
+const targets = props.intent.kind === 'renew' ? props.intent.ips.map(ip => ({ ...ip, address: endpoint(ip) })) : []
+const ids = targets.map(ip => ip.id)
+const quoteLines = computed(() => quote.value?.lines.map(line => {
+  const ip = targets.find(target => target.id === line.id)
+  return { ...line, address: ip?.address ?? line.ip, ipType: ip?.ipType }
+}) ?? [])
 const expectedTotal = computed(() => quote.value?.lines.reduce((sum, line) => sum + line.unitMinor, 0n) ?? 0n)
 const outcomeType = { pending: 'warning', succeeded: 'success', failed: 'danger' } as const
 
@@ -145,7 +150,7 @@ onUnmounted(() => controller.abort())
 <template>
   <ElDialog
     v-model="open" :title="t(order || intent.kind === 'order' ? 'staticIps.renewal.result' : 'staticIps.renewal.title')"
-    class="renewal-dialog" width="min(var(--content-narrow-width), calc(100vw - 2 * var(--space-4)))" align-center
+    class="renewal-dialog" width="min(calc(var(--order-drawer-width) + var(--space-6) + var(--space-2)), calc(100vw - 2 * var(--space-4)))" align-center
     :show-close="!busy" :close-on-click-modal="!busy" :close-on-press-escape="!busy" @closed="emit('closed')"
   >
     <div class="renewal-body">
@@ -153,7 +158,7 @@ onUnmounted(() => controller.abort())
 
       <template v-if="order">
         <p class="tabular">{{ t('staticIps.renewal.order', { id: order.id }) }}</p>
-        <ElTable :data="order.items" row-key="id">
+        <ElTable :data="order.items" row-key="id" class="renewal-quote">
           <ElTableColumn :label="t('staticIps.address')" prop="ip" min-width="128" class-name="mono" />
           <ElTableColumn :label="t('staticIps.state')" min-width="128">
             <template #default="{ row }">
@@ -169,28 +174,45 @@ onUnmounted(() => controller.abort())
         <p v-else role="status">{{ t('staticIps.renewal.submitting') }}</p>
       </template>
       <template v-else-if="intent.kind === 'renew'">
-        <p>{{ t('staticIps.renewal.intro') }}</p>
+        <p class="renewal-intro">{{ t('staticIps.renewal.intro') }}</p>
         <p v-if="busy === 'loadingTerms'" role="status">{{ t('staticIps.renewal.loadingTerms') }}</p>
         <ElAlert v-if="terms && !terms.length" :title="t('staticIps.renewal.noTerms')" type="warning" :closable="false" show-icon />
-        <fieldset v-if="terms?.length">
-          <legend>{{ t('staticIps.renewal.term') }}</legend>
+        <div v-if="terms?.length" class="renewal-terms">
+          <span>{{ t('staticIps.renewal.term') }}</span>
           <ElRadioGroup v-model="term" class="term-options" :aria-label="t('staticIps.renewal.term')" :disabled="Boolean(busy)" @change="changeTerm">
             <ElRadioButton v-for="option in terms" :key="option.code" :value="option.code">
               {{ t('staticIps.renewal.days', { days: option.days }) }}
             </ElRadioButton>
           </ElRadioGroup>
-        </fieldset>
-        <p>{{ t('staticIps.renewal.targets', { count: ids.length }) }}</p>
-        <ElTable v-if="quote" :data="quote.lines" row-key="id">
-          <ElTableColumn :label="t('staticIps.address')" prop="ip" min-width="128" class-name="mono" />
-          <ElTableColumn :label="t('staticIps.renewal.price')" min-width="116">
+        </div>
+        <ElTable v-if="quote" :data="quoteLines" row-key="id" class="renewal-quote">
+          <ElTableColumn :label="t('staticIps.renewal.targets', { count: ids.length })" min-width="145">
+            <template #default="{ row }">
+              <span class="quote-endpoint tabular">{{ row.address }}</span>
+              <span v-if="row.ipType" class="quote-product">{{ row.ipType }}</span>
+            </template>
+          </ElTableColumn>
+          <ElTableColumn :label="t('staticIps.renewal.price')" min-width="54">
             <template #default="{ row }">
               <span class="tabular">{{ formatYuan(row.unitMinor, locale) }}</span>
             </template>
           </ElTableColumn>
-          <ElTableColumn :label="t('staticIps.renewal.newExpiry')" min-width="176">
+          <ElTableColumn :label="t('staticIps.renewal.newExpiry')" min-width="110" align="right">
             <template #default="{ row }">
               <time class="tabular" :datetime="row.newExpiry.toISOString()">{{ formatDate(row.newExpiry) }}</time>
+            </template>
+          </ElTableColumn>
+        </ElTable>
+        <ElTable v-else :data="targets" row-key="id" class="renewal-quote">
+          <ElTableColumn :label="t('staticIps.renewal.targets', { count: ids.length })" min-width="145">
+            <template #default="{ row }">
+              <span class="quote-endpoint tabular">{{ row.address }}</span>
+              <span v-if="row.ipType" class="quote-product">{{ row.ipType }}</span>
+            </template>
+          </ElTableColumn>
+          <ElTableColumn :label="t('staticIps.expiresAt')" min-width="110" align="right">
+            <template #default="{ row }">
+              <span class="tabular">{{ formatDate(row.expiry) }}</span>
             </template>
           </ElTableColumn>
         </ElTable>
@@ -202,7 +224,8 @@ onUnmounted(() => controller.abort())
 
     <template #footer>
       <div class="dialog-actions">
-        <ElButton :disabled="Boolean(busy)" @click="open = false">
+        <ElButton :type="order && order.status !== 'pending' ? 'primary' : 'default'"
+          :disabled="Boolean(busy)" @click="open = false">
           {{ t(order || completedResume ? 'staticIps.renewal.done' : 'staticIps.renewal.cancel') }}
         </ElButton>
         <ElButton v-if="order?.status === 'pending'" type="primary" :loading="busy === 'checking'" @click="recheck">
@@ -230,19 +253,49 @@ onUnmounted(() => controller.abort())
 
 <style scoped>
 .renewal-body { display: grid; gap: var(--space-4); min-width: 0; }
-.renewal-body :is(fieldset, legend) { margin: 0; padding: 0; border: 0; min-width: 0; }
-.renewal-body legend { margin-bottom: var(--space-2); font-weight: var(--font-weight-semibold); }
+.renewal-intro { color: var(--color-text-secondary); }
+.renewal-terms {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  font-weight: var(--font-weight-semibold);
+}
 .term-options { gap: var(--space-2) 0; }
+.renewal-quote {
+  --el-table-header-bg-color: var(--color-surface-muted);
+  --el-table-row-hover-bg-color: var(--color-surface-muted);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-card);
+  font-size: var(--font-size-xs);
+}
+.quote-endpoint { color: var(--color-text); font-size: var(--font-size-md); font-weight: var(--font-weight-semibold); }
+.quote-product {
+  display: inline-block;
+  margin-inline-start: var(--space-1);
+  padding-inline: var(--space-1);
+  border-radius: var(--space-1);
+  background: var(--color-success-bg);
+  color: var(--color-success-text);
+  font-size: var(--font-size-xs);
+}
 .quote-total {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: var(--space-3);
-  background: var(--color-surface-muted);
-  border-radius: var(--radius-control);
-  padding: var(--space-3);
+  font-weight: var(--font-weight-semibold);
 }
-.quote-total strong { color: var(--color-primary); font-size: var(--font-size-xl); }
+.quote-total strong { color: var(--color-text); font-size: var(--font-size-title); }
 .dialog-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); justify-content: flex-end; }
 .dialog-actions button { margin: 0; }
+</style>
+
+<style>
+.renewal-dialog {
+  --el-dialog-border-radius: var(--radius-card);
+  --el-dialog-padding-primary: var(--space-5);
+  --el-dialog-box-shadow: var(--shadow-overlay);
+}
 </style>

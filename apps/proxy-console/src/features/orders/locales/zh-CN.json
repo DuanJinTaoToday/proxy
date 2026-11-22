@@ -72,6 +72,8 @@
     "walletActivity": "关联钱包流水",
     "ledgerNumber": "流水 #{id}",
     "creditAmount": "+{amount}",
-    "noWalletEntries": "暂无关联流水"
+    "noWalletEntries": "暂无关联流水",
+    "pageEntries": "本页 {count} 条",
+    "rentalTerm": "租期"
   }
 }

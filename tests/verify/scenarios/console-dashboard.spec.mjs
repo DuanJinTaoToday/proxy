@@ -32,7 +32,7 @@ test('仪表板展示余额、上海业务日用量和待处理事项，通知�
   await register(page, '13900000071')
 
   await expect(page.getByRole('region', { name: '钱包余额' })).toContainText(/¥0\.00/)
-  await expect(page.getByRole('region', { name: '动态代理可用流量' })).toContainText('0 GB')
+  await expect(page.getByRole('region', { name: '动态代理可用流量' })).toContainText('0.00 GB')
   await expect(page.getByRole('region', { name: '静态代理可用 IP' })).toContainText('暂无可用静态 IP')
   await expect(page.getByText('最近 7 天暂无扣减记录')).toBeVisible()
   await expect(todo(page).getByText('暂无待处理事项')).toBeVisible()
@@ -89,49 +89,52 @@ test('仪表板展示余额、上海业务日用量和待处理事项，通知�
 
   const wallet = page.getByRole('region', { name: '钱包余额' })
   await expect(wallet).toContainText(/¥123\.45/)
-  await expect(wallet.getByRole('link', { name: '查看钱包流水' })).toHaveAttribute('href', '/console/wallet')
+  await expect(wallet.getByRole('link', { name: '查看流水' })).toHaveAttribute('href', '/console/wallet')
   await wallet.getByRole('button', { name: '联系运营充值' }).click()
-  await expect(page.getByText('联系运营获取转账方式。运营确认到账后会为钱包充值。')).toBeVisible()
+  await expect(page.getByText(/首版暂不支持在线支付/)).toBeVisible()
   await page.getByRole('heading', { name: '仪表板' }).click()
   const traffic = page.getByRole('region', { name: '动态代理可用流量' })
   await expect(traffic).toContainText('0.75 GB')
+  await expect(traffic).toContainText('低于 1 GB')
+  await expect(traffic).toContainText('近 7 天消耗 3.25 GB')
   await expect(traffic.getByRole('link')).toHaveAttribute('href', '/console/dynamic/pricing')
   const staticIp = page.getByRole('region', { name: '静态代理可用 IP' })
   await expect(staticIp).toContainText('2 个')
   await expect(staticIp.locator('time')).toHaveAttribute('datetime', new Date(expiry).toISOString())
-  await expect(staticIp.getByRole('link', { name: '查看 IP 列表' })).toHaveAttribute('href', '/console/static/ips')
+  await expect(staticIp.getByRole('link', { name: '查看价格' })).toHaveAttribute('href', '/console/static/pricing')
   await expect(todo(page)).toContainText('动态流量偏低')
   await expect(todo(page)).toContainText('1 个静态 IP 即将到期')
   await expect(todo(page).getByRole('link', { name: '去续费' })).toHaveAttribute('href', '/console/static/ips')
-  await expect(todo(page)).toContainText('有订单确认中')
-  await expect(todo(page).getByRole('link', { name: '查看确认中的订单' }))
+  await expect(todo(page)).toContainText('1 笔订单确认中')
+  await expect(todo(page).getByRole('link', { name: '查看订单' }))
     .toHaveAttribute('href', '/console/account/orders?status=pending')
 
   await expect(page.getByRole('img', { name: '近 7 天每日扣减流量面积图' })).toBeVisible()
   await page.locator(`[data-date="${today}"]`).hover()
   await expect(page.getByRole('status')).toContainText('1.25 GB')
-  await expect(page.getByText('合计扣减 3.25 GB', { exact: false })).toBeVisible()
+  await expect(page.getByText('7 天合计扣减', { exact: false })).toBeVisible()
+  await expect(page.getByText(firstDay.replaceAll('-', '/') + ' – ' + today.slice(5).replace('-', '/'), { exact: true })).toBeVisible()
   await screenshot(page, info, 'dashboard-area-chart')
   await page.getByRole('button', { name: '查看数据表' }).click()
   const rows = page.getByRole('row')
   await expect(rows).toHaveCount(8)
-  await expect(rows.filter({ hasText: firstDay })).toContainText('2 GB')
-  await expect(rows.filter({ hasText: today })).toContainText('1.25 GB')
+  await expect(rows.filter({ hasText: firstDay.replaceAll('-', '/') })).toContainText('2.00 GB')
+  await expect(rows.filter({ hasText: today.replaceAll('-', '/') })).toContainText('1.25 GB')
   await screenshot(page, info, 'dashboard-daily-table')
   await page.getByRole('button', { name: '查看图表' }).click()
 
   await unreadButton(page).click()
-  await expect(page.getByRole('link', { name: /动态流量余额偏低/ })).toBeVisible()
+  await expect(page.getByRole('link', { name: /动态流量余额较低/ })).toBeVisible()
   await screenshot(page, info, 'dashboard-unread-notifications')
-  await page.getByRole('link', { name: /动态流量余额偏低/ }).click()
+  await page.getByRole('link', { name: /动态流量余额较低/ }).click()
   await expect(page).toHaveURL(/\/console\/dynamic\/pricing$/)
   await unreadButton(page).click()
-  await page.getByRole('link', { name: /1 个静态 IP 即将到期/ }).click()
+  await page.getByRole('link', { name: /静态 IP 即将到期.*1 个静态 IP/ }).click()
   await expect(page).toHaveURL(/\/console\/static\/ips$/)
   await expect(unreadButton(page)).toHaveCount(0)
   await page.reload()
   await notificationButton(page).click()
-  await expect(page.getByRole('link', { name: /1 个静态 IP 即将到期/ })).toBeVisible()
+  await expect(page.getByRole('link', { name: /静态 IP 即将到期.*1 个静态 IP/ })).toBeVisible()
   await expect(unreadButton(page)).toHaveCount(0)
   expect(claims).toEqual([1])
 
@@ -148,11 +151,31 @@ test('仪表板展示余额、上海业务日用量和待处理事项，通知�
   await expect(page.getByRole('alert').filter({ hasText: /^暂时无法加载通知。$/ })).toBeVisible()
   await page.getByRole('button', { name: '重试', exact: true }).click()
   await expect(unreadButton(page)).toBeVisible()
-  await expect(page.getByRole('link', { name: /2 个静态 IP 即将到期/ })).toBeVisible()
+  await expect(page.getByRole('link', { name: /静态 IP 即将到期.*2 个静态 IP/ })).toBeVisible()
   await page.getByRole('button', { name: '全部已读' }).click()
   await expect(unreadButton(page)).toHaveCount(0)
   await page.getByRole('button', { name: '关闭通知' }).click()
-  await expect(page.getByRole('link', { name: /2 个静态 IP 即将到期/ })).toBeHidden()
+  await expect(page.getByRole('link', { name: /静态 IP 即将到期.*2 个静态 IP/ })).toBeHidden()
+
+  await page.route('**/v1/tenant/access-location', async route => {
+    const response = await route.fetch({ url: new URL('/fixture/access-location/cn', page.url()).href });
+    await route.fulfill({ response });
+  });
+  await page.route('**/v1/tenant/static-renewal-terms', route =>
+    route.fulfill({ json: { terms: [{ term: 'yp1', term_days: 30 }] } }));
+  await page.route('**/v1/tenant/static-renewal-quotes', route =>
+    route.fulfill({
+      json: { lines: route.request().postDataJSON().supplier_item_ids.map(id => ({
+        supplier_item_id: id, ip: '192.0.2.1', term_days: 30, unit_minor: '10000', original_expiry: expiry,
+      })) },
+    }));
+  await page.goto('/console')
+  await expect(todo(page)).toContainText('当前网络无法使用')
+  await expect(todo(page).getByRole('link', { name: '查看当前 IP' })).toHaveAttribute('href', '/console/account/profile');
+  await expect(todo(page)).toContainText('余额不足以续费');
+  await expect(todo(page)).toContainText('¥76.55');
+  await expect(todo(page).getByRole('link', { name: '查看钱包' })).toHaveAttribute('href', '/console/wallet');
+  await page.unroute('**/v1/tenant/access-location');
 
   sql(`UPDATE tenant_balances SET available_bytes = -450000000
     WHERE tenant_id = (SELECT tenant_id FROM tenant_admins WHERE phone_e164 = '+8613900000071')`)
@@ -163,11 +186,11 @@ test('仪表板展示余额、上海业务日用量和待处理事项，通知�
   await page.getByRole('button', { name: /^语言[:：]/ }).click()
   await page.getByRole('menuitem', { name: 'English', exact: true }).click()
   await expect(page.getByRole('region', { name: 'Available rotating proxy traffic' })).toContainText('0.45 GB owed')
-  await expect(page.getByText('Orders awaiting confirmation', { exact: true })).toBeVisible()
+  await expect(page.getByText('1 order awaiting confirmation', { exact: true })).toBeVisible()
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(360)
   await screenshot(page, info, 'dashboard-en-mobile')
   await page.getByRole('button', { name: 'Notifications', exact: true }).click()
-  const notice = page.getByRole('link', { name: /2 static IPs expire soon/ })
+  const notice = page.getByRole('link', { name: /Static IPs expiring soon.*2 static IPs/i })
   await expect(notice).toBeVisible()
   const noticeBounds = await notice.boundingBox()
   expect(noticeBounds.x).toBeGreaterThanOrEqual(0)

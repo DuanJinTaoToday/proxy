@@ -105,7 +105,7 @@ const hasFilters = computed(() => Boolean(product.value || status.value || order
 </script>
 
 <template>
-  <ElCard shadow="never" role="region" :aria-label="t('tabs.accountOrders')">
+  <ElCard class="order-records" :body-style="{ padding: 0 }" shadow="never" role="region" :aria-label="t('tabs.accountOrders')">
     <div class="order-filters">
       <form class="order-search" @submit.prevent="searchOrders">
         <ElInput v-model="orderSearch" :prefix-icon="Search" :placeholder="t('orders.orderSearch')"
@@ -114,7 +114,7 @@ const hasFilters = computed(() => Boolean(product.value || status.value || order
           clearable @clear="clearOrderSearch" />
         <ElButton native-type="submit">{{ t('orders.search') }}</ElButton>
       </form>
-      <ElSelect :model-value="product ?? 'all'" class="select-filter" :aria-label="t('orders.productFilter')"
+      <ElSelect :model-value="product ?? 'all'" class="select-filter product-filter" :aria-label="t('orders.productFilter')"
         @update:model-value="editFilters({ product: $event === 'all' ? undefined : $event })">
         <ElOption value="all" :label="t('orders.allProducts')" />
         <ElOption v-for="value in orderProducts" :key="value" :value="value" :label="t(`orders.products.${value}`)" />
@@ -135,30 +135,30 @@ const hasFilters = computed(() => Boolean(product.value || status.value || order
     </div>
     <p v-if="invalidSearch" id="order-search-error" class="search-error" role="alert">{{ t('orders.invalidOrderId') }}</p>
 
-    <div v-if="state.kind === 'loading'" role="status" :aria-label="t('orders.loading')">
+    <div v-if="state.kind === 'loading'" class="order-feedback" role="status" :aria-label="t('orders.loading')">
       <ElSkeleton animated :rows="5" />
     </div>
-    <ElAlert v-else-if="state.kind === 'failed'" type="error" :title="t('orders.listFailed')" show-icon :closable="false">
+    <ElAlert v-else-if="state.kind === 'failed'" class="order-feedback" type="error" :title="t('orders.listFailed')" show-icon :closable="false">
       <p>{{ errorMessage(state.error) }}</p>
       <ElButton size="small" @click="retry++">{{ t('orders.retry') }}</ElButton>
     </ElAlert>
     <template v-else>
-      <ElTable :data="state.data.orders" row-key="id" @row-click="openOrder">
+      <ElTable :data="state.data.orders" row-key="id" class="order-table" header-row-class-name="order-table-heading" row-class-name="order-table-row" @row-click="openOrder">
         <!-- @vue-generic {OrderSummary} -->
-        <ElTableColumn :label="t('orders.number')" min-width="130">
+        <ElTableColumn :label="t('orders.number')" min-width="150">
           <template #default="{ row }">
             <span class="mono">{{ t('orders.orderNumber', { id: row.id }) }}</span>
           </template>
         </ElTableColumn>
         <!-- @vue-generic {OrderSummary} -->
-        <ElTableColumn :label="t('orders.type')" min-width="135">
+        <ElTableColumn :label="t('orders.type')" min-width="110">
           <template #default="{ row }">{{ t(`orders.kinds.${row.kind}`) }}</template>
         </ElTableColumn>
         <!-- @vue-generic {OrderSummary} -->
-        <ElTableColumn :label="t('orders.contents')" min-width="180">
+        <ElTableColumn :label="t('orders.contents')" min-width="250">
           <template #default="{ row }">
             <template v-if="row.summaryItem">
-              <span class="tabular">{{ row.itemCount > 1
+              <span class="order-summary tabular">{{ row.itemCount > 1
                 ? t('orders.itemSummary', { first: itemDescription(row.summaryItem), count: row.itemCount }, row.itemCount)
                 : itemDescription(row.summaryItem) }}</span>
               <span v-if="row.summaryItem.termDays" class="order-note tabular">
@@ -169,11 +169,11 @@ const hasFilters = computed(() => Boolean(product.value || status.value || order
           </template>
         </ElTableColumn>
         <!-- @vue-generic {OrderSummary} -->
-        <ElTableColumn :label="t('orders.delivery')" min-width="135">
+        <ElTableColumn :label="t('orders.delivery')" min-width="110">
           <template #default="{ row }"><span class="tabular">{{ delivery(row) }}</span></template>
         </ElTableColumn>
         <!-- @vue-generic {OrderSummary} -->
-        <ElTableColumn :label="t('orders.paid')" min-width="145" align="right">
+        <ElTableColumn :label="t('orders.paid')" min-width="100" align="right">
           <template #default="{ row }">
             <span class="tabular">{{ money(row.settledMinor) }}</span>
             <span v-if="row.refundedMinor > 0n" class="order-note tabular">
@@ -182,32 +182,35 @@ const hasFilters = computed(() => Boolean(product.value || status.value || order
           </template>
         </ElTableColumn>
         <!-- @vue-generic {OrderSummary} -->
-        <ElTableColumn :label="t('orders.state')" min-width="140">
+        <ElTableColumn :label="t('orders.state')" min-width="100">
           <template #default="{ row }">
             <ElTag :type="statusTypes[row.status]" size="small" disable-transitions>{{ t(`orders.status.${row.status}`) }}</ElTag>
           </template>
         </ElTableColumn>
         <!-- @vue-generic {OrderSummary} -->
-        <ElTableColumn :label="t('orders.placedAt')" min-width="175">
+        <ElTableColumn :label="t('orders.placedAt')" min-width="150">
           <template #default="{ row }">
             <time :datetime="row.createdAt.toISOString()">{{ dateTime(row.createdAt) }}</time>
           </template>
         </ElTableColumn>
         <!-- @vue-generic {OrderSummary} -->
-        <ElTableColumn min-width="85" align="right">
+        <ElTableColumn width="70" align="right">
           <template #default="{ row }">
             <ElButton link type="primary" @click.stop="openOrder(row)">{{ t('orders.details') }}</ElButton>
           </template>
         </ElTableColumn>
         <template #empty>
-          <ElEmpty :description="t(hasFilters ? 'orders.noneMatching' : 'orders.emptyOrders')">
+          <ElEmpty :image-size="72" :description="t(hasFilters ? 'orders.noneMatching' : 'orders.emptyOrders')">
             <ElButton v-if="hasFilters" @click="resetFilters">{{ t('orders.clearFilters') }}</ElButton>
           </ElEmpty>
         </template>
       </ElTable>
-      <nav v-if="cursorHistory.length > 1 || state.data.nextBeforeId" class="order-pagination" :aria-label="t('orders.pagination')">
-        <ElButton :disabled="cursorHistory.length < 2" @click="cursorHistory.pop()">{{ t('orders.previous') }}</ElButton>
-        <ElButton :disabled="!state.data.nextBeforeId" @click="nextPage">{{ t('orders.next') }}</ElButton>
+      <nav class="order-pagination" :aria-label="t('orders.pagination')">
+        <span>{{ t('orders.pageEntries', { count: state.data.orders.length }) }}</span>
+        <div v-if="cursorHistory.length > 1 || state.data.nextBeforeId" class="order-pagination__controls">
+          <ElButton size="small" :disabled="cursorHistory.length < 2" @click="cursorHistory.pop()">{{ t('orders.previous') }}</ElButton>
+          <ElButton size="small" :disabled="!state.data.nextBeforeId" @click="nextPage">{{ t('orders.next') }}</ElButton>
+        </div>
       </nav>
     </template>
   </ElCard>
@@ -215,20 +218,30 @@ const hasFilters = computed(() => Boolean(product.value || status.value || order
 </template>
 
 <style scoped>
-.order-filters, .order-search, .order-dates, .order-pagination {
+.order-records { border-radius: var(--dashboard-card-radius); min-inline-size: 0; }
+.order-filters, .order-search, .order-dates, .order-pagination, .order-pagination__controls {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
 }
-.order-filters {
-  flex-wrap: wrap;
-  margin-bottom: var(--space-4);
+.order-filters { padding: var(--space-3) var(--space-4); border-block-end: var(--border-width) solid var(--color-border); }
+.order-search { max-width: 100%; }
+.order-search .el-input { width: var(--tenant-order-search-width); max-width: 100%; }
+.select-filter { width: var(--tenant-order-status-width); max-width: 100%; }
+.product-filter { width: var(--tenant-order-product-width); }
+.date-filter { --el-date-editor-width: min(40vw, var(--business-date-filter-width)); }
+.search-error { margin: var(--space-3) var(--space-4); color: var(--color-danger-text); }
+.order-feedback { margin: var(--space-4); }
+.order-table {
+  --el-table-header-bg-color: var(--color-surface-muted);
+  --el-table-row-hover-bg-color: var(--color-surface-muted);
+  font-size: var(--font-size-sm);
 }
-.order-search, .order-dates { flex-wrap: wrap; }
-.order-search .el-input { width: calc(var(--account-name-width) + var(--space-5)); max-width: 100%; }
-.select-filter { width: calc(var(--account-name-width) + var(--space-5)); max-width: 100%; }
-.date-filter { width: var(--business-date-filter-width); max-width: 100%; }
-.search-error { color: var(--color-danger-text); margin-bottom: var(--space-4); }
+.order-table :deep(.order-table-heading) { height: var(--tenant-table-heading-height); color: var(--color-text-secondary); font-size: var(--font-size-xs); }
+.order-table :deep(.order-table-row) { height: var(--tenant-table-row-height); cursor: pointer; }
+.order-summary { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .order-note { display: block; color: var(--color-text-secondary); font-size: var(--font-size-xs); }
-.order-pagination { justify-content: flex-end; margin-top: var(--space-4); }
+.order-pagination { justify-content: space-between; padding: var(--space-3) var(--space-4); color: var(--color-text-secondary); font-size: var(--font-size-xs); }
+.order-pagination__controls .el-button { margin-inline: 0; }
 </style>

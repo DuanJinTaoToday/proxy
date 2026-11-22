@@ -50,6 +50,8 @@
       "release": "Unsettled funds returned to the wallet",
       "refund": "Order refund credited to the wallet",
       "unknown": "Wallet balance adjustment"
-    }
+    },
+    "lowBalanceHint": "The balance is low and may not cover your next purchase or renewal.",
+    "pageEntries": "{count} entries on this page"
   }
 }

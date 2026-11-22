@@ -30,6 +30,8 @@ const { t } = useI18n()
 </template>
 
 <style scoped>
+.static-guide { --el-card-border-radius: var(--radius-card); }
+
 .static-guide__title {
   font-size: var(--font-size-xl);
   font-weight: var(--font-weight-semibold);
@@ -48,8 +50,15 @@ const { t } = useI18n()
 }
 
 .static-guide__steps p {
-  margin-top: var(--space-1);
+  margin-top: var(--space-2);
   color: var(--color-text-secondary);
   overflow-wrap: anywhere;
+}
+
+.static-guide code {
+  padding-inline: var(--space-1);
+  border-radius: var(--space-1);
+  background: var(--color-surface-muted);
+  font-size: var(--font-size-xs);
 }
 </style>

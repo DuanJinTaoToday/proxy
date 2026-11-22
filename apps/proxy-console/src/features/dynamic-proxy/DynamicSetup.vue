@@ -81,6 +81,11 @@ async function loadCredentials(id: string) {
 }
 
 watch(clientId, loadCredentials, { flush: 'sync' })
+watch(mode, value => {
+  if (value === 'explicit' && !sid.value) {
+    sid.value = crypto.getRandomValues(new Uint32Array(1))[0].toString(16).padStart(8, '0')
+  }
+})
 
 async function loadAccounts() {
   listRequest?.abort()
@@ -125,13 +130,11 @@ void loadBalance()
 
 <template>
   <div class="setup">
-    <ElCard shadow="never">
-      <template #header>
-        <div class="toolbar">
-          <h2>{{ t('dynamicSetup.heading') }}</h2>
-          <RouterLink :to="{ name: 'console-sub-accounts' }">{{ t('dynamicSetup.manage') }}</RouterLink>
-        </div>
-      </template>
+    <ElCard class="setup-panel" shadow="never">
+      <header class="setup-header">
+        <h2>{{ t('dynamicSetup.heading') }}</h2>
+        <RouterLink class="manage" :to="{ name: 'console-sub-accounts' }">{{ t('dynamicSetup.manage') }}</RouterLink>
+      </header>
 
       <ElAlert v-if="listError" :title="errorMessage(listError)" type="error" :closable="false" show-icon>
         <ElButton size="small" @click="loadAccounts">{{ t('dynamicSetup.retry') }}</ElButton>
@@ -139,7 +142,7 @@ void loadBalance()
       <ElSkeleton v-else-if="!accounts" animated :rows="4" />
       <ElAlert v-else-if="!accounts.length" :title="t('dynamicSetup.empty')" type="info" :closable="false" show-icon>
         <p>{{ t('dynamicSetup.emptyHint') }}</p>
-        <LinkButton :to="{ name: 'console-sub-accounts' }" type="primary" size="small">{{ t('dynamicSetup.create') }}</LinkButton>
+        <LinkButton class="alert-action" :to="{ name: 'console-sub-accounts' }" type="primary" size="small">{{ t('dynamicSetup.create') }}</LinkButton>
       </ElAlert>
       <template v-else>
         <div class="form-row">
@@ -161,13 +164,12 @@ void loadBalance()
               <ElRadioButton v-if="credentials.explicit_sid" value="explicit">{{ t('dynamicSetup.explicitSession') }}</ElRadioButton>
             </ElRadioGroup>
           </div>
-          <div v-if="mode === 'explicit'" class="form-row">
-            <label for="dynamic-sid">{{ t('dynamicSetup.sid') }}</label>
-            <div>
-              <ElInput id="dynamic-sid" v-model="sid" :aria-invalid="invalidSid" aria-describedby="dynamic-sid-help"
-                :placeholder="t('dynamicSetup.sidFormat')" />
-              <p id="dynamic-sid-help" :class="{ invalid: invalidSid }">{{ t(invalidSid ? 'dynamicSetup.sidFormat' : 'dynamicSetup.sidHelp') }}</p>
-            </div>
+          <div v-if="mode === 'explicit'" class="session-id">
+            <ElInput v-model="sid" :aria-label="t('dynamicSetup.sid')" :aria-invalid="invalidSid" aria-describedby="dynamic-sid-help"
+              :placeholder="t('dynamicSetup.sidFormat')">
+              <template #prepend><code>sid</code></template>
+            </ElInput>
+            <p id="dynamic-sid-help" :class="{ invalid: invalidSid }">{{ t(invalidSid ? 'dynamicSetup.sidFormat' : 'dynamicSetup.sidHelp') }}</p>
           </div>
 
           <dl class="credentials">
@@ -177,14 +179,14 @@ void loadBalance()
                 <code>{{ field.key === 'password' && !revealed ? mask : field.value || '—' }}</code>
                 <ElButton v-if="field.key === 'password'" link :icon="revealed ? Hide : View"
                   :aria-label="t(revealed ? 'dynamicSetup.hide' : 'dynamicSetup.reveal')" @click="revealed = !revealed" />
-                <ElButton link :icon="CopyDocument" :disabled="!field.value" type="primary"
+                <ElButton link :icon="CopyDocument" :disabled="!field.value"
                   :aria-label="t('dynamicSetup.copyField', { field: t('dynamicSetup.' + field.key) })" @click="copy(field.value)" />
               </dd>
             </div>
           </dl>
 
           <section v-for="example in [{ key: 'connection', render: connection }, { key: 'curl', render: curl }]" :key="example.key" class="example">
-            <div class="toolbar">
+            <div class="example-header">
               <h3>{{ t('dynamicSetup.' + example.key) }}</h3>
               <ElButton link :icon="CopyDocument" type="primary" :disabled="!username"
                 :aria-label="t('dynamicSetup.copyField', { field: t('dynamicSetup.' + example.key) })" @click="copy(example.render(true))">
@@ -198,15 +200,15 @@ void loadBalance()
     </ElCard>
 
     <div class="setup-side">
-      <ElCard shadow="never">
-        <template #header><h2>{{ t('dynamicSetup.balance') }}</h2></template>
+      <ElCard class="balance-panel" shadow="never">
+        <h2>{{ t('dynamicSetup.balance') }}</h2>
         <ElSkeleton v-if="!balance" animated :rows="1" />
         <ElAlert v-else-if="balance.kind === 'error'" :title="errorMessage(balance.error)" type="error" :closable="false">
           <ElButton size="small" @click="loadBalance">{{ t('dynamicSetup.retry') }}</ElButton>
         </ElAlert>
-        <strong v-else class="tabular balance">{{ t('subaccounts.gb', { value: formatGB(balance.bytes, locale) }) }}</strong>
+        <strong v-else class="tabular balance" :class="{ negative: balance.bytes < 0n }">{{ t('subaccounts.gb', { value: formatGB(balance.bytes, locale) }) }}</strong>
         <p>{{ t('dynamicSetup.balanceHint') }}</p>
-        <LinkButton :to="{ name: 'console-dynamic-pricing' }" type="primary">{{ t('dynamicSetup.buy') }}</LinkButton>
+        <LinkButton :to="{ name: 'console-dynamic-pricing' }" type="primary" size="small">{{ t('dynamicSetup.buy') }}</LinkButton>
       </ElCard>
       <slot name="aside" />
     </div>
@@ -214,24 +216,43 @@ void loadBalance()
 </template>
 
 <style scoped>
-.setup { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 1fr); align-items: start; gap: var(--space-4); }
+.setup { display: grid; grid-template-columns: minmax(0, 1fr) var(--dynamic-side-panel-width); align-items: start; gap: var(--space-4); }
+.setup-panel, .balance-panel { --el-card-padding: var(--space-5); border-radius: var(--radius-card); }
 .setup-side { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-4); }
-.toolbar, .credential, .form-row { display: flex; align-items: start; flex-wrap: wrap; gap: var(--space-2) var(--space-4); }
-.toolbar, .credential { justify-content: space-between; align-items: center; }
-.form-row { margin-block-end: var(--space-4); }
-.form-row > label, .form-row > span { align-self: center; min-inline-size: var(--account-name-width); }
+.setup-header, .example-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-2); }
+.setup-header { margin-block-end: var(--space-4); }
+.setup-header h2 { font-size: var(--font-size-lg); }
+.manage { color: var(--color-primary); font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); }
+.alert-action { margin-block-start: var(--space-2); }
+.form-row { display: grid; grid-template-columns: max-content minmax(0, 1fr); align-items: center; gap: var(--space-3); margin-block-end: calc(var(--space-3) + 2 * var(--border-width)); }
+.form-row > :is(label, span) { min-inline-size: var(--dynamic-form-label-width); color: var(--color-text-secondary); font-weight: var(--font-weight-semibold); }
+.setup:lang(en) { --dynamic-form-label-width: var(--usage-chart-axis-width); }
 .el-select { max-inline-size: var(--notification-panel-width); }
-h2, h3 { margin: 0; font-size: var(--font-size-lg); }
-h3 { font-size: var(--font-size-md); }
+.session-id { margin-inline-start: calc(var(--dynamic-form-label-width) + var(--space-3)); max-inline-size: var(--auth-card-width); margin-block-end: var(--space-3); }
 p { color: var(--color-text-secondary); }
-.form-row p { margin: var(--space-1) 0 0; }
+.session-id p { margin: var(--space-1) 0 0; font-size: var(--font-size-xs); }
 .invalid { color: var(--color-danger-text); }
-.credentials { margin: var(--space-4) 0; }
-.credential { border-block-end: var(--border-width) solid var(--color-border); padding-block: var(--space-2); }
-dd { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2); margin: 0; min-inline-size: 0; }
+.credentials { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--space-5); margin: 0 0 var(--space-4); padding: var(--space-1) var(--space-4); border: var(--border-width) solid var(--color-border); border-radius: var(--radius-card); }
+.credential { display: grid; align-content: start; gap: var(--space-1); padding-block: var(--space-2); }
+.credential:nth-child(-n + 2) { border-block-end: var(--border-width) solid var(--color-border); }
+dt, .example-header { color: var(--color-text-secondary); font-size: var(--font-size-xs); }
+dd { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-1); margin: 0; min-inline-size: 0; font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); }
+dd button + button { margin-inline-start: var(--space-1); }
 code { font-family: var(--font-mono); overflow-wrap: anywhere; }
-.example { padding: var(--space-3); background: var(--color-surface-muted); border-radius: var(--radius-control); margin-block-start: var(--space-3); }
-.example .toolbar { margin-block-end: var(--space-2); }
-.balance { font-size: var(--font-size-title); }
-@media (max-width: 900px) { .setup { grid-template-columns: minmax(0, 1fr); } }
+.example { border: var(--border-width) solid var(--color-border); background: var(--color-surface-muted); border-radius: var(--radius-card); margin-block-start: var(--space-2); font-size: var(--font-size-xs); }
+.example-header { min-block-size: var(--brand-mark-size); padding: var(--space-1) var(--space-3); border-block-end: var(--border-width) solid var(--color-border); }
+.example-header h3, .balance-panel h2 { font-size: inherit; font-weight: var(--font-weight-regular); }
+.example-header button { font-size: inherit; }
+.example > code { display: block; padding: calc(var(--space-2) + 2 * var(--border-width)) var(--space-3); }
+.balance-panel { background: var(--gradient-metric); box-shadow: var(--shadow-card); font-size: var(--font-size-sm); }
+.balance-panel h2 { color: var(--color-text-secondary); }
+.balance { display: block; margin-block-start: var(--space-1); font-size: var(--font-size-metric); line-height: var(--line-height-tight); }
+.balance.negative { color: var(--color-danger-text); }
+.balance-panel p { margin: var(--space-3) 0; }
+@media (max-width: 1180px) { .setup { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 480px) {
+  .form-row { grid-template-columns: minmax(0, 1fr); gap: var(--space-1); }
+  .session-id { margin-inline-start: 0; }
+  .credentials { column-gap: var(--space-3); }
+}
 </style>

@@ -93,59 +93,54 @@ function previousPage() {
 </script>
 
 <template>
-  <ElCard class="wallet-ledger" role="region" aria-labelledby="wallet-ledger-title" shadow="never">
-    <div class="wallet-ledger__heading">
-      <h2 id="wallet-ledger-title">{{ t('wallet.ledger') }}</h2>
-      <span>{{ t('wallet.businessDay') }}</span>
-    </div>
+  <ElCard class="wallet-ledger" role="region" :aria-label="t('wallet.ledger')" :body-style="{ padding: 0 }" shadow="never">
     <div class="wallet-ledger__toolbar">
-      <ElRadioGroup
-        :model-value="kind ?? 'all'" :aria-label="t('wallet.kindFilter')"
-        @update:model-value="setFilters($event, start, end)"
-      >
-        <ElRadioButton value="all">{{ t('wallet.all') }}</ElRadioButton>
-        <ElRadioButton v-for="filter in filterKinds" :key="filter" :value="filter">
-          {{ t(`wallet.kinds.${filter}`) }}
-        </ElRadioButton>
-      </ElRadioGroup>
-      <div class="wallet-ledger__dates" role="group" :aria-label="t('wallet.dateFilter')">
-        <ElDatePicker
-          class="wallet-ledger__date-input" :model-value="start" type="date" value-format="YYYY-MM-DD"
-          :aria-label="t('wallet.startDate')" :placeholder="t('wallet.startDate')" @update:model-value="setDate('start', $event)"
-        />
-        <span>{{ t('wallet.dateSeparator') }}</span>
-        <ElDatePicker
-          class="wallet-ledger__date-input" :model-value="end" type="date" value-format="YYYY-MM-DD"
-          :aria-label="t('wallet.endDate')" :placeholder="t('wallet.endDate')" @update:model-value="setDate('end', $event)"
-        />
+      <div class="wallet-ledger__filters">
+        <ElRadioGroup
+          :model-value="kind ?? 'all'" :aria-label="t('wallet.kindFilter')"
+          @update:model-value="setFilters($event, start, end)"
+        >
+          <ElRadioButton value="all">{{ t('wallet.all') }}</ElRadioButton>
+          <ElRadioButton v-for="filter in filterKinds" :key="filter" :value="filter">
+            {{ t(`wallet.kinds.${filter}`) }}
+          </ElRadioButton>
+        </ElRadioGroup>
+        <div class="wallet-ledger__dates" role="group" :aria-label="t('wallet.dateFilter')">
+          <ElDatePicker
+            class="wallet-ledger__date-input" :model-value="start" type="date" value-format="YYYY-MM-DD"
+            :aria-label="t('wallet.startDate')" :placeholder="t('wallet.startDate')" @update:model-value="setDate('start', $event)"
+          />
+          <span>{{ t('wallet.dateSeparator') }}</span>
+          <ElDatePicker
+            class="wallet-ledger__date-input" :model-value="end" type="date" value-format="YYYY-MM-DD"
+            :aria-label="t('wallet.endDate')" :placeholder="t('wallet.endDate')" @update:model-value="setDate('end', $event)"
+          />
+        </div>
       </div>
+      <span class="wallet-ledger__business-day">{{ t('wallet.businessDay') }}</span>
     </div>
 
-    <div v-if="state.kind === 'loading'" role="status" :aria-label="t('wallet.loadingLedger')">
+    <div v-if="state.kind === 'loading'" class="wallet-ledger__feedback" role="status" :aria-label="t('wallet.loadingLedger')">
       <ElSkeleton animated :rows="5" />
     </div>
-    <ElAlert v-else-if="state.kind === 'failed'" :title="t('wallet.ledgerFailed')" type="error" :closable="false" show-icon>
+    <ElAlert v-else-if="state.kind === 'failed'" class="wallet-ledger__feedback" :title="t('wallet.ledgerFailed')" type="error" :closable="false" show-icon>
       <ElButton size="small" @click="load">{{ t('wallet.retry') }}</ElButton>
     </ElAlert>
-    <ElTable v-else-if="state.kind === 'ready'" :data="state.page.entries" row-key="id">
+    <ElTable v-else-if="state.kind === 'ready'" :data="state.page.entries" row-key="id" class="wallet-ledger__table" header-row-class-name="wallet-ledger__table-heading" row-class-name="wallet-ledger__table-row">
       <!-- @vue-generic {WalletEntry} -->
-      <ElTableColumn :label="t('wallet.entryId')" min-width="110">
-        <template #default="{ row }"><span class="tabular">{{ row.id }}</span></template>
-      </ElTableColumn>
-      <!-- @vue-generic {WalletEntry} -->
-      <ElTableColumn :label="t('wallet.time')" min-width="170">
+      <ElTableColumn :label="t('wallet.time')" min-width="150">
         <template #default="{ row }">
-          <time :datetime="row.createdAt.toISOString()">{{ shanghaiDateTime(row.createdAt, locale) }}</time>
+          <time :datetime="row.createdAt.toISOString()">{{ shanghaiDateTime(row.createdAt, locale, 'compact') }}</time>
         </template>
       </ElTableColumn>
       <!-- @vue-generic {WalletEntry} -->
-      <ElTableColumn :label="t('wallet.kind')" min-width="110">
+      <ElTableColumn :label="t('wallet.kind')" width="90">
         <template #default="{ row }">
-          <ElTag :type="tagTypes[row.kind]" size="small">{{ t(`wallet.kinds.${row.kind}`) }}</ElTag>
+          <ElTag :type="tagTypes[row.kind]" size="small" :class="`wallet-ledger__kind--${row.kind}`" disable-transitions>{{ t(`wallet.kinds.${row.kind}`) }}</ElTag>
         </template>
       </ElTableColumn>
       <!-- @vue-generic {WalletEntry} -->
-      <ElTableColumn :label="t('wallet.description')" min-width="225">
+      <ElTableColumn :label="t('wallet.description')" min-width="240">
         <template #default="{ row }">
           <span>{{ t(`wallet.notes.${row.kind}`) }}</span>
           <ElButton
@@ -170,6 +165,10 @@ function previousPage() {
           <span class="wallet-ledger__amount tabular">{{ formatYuan(row.afterMinor, locale) }}</span>
         </template>
       </ElTableColumn>
+      <!-- @vue-generic {WalletEntry} -->
+      <ElTableColumn :label="t('wallet.entryId')" min-width="110">
+        <template #default="{ row }"><span class="tabular">{{ row.id }}</span></template>
+      </ElTableColumn>
       <template #empty>
         <ElEmpty :description="t('wallet.noEntries')" :image-size="72">
           <ElButton v-if="hasFilters" @click="setFilters()">{{ t('wallet.clear') }}</ElButton>
@@ -177,16 +176,14 @@ function previousPage() {
       </template>
     </ElTable>
 
-    <nav
-      v-if="cursors.length > 1 || (state.kind === 'ready' && state.page.nextBeforeId)"
-      class="wallet-ledger__pager" :aria-label="t('wallet.pagination')"
-    >
-      <span class="tabular">{{ t('wallet.page', { page: cursors.length }) }}</span>
-      <div class="wallet-ledger__controls">
-        <ElButton size="small" :disabled="cursors.length === 1 || state.kind === 'loading'" @click="previousPage">
+    <nav v-if="state.kind === 'ready'" class="wallet-ledger__pager" :aria-label="t('wallet.pagination')">
+      <span class="tabular">{{ t('wallet.pageEntries', { count: state.page.entries.length }) }}</span>
+      <div v-if="cursors.length > 1 || state.page.nextBeforeId" class="wallet-ledger__controls">
+        <span class="tabular">{{ t('wallet.page', { page: cursors.length }) }}</span>
+        <ElButton size="small" :disabled="cursors.length === 1" @click="previousPage">
           {{ t('wallet.previous') }}
         </ElButton>
-        <ElButton size="small" :disabled="state.kind !== 'ready' || !state.page.nextBeforeId" @click="nextPage">
+        <ElButton size="small" :disabled="!state.page.nextBeforeId" @click="nextPage">
           {{ t('wallet.next') }}
         </ElButton>
       </div>
@@ -195,31 +192,49 @@ function previousPage() {
 </template>
 
 <style scoped>
-.wallet-ledger { min-inline-size: 0; }
-.wallet-ledger__heading,
+.wallet-ledger { min-inline-size: 0; border-radius: var(--dashboard-card-radius); }
 .wallet-ledger__toolbar,
+.wallet-ledger__filters,
 .wallet-ledger__pager,
 .wallet-ledger__controls {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-2);
 }
-.wallet-ledger__heading,
-.wallet-ledger__pager { justify-content: space-between; }
-.wallet-ledger__heading { margin-block-end: var(--space-3); }
-.wallet-ledger__heading h2 { font-size: var(--font-size-lg); font-weight: var(--font-weight-semibold); }
-.wallet-ledger__heading span,
-.wallet-ledger__pager > span { color: var(--color-text-secondary); font-size: var(--font-size-sm); }
-.wallet-ledger__toolbar { margin-block-end: var(--space-4); }
+.wallet-ledger__toolbar, .wallet-ledger__pager { justify-content: space-between; }
+.wallet-ledger__toolbar {
+  padding: var(--space-3) var(--space-4);
+  border-block-end: var(--border-width) solid var(--color-border);
+}
+.wallet-ledger__feedback { margin: var(--space-4); }
+.wallet-ledger__business-day, .wallet-ledger__pager { color: var(--color-text-secondary); font-size: var(--font-size-xs); }
 .wallet-ledger__dates {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-1);
   max-inline-size: 100%;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-control);
+  color: var(--color-text-secondary);
+  overflow: hidden;
 }
-.wallet-ledger__date-input { width: min(100%, var(--business-date-filter-width)); }
+.wallet-ledger__date-input {
+  --el-date-editor-width: min(38vw, var(--tenant-date-field-width));
+  --el-input-height: calc(var(--control-height) - 2 * var(--border-width));
+  --el-input-border-color: transparent;
+}
+.wallet-ledger__table {
+  --el-table-header-bg-color: var(--color-surface-muted);
+  --el-table-row-hover-bg-color: var(--color-surface-muted);
+  font-size: var(--font-size-sm);
+}
+.wallet-ledger__table :deep(.wallet-ledger__table-heading) {
+  height: var(--tenant-table-heading-height);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+}
+.wallet-ledger__table :deep(.wallet-ledger__table-row) { height: var(--tenant-table-row-height); }
 .wallet-ledger__order {
   margin-inline-start: var(--space-2);
   white-space: normal;
@@ -227,6 +242,8 @@ function previousPage() {
 }
 .wallet-ledger__amount { font-weight: var(--font-weight-semibold); }
 .wallet-ledger__amount--positive { color: var(--color-success-text); }
-.wallet-ledger__pager { margin-block-start: var(--space-3); }
+.wallet-ledger__kind--debit { --el-tag-bg-color: var(--color-canvas); --el-tag-text-color: var(--color-text-secondary); }
+.wallet-ledger__kind--refund { --el-tag-bg-color: var(--color-info-bg); --el-tag-text-color: var(--color-info-text); }
+.wallet-ledger__pager { padding: var(--space-3) var(--space-4); }
 .wallet-ledger__controls .el-button { margin-inline: 0; }
 </style>

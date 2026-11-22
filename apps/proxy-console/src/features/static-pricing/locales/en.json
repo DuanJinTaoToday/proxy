@@ -7,7 +7,7 @@
     "exclusiveHint": "Each IP is assigned to one customer. Prices depend on the region and lease term.",
     "sharedHint": "Multiple customers may use the same IP. Availability varies by intended use.",
     "chooseRegion": "Choose a country or region",
-    "search": "Search regions or providers",
+    "search": "Search by country, city, or provider",
     "purpose": "Intended use",
     "anyPurpose": "No specific use",
     "purposeTikTok": "TikTok",
@@ -38,7 +38,7 @@
     "removeOffer": "Remove {region}",
     "quantity": "Quantity",
     "regionQuantity": "{region} quantity",
-    "selectRegion": "Select one or more regions to buy IPs.",
+    "selectRegion": "Choose regions and quantities",
     "unavailableLine": "This region is unavailable for the selected term.",
     "adjustQuantity": "Available stock is {stock}. Adjust the quantity or remove this region.",
     "lineLimit": "You can select up to {count} offers per order.",
@@ -88,6 +88,12 @@
       "WALLET_INSUFFICIENT_FUNDS": "Your wallet balance is too low. Add funds and try again.",
       "WALLET_UNAVAILABLE": "The wallet is unavailable. Try again shortly.",
       "INVALID_WALLET_REQUEST": "The purchase details are invalid. Select the requirements again."
-    }
+    },
+    "purposeHint": "Available quantities vary by purpose",
+    "cardQuantity": "Adjust quantity for {region}",
+    "availableCount": "{count} available",
+    "pricePerIp": "{price}/IP",
+    "summaryProduct": "Order summary · {product}",
+    "ipCount": "IP count"
   }
 }
