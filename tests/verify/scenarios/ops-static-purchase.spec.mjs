@@ -1,5 +1,6 @@
 import { execFileSync } from 'node:child_process'
 import { randomUUID } from 'node:crypto'
+import { writeFile } from 'node:fs/promises'
 import { expect, test } from '@playwright/test'
 import { field, screenshot, signInOperator } from '../support/console.mjs'
 
@@ -111,12 +112,11 @@ test('运营在 24 小时后核实静态采购，72 小时后关闭剩余并只�
   const detail = await json(await request.get(`${tenantPath}/orders/${order.id}`, { headers: ops }))
   const { name, primary_account_name } = await json(await request.get(tenantPath, { headers: ops }))
   const { supplier_order_id } = (await pending(ops)).find(item => item.order_id === order.id)
-  await info.attach('visual-fixture', {
-    body: Buffer.from(JSON.stringify({
-      id: order.id, name, primary_account_name, supplier_order_id, created_at: detail.created_at, items: detail.items,
-    })),
-    contentType: 'application/json',
-  })
+  const comparisonPath = info.outputPath('visual-fixture.json')
+  await writeFile(comparisonPath, JSON.stringify({
+    id: order.id, name, primary_account_name, supplier_order_id, created_at: detail.created_at, items: detail.items,
+  }))
+  await info.attach('visual-fixture', { path: comparisonPath, contentType: 'application/json' })
   await row.getByRole('button', { name: '核实' }).click()
   await screenshot(page, info, '12-resolve-dialog')
   await page.getByText('关闭剩余，退回未交付部分', { exact: true }).click()

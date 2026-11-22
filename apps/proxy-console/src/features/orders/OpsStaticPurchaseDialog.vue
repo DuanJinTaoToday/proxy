@@ -81,10 +81,10 @@ async function submit() {
   <ElDialog v-model="open" :title="t('orders.ops.verifyTitle')" class="ops-dialog"
     width="min(var(--ops-resolve-width), calc(100vw - var(--space-6)))" align-center
     :close-on-click-modal="!pending" :close-on-press-escape="!pending" :show-close="!pending">
-    <dl class="resolve-summary">
+    <dl class="resolve-summary resolve-heading">
       <div><dt>{{ t('orders.ops.order') }}</dt><dd><span class="mono">{{ record.order.id }}</span> · {{ t(`orders.kinds.${record.order.kind}`) }}</dd></div>
       <div><dt>{{ t('orders.ops.tenant') }}</dt><dd>{{ record.tenant.name }} · {{ record.tenant.account }}</dd></div>
-      <div><dt>{{ t('orders.placedAt') }}</dt><dd>{{ dateTime(record.order.createdAt) }} · {{ t('orders.ops.waitedValue', { duration: waited }) }}</dd></div>
+      <div><dt>{{ t('orders.placedAt') }}</dt><dd>{{ dateTime(record.order.createdAt, 'short') }} · {{ t('orders.ops.waitedValue', { duration: waited }) }}</dd></div>
       <div><dt>{{ t('orders.ops.stage') }}</dt><dd><ElTag :type="record.canClose ? 'danger' : 'warning'" size="small" disable-transitions>{{ t(record.canClose ? 'orders.ops.closable' : 'orders.ops.review') }}</ElTag></dd></div>
     </dl>
     <ElForm label-position="top" class="resolve-form" :disabled="pending || !canBill" @submit.prevent="submit">
@@ -103,7 +103,7 @@ async function submit() {
             </tr>
           </tbody>
         </table>
-        <p class="resolve-hint">{{ t('orders.ops.deliveredHint') }}</p>
+        <p class="resolve-hint resolve-delivery-hint">{{ t('orders.ops.deliveredHint') }}</p>
       </ElFormItem>
       <ElFormItem :label="t('orders.ops.mode')">
         <ElRadioGroup v-model="mode" class="resolve-mode">
