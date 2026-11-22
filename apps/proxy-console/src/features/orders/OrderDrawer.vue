@@ -2,11 +2,12 @@
 import { ref, shallowRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElAlert, ElButton, ElDescriptions, ElDescriptionsItem, ElDrawer, ElSkeleton, ElTable, ElTableColumn, ElTag } from 'element-plus'
+import { getOpsTenantOrder } from '@/api/opsTenants'
 import { getOrder, type OrderItem } from '@/api/orders'
 import { useErrorMessage } from '@/shared/lib/useErrorMessage'
 import { useOrderFormatting } from './format'
 
-const props = defineProps<{ orderId?: string }>()
+const props = defineProps<{ orderId?: string, tenantId?: string }>()
 const emit = defineEmits<{ close: [] }>()
 const { t } = useI18n()
 const errorMessage = useErrorMessage()
@@ -19,13 +20,13 @@ type DetailState =
 const state = shallowRef<DetailState>({ kind: 'loading' })
 const retry = ref(0)
 
-watch([() => props.orderId, retry], async ([id], _previous, onCleanup) => {
+watch([() => props.orderId, () => props.tenantId, retry], async ([id, tenantId], _previous, onCleanup) => {
   if (!id) return
   const request = new AbortController()
   onCleanup(() => request.abort())
   state.value = { kind: 'loading' }
   try {
-    const order = await getOrder(id, request.signal)
+    const order = await (tenantId ? getOpsTenantOrder(tenantId, id, request.signal) : getOrder(id, request.signal))
     if (!request.signal.aborted) state.value = { kind: 'ready', order }
   } catch (error) {
     if (!request.signal.aborted) state.value = { kind: 'failed', error }

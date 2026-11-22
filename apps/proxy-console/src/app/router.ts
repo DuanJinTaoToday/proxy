@@ -84,7 +84,15 @@ export const routes: RouteRecordRaw[] = [
     children: [
       { path: '', redirect: { name: 'ops-tenants' } },
       { path: 'tenants', name: 'ops-tenants', component: () => import('@/pages/ops/OpsTenantsPage.vue'), meta: { titleKey: 'nav.opsTenants' } },
-      { path: 'tenants/:tenantId', name: 'ops-tenant', component: () => import('@/pages/ops/OpsTenantPage.vue'), meta: { titleKey: 'nav.opsTenants' } },
+      {
+        path: 'tenants/:tenantId',
+        component: () => import('@/pages/ops/OpsTenantPage.vue'),
+        meta: { titleKey: 'nav.opsTenants' },
+        children: [
+          { path: '', name: 'ops-tenant', component: () => import('@/pages/ops/OpsTenantOrdersPage.vue') },
+          { path: 'ledger', name: 'ops-tenant-ledger', component: () => import('@/pages/ops/OpsTenantLedgerPage.vue') },
+        ],
+      },
       tabbed('products', 'ops-products', 'nav.opsProducts', [{ path: 'dynamic', labelKey: 'tabs.productsDynamic' }, { path: 'static', labelKey: 'tabs.productsStatic' }]),
       { path: 'orders', name: 'ops-orders', component: () => import('@/pages/ops/OpsOrdersPage.vue'), meta: { titleKey: 'nav.opsOrders' } },
     ],

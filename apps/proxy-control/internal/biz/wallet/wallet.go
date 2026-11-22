@@ -157,9 +157,8 @@ type Repository interface {
 	Tenant(context.Context, string) (Tenant, error)
 	CustomerWallet(context.Context, string) (Tenant, error)
 	Entries(context.Context, string, Filter) ([]Entry, error)
-	Orders(context.Context, string, Filter, bool) (OrderPage, error)
-	Order(context.Context, string, int64) (Order, error)
-	CustomerOrder(context.Context, string, int64) (Order, error)
+	Orders(context.Context, string, Filter) (OrderPage, error)
+	OrderDetail(context.Context, string, int64) (Order, error)
 	CreateRechargeQuote(context.Context, RechargeQuote) error
 	RechargeQuote(context.Context, string, string, string, string) (RechargeQuote, error)
 	ApplyRecharge(context.Context, Command) (Entry, error)

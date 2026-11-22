@@ -1,5 +1,8 @@
 {
   "orders": {
+    "opsNoExpiry": "长期有效",
+    "kindFilter": "按类型筛选",
+    "allKinds": "全部类型",
     "products": {
       "dynamic": "动态住宅代理-GB",
       "static": "静态住宅代理"

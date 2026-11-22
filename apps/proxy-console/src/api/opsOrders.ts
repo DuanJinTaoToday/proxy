@@ -1,6 +1,6 @@
 import { request } from './client'
-import { getOpsTenant, opsTenantPath } from './opsTenants'
-import { getOpsOrder, mapOrder, type OrderWire } from './orders'
+import { getOpsTenant, getOpsTenantOrder, opsTenantPath } from './opsTenants'
+import { mapOrderDetail, type OrderDetailWire } from './orders'
 
 interface PendingOrderWire {
   order_id: string
@@ -12,7 +12,7 @@ interface PendingOrderWire {
 
 export interface OpsPendingOrder {
   tenant: Awaited<ReturnType<typeof getOpsTenant>>
-  order: Awaited<ReturnType<typeof getOpsOrder>>
+  order: Awaited<ReturnType<typeof getOpsTenantOrder>>
   supplierOrderId: string
   canClose: boolean
   pendingRenewalItems: string[]
@@ -33,7 +33,7 @@ export async function listOpsPendingOrders(afterId: string | undefined, signal: 
   const records = await Promise.all((wire.purchases ?? []).map(async (item): Promise<OpsPendingOrder> => {
     const [tenant, order] = await Promise.all([
       tenantFor(item.tenant_id),
-      getOpsOrder(item.tenant_id, item.order_id, signal),
+      getOpsTenantOrder(item.tenant_id, item.order_id, signal),
     ])
     return {
       tenant, order, supplierOrderId: item.supplier_order_id ?? '',
@@ -48,7 +48,7 @@ export async function resolveOpsStaticPurchase(
   input: { supplierOrderId: string, evidence: string, closeRemaining: boolean, confirmedUndeliverable: boolean },
 ) {
   const path = opsTenantPath(tenant.id) + '/orders/' + encodeURIComponent(order.id)
-  return mapOrder(await request<OrderWire>(path + '/static-resolution', {
+  return mapOrderDetail(await request<OrderDetailWire>(path + '/static-resolution', {
     body: {
       supplier_order_id: input.supplierOrderId,
       evidence: input.evidence,

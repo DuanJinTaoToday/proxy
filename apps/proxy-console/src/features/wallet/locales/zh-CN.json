@@ -1,5 +1,8 @@
 {
   "wallet": {
+    "opsEntryTime": "流水号 / 时间",
+    "opsOperator": "操作人",
+    "opsBalanceChange": "变动前 → 后",
     "available": "可用余额",
     "balanceHint": "购买流量包、静态 IP 和续费均从钱包余额扣款。",
     "totalRecharge": "累计充值",
