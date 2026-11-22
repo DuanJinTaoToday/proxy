@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/product"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/data"
@@ -59,6 +60,43 @@ func (r *ProductRepository) Packages(ctx context.Context) ([]product.Package, er
 		return nil, errProductUnavailable
 	}
 	return listTrafficPackages(r.db.WithContext(ctx))
+}
+
+func (r *ProductRepository) Changes(ctx context.Context) ([]product.Change, error) {
+	if r.db == nil {
+		return nil, errProductUnavailable
+	}
+	var rows []struct {
+		ID               int64
+		TargetKind       string
+		TargetID         string
+		OperatorUsername string
+		CreatedAt        time.Time
+		BeforeValue      []byte
+		AfterValue       []byte
+	}
+	err := r.db.WithContext(ctx).Raw(`SELECT changes.id, changes.target_kind, changes.target_id, changes.created_at,
+		operators.username AS operator_username, changes.before_value, changes.after_value
+		FROM product_change_log AS changes JOIN operators ON operators.id = changes.operator_id
+		ORDER BY changes.id DESC LIMIT 50`).Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+	changes := make([]product.Change, 0, len(rows))
+	for _, row := range rows {
+		change := product.Change{
+			ID: row.ID, TargetKind: row.TargetKind, TargetID: row.TargetID,
+			OperatorUsername: row.OperatorUsername, CreatedAt: row.CreatedAt,
+		}
+		if err := json.Unmarshal(row.BeforeValue, &change.Before); err != nil {
+			return nil, fmt.Errorf("decode old product values: %w", err)
+		}
+		if err := json.Unmarshal(row.AfterValue, &change.After); err != nil {
+			return nil, fmt.Errorf("decode new product values: %w", err)
+		}
+		changes = append(changes, change)
+	}
+	return changes, nil
 }
 
 func listTrafficPackages(db *gorm.DB) ([]product.Package, error) {

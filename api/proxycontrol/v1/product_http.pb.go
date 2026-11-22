@@ -17,12 +17,14 @@ var _ = new(context.Context)
 
 const _ = http.SupportPackageIsVersion3
 
+const OperationProductServiceListProductChanges = "/proxycontrol.v1.ProductService/ListProductChanges"
 const OperationProductServiceListProducts = "/proxycontrol.v1.ProductService/ListProducts"
 const OperationProductServiceListTrafficPackages = "/proxycontrol.v1.ProductService/ListTrafficPackages"
 const OperationProductServiceSetProductSale = "/proxycontrol.v1.ProductService/SetProductSale"
 const OperationProductServiceUpdateTrafficPackage = "/proxycontrol.v1.ProductService/UpdateTrafficPackage"
 
 type ProductServiceHTTPServer interface {
+	ListProductChanges(context.Context, *BaseRequest) (*ProductChanges, error)
 	ListProducts(context.Context, *BaseRequest) (*Products, error)
 	ListTrafficPackages(context.Context, *BaseRequest) (*TrafficPackages, error)
 	SetProductSale(context.Context, *SetProductSaleRequest) (*Product, error)
@@ -34,6 +36,7 @@ func RegisterProductServiceHTTPServer(s *http.Server, srv ProductServiceHTTPServ
 	r.Handle("GET", "/v1/public/products", _ProductService_ListProducts0_HTTP_Handler(srv))
 	r.Handle("GET", "/v1/operations/traffic-packages", _ProductService_ListTrafficPackages0_HTTP_Handler(srv))
 	r.Handle("PATCH", "/v1/operations/traffic-packages/{id}", _ProductService_UpdateTrafficPackage0_HTTP_Handler(srv))
+	r.Handle("GET", "/v1/operations/product-changes", _ProductService_ListProductChanges0_HTTP_Handler(srv))
 	r.Handle("PUT", "/v1/operations/product-sales/{kind}", _ProductService_SetProductSale0_HTTP_Handler(srv))
 }
 
@@ -97,6 +100,25 @@ func _ProductService_UpdateTrafficPackage0_HTTP_Handler(srv ProductServiceHTTPSe
 	}
 }
 
+func _ProductService_ListProductChanges0_HTTP_Handler(srv ProductServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in BaseRequest
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationProductServiceListProductChanges)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.ListProductChanges(ctx, req.(*BaseRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*ProductChanges)
+		return ctx.Result(200, reply)
+	}
+}
+
 func _ProductService_SetProductSale0_HTTP_Handler(srv ProductServiceHTTPServer) func(ctx http.Context) error {
 	return func(ctx http.Context) error {
 		var in SetProductSaleRequest
@@ -120,6 +142,7 @@ func _ProductService_SetProductSale0_HTTP_Handler(srv ProductServiceHTTPServer) 
 }
 
 type ProductServiceHTTPClient interface {
+	ListProductChanges(ctx context.Context, req *BaseRequest, opts ...http.CallOption) (rsp *ProductChanges, err error)
 	ListProducts(ctx context.Context, req *BaseRequest, opts ...http.CallOption) (rsp *Products, err error)
 	ListTrafficPackages(ctx context.Context, req *BaseRequest, opts ...http.CallOption) (rsp *TrafficPackages, err error)
 	SetProductSale(ctx context.Context, req *SetProductSaleRequest, opts ...http.CallOption) (rsp *Product, err error)
@@ -132,6 +155,22 @@ type ProductServiceHTTPClientImpl struct {
 
 func NewProductServiceHTTPClient(client *http.Client) ProductServiceHTTPClient {
 	return &ProductServiceHTTPClientImpl{client}
+}
+
+func (c *ProductServiceHTTPClientImpl) ListProductChanges(ctx context.Context, in *BaseRequest, opts ...http.CallOption) (*ProductChanges, error) {
+	var out ProductChanges
+	pattern := "/v1/operations/product-changes"
+	path := http.BuildPath(pattern, in, http.WithQueryParams())
+	opts = append([]http.CallOption{
+		http.Accept("application/protojson"),
+		http.Operation(OperationProductServiceListProductChanges),
+		http.PathTemplate(pattern),
+	}, opts...)
+	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
 }
 
 func (c *ProductServiceHTTPClientImpl) ListProducts(ctx context.Context, in *BaseRequest, opts ...http.CallOption) (*Products, error) {

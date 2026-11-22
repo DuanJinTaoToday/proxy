@@ -93,7 +93,7 @@ export const routes: RouteRecordRaw[] = [
           { path: 'ledger', name: 'ops-tenant-ledger', component: () => import('@/pages/ops/OpsTenantLedgerPage.vue') },
         ],
       },
-      tabbed('products', 'ops-products', 'nav.opsProducts', [{ path: 'dynamic', labelKey: 'tabs.productsDynamic' }, { path: 'static', labelKey: 'tabs.productsStatic' }]),
+      { path: 'products', alias: ['products/dynamic', 'products/static'], name: 'ops-products', component: () => import('@/pages/ops/OpsProductsPage.vue'), meta: { titleKey: 'nav.opsProducts' } },
       { path: 'orders', name: 'ops-orders', component: () => import('@/pages/ops/OpsOrdersPage.vue'), meta: { titleKey: 'nav.opsOrders' } },
     ],
   },

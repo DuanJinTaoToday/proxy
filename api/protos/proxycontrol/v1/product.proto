@@ -3,6 +3,7 @@ syntax = "proto3";
 package proxycontrol.v1;
 
 import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
 import "openapiv3/annotations.proto";
 import "proxycontrol/v1/common.proto";
 import "validate/validate.proto";
@@ -23,6 +24,11 @@ service ProductService {
   rpc UpdateTrafficPackage(UpdateTrafficPackageRequest) returns (TrafficPackage) {
     option (google.api.http) = {patch: "/v1/operations/traffic-packages/{id}", body: "*"};
     option (openapi.v3.operation) = {summary: "修改流量套餐并记录变更"};
+  }
+
+  rpc ListProductChanges(BaseRequest) returns (ProductChanges) {
+    option (google.api.http) = {get: "/v1/operations/product-changes"};
+    option (openapi.v3.operation) = {summary: "读取最近 50 条商品开售及套餐配置修改记录"};
   }
 
   rpc SetProductSale(SetProductSaleRequest) returns (Product) {
@@ -50,6 +56,28 @@ message Product {
 
 message TrafficPackages {
   repeated TrafficPackage packages = 1;
+}
+
+message ProductChanges {
+  repeated ProductChange changes = 1;
+}
+
+message ProductChange {
+  int64 id = 1;
+  // sale 或 package。
+  string target_kind = 2;
+  string target_id = 3;
+  string operator_username = 4;
+  google.protobuf.Timestamp created_at = 5;
+  ProductChangeValue before = 6;
+  ProductChangeValue after = 7;
+}
+
+message ProductChangeValue {
+  bool open = 1;
+  int64 capacity_bytes = 2;
+  int64 price_minor = 3;
+  bool listed = 4;
 }
 
 message TrafficPackage {

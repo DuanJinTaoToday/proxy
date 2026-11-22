@@ -71,6 +71,7 @@ flowchart LR
 | `ResetTenantPassword` POST `/v1/operations/tenants/{tenant_id}:reset-password` | 已核实的租户、至少 12 位新密码 → 空响应 | 具备账号管理权限的运营，记录操作者与重置时间，旧会话按 #37 失效。 |
 | `QuoteWalletRecharge` POST `/v1/operations/tenants/{tenant_id}/wallet/recharge-quotes`、`RechargeWallet` POST `/v1/operations/tenants/{tenant_id}/wallet/recharges` | 金额、原因；提交附确认凭证及请求键 → 租户名、主账号名、预计余额或流水 | 计费管理权限。余额在确认后变化需更新确认信息；重复提交不增加余额。 |
 | `ListTrafficPackages` GET / `UpdateTrafficPackage` PATCH `/v1/operations/traffic-packages`（修改按 `/{id}`）、`SetProductSale` PUT `/v1/operations/product-sales/{type}` | 容量、价格、上下架、预期版本；开售状态及已验收依据 → 新配置及版本 | 修改仅计费管理权限，记录前后值。两类开售分别控制。 |
+| `ListProductChanges` GET `/v1/operations/product-changes` | 最近 50 条记录，含变更对象、操作人、时间和配置前后值 | 运营读取或计费管理权限可读完整套餐目录和修改记录。 |
 | `ListPendingStaticOrders` GET `/v1/operations/orders/static-pending`、`ResolveStaticItem` POST `/v1/operations/orders/{order_id}/items/{item_id}:resolve` | 筛选未知/待核实；目标明细、已核实结果、证据引用及请求键 → 明细结算状态 | 读权限可核查。经授权运营提交结算，后台校验 24/72 小时边界、未结金额和终态。接口支持人工处理，截止时间不触发自动退款。 |
 | `QueryUsage` / `ListRecordAnomalies` / `ListUsageGaps` | 原运营查询入口与筛选 → 用量、隔离、可能缺口 | 运营读权限。租户、网关、时间、子账号维度保留；移除旧倍率分桶。 |
 
