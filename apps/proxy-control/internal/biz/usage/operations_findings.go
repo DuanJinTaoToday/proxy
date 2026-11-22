@@ -70,10 +70,7 @@ func (s *Service) ListUsageGaps(ctx context.Context, token string, filter Findin
 
 func readFindingPage[T any](list string, filter FindingFilter, size int, token string, load func(*FindingKey, int) ([]T, error), key func(T) FindingKey, countOpen func() (int64, error)) (AuditPage[T], error) {
 	var page AuditPage[T]
-	if filter.Resolution == "all" {
-		filter.Resolution = ""
-	}
-	if filter.Resolution != "" && filter.Resolution != "open" && filter.Resolution != "resolved" {
+	if filter.Resolution != "" && filter.Resolution != "open" && filter.Resolution != "resolved" && filter.Resolution != "all" {
 		return page, errors.BadRequest("INVALID_FINDING_RESOLUTION", "resolution must be open, resolved, or all")
 	}
 	scope := struct {

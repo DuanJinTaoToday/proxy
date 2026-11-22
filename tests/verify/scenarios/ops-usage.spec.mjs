@@ -27,8 +27,8 @@ test('运营只读排查用量缺口和 Recorder 记录异常', async ({ page, r
   const usage = '/ops/usage'
   await signInOperator(page, usage, 'operator-readonly')
   await expect(page.getByRole('heading', { name: '用量异常' })).toBeVisible()
-  await expect(page.getByRole('tab', { name: '用量缺口2' })).toBeVisible()
-  await expect(page.getByRole('tab', { name: '记录异常2' })).toBeVisible()
+  await expect(page.getByRole('tab', { name: /^用量缺口\s*2$/ })).toBeVisible()
+  await expect(page.getByRole('tab', { name: /^记录异常\s*2$/ })).toBeVisible()
   const pending = page.getByRole('row').filter({ hasText: 'b-20261120-d7' })
   await expect(pending).toContainText('待回放')
   await expect(pending.getByRole('link')).toHaveCount(0)
@@ -50,7 +50,7 @@ test('运营只读排查用量缺口和 Recorder 记录异常', async ({ page, r
   await screenshot(page, info, '13-usage-gaps-resolved')
   await page.getByText('未解决', { exact: true }).first().click()
 
-  await page.getByRole('tab', { name: '记录异常2' }).click()
+  await page.getByRole('tab', { name: /^记录异常\s*2$/ }).click()
   const anomaly = page.getByRole('row').filter({ hasText: 'rec-000412' })
   await expect(anomaly).toContainText('decode_error')
   await expect(anomaly).toContainText('gw-sg-01')
@@ -108,6 +108,24 @@ test('运营只读排查用量缺口和 Recorder 记录异常', async ({ page, r
     await page.getByText('全部', { exact: true }).click()
     await expect(first).toBeVisible()
   }
+
+  const boot = { gateway_id: 'local-test', boot_id: 'verify-clean-replay' }
+  // The isolated deployment seeds this test gateway's reporting credential.
+  const report = { Authorization: 'Bearer TKR5RfqAtYQI4M70cO9hnpOkfvHqmvWRllr-DuALy2I' }
+  await json(await request.post('/v1/reporting/lifecycle', {
+    headers: report, data: { ...boot, exited_at: new Date().toISOString() },
+  }))
+  await page.goto(usage + '?gateway_id=local-test&boot_id=' + boot.boot_id)
+  await expect(page.getByRole('row').filter({ hasText: boot.boot_id })).toContainText('待回放')
+  await json(await request.post('/v1/reporting/boots/' + boot.boot_id + '/replay-complete', {
+    headers: report, data: { ...boot, has_session_records: true },
+  }))
+  await page.reload()
+  await expect(page.getByText('暂无记录')).toBeVisible()
+  await page.getByText('已解决', { exact: true }).click()
+  const completed = page.getByRole('row').filter({ hasText: boot.boot_id })
+  await expect(completed.getByText(/^解决于 /)).toBeVisible()
+  await screenshot(page, info, '13-usage-gaps-replay-complete')
 
   const observer = await json(await request.post('/v1/operations/access/login',
     { data: { username: 'verify-no-read', password: 'proxy-local-test' } }))

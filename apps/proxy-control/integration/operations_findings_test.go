@@ -215,10 +215,23 @@ func TestOperationsUsageGapStates(t *testing.T) {
 
 	const cleanBoot = `"gateway_id":"gateway-a","boot_id":"clean"`
 	post("lifecycle", "{"+cleanBoot+`,"exited_at":"2026-11-12T02:00:02Z"}`)
+	read(gapsPath+"?boot_id=clean&resolution=open", &state)
+	if len(state.GetGaps()) != 1 || state.GetGaps()[0].GetStatus() != "pending_replay" {
+		t.Fatalf("unreplayed boot should be pending: %v", &state)
+	}
 	post("boots/clean/replay-complete", "{"+cleanBoot+`,"has_session_records":true}`)
 	read(gapsPath+"?boot_id=clean", &state)
 	if len(state.GetGaps()) != 0 {
 		t.Fatalf("completed replay without unfinished sessions produced a gap: %v", &state)
+	}
+	read(gapsPath+"?boot_id=clean&resolution=resolved", &state)
+	if len(state.GetGaps()) != 1 || state.GetGaps()[0].GetResolvedAt() == nil ||
+		state.GetGaps()[0].GetStatus() != "" || state.GetOpenCount() != 0 {
+		t.Fatalf("completed clean replay should retain its resolution time: %v", &state)
+	}
+	read(gapsPath+"?boot_id=clean&resolution=all&status=possible_gap", &state)
+	if len(state.GetGaps()) != 0 {
+		t.Fatalf("completed clean replay should not match possible gaps: %v", &state)
 	}
 
 	execSQL(t, f.db, "INSERT INTO operators (id, username, password_hash) VALUES ('observer', 'observer', ?)", testfixture.PasswordHash)

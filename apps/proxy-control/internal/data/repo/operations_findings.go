@@ -33,8 +33,19 @@ const gapFindings = `SELECT g.id, g.gateway_id, g.boot_id, COALESCE(g.tenant_id,
 			AND NOT EXISTS (SELECT 1 FROM usage_gaps g WHERE g.gateway_id = b.gateway_id AND g.boot_id = b.boot_id)`
 
 func (r *UsageRepository) ListUsageGaps(ctx context.Context, filter usage.FindingFilter, after *usage.FindingKey, limit int) ([]usage.UsageGap, error) {
+	source := gapFindings
+	if filter.Resolution == "resolved" || filter.Resolution == "all" {
+		// A clean replay closes the provisional boot finding. A persisted gap
+		// still represents potentially missing usage and keeps its own resolution.
+		source += ` UNION ALL
+		SELECT 0, b.gateway_id, b.boot_id, '', 'boot', '', '',
+			COALESCE(b.last_record_at, b.last_heartbeat_at, b.exited_at), b.exited_at, b.replay_completed_at, b.exited_at
+		FROM gateway_boots b
+		WHERE b.exited_at IS NOT NULL AND b.replay_completed_at IS NOT NULL
+			AND NOT EXISTS (SELECT 1 FROM usage_gaps g WHERE g.gateway_id = b.gateway_id AND g.boot_id = b.boot_id)`
+	}
 	var rows []usage.UsageGap
-	err := queryFindings(r.db.WithContext(ctx), gapFindings, filter, after, limit).Scan(&rows).Error
+	err := queryFindings(r.db.WithContext(ctx), source, filter, after, limit).Scan(&rows).Error
 	return rows, err
 }
 

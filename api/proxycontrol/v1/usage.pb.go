@@ -669,7 +669,7 @@ type ListUsageGapsRequest struct {
 	PageToken string `protobuf:"bytes,6,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	// 缺口状态筛选条件，支持 pending_replay 或 possible_gap。
 	Status string `protobuf:"bytes,7,opt,name=status,proto3" json:"status,omitempty"`
-	// 处理状态：open 为未解决，resolved 为已解决，省略或 all 为全部。
+	// 处理状态：open 为未解决，resolved 为已解决，all 为全部。省略兼容旧客户端，返回全部已存缺口和待回放的运行代次。
 	Resolution    string `protobuf:"bytes,8,opt,name=resolution,proto3" json:"resolution,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -773,7 +773,7 @@ type UsageGap struct {
 	TenantId string `protobuf:"bytes,4,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
 	// 缺口类型，boot 表示运行代次，session 表示会话。
 	Kind string `protobuf:"bytes,5,opt,name=kind,proto3" json:"kind,omitempty"`
-	// 回放状态，pending_replay 表示待回放，possible_gap 表示可能缺失。
+	// 回放状态，pending_replay 表示待回放，possible_gap 表示可能缺失，回放完成且无缺口的运行代次省略。
 	Status string `protobuf:"bytes,6,opt,name=status,proto3" json:"status,omitempty"`
 	// 代理会话 ID。
 	SessionId string `protobuf:"bytes,7,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`

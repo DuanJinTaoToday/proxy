@@ -17,7 +17,7 @@ interface FindingWire {
 
 interface GapWire extends FindingWire {
   kind: 'boot' | 'session'
-  status: GapStatus
+  status?: GapStatus
   session_id?: string
   from_at: string
 }

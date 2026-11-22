@@ -61,7 +61,7 @@ const dateTime = computed(() => new Intl.DateTimeFormat(locale.value, {
   hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
 }))
 const time = (date: Date) => dateTime.value.format(date)
-const statusLabel = (row: Finding) => row.resolvedAt ? 'resolved' : row.type === 'gap' ? row.status : 'open'
+const statusLabel = (row: Finding) => row.resolvedAt ? 'resolved' : row.type === 'gap' ? row.status ?? 'open' : 'open'
 function tagType(row: Finding) {
   if (row.resolvedAt) return 'success'
   return row.type === 'gap' && row.status === 'pending_replay' ? 'warning' : 'danger'

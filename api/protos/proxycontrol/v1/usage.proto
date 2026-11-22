@@ -168,7 +168,7 @@ message ListUsageGapsRequest {
   string page_token = 6;
   // 缺口状态筛选条件，支持 pending_replay 或 possible_gap。
   string status = 7;
-  // 处理状态：open 为未解决，resolved 为已解决，省略或 all 为全部。
+  // 处理状态：open 为未解决，resolved 为已解决，all 为全部。省略兼容旧客户端，返回全部已存缺口和待回放的运行代次。
   string resolution = 8;
 }
 
@@ -183,7 +183,7 @@ message UsageGap {
   string tenant_id = 4;
   // 缺口类型，boot 表示运行代次，session 表示会话。
   string kind = 5;
-  // 回放状态，pending_replay 表示待回放，possible_gap 表示可能缺失。
+  // 回放状态，pending_replay 表示待回放，possible_gap 表示可能缺失，回放完成且无缺口的运行代次省略。
   string status = 6;
   // 代理会话 ID。
   string session_id = 7;
