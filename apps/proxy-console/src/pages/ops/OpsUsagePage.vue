@@ -61,6 +61,7 @@ const dateTime = computed(() => new Intl.DateTimeFormat(locale.value, {
   hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
 }))
 const time = (date: Date) => dateTime.value.format(date)
+const cellStyle = { height: 'var(--ops-history-row-height)' }
 const statusLabel = (row: Finding) => row.resolvedAt ? 'resolved' : row.type === 'gap' ? row.status ?? 'open' : 'open'
 function tagType(row: Finding) {
   if (row.resolvedAt) return 'success'
@@ -74,7 +75,8 @@ function tagType(row: Finding) {
   <ElTabs :model-value="tab" class="ops-usage-tabs" @update:model-value="query({ tab: $event === 'anomalies' ? 'anomalies' : undefined })">
     <ElTabPane v-for="item in tabs" :key="item" :name="item">
       <template #label>
-        {{ t('opsUsage.' + item) }}<span v-if="counts[item]" class="ops-usage-count">{{ counts[item].toLocaleString(locale) }}</span>
+        <span :class="{ 'ops-usage-tab-active': tab === item }">{{ t('opsUsage.' + item) }}</span>
+        <span v-if="counts[item]" class="ops-usage-count">{{ counts[item].toLocaleString(locale) }}</span>
       </template>
     </ElTabPane>
   </ElTabs>
@@ -102,7 +104,7 @@ function tagType(row: Finding) {
       </ElAlert>
     </div>
     <ElTable v-else :key="tab" :data="state.rows" :empty-text="t('opsUsage.empty')" class="ops-history-table ops-usage-table"
-      header-cell-class-name="ops-history-heading">
+      :cell-style="cellStyle" header-cell-class-name="ops-history-heading">
       <!-- @vue-generic {Finding} -->
       <ElTableColumn :label="t('opsUsage.status')" :width="tab === 'gaps' ? 110 : 90">
         <template #default="{ row }">
@@ -170,8 +172,13 @@ function tagType(row: Finding) {
 .ops-usage-tabs {
   --el-tabs-header-height: var(--ops-history-header-height);
   margin-block-end: var(--ops-usage-tabs-gap);
+  line-height: normal;
 }
-.ops-usage-table.ops-history-table { --el-table-row-hover-bg-color: var(--color-surface-muted); }
+.ops-usage-tab-active { font-weight: var(--font-weight-bold); }
+.ops-history .ops-usage-table {
+  --el-table-row-hover-bg-color: var(--color-surface-muted);
+  --el-table-current-row-bg-color: var(--color-surface-muted);
+}
 .ops-usage-table .mono { font-size: var(--font-size-xs); }
 .ops-usage-count {
   display: inline-grid;
@@ -189,12 +196,17 @@ function tagType(row: Finding) {
 .ops-usage-toolbar { justify-content: space-between; gap: var(--space-3); }
 .ops-usage-filters { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
 .ops-usage-status { width: var(--ops-history-status-width); }
-.ops-usage-hint { color: var(--color-text-secondary); font-size: var(--font-size-sm); margin-inline-end: var(--space-1); }
+.ops-usage-hint {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  line-height: normal;
+  margin-inline-end: var(--space-1);
+}
 .ops-usage-link { color: var(--color-primary); font-weight: var(--font-weight-semibold); text-decoration: none; }
 .ops-usage-link:hover { text-decoration: underline; }
 .ops-usage-footer {
   padding-block: var(--ops-usage-footer-padding);
   font-size: var(--font-size-xs);
-  line-height: var(--ops-usage-footer-line-height);
+  line-height: normal;
 }
 </style>

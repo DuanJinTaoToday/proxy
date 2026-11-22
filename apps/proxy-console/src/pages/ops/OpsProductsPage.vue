@@ -282,12 +282,13 @@ if (canRead.value) void load()
       </section>
     </template>
 
-    <OpsDialog :model-value="Boolean(editing)" :title="editing && t('catalog.editTitle', { capacity: capacityLabel(editing.capacityBytes) })"
+    <OpsDialog class="catalog-price-dialog" :model-value="Boolean(editing)" :title="editing && t('catalog.editTitle', { capacity: capacityLabel(editing.capacityBytes) })"
       width="min(var(--catalog-price-dialog-width), calc(100vw - var(--space-6)))" append-to-body
       :show-close="!busy" :close-on-click-modal="!busy" :close-on-press-escape="!busy" @update:model-value="editing = undefined">
       <ElForm v-if="editing" label-position="top" @submit.prevent="savePrice">
         <ElFormItem :label="t('catalog.yuanPrice')" :error="price && !newPrice ? t('catalog.invalidPrice') : undefined">
-          <ElInput v-model="price" inputmode="decimal" :disabled="busy" maxlength="20" :input-style="{ textAlign: 'center' }" />
+          <ElInput v-model="price" inputmode="decimal" :disabled="busy" maxlength="20"
+            :input-style="{ textAlign: 'center', '-webkit-font-smoothing': 'auto' }" />
         </ElFormItem>
         <dl class="summary-total">
           <div><dt>{{ t('catalog.currentPrice') }}</dt><dd>{{ priceLabel(editing.priceMinor) }}</dd></div>
@@ -320,6 +321,10 @@ if (canRead.value) void load()
   </template>
 </template>
 
+<style>
+.ops-dialog.catalog-price-dialog { line-height: normal; }
+</style>
+
 <style scoped>
 .catalog-card {
   min-width: 0;
@@ -346,7 +351,7 @@ if (canRead.value) void load()
   margin-block-start: var(--ops-detail-meta-gap);
   color: var(--color-text-secondary);
   font-size: var(--font-size-xs);
-  line-height: var(--line-height-tight);
+  line-height: normal;
 }
 .sale-card .card-desc { margin-block-start: var(--catalog-sale-description-gap); }
 .sale-switch { display: flex; align-items: center; gap: var(--space-3); flex: none; }
@@ -362,7 +367,7 @@ if (canRead.value) void load()
   --el-table-current-row-bg-color: var(--color-surface-muted);
   font-size: var(--font-size-sm);
 }
-.price { font-weight: var(--font-weight-semibold); }
+.price { color: var(--color-text); font-weight: var(--font-weight-semibold); }
 .row-actions { display: inline-flex; flex-wrap: wrap; justify-content: end; gap: var(--space-3); }
 .row-actions .el-button { margin-inline-start: 0; font-size: var(--font-size-sm); }
 .audit-before { color: var(--color-text-secondary); text-decoration: line-through; }
