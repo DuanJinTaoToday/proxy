@@ -101,8 +101,8 @@ function tagType(row: Finding) {
         <ElButton size="small" @click="load">{{ t('orders.retry') }}</ElButton>
       </ElAlert>
     </div>
-    <ElTable v-else :key="tab" :data="state.rows" :empty-text="t('opsUsage.empty')" class="ops-history-table"
-      cell-class-name="ops-history-cell" header-cell-class-name="ops-history-heading">
+    <ElTable v-else :key="tab" :data="state.rows" :empty-text="t('opsUsage.empty')" class="ops-history-table ops-usage-table"
+      header-cell-class-name="ops-history-heading">
       <!-- @vue-generic {Finding} -->
       <ElTableColumn :label="t('opsUsage.status')" :width="tab === 'gaps' ? 110 : 90">
         <template #default="{ row }">
@@ -167,7 +167,12 @@ function tagType(row: Finding) {
 </template>
 
 <style scoped>
-.ops-usage-tabs { --el-tabs-header-height: var(--ops-history-header-height); }
+.ops-usage-tabs {
+  --el-tabs-header-height: var(--ops-history-header-height);
+  margin-block-end: var(--ops-usage-tabs-gap);
+}
+.ops-usage-table.ops-history-table { --el-table-row-hover-bg-color: var(--color-surface-muted); }
+.ops-usage-table .mono { font-size: var(--font-size-xs); }
 .ops-usage-count {
   display: inline-grid;
   place-items: center;
@@ -187,5 +192,9 @@ function tagType(row: Finding) {
 .ops-usage-hint { color: var(--color-text-secondary); font-size: var(--font-size-sm); margin-inline-end: var(--space-1); }
 .ops-usage-link { color: var(--color-primary); font-weight: var(--font-weight-semibold); text-decoration: none; }
 .ops-usage-link:hover { text-decoration: underline; }
-.ops-usage-footer { padding-block: var(--ops-usage-footer-padding); font-size: var(--font-size-xs); }
+.ops-usage-footer {
+  padding-block: var(--ops-usage-footer-padding);
+  font-size: var(--font-size-xs);
+  line-height: var(--ops-usage-footer-line-height);
+}
 </style>
