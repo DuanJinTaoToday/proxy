@@ -108,6 +108,10 @@
   --ops-tenant-chip-line-height: 20px;
   --ops-recharge-amount-tracking: -.02em;
   --ops-password-tracking: .04em;
+  --ops-order-section-space: 22px;
+  --ops-order-heading-space: 10px;
+  --ops-order-ledger-padding: 10px;
+  --ops-order-ledger-radius: 9px;
   --ops-dialog-width: 480px;
   --ops-resolve-width: 620px;
   --ops-resolve-count-width: 96px;

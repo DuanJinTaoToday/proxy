@@ -36,7 +36,8 @@ watch([() => props.orderId, () => props.tenantId, retry], async ([id, tenantId],
 
 <template>
   <ElDrawer :model-value="Boolean(props.orderId)" :title="t('orders.detailTitle')"
-    size="min(var(--order-drawer-width), 100vw)" @update:model-value="open => { if (!open) emit('close') }">
+    size="min(var(--order-drawer-width), 100vw)" :class="{ 'ops-order-drawer': tenantId }"
+    @update:model-value="open => { if (!open) emit('close') }">
     <div v-if="state.kind === 'loading'" role="status" :aria-label="t('orders.detailLoading')">
       <ElSkeleton animated :rows="6" />
     </div>
@@ -44,7 +45,7 @@ watch([() => props.orderId, () => props.tenantId, retry], async ([id, tenantId],
       <p>{{ errorMessage(state.error) }}</p>
       <ElButton size="small" @click="retry++">{{ t('orders.retry') }}</ElButton>
     </ElAlert>
-    <div v-else class="order-detail">
+    <div v-else class="order-detail" :class="{ 'order-detail--ops': tenantId }">
       <ElAlert v-if="state.order.status === 'pending'" type="info" show-icon :closable="false"
         :title="t('orders.pendingTitle')" :description="t('orders.pendingDescription')" />
       <ElDescriptions :column="2" border size="small">
@@ -53,7 +54,7 @@ watch([() => props.orderId, () => props.tenantId, retry], async ([id, tenantId],
         </ElDescriptionsItem>
         <ElDescriptionsItem :label="t('orders.type')">{{ t(`orders.kinds.${state.order.kind}`) }}</ElDescriptionsItem>
         <ElDescriptionsItem :label="t('orders.state')">
-          <ElTag :type="statusTypes[state.order.status]" size="small" disable-transitions>{{ t(`orders.status.${state.order.status}`) }}</ElTag>
+          <ElTag :type="tenantId && state.order.status === 'pending' ? 'primary' : statusTypes[state.order.status]" size="small" disable-transitions>{{ t(`orders.status.${state.order.status}`) }}</ElTag>
         </ElDescriptionsItem>
         <ElDescriptionsItem :label="t('orders.placedAt')">
           <time :datetime="state.order.createdAt.toISOString()">{{ dateTime(state.order.createdAt) }}</time>
@@ -67,20 +68,20 @@ watch([() => props.orderId, () => props.tenantId, retry], async ([id, tenantId],
         <h3 id="locked-items-title">{{ t('orders.lockedItems') }}</h3>
         <ElTable :data="state.order.items" row-key="position" size="small" :empty-text="t('orders.noItems')">
           <!-- @vue-generic {OrderItem} -->
-          <ElTableColumn :label="t('orders.item')" min-width="130">
+          <ElTableColumn :label="t('orders.item')" :min-width="tenantId ? 200 : 130">
             <template #default="{ row }">
               <span class="tabular">{{ itemDescription(row) }}</span>
               <span v-if="row.termDays" class="order-note tabular">{{ t('orders.termDays', row.termDays) }}</span>
             </template>
           </ElTableColumn>
           <!-- @vue-generic {OrderItem} -->
-          <ElTableColumn :label="t('orders.lineProgress')" min-width="120" align="right">
+          <ElTableColumn :label="t('orders.lineProgress')" :min-width="tenantId ? 100 : 120" align="right">
             <template #default="{ row }">
               <span class="tabular">{{ t('orders.quantityProgress', { delivered: row.deliveredCount, ordered: row.quantity }) }}</span>
             </template>
           </ElTableColumn>
           <!-- @vue-generic {OrderItem} -->
-          <ElTableColumn :label="t('orders.unitPrice')" min-width="95" align="right">
+          <ElTableColumn :label="t('orders.unitPrice')" :min-width="tenantId ? 90 : 95" align="right">
             <template #default="{ row }"><span class="tabular">{{ money(row.unitMinor) }}</span></template>
           </ElTableColumn>
         </ElTable>
@@ -131,4 +132,25 @@ watch([() => props.orderId, () => props.tenantId, retry], async ([id, tenantId],
 .order-ledger { display: grid; gap: var(--space-2); list-style: none; margin: 0; padding: 0; }
 .order-ledger > li { border-bottom: var(--border-width) solid var(--color-border); }
 .credit-amount { color: var(--color-success-text); }
+.order-detail--ops { gap: var(--ops-order-section-space); }
+.order-detail--ops h3 { margin-block-end: var(--ops-order-heading-space); font-size: var(--font-size-md); }
+.order-detail--ops .mono { font-size: var(--font-size-xs); }
+.order-detail--ops .order-ledger {
+  gap: 0;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--ops-order-ledger-radius);
+}
+.order-detail--ops .order-ledger li {
+  padding: var(--ops-order-ledger-padding) var(--space-3);
+  font-size: var(--font-size-sm);
+}
+.order-detail--ops .order-ledger li:last-child { border-block-end: 0; }
+.order-detail--ops .order-totals {
+  margin-block-start: var(--space-4);
+  padding-block-start: var(--space-3);
+  border-block-start: var(--border-width) solid var(--color-border);
+  font-size: var(--font-size-sm);
+}
+.order-detail--ops .order-paid { align-items: end; border-block-start: 0; }
+.order-detail--ops .order-paid dd { font-size: var(--font-size-title); }
 </style>

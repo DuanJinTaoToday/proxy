@@ -54,7 +54,7 @@
   --el-component-size: var(--control-height-compact);
 }
 
-.density-compact, :root .ops-dialog {
+.density-compact, :root .ops-dialog, :root .ops-order-drawer {
   --font-mono: var(--ops-font-mono);
   --el-color-success: var(--ops-success);
   --el-color-success-light-8: var(--ops-success-border);
