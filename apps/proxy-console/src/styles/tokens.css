@@ -88,6 +88,11 @@
   --notification-panel-width: 360px;
   --recharge-panel-width: 280px;
   --ops-dialog-width: 480px;
+  --ops-queue-header-height: 42px;
+  --ops-queue-row-height: 58px;
+  --ops-resolve-width: 620px;
+  --ops-resolve-count-width: 96px;
+  --ops-resolve-form-gap: 18px;
   --ops-dialog-footer-padding: 20px;
   --ops-card-radius: 14px;
   --ops-card-title-line-height: 26px;

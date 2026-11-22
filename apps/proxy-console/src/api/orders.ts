@@ -1,4 +1,5 @@
 import { request } from './client'
+import { opsTenantPath } from './opsTenants'
 import { mapWalletEntry, type WalletEntryWire } from './wallet'
 
 export const orderProducts = ['dynamic', 'static'] as const
@@ -16,9 +17,11 @@ interface OrderItemWire {
   unit_minor?: string
   quantity?: number
   delivered_count?: number
+  supplier_item_id?: string
+  outcome?: string
 }
 
-interface OrderWire {
+export interface OrderWire {
   id: string
   kind: string
   status: string
@@ -63,10 +66,12 @@ function mapItem(wire: OrderItemWire) {
     unitMinor: BigInt(wire.unit_minor ?? 0),
     quantity: wire.quantity ?? 0,
     deliveredCount: wire.delivered_count ?? 0,
+    supplierItemId: wire.supplier_item_id,
+    outcome: wire.outcome,
   }
 }
 
-function mapOrder(wire: OrderWire) {
+export function mapOrder(wire: OrderWire) {
   const kind: OrderKind | 'unknown' = orderKinds.find(kind => kind === wire.kind) ?? 'unknown'
   const status: OrderStatus | 'unknown' = orderStatuses.find(status => status === wire.status) ?? 'unknown'
   const createdAt = new Date(wire.created_at)
@@ -116,7 +121,15 @@ export async function getPendingOrderCount(signal: AbortSignal) {
 }
 
 export async function getOrder(orderId: string, signal: AbortSignal) {
-  const wire = await request<OrderDetailWire>(`/v1/tenant/orders/${encodeURIComponent(orderId)}`, { signal })
+  return fetchOrder(`/v1/tenant/orders/${encodeURIComponent(orderId)}`, signal)
+}
+
+export function getOpsOrder(tenantId: string, orderId: string, signal: AbortSignal) {
+  return fetchOrder(opsTenantPath(tenantId) + '/orders/' + encodeURIComponent(orderId), signal)
+}
+
+async function fetchOrder(path: string, signal: AbortSignal) {
+  const wire = await request<OrderDetailWire>(path, { signal })
   return {
     ...mapOrder(wire),
     items: (wire.items ?? []).map(mapItem),

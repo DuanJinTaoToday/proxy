@@ -40,8 +40,6 @@ function tabbed(path: string, prefix: string, titleKey: string, tabs: Tab[], com
 
 export const tabsParent = (route: RouteLocationNormalizedLoaded) => route.matched.find(record => record.meta.tabs)
 
-const page = (path: string, name: string, titleKey: string): RouteRecordRaw => ({ path, name, component: RoutePlaceholder, meta: { titleKey } })
-
 export const routes: RouteRecordRaw[] = [
   { path: '/', redirect: '/zh-CN/' },
   {
@@ -88,7 +86,7 @@ export const routes: RouteRecordRaw[] = [
       { path: 'tenants', name: 'ops-tenants', component: () => import('@/pages/ops/OpsTenantsPage.vue'), meta: { titleKey: 'nav.opsTenants' } },
       { path: 'tenants/:tenantId', name: 'ops-tenant', component: () => import('@/pages/ops/OpsTenantPage.vue'), meta: { titleKey: 'nav.opsTenants' } },
       tabbed('products', 'ops-products', 'nav.opsProducts', [{ path: 'dynamic', labelKey: 'tabs.productsDynamic' }, { path: 'static', labelKey: 'tabs.productsStatic' }]),
-      page('orders', 'ops-orders', 'nav.opsOrders'),
+      { path: 'orders', name: 'ops-orders', component: () => import('@/pages/ops/OpsOrdersPage.vue'), meta: { titleKey: 'nav.opsOrders' } },
     ],
   },
   { path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('@/pages/public/NotFoundPage.vue'), meta: { titleKey: 'notFound.title' } },
