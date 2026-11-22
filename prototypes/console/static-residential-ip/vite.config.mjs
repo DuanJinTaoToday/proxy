@@ -6,5 +6,5 @@ const page = name => fileURLToPath(new URL(name, import.meta.url))
 
 export default defineConfig({
   plugins: [vue()],
-  build: { rollupOptions: { input: { console: page('index.html'), operator: page('operator.html') } } },
+  build: { rollupOptions: { input: { console: page('index.html'), operator: page('operator.html'), home: page('home.html') } } },
 })

@@ -30,4 +30,6 @@ npm --prefix prototypes/console/static-residential-ip run dev
 
 两个入口共用一份演示数据，保存在浏览器 localStorage，在两个标签页分别打开时会实时同步，例如运营充值后客户钱包立即到账、下架某档流量包后客户价格页随之隐藏。运营后台账号菜单里的「重置演示数据」恢复初始状态。
 
+同一工程的 `/home.html` 是官网首页原型，供评审首屏方案。网址参数 `?variant=D|A|B|C` 切换方案，默认 D 组合方案：在连续深色底上依次讲选型、接入和查账管理，地图首屏接一组动态与静态的双栏价格对比，C 的实时终端做接入主画面，再用一张控制台局部展示用量和子账号，画面数据均标为示例。A、B、C 保留为单独方案（数据冲击、双商品分屏、实时控制台）供对照，`&hero=map|globe` 切换点阵地图或可拖拽地球动效，底部黄色切换条和键盘 ←、→ 也能切换。切换条的「开售」直接改写共用的商品开售开关，评审后请切回「两个都开售」。首屏数字、客户评价和 Telegram 联系方式为编造或占位，集中在 `src/home/home-demo.ts`，上线前替换。
+
 静态 IP 的地区、库存、租期和价格来自皇冠正式 API 的目录快照，存于 `src/catalog.ts`。重新查询后把快照写入仓库根目录 `.scratch/ipcrown-catalog.json`，再运行 `pwsh prototypes/console/static-residential-ip/scripts/gen-catalog.ps1` 重新生成。快照和生成文件均不含凭证。动态套餐价格、网关地址和用量为示例值。
