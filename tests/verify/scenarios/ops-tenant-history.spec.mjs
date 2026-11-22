@@ -89,6 +89,16 @@ test('运营按租户筛选和分页，核对订单交付、退款和钱包流�
     await expect(page.getByText('没有符合条件的订单')).toBeVisible()
     await screenshot(page, info, '03-tenant-orders-empty')
     await page.getByRole('button', { name: '清除筛选' }).click()
+    const search = page.getByRole('textbox', { name: '搜索订单号' })
+    await search.fill('9999999999999999999')
+    await search.press('Enter')
+    await expect(page.getByText('没有符合条件的订单')).toBeVisible()
+    await expect(page).toHaveURL(/orderQuery=9999999999999999999/)
+    await search.fill(traffic.id)
+    await search.press('Enter')
+    await expect(page.getByRole('button', { name: traffic.id, exact: true })).toBeVisible()
+    await search.fill('')
+    await search.press('Enter')
 
     await page.getByRole('tab', { name: '钱包流水', exact: true }).click()
     await expect(page).toHaveURL(new RegExp(tenantPage + '/ledger$'))
@@ -112,6 +122,12 @@ test('运营按租户筛选和分页，核对订单交付、退款和钱包流�
     await expect(drawer.getByText('+¥10.00', { exact: true })).toBeVisible()
     await expect(drawer.getByText('流水 #' + refund.id, { exact: false })).toBeVisible()
     await screenshot(page, info, '04-tenant-ledger-linked-order')
+    await page.keyboard.press('Escape')
+    await page.getByText('充值', { exact: true }).first().click()
+    await expect(rechargeRow).toBeVisible()
+    await expect(refundRow).toHaveCount(0)
+    await page.goto(tenantPage + '/ledger?start=2000-01-01&end=2000-01-02')
+    await expect(page.getByText('没有符合条件的流水')).toBeVisible()
 
     const { tenant_id: emptyId } = await json(await request.post('/v1/access/register', {
       data: { phone: '13900008802', password: 'proxy-local-test' },
