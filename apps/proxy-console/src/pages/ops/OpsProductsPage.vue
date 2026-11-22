@@ -129,7 +129,7 @@ async function toggleSale(kind: ProductKind) {
   }
   const name = productName(kind)
   const confirmed = await ElMessageBox.confirm(t('catalog.closeHint'), t('catalog.closeTitle', { name }), {
-    confirmButtonText: t('catalog.close'), cancelButtonText: t('catalog.cancel'), type: 'warning',
+    confirmButtonText: t('catalog.close'), cancelButtonText: t('catalog.cancel'), type: 'warning', autofocus: false,
   }).then(() => true, () => false)
   if (confirmed) {
     await save(() => setProductSale(kind, { open: false }, controller.signal), () => ElMessage.success(t('catalog.saleClosed', { name })))
@@ -222,7 +222,9 @@ if (canRead.value) void load()
           <div class="sale-switch">
             <ElTag :type="opsCatalog.sales[kind] ? 'success' : 'info'" disable-transitions>{{ t(opsCatalog.sales[kind] ? 'catalog.onSale' : 'catalog.closed') }}</ElTag>
             <ElTooltip :disabled="canBill" :content="t('catalog.billingOnly')" placement="top">
-              <span><ElSwitch :model-value="opsCatalog.sales[kind]" :disabled="locked" :aria-label="t('catalog.switchLabel', { name: productName(kind) })" @change="toggleSale(kind)" /></span>
+              <span @keydown.enter.stop.prevent>
+                <ElSwitch :model-value="opsCatalog.sales[kind]" :disabled="locked" :aria-label="t('catalog.switchLabel', { name: productName(kind) })" @change="toggleSale(kind)" />
+              </span>
             </ElTooltip>
           </div>
         </section>

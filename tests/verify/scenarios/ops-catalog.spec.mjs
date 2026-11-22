@@ -9,6 +9,8 @@ const publicProductsPath = '/v1/public/products'
 const staticPurchasePath = '/v1/tenant/static-orders'
 const staticQuotePath = '/v1/tenant/static-purchase-quotes'
 
+test.use({ actionTimeout: 7000 })
+
 async function openProducts(page, username) {
   await signInOperator(page, '/ops', username)
   await expect(page).toHaveURL(/\/ops\/tenants$/)
