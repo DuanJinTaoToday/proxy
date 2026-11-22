@@ -1,81 +1,119 @@
 import { test, expect } from '@playwright/test'
 import { writeFile } from 'node:fs/promises'
-import { findTenant, login, prepareRecharge, screenshot, submitRecharge } from '../support/console.mjs'
+import { screenshot, signInOperator, signInTenant } from '../support/console.mjs'
 
-// 旧控制台已在 #77 移除。新控制台交付登录（#69）、动态购买（#72）、钱包（#76）和运营充值页面后，改用新页面恢复本场景。
-test.fixme('运营充值 → 租户看到到账', async ({ browser, page: tenant, baseURL }, info) => {
-  const operatorContext = await browser.newContext({ baseURL, ignoreHTTPSErrors: true })
-  const operator = await operatorContext.newPage()
-  const reason = 'verify-' + process.env.VERIFY_ID
-  const balance = tenant.locator('.summary-card').filter({
-    has: tenant.getByRole('heading', { name: '可用余额', exact: true }),
-  }).locator('.summary-number')
-  let before, after, receipt
+const searchInput = page => page.getByRole('textbox', { name: '主账号名或手机号' })
+const receiptField = (page, dialog, label) => dialog.locator('dl > div').filter({ has: page.getByText(label, { exact: true }) }).locator('dd')
+const rechargePath = '/v1/operations/tenants/visual-recharge-tenant/wallet/recharges'
+
+async function search(page, value) {
+  await searchInput(page).fill(value)
+  await page.getByRole('button', { name: '查找', exact: true }).click()
+}
+
+test('运营充值 → 原提交重试 → 租户看到唯一一笔到账', async ({ browser, page: tenant, baseURL }, info) => {
+  const context = await browser.newContext({ baseURL, ignoreHTTPSErrors: true, viewport: { width: 1440, height: 1000 }, timezoneId: 'Asia/Shanghai', locale: 'zh-CN' })
+  const operator = await context.newPage()
+  const reason = '对公转账到账，回单尾号 3381'
+  const balance = tenant.getByRole('region', { name: '可用余额', exact: true }).locator('.wallet-overview__available')
+  const before = '¥229.00'
+  const after = '¥239.00'
+  let receipt
 
   try {
     await test.step('租户登录并读取初始余额', async () => {
-      await login(tenant, '/console', '手机号', '13800000001')
-      await tenant.getByRole('navigation', { name: '租户导航' })
-        .getByRole('link', { name: '鲲星钱包', exact: true }).click()
-      await expect(balance).toHaveText(/^¥[\d,]+\.\d{2}$/)
-      before = await balance.innerText()
-      const [yuan, fraction] = before.slice(1).replaceAll(',', '').split('.')
-      after = '¥' + (BigInt(yuan) + 10n).toLocaleString('zh-CN') + '.' + fraction
-      await screenshot(tenant, info, '01-tenant-before')
+      await signInTenant(tenant, '13800136021')
+      await tenant.getByRole('menuitem', { name: '钱包', exact: true }).click()
+      await expect(balance).toHaveText(before)
+      await screenshot(tenant, info, 'customer-before')
     })
-    await test.step('运营核对租户、金额、原因和预计余额', async () => {
-      await login(operator, '/operations', '运营账号', 'operator')
-      const nav = operator.getByRole('navigation', { name: '运营导航' })
-      const toggle = operator.getByRole('button', { name: '切换侧栏' })
-      await toggle.click()
-      await expect(nav.getByRole('button', { name: '租户钱包', exact: true })).toHaveAttribute('title', '租户钱包')
-      await expect(nav.getByRole('link', { name: '商品与套餐', exact: true })).toHaveAttribute('title', '商品与套餐')
-      await expect(nav.getByRole('link', { name: '待核实订单', exact: true })).toHaveAttribute('title', '待核实订单')
-      await toggle.click()
-      await findTenant(operator, '13800000001')
-      const summary = operator.getByRole('region', { name: 'Alpha', exact: true })
-      await expect(summary.getByText(before, { exact: true })).toBeVisible()
-      await prepareRecharge(operator, '10.00', reason)
-      const form = operator.locator('form').filter({ has: operator.getByRole('heading', { name: '确认充值信息' }) })
-      const field = label => form.locator('dl > div').filter({ has: operator.getByText(label, { exact: true }) }).locator('dd')
-      for (const [label, expected] of [
-        ['租户名', 'Alpha'], ['主账号名', 'localalpha'], ['充值金额', '¥10.00'],
-        ['预计到账后余额', after], ['充值原因', reason],
-      ]) await expect(field(label)).toHaveText(expected)
-      await screenshot(operator, info, '02-operator-confirmation')
+    await test.step('运营通过手机号与主账号名查找同一租户并核对信息', async () => {
+      await signInOperator(operator, '/ops', 'operator-billing')
+      await expect(operator).toHaveURL(new URL('/ops/tenants', baseURL).href)
+      await expect(operator.getByRole('heading', { name: '查找租户' })).toBeVisible()
+      await screenshot(operator, info, '01-tenant-search')
+      await search(operator, 'unknown-account')
+      await expect(operator.getByText(/没有找到租户/)).toBeVisible()
+      await screenshot(operator, info, '01b-tenant-empty')
+      await search(operator, '+8613800136021')
+      const match = operator.getByRole('link', { name: /陈小岚工作室.*chenxl-studio/ })
+      const href = await match.getAttribute('href')
+      expect(href).toBe('/ops/tenants/visual-recharge-tenant')
+      await search(operator, 'chenxl-studio')
+      await expect(match).toHaveAttribute('href', href)
+      await screenshot(operator, info, '02-tenant-match')
+      await match.click()
+      await expect(operator).toHaveURL(new URL(href, baseURL).href)
+      await expect(operator.getByRole('heading', { name: '陈小岚工作室' })).toBeVisible()
+      await expect(operator.getByText(before, { exact: true })).toBeVisible()
+      await screenshot(operator, info, '03-tenant-detail')
+
+      await operator.getByRole('button', { name: '钱包充值', exact: true }).click()
+      const dialog = operator.getByRole('dialog')
+      await dialog.getByRole('spinbutton', { name: /充值金额/ }).fill('10.00')
+      await dialog.getByRole('textbox', { name: /充值原因/ }).fill(reason)
+      await screenshot(operator, info, '05-recharge-form')
+      await dialog.getByRole('button', { name: '下一步' }).click()
+      for (const [label, value] of [
+        ['租户名', '陈小岚工作室'], ['主账号名', 'chenxl-studio'], ['充值原因', reason],
+        ['充值金额', '¥10.00'], ['当前余额', before], ['到账后余额', after],
+      ]) await expect(receiptField(operator, dialog, label)).toHaveText(value)
+      await screenshot(operator, info, '06-recharge-confirm')
     })
-    await test.step('提交充值并读取运营回执', async () => {
-      receipt = await submitRecharge(operator)
-      const row = operator.getByRole('row').filter({ has: operator.getByText(reason, { exact: true }) })
-      await expect(row).toHaveCount(1)
-      await expect(row.getByRole('rowheader')).toHaveText('#' + receipt)
-      await screenshot(operator, info, '03-operator-receipt')
+    await test.step('首笔已经入账但回执丢失，重试保持原请求', async () => {
+      const dialog = operator.getByRole('dialog')
+      let firstRequest, firstReceipt, replayRequest, replayReceipt
+      await operator.route('**' + rechargePath, async route => {
+        const body = route.request().postDataJSON()
+        const response = await route.fetch()
+        expect(response.status()).toBe(200)
+        if (!firstRequest) {
+          firstRequest = body
+          firstReceipt = await response.json()
+          await route.abort('failed')
+        } else {
+          replayRequest = body
+          replayReceipt = await response.json()
+          await route.fulfill({ response })
+        }
+      })
+      await dialog.getByRole('button', { name: /^确认充值/ }).click()
+      await expect(dialog.getByRole('alert')).toHaveText(/暂未收到充值结果/)
+      await dialog.getByRole('button', { name: '重试原提交' }).click()
+      await expect(dialog.getByText('充值已到账', { exact: true })).toBeVisible()
+      expect(replayRequest).toEqual(firstRequest)
+      expect(replayReceipt).toEqual(firstReceipt)
+      expect(firstReceipt).toMatchObject({ operator_name: 'operator-billing', reason })
+      receipt = firstReceipt.id
+      await expect(receiptField(operator, dialog, '流水号')).toHaveText(receipt)
+      await expect(receiptField(operator, dialog, '操作人')).toHaveText('operator-billing')
+      await expect(receiptField(operator, dialog, '到账时间')).toHaveText(/\d{4}/)
+      await expect(receiptField(operator, dialog, '变动')).toHaveText(before + ' → ' + after)
+      await screenshot(operator, info, '07-recharge-result')
+      await dialog.getByRole('button', { name: '完成' }).click()
+      await expect(operator.getByText(after, { exact: true })).toBeVisible()
     })
-    for (const step of ['租户刷新并核对到账', '再次刷新确认余额和流水稳定']) {
-      await test.step(step, async () => {
+    for (let refresh = 1; refresh <= 2; refresh++) {
+      await test.step('租户刷新并核对余额和唯一流水 ' + refresh, async () => {
         await tenant.reload()
         await expect(balance).toHaveText(after)
-        const row = tenant.getByRole('row').filter({
-          has: tenant.getByRole('rowheader', { name: '#' + receipt, exact: true }),
-        })
+        const row = tenant.getByRole('row').filter({ has: tenant.getByRole('cell', { name: receipt, exact: true }) })
         await expect(row).toHaveCount(1)
-        const cells = row.getByRole('cell')
-        await expect(cells.nth(1)).toHaveText('运营充值')
-        await expect(cells.nth(2)).toHaveText('¥10.00')
-        await expect(cells.nth(3)).toHaveText(after)
+        await expect(row.getByRole('cell', { name: '运营充值到账', exact: true })).toBeVisible()
+        await expect(row.getByRole('cell', { name: '+¥10.00', exact: true })).toBeVisible()
+        await expect(row.getByRole('cell', { name: after, exact: true })).toBeVisible()
+        await expect(row).not.toContainText(reason)
+        await expect(row).not.toContainText('operator-billing')
       })
     }
-    await screenshot(tenant, info, '04-tenant-after-refresh')
+    await screenshot(tenant, info, 'customer-after')
     const path = info.outputPath('wallet-result.json')
-    await writeFile(path, JSON.stringify({
-      tenant: 'Alpha', account: 'localalpha', before, amount: '¥10.00',
-      after: await balance.innerText(), receipt, reason, verifiedRefreshes: 2,
-    }, null, 2) + '\n')
+    await writeFile(path, JSON.stringify({ tenant: '陈小岚工作室', account: 'chenxl-studio', before, amount: '¥10.00', after, receipt, reason, verifiedRefreshes: 2 }, null, 2) + '\n')
     await info.attach('wallet-result', { path, contentType: 'application/json' })
   } catch (error) {
     if (!operator.isClosed()) await screenshot(operator, info, 'operator-at-failure')
     throw error
   } finally {
-    await operatorContext.close()
+    await context.close()
   }
 })

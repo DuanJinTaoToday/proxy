@@ -1,5 +1,8 @@
 {
   "wallet": {
+    "opsHistoryCount": "{count} result | {count} results",
+    "opsHistoryEntryTime": "Entry ID / time",
+    "opsBalanceChange": "Before → after",
     "available": "Available balance",
     "balanceHint": "Traffic packages, static IPs, and renewals are paid from your wallet.",
     "totalRecharge": "Total recharged",
@@ -52,6 +55,34 @@
       "unknown": "Wallet balance adjustment"
     },
     "lowBalanceHint": "The balance is low and may not cover your next purchase or renewal.",
-    "pageEntries": "{count} entries on this page"
+    "pageEntries": "{count} entries on this page",
+    "opsRecharge": "Wallet recharge",
+    "opsReviewTitle": "Review recharge details",
+    "opsTenant": "Tenant",
+    "opsAmount": "Recharge amount (CNY)",
+    "opsReason": "Recharge reason",
+    "opsReasonExample": "For example, bank transfer received, receipt ending in 3381",
+    "opsReasonHint": "Only operators can see the reason and operator name. The customer ledger shows “Operator recharge.”",
+    "opsTenantName": "Tenant name",
+    "opsPrimaryAccount": "Primary account name",
+    "opsCurrent": "Current balance",
+    "opsAfter": "Expected balance",
+    "opsAmountSummary": "Recharge amount",
+    "opsReviewHint": "The recharge posts immediately and cannot be reversed. Operator: {operator}.",
+    "opsDone": "Recharge posted",
+    "opsDoneBalance": "{tenant} now has a balance of {amount}",
+    "opsEntry": "Ledger ID",
+    "opsOperator": "Operator",
+    "opsEntryTime": "Posted at",
+    "opsChange": "Balance change",
+    "opsBillingOnly": "Billing permission is required to recharge.",
+    "opsMissingReason": "Enter a recharge reason",
+    "opsMissingAmount": "Enter a valid recharge amount",
+    "opsNext": "Next",
+    "opsEdit": "Back to edit",
+    "opsConfirm": "Confirm recharge {amount}",
+    "opsFinish": "Done",
+    "opsUncertain": "The result is unknown. Retry the original request to avoid a second credit.",
+    "opsRetry": "Retry original request"
   }
 }

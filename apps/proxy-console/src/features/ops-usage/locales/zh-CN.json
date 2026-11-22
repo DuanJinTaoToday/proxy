@@ -1,0 +1,29 @@
+{
+  "opsUsage": {
+    "gaps": "用量缺口",
+    "anomalies": "记录异常",
+    "resolutionFilter": "按处理状态筛选",
+    "statusFilter": "按缺口状态筛选",
+    "open": "未解决",
+    "resolved": "已解决",
+    "all": "全部",
+    "allStatuses": "全部状态",
+    "pending_replay": "待回放",
+    "possible_gap": "可能缺失",
+    "boot": "运行代次",
+    "session": "会话",
+    "gapsHint": "网关退出或会话中断后，未回放的用量可能少扣",
+    "anomaliesHint": "Recorder 文件中无法解析的记录",
+    "status": "状态",
+    "kind": "类型",
+    "anomalyKind": "异常类型",
+    "tenant": "租户",
+    "gatewayBoot": "网关 / 运行代次",
+    "fileOffset": "文件 / 偏移",
+    "fromAt": "可能缺失起点",
+    "detectedResolved": "发现 / 解决",
+    "resolvedAt": "解决于 {time}",
+    "readOnly": "只读视图 · 处理由网关回放和工程排查完成",
+    "empty": "暂无记录"
+  }
+}

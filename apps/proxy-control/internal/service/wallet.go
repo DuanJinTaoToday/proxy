@@ -17,7 +17,7 @@ func NewWallet(biz *wallet.Service) *Wallet { return &Wallet{biz: biz} }
 func (s *Wallet) FindTenants(ctx context.Context, req *v1.FindWalletTenantRequest) (*v1.WalletTenant, error) {
 	noStore(ctx)
 	tenant, err := s.biz.FindTenant(ctx, bearerToken(ctx), req.GetQuery())
-	return tenantMessage(tenant), wallet.PublicError(err)
+	return tenantMessage(tenant, true), wallet.PublicError(err)
 }
 
 func (s *Wallet) GetTenant(ctx context.Context, req *v1.WalletTenantRequest) (*v1.WalletTenant, error) {
@@ -27,7 +27,7 @@ func (s *Wallet) GetTenant(ctx context.Context, req *v1.WalletTenantRequest) (*v
 func (s *Wallet) GetCustomerWallet(ctx context.Context, _ *v1.BaseRequest) (*v1.WalletTenant, error) {
 	noStore(ctx)
 	tenant, err := s.biz.CustomerWallet(ctx, bearerToken(ctx))
-	return tenantMessage(tenant), wallet.PublicError(err)
+	return tenantMessage(tenant, false), wallet.PublicError(err)
 }
 
 func (s *Wallet) PurchaseTrafficPackage(ctx context.Context, req *v1.PurchaseTrafficPackageRequest) (*v1.PurchaseOrder, error) {
@@ -41,7 +41,7 @@ func (s *Wallet) PurchaseTrafficPackage(ctx context.Context, req *v1.PurchaseTra
 func (s *Wallet) getTenant(ctx context.Context, id string, operations bool) (*v1.WalletTenant, error) {
 	noStore(ctx)
 	tenant, err := s.biz.Tenant(ctx, bearerToken(ctx), id, operations)
-	return tenantMessage(tenant), wallet.PublicError(err)
+	return tenantMessage(tenant, operations), wallet.PublicError(err)
 }
 
 func (s *Wallet) QuoteWalletRecharge(ctx context.Context, req *v1.QuoteWalletRechargeRequest) (*v1.WalletRechargeQuote, error) {
@@ -50,7 +50,7 @@ func (s *Wallet) QuoteWalletRecharge(ctx context.Context, req *v1.QuoteWalletRec
 	if err != nil {
 		return nil, wallet.PublicError(err)
 	}
-	return &v1.WalletRechargeQuote{Tenant: tenantMessage(tenant), AmountMinor: quote.AmountMinor,
+	return &v1.WalletRechargeQuote{Tenant: tenantMessage(tenant, true), AmountMinor: quote.AmountMinor,
 		Reason: quote.Reason, ExpectedAfterMinor: after, ConfirmationToken: quote.ID, ExpiresAt: timestamppb.New(quote.ExpiresAt)}, nil
 }
 
@@ -61,7 +61,9 @@ func (s *Wallet) RechargeWallet(ctx context.Context, req *v1.RechargeWalletReque
 }
 
 func (s *Wallet) ListOperatorWalletEntries(ctx context.Context, req *v1.OperatorWalletEntriesRequest) (*v1.WalletEntries, error) {
-	return s.entries(ctx, req.GetTenantId(), true, wallet.Filter{BeforeID: req.GetBeforeId()})
+	return s.entries(ctx, req.GetTenantId(), true, wallet.Filter{
+		BeforeID: req.GetBeforeId(), Kind: req.GetKind(), StartDate: req.GetStartDate(), EndDate: req.GetEndDate(),
+	})
 }
 
 func (s *Wallet) ListCustomerWalletEntries(ctx context.Context, req *v1.CustomerWalletEntriesRequest) (*v1.WalletEntries, error) {
@@ -88,7 +90,9 @@ func (s *Wallet) entries(ctx context.Context, id string, operations bool, filter
 }
 
 func (s *Wallet) ListOperatorPurchaseOrders(ctx context.Context, req *v1.OperatorPurchaseOrdersRequest) (*v1.PurchaseOrders, error) {
-	return s.orders(ctx, req.GetTenantId(), true, wallet.Filter{BeforeID: req.GetBeforeId(), Kind: req.GetKind(), Status: req.GetStatus()})
+	return s.orders(ctx, req.GetTenantId(), true, wallet.Filter{
+		BeforeID: req.GetBeforeId(), OrderQuery: req.GetOrderQuery(), Kind: req.GetKind(), Status: req.GetStatus(),
+	})
 }
 
 func (s *Wallet) ListCustomerPurchaseOrders(ctx context.Context, req *v1.CustomerPurchaseOrdersRequest) (*v1.PurchaseOrders, error) {
@@ -130,10 +134,17 @@ func (s *Wallet) getOrder(ctx context.Context, id string, operations bool, order
 	return orderMessage(order), wallet.PublicError(err)
 }
 
-func tenantMessage(tenant wallet.Tenant) *v1.WalletTenant {
-	return &v1.WalletTenant{TenantId: tenant.ID, Name: tenant.Name, PrimaryAccountName: tenant.PrimaryAccountName,
+func tenantMessage(tenant wallet.Tenant, operations bool) *v1.WalletTenant {
+	message := &v1.WalletTenant{TenantId: tenant.ID, Name: tenant.Name, PrimaryAccountName: tenant.PrimaryAccountName,
 		AvailableMinor: tenant.AvailableMinor, AvailableTrafficBytes: tenant.AvailableTrafficBytes,
 		TotalRechargeMinor: tenant.TotalRechargeMinor, TotalSpendMinor: tenant.TotalSpendMinor}
+	if operations {
+		message.Phone = tenant.Phone
+		if !tenant.RegisteredAt.IsZero() {
+			message.RegisteredAt = timestamppb.New(tenant.RegisteredAt)
+		}
+	}
+	return message
 }
 
 func entryMessage(entry wallet.Entry, operations bool) *v1.WalletEntry {

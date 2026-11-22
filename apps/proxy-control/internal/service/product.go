@@ -5,6 +5,7 @@ import (
 
 	v1 "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/product"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type Product struct{ biz *product.Service }
@@ -44,6 +45,28 @@ func (s *Product) UpdateTrafficPackage(ctx context.Context, req *v1.UpdateTraffi
 		Version: req.GetVersion(),
 	}, req.Listed)
 	return packageMessage(item), product.PublicError(err)
+}
+
+func (s *Product) ListProductChanges(ctx context.Context, _ *v1.BaseRequest) (*v1.ProductChanges, error) {
+	noStore(ctx)
+	items, err := s.biz.Changes(ctx, bearerToken(ctx))
+	if err != nil {
+		return nil, product.PublicError(err)
+	}
+	response := &v1.ProductChanges{}
+	for _, item := range items {
+		response.Changes = append(response.Changes, &v1.ProductChange{
+			Id: item.ID, TargetKind: item.TargetKind, TargetId: item.TargetID, OperatorUsername: item.OperatorUsername,
+			CreatedAt: timestamppb.New(item.CreatedAt), Before: changeValueMessage(item.Before), After: changeValueMessage(item.After),
+		})
+	}
+	return response, nil
+}
+
+func changeValueMessage(value product.ChangeValue) *v1.ProductChangeValue {
+	return &v1.ProductChangeValue{
+		Open: value.Open, CapacityBytes: value.CapacityBytes, PriceMinor: value.PriceMinor, Listed: value.Listed,
+	}
 }
 
 func (s *Product) SetProductSale(ctx context.Context, req *v1.SetProductSaleRequest) (*v1.Product, error) {

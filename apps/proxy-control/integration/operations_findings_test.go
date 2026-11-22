@@ -59,8 +59,24 @@ func TestOperationsRecordAnomalies(t *testing.T) {
 			t.Fatalf("filter %s returned %v, want %d rows", tc.query, &result, tc.want)
 		}
 	}
+	var onlyOpen v1.ListRecordAnomaliesResponse
+	read(anomaliesPath+"?page_size=1&resolution=open", &onlyOpen)
+	if len(onlyOpen.GetAnomalies()) != 1 || onlyOpen.GetAnomalies()[0].GetFileOffset() != 11 || onlyOpen.GetNextPageToken() == "" {
+		t.Fatalf("first unresolved anomaly page: %v", &onlyOpen)
+	}
+	openCursor := url.QueryEscape(onlyOpen.GetNextPageToken())
+	read(anomaliesPath+"?page_size=1&resolution=open&page_token="+openCursor, &onlyOpen)
+	if len(onlyOpen.GetAnomalies()) != 1 || onlyOpen.GetAnomalies()[0].GetFileOffset() != 33 || onlyOpen.GetNextPageToken() != "" {
+		t.Fatalf("second unresolved anomaly page: %v", &onlyOpen)
+	}
+	var onlyResolved v1.ListRecordAnomaliesResponse
+	read(anomaliesPath+"?page_size=1&resolution=resolved", &onlyResolved)
+	if len(onlyResolved.GetAnomalies()) != 1 || onlyResolved.GetAnomalies()[0].GetFileOffset() != 22 || onlyResolved.GetAnomalies()[0].GetResolvedAt() == nil || onlyResolved.GetNextPageToken() != "" {
+		t.Fatalf("resolved anomaly page: %v", &onlyResolved)
+	}
 	path := anomaliesPath + "?page_size=1"
 	operator := testfixture.Login(t, f.http, "operator")
+	testfixture.AssertStatus(t, testfixture.Request(f.http, "GET", anomaliesPath+"?resolution=resolved&page_token="+openCursor, "", operator), 400, "INVALID_PAGE_TOKEN")
 	for i, offset := range []uint64{22, 11, 33} {
 		var page v1.ListRecordAnomaliesResponse
 		read(path, &page)
@@ -175,6 +191,20 @@ func TestOperationsUsageGapStates(t *testing.T) {
 		t.Fatalf("unexpected gap: %v", gap)
 	}
 
+	// The engineering resolution follows replay; reporting itself only
+	// establishes whether there may be a gap.
+	execSQL(t, f.db, `UPDATE usage_gaps SET resolved_at = '2026-11-12T02:13:00Z'
+		WHERE gateway_id = 'gateway-a' AND boot_id = 'replay' AND session_id = 'session-b'`)
+	read(sessionPath+"&status=possible_gap&resolution=resolved&page_size=1", &state)
+	if len(state.GetGaps()) != 1 || state.GetGaps()[0].GetGapId() != gapID ||
+		state.GetGaps()[0].GetResolvedAt().AsTime().Format(time.RFC3339) != "2026-11-12T02:13:00Z" || state.GetNextPageToken() != "" || state.GetOpenCount() != 1 {
+		t.Fatalf("expected the resolved session and scoped open count: %v", &state)
+	}
+	read(sessionPath+"&status=possible_gap&resolution=open&page_size=1", &state)
+	if len(state.GetGaps()) != 1 || state.GetGaps()[0].GetSessionId() != "session-a" || state.GetNextPageToken() != "" {
+		t.Fatalf("expected only the unresolved session: %v", &state)
+	}
+
 	const emptyBoot = `"gateway_id":"gateway-a","boot_id":"empty"`
 	post("lifecycle", "{"+emptyBoot+`,"exited_at":"2026-11-12T02:00:02Z"}`)
 	post("boots/empty/replay-complete", "{"+emptyBoot+`,"has_session_records":false}`)
@@ -185,13 +215,29 @@ func TestOperationsUsageGapStates(t *testing.T) {
 
 	const cleanBoot = `"gateway_id":"gateway-a","boot_id":"clean"`
 	post("lifecycle", "{"+cleanBoot+`,"exited_at":"2026-11-12T02:00:02Z"}`)
+	read(gapsPath+"?boot_id=clean&resolution=open", &state)
+	if len(state.GetGaps()) != 1 || state.GetGaps()[0].GetStatus() != "pending_replay" {
+		t.Fatalf("unreplayed boot should be pending: %v", &state)
+	}
 	post("boots/clean/replay-complete", "{"+cleanBoot+`,"has_session_records":true}`)
 	read(gapsPath+"?boot_id=clean", &state)
 	if len(state.GetGaps()) != 0 {
 		t.Fatalf("completed replay without unfinished sessions produced a gap: %v", &state)
 	}
+	read(gapsPath+"?boot_id=clean&resolution=resolved", &state)
+	if len(state.GetGaps()) != 1 || state.GetGaps()[0].GetResolvedAt() == nil ||
+		state.GetGaps()[0].GetStatus() != "" || state.GetOpenCount() != 0 {
+		t.Fatalf("completed clean replay should retain its resolution time: %v", &state)
+	}
+	read(gapsPath+"?boot_id=clean&resolution=all&status=possible_gap", &state)
+	if len(state.GetGaps()) != 0 {
+		t.Fatalf("completed clean replay should not match possible gaps: %v", &state)
+	}
 
+	execSQL(t, f.db, "INSERT INTO operators (id, username, password_hash) VALUES ('observer', 'observer', ?)", testfixture.PasswordHash)
+	observer := testfixture.Login(t, f.http, "observer")
 	for _, path := range []string{anomaliesPath, gapsPath} {
 		testfixture.AssertStatus(t, testfixture.Request(f.http, "GET", path, "", ""), 401, "")
+		testfixture.AssertStatus(t, testfixture.Request(f.http, "GET", path+"?resolution=open", "", observer), 403, "")
 	}
 }

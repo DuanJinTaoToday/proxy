@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import { ElTag } from 'element-plus'
 import WorkspaceFrame from './WorkspaceFrame.vue'
 import { opsNav } from '../navigation'
 
@@ -9,8 +8,43 @@ const { t } = useI18n()
 
 <template>
   <div class="density-compact">
-    <WorkspaceFrame :sections="opsNav" :nav-label="t('nav.opsNav')">
-      <template #brand-extra><ElTag effect="dark" size="small" disable-transitions>{{ t('app.opsBadge') }}</ElTag></template>
+    <WorkspaceFrame ops :sections="opsNav" :nav-label="t('nav.opsNav')">
+      <template #brand-extra><span class="ops-badge">{{ t('app.opsBadge') }}</span></template>
     </WorkspaceFrame>
   </div>
 </template>
+
+<style>
+.density-compact {
+  --el-border-radius-base: var(--ops-control-radius);
+}
+.ops-page-tabs {
+  --el-tabs-header-height: var(--tabs-height);
+  --el-border-color-light: transparent;
+  background-image: linear-gradient(var(--color-border), var(--color-border));
+  background-position: 0 calc(var(--el-tabs-header-height) - var(--border-width));
+  background-repeat: no-repeat;
+  background-size: 100% var(--border-width);
+}
+.ops-page-title {
+  margin-block-end: var(--ops-page-heading-gap);
+  font-size: var(--ops-display-size);
+  line-height: var(--ops-heading-line-height);
+  letter-spacing: var(--ops-display-tracking);
+  font-weight: var(--font-weight-heavy);
+}
+</style>
+
+<style scoped>
+.ops-badge {
+  margin-inline-start: var(--ops-badge-offset);
+  padding: var(--ops-badge-offset) var(--space-2);
+  border-radius: var(--radius-control);
+  background: var(--color-shell);
+  color: var(--color-accent);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--ops-badge-line-height);
+  white-space: nowrap;
+}
+</style>

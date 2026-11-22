@@ -378,7 +378,9 @@ type ListRecordAnomaliesRequest struct {
 	// 每页条数，取值为 1–500。省略或传 0 时使用 100。
 	PageSize int32 `protobuf:"varint,5,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	// 上一页返回的游标。查询条件应与上一页一致，首屏留空。
-	PageToken     string `protobuf:"bytes,6,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	PageToken string `protobuf:"bytes,6,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	// 处理状态：open 为未解决，resolved 为已解决，省略或 all 为全部。
+	Resolution    string `protobuf:"bytes,7,opt,name=resolution,proto3" json:"resolution,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -455,6 +457,13 @@ func (x *ListRecordAnomaliesRequest) GetPageToken() string {
 	return ""
 }
 
+func (x *ListRecordAnomaliesRequest) GetResolution() string {
+	if x != nil {
+		return x.Resolution
+	}
+	return ""
+}
+
 type RecordAnomaly struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 异常记录 ID。
@@ -474,7 +483,9 @@ type RecordAnomaly struct {
 	// 首次检测到问题的时间。
 	DetectedAt *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=detected_at,json=detectedAt,proto3" json:"detected_at,omitempty"`
 	// 问题解决的时间。
-	ResolvedAt    *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=resolved_at,json=resolvedAt,proto3" json:"resolved_at,omitempty"`
+	ResolvedAt *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=resolved_at,json=resolvedAt,proto3" json:"resolved_at,omitempty"`
+	// 有归属时的租户名称。
+	TenantName    string `protobuf:"bytes,10,opt,name=tenant_name,json=tenantName,proto3" json:"tenant_name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -572,12 +583,21 @@ func (x *RecordAnomaly) GetResolvedAt() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *RecordAnomaly) GetTenantName() string {
+	if x != nil {
+		return x.TenantName
+	}
+	return ""
+}
+
 type ListRecordAnomaliesResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 本页的异常记录。
 	Anomalies []*RecordAnomaly `protobuf:"bytes,1,rep,name=anomalies,proto3" json:"anomalies,omitempty"`
 	// 下一页的游标。为空表示没有更多记录。
 	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	// 首屏查询范围内的未解决总数，不受处理状态筛选影响。
+	OpenCount     int64 `protobuf:"varint,3,opt,name=open_count,json=openCount,proto3" json:"open_count,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -626,6 +646,13 @@ func (x *ListRecordAnomaliesResponse) GetNextPageToken() string {
 	return ""
 }
 
+func (x *ListRecordAnomaliesResponse) GetOpenCount() int64 {
+	if x != nil {
+		return x.OpenCount
+	}
+	return 0
+}
+
 type ListUsageGapsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 网关 ID。
@@ -641,7 +668,9 @@ type ListUsageGapsRequest struct {
 	// 上一页返回的游标。查询条件应与上一页一致，首屏留空。
 	PageToken string `protobuf:"bytes,6,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	// 缺口状态筛选条件，支持 pending_replay 或 possible_gap。
-	Status        string `protobuf:"bytes,7,opt,name=status,proto3" json:"status,omitempty"`
+	Status string `protobuf:"bytes,7,opt,name=status,proto3" json:"status,omitempty"`
+	// 处理状态：open 为未解决，resolved 为已解决，all 为全部。省略兼容旧客户端，返回全部已存缺口和待回放的运行代次。
+	Resolution    string `protobuf:"bytes,8,opt,name=resolution,proto3" json:"resolution,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -725,6 +754,13 @@ func (x *ListUsageGapsRequest) GetStatus() string {
 	return ""
 }
 
+func (x *ListUsageGapsRequest) GetResolution() string {
+	if x != nil {
+		return x.Resolution
+	}
+	return ""
+}
+
 type UsageGap struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Empty for a pending boot that has no session reports yet.
@@ -737,7 +773,7 @@ type UsageGap struct {
 	TenantId string `protobuf:"bytes,4,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
 	// 缺口类型，boot 表示运行代次，session 表示会话。
 	Kind string `protobuf:"bytes,5,opt,name=kind,proto3" json:"kind,omitempty"`
-	// 回放状态，pending_replay 表示待回放，possible_gap 表示可能缺失。
+	// 回放状态，pending_replay 表示待回放，possible_gap 表示可能缺失，回放完成且无缺口的运行代次省略。
 	Status string `protobuf:"bytes,6,opt,name=status,proto3" json:"status,omitempty"`
 	// 代理会话 ID。
 	SessionId string `protobuf:"bytes,7,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
@@ -748,7 +784,9 @@ type UsageGap struct {
 	// 问题解决的时间。
 	ResolvedAt *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=resolved_at,json=resolvedAt,proto3" json:"resolved_at,omitempty"`
 	// 网关退出时间。
-	ExitedAt      *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=exited_at,json=exitedAt,proto3" json:"exited_at,omitempty"`
+	ExitedAt *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=exited_at,json=exitedAt,proto3" json:"exited_at,omitempty"`
+	// 有归属时的租户名称。
+	TenantName    string `protobuf:"bytes,12,opt,name=tenant_name,json=tenantName,proto3" json:"tenant_name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -860,12 +898,21 @@ func (x *UsageGap) GetExitedAt() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *UsageGap) GetTenantName() string {
+	if x != nil {
+		return x.TenantName
+	}
+	return ""
+}
+
 type ListUsageGapsResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 本页的用量缺口。
 	Gaps []*UsageGap `protobuf:"bytes,1,rep,name=gaps,proto3" json:"gaps,omitempty"`
 	// 下一页的游标。为空表示没有更多记录。
 	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	// 首屏查询范围内的未解决总数，不受缺口状态或处理状态筛选影响。
+	OpenCount     int64 `protobuf:"varint,3,opt,name=open_count,json=openCount,proto3" json:"open_count,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -912,6 +959,13 @@ func (x *ListUsageGapsResponse) GetNextPageToken() string {
 		return x.NextPageToken
 	}
 	return ""
+}
+
+func (x *ListUsageGapsResponse) GetOpenCount() int64 {
+	if x != nil {
+		return x.OpenCount
+	}
+	return 0
 }
 
 type QueryUsageRequest struct {
@@ -1248,7 +1302,7 @@ const file_proxycontrol_v1_usage_proto_rawDesc = "" +
 	"occurrence\x18\x03 \x01(\x03R\n" +
 	"occurrence\x12=\n" +
 	"\ftriggered_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\vtriggeredAtB\x12\n" +
-	"\x10_threshold_bytes\"\xcd\x01\n" +
+	"\x10_threshold_bytes\"\xed\x01\n" +
 	"\x1aListRecordAnomaliesRequest\x12\x1d\n" +
 	"\n" +
 	"gateway_id\x18\x01 \x01(\tR\tgatewayId\x12\x17\n" +
@@ -1258,7 +1312,10 @@ const file_proxycontrol_v1_usage_proto_rawDesc = "" +
 	"\tpage_size\x18\x05 \x01(\x05B\n" +
 	"\xfaB\a\x1a\x05\x18\xf4\x03(\x00R\bpageSize\x12\x1d\n" +
 	"\n" +
-	"page_token\x18\x06 \x01(\tR\tpageToken\"\xcb\x02\n" +
+	"page_token\x18\x06 \x01(\tR\tpageToken\x12\x1e\n" +
+	"\n" +
+	"resolution\x18\a \x01(\tR\n" +
+	"resolution\"\xec\x02\n" +
 	"\rRecordAnomaly\x12\x1d\n" +
 	"\n" +
 	"anomaly_id\x18\x01 \x01(\tR\tanomalyId\x12\x1d\n" +
@@ -1273,10 +1330,15 @@ const file_proxycontrol_v1_usage_proto_rawDesc = "" +
 	"\vdetected_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"detectedAt\x12;\n" +
 	"\vresolved_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"resolvedAt\"\x83\x01\n" +
+	"resolvedAt\x12\x1f\n" +
+	"\vtenant_name\x18\n" +
+	" \x01(\tR\n" +
+	"tenantName\"\xa2\x01\n" +
 	"\x1bListRecordAnomaliesResponse\x12<\n" +
 	"\tanomalies\x18\x01 \x03(\v2\x1e.proxycontrol.v1.RecordAnomalyR\tanomalies\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\xdf\x01\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1d\n" +
+	"\n" +
+	"open_count\x18\x03 \x01(\x03R\topenCount\"\xff\x01\n" +
 	"\x14ListUsageGapsRequest\x12\x1d\n" +
 	"\n" +
 	"gateway_id\x18\x01 \x01(\tR\tgatewayId\x12\x17\n" +
@@ -1287,7 +1349,10 @@ const file_proxycontrol_v1_usage_proto_rawDesc = "" +
 	"\xfaB\a\x1a\x05\x18\xf4\x03(\x00R\bpageSize\x12\x1d\n" +
 	"\n" +
 	"page_token\x18\x06 \x01(\tR\tpageToken\x12\x16\n" +
-	"\x06status\x18\a \x01(\tR\x06status\"\xa9\x03\n" +
+	"\x06status\x18\a \x01(\tR\x06status\x12\x1e\n" +
+	"\n" +
+	"resolution\x18\b \x01(\tR\n" +
+	"resolution\"\xca\x03\n" +
 	"\bUsageGap\x12\x15\n" +
 	"\x06gap_id\x18\x01 \x01(\tR\x05gapId\x12\x1d\n" +
 	"\n" +
@@ -1304,10 +1369,14 @@ const file_proxycontrol_v1_usage_proto_rawDesc = "" +
 	"\vresolved_at\x18\n" +
 	" \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"resolvedAt\x127\n" +
-	"\texited_at\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\bexitedAt\"n\n" +
+	"\texited_at\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\bexitedAt\x12\x1f\n" +
+	"\vtenant_name\x18\f \x01(\tR\n" +
+	"tenantName\"\x8d\x01\n" +
 	"\x15ListUsageGapsResponse\x12-\n" +
 	"\x04gaps\x18\x01 \x03(\v2\x19.proxycontrol.v1.UsageGapR\x04gaps\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\xcb\x03\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1d\n" +
+	"\n" +
+	"open_count\x18\x03 \x01(\x03R\topenCount\"\xcb\x03\n" +
 	"\x11QueryUsageRequest\x12$\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\a\xfaB\x04r\x02 \x01R\btenantId\x12\x1d\n" +
 	"\n" +

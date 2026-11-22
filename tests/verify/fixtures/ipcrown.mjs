@@ -8,6 +8,7 @@ const termDays = new Map([['rp', 1], ['zp', 7], ['yp1', 30], ['yp3', 90], ['yp6'
 const allocations = new Map()
 const orders = new Map()
 const pendingRenewals = new Map()
+const delayedRenewalIDs = new Set()
 const sequenceByNode = new Map()
 const day = 24 * 60 * 60 * 1000
 
@@ -90,7 +91,7 @@ function renew({ cid, ids, time }) {
     // Item 20102 remains unresolved until the operator records a confirmed failure.
     if (id === 20102) continue
     // Item 20103 is visible in detail only after the test releases the delayed confirmation.
-    if (id === 20103) {
+    if (id === 20103 || delayedRenewalIDs.has(id)) {
       pendingRenewals.set(id, stoptime)
       continue
     }
@@ -136,8 +137,18 @@ async function handle(request, response) {
     return json(response, 200, { available: detailAvailable })
   }
   if (path === '/fixture/renewals/confirm') {
-    for (const [id, stoptime] of pendingRenewals) allocations.get(id).stoptime = stoptime
-    pendingRenewals.clear()
+    const ids = body.id === undefined ? [...pendingRenewals.keys()] : [body.id]
+    for (const id of ids) {
+      if (!pendingRenewals.has(id)) continue
+      allocations.get(id).stoptime = pendingRenewals.get(id)
+      pendingRenewals.delete(id)
+      delayedRenewalIDs.delete(id)
+    }
+    return json(response, 200, { ok: true })
+  }
+  if (path === '/fixture/renewals/delay') {
+    if (!allocations.has(body.id)) return json(response, 400, { error: 'Expected an allocated fixture item ID' })
+    delayedRenewalIDs.add(body.id)
     return json(response, 200, { ok: true })
   }
 

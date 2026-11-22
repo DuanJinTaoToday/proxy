@@ -12,15 +12,16 @@ func (s *Usage) ListRecordAnomalies(ctx context.Context, req *v1.ListRecordAnoma
 	noStore(ctx)
 	filter := usage.FindingFilter{
 		GatewayID: req.GetGatewayId(), BootID: req.GetBootId(), TenantID: req.GetTenantId(), Kind: req.GetKind(),
+		Resolution: req.GetResolution(),
 	}
 	page, err := s.biz.ListRecordAnomalies(ctx, bearerToken(ctx), filter, int(req.GetPageSize()), req.GetPageToken())
 	if err != nil {
 		return nil, err
 	}
-	reply := &v1.ListRecordAnomaliesResponse{NextPageToken: page.NextToken}
+	reply := &v1.ListRecordAnomaliesResponse{NextPageToken: page.NextToken, OpenCount: page.OpenCount}
 	for _, row := range page.Items {
 		reply.Anomalies = append(reply.Anomalies, &v1.RecordAnomaly{
-			AnomalyId: optionalNumericID(row.ID), GatewayId: row.GatewayID, BootId: row.BootID, TenantId: row.TenantID,
+			AnomalyId: optionalNumericID(row.ID), GatewayId: row.GatewayID, BootId: row.BootID, TenantId: row.TenantID, TenantName: row.TenantName,
 			Kind: row.Kind, FileId: row.FileID, FileOffset: row.FileOffset,
 			DetectedAt: timestamppb.New(row.DetectedAt), ResolvedAt: timestamp(row.ResolvedAt),
 		})
@@ -33,15 +34,16 @@ func (s *Usage) ListUsageGaps(ctx context.Context, req *v1.ListUsageGapsRequest)
 	filter := usage.FindingFilter{
 		GatewayID: req.GetGatewayId(), BootID: req.GetBootId(), TenantID: req.GetTenantId(),
 		Kind: req.GetKind(), Status: req.GetStatus(),
+		Resolution: req.GetResolution(),
 	}
 	page, err := s.biz.ListUsageGaps(ctx, bearerToken(ctx), filter, int(req.GetPageSize()), req.GetPageToken())
 	if err != nil {
 		return nil, err
 	}
-	reply := &v1.ListUsageGapsResponse{NextPageToken: page.NextToken}
+	reply := &v1.ListUsageGapsResponse{NextPageToken: page.NextToken, OpenCount: page.OpenCount}
 	for _, row := range page.Items {
 		reply.Gaps = append(reply.Gaps, &v1.UsageGap{
-			GapId: optionalNumericID(row.ID), GatewayId: row.GatewayID, BootId: row.BootID, TenantId: row.TenantID,
+			GapId: optionalNumericID(row.ID), GatewayId: row.GatewayID, BootId: row.BootID, TenantId: row.TenantID, TenantName: row.TenantName,
 			Kind: row.Kind, Status: row.Status, SessionId: row.SessionID, FromAt: timestamppb.New(row.FromAt),
 			DetectedAt: timestamppb.New(row.DetectedAt), ResolvedAt: timestamp(row.ResolvedAt),
 			ExitedAt: timestamp(row.ExitedAt),

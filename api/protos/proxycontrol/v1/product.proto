@@ -3,6 +3,7 @@ syntax = "proto3";
 package proxycontrol.v1;
 
 import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
 import "openapiv3/annotations.proto";
 import "proxycontrol/v1/common.proto";
 import "validate/validate.proto";
@@ -23,6 +24,11 @@ service ProductService {
   rpc UpdateTrafficPackage(UpdateTrafficPackageRequest) returns (TrafficPackage) {
     option (google.api.http) = {patch: "/v1/operations/traffic-packages/{id}", body: "*"};
     option (openapi.v3.operation) = {summary: "修改流量套餐并记录变更"};
+  }
+
+  rpc ListProductChanges(BaseRequest) returns (ProductChanges) {
+    option (google.api.http) = {get: "/v1/operations/product-changes"};
+    option (openapi.v3.operation) = {summary: "读取最近 50 条商品开售及套餐配置修改记录"};
   }
 
   rpc SetProductSale(SetProductSaleRequest) returns (Product) {
@@ -50,6 +56,39 @@ message Product {
 
 message TrafficPackages {
   repeated TrafficPackage packages = 1;
+}
+
+message ProductChanges {
+  // 商品与套餐的配置变更审计记录。
+  repeated ProductChange changes = 1;
+}
+
+message ProductChange {
+  // 审计记录编号。
+  int64 id = 1;
+  // 变更目标类型。sale 表示商品开售状态，package 表示流量包配置。
+  string target_kind = 2;
+  // sale 为商品类型（dynamic 或 static），package 为稳定套餐 ID。
+  string target_id = 3;
+  // 执行变更的运营账号用户名。
+  string operator_username = 4;
+  // 记录变更的时间。
+  google.protobuf.Timestamp created_at = 5;
+  // 变更前的目标快照。
+  ProductChangeValue before = 6;
+  // 变更后的目标快照。
+  ProductChangeValue after = 7;
+}
+
+message ProductChangeValue {
+  // 商品是否开售。仅适用于 sale；字段省略时表示未开售。
+  bool open = 1;
+  // 套餐容量，单位字节，1 GB 等于 1,000,000,000 字节。仅适用于 package。
+  int64 capacity_bytes = 2;
+  // 套餐总价，单位分。仅适用于 package；字段省略或为 0 时表示未定价。
+  int64 price_minor = 3;
+  // 套餐是否上架。仅适用于 package；字段省略时表示下架。
+  bool listed = 4;
 }
 
 message TrafficPackage {

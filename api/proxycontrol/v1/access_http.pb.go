@@ -19,6 +19,7 @@ const _ = http.SupportPackageIsVersion3
 
 const OperationAccessServiceCheckPermission = "/proxycontrol.v1.AccessService/CheckPermission"
 const OperationAccessServiceGetAccount = "/proxycontrol.v1.AccessService/GetAccount"
+const OperationAccessServiceGetOperatorAccount = "/proxycontrol.v1.AccessService/GetOperatorAccount"
 const OperationAccessServiceLogin = "/proxycontrol.v1.AccessService/Login"
 const OperationAccessServiceLoginOperator = "/proxycontrol.v1.AccessService/LoginOperator"
 const OperationAccessServiceRegister = "/proxycontrol.v1.AccessService/Register"
@@ -27,6 +28,7 @@ const OperationAccessServiceResetTenantPassword = "/proxycontrol.v1.AccessServic
 type AccessServiceHTTPServer interface {
 	CheckPermission(context.Context, *CheckPermissionRequest) (*BaseResp, error)
 	GetAccount(context.Context, *BaseRequest) (*TenantAccess, error)
+	GetOperatorAccount(context.Context, *BaseRequest) (*OperatorAccount, error)
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
 	LoginOperator(context.Context, *LoginOperatorRequest) (*LoginResponse, error)
 	Register(context.Context, *RegisterRequest) (*TenantAccess, error)
@@ -38,6 +40,7 @@ func RegisterAccessServiceHTTPServer(s *http.Server, srv AccessServiceHTTPServer
 	r.Handle("POST", "/v1/access/register", _AccessService_Register0_HTTP_Handler(srv))
 	r.Handle("GET", "/v1/tenant/account", _AccessService_GetAccount0_HTTP_Handler(srv))
 	r.Handle("POST", "/v1/operations/access/login", _AccessService_LoginOperator0_HTTP_Handler(srv))
+	r.Handle("GET", "/v1/operations/access/account", _AccessService_GetOperatorAccount0_HTTP_Handler(srv))
 	r.Handle("POST", "/v1/operations/tenants/{tenant_id}:reset-password", _AccessService_ResetTenantPassword0_HTTP_Handler(srv))
 	r.Handle("POST", "/v1/access/check", _AccessService_CheckPermission0_HTTP_Handler(srv))
 	r.Handle("POST", "/v1/access/login", _AccessService_Login0_HTTP_Handler(srv))
@@ -96,6 +99,25 @@ func _AccessService_LoginOperator0_HTTP_Handler(srv AccessServiceHTTPServer) fun
 			return err
 		}
 		reply := out.(*LoginResponse)
+		return ctx.Result(200, reply)
+	}
+}
+
+func _AccessService_GetOperatorAccount0_HTTP_Handler(srv AccessServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in BaseRequest
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationAccessServiceGetOperatorAccount)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.GetOperatorAccount(ctx, req.(*BaseRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*OperatorAccount)
 		return ctx.Result(200, reply)
 	}
 }
@@ -163,6 +185,7 @@ func _AccessService_Login0_HTTP_Handler(srv AccessServiceHTTPServer) func(ctx ht
 type AccessServiceHTTPClient interface {
 	CheckPermission(ctx context.Context, req *CheckPermissionRequest, opts ...http.CallOption) (rsp *BaseResp, err error)
 	GetAccount(ctx context.Context, req *BaseRequest, opts ...http.CallOption) (rsp *TenantAccess, err error)
+	GetOperatorAccount(ctx context.Context, req *BaseRequest, opts ...http.CallOption) (rsp *OperatorAccount, err error)
 	Login(ctx context.Context, req *LoginRequest, opts ...http.CallOption) (rsp *LoginResponse, err error)
 	LoginOperator(ctx context.Context, req *LoginOperatorRequest, opts ...http.CallOption) (rsp *LoginResponse, err error)
 	Register(ctx context.Context, req *RegisterRequest, opts ...http.CallOption) (rsp *TenantAccess, err error)
@@ -201,6 +224,22 @@ func (c *AccessServiceHTTPClientImpl) GetAccount(ctx context.Context, in *BaseRe
 	opts = append([]http.CallOption{
 		http.Accept("application/protojson"),
 		http.Operation(OperationAccessServiceGetAccount),
+		http.PathTemplate(pattern),
+	}, opts...)
+	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (c *AccessServiceHTTPClientImpl) GetOperatorAccount(ctx context.Context, in *BaseRequest, opts ...http.CallOption) (*OperatorAccount, error) {
+	var out OperatorAccount
+	pattern := "/v1/operations/access/account"
+	path := http.BuildPath(pattern, in, http.WithQueryParams())
+	opts = append([]http.CallOption{
+		http.Accept("application/protojson"),
+		http.Operation(OperationAccessServiceGetOperatorAccount),
 		http.PathTemplate(pattern),
 	}, opts...)
 	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)

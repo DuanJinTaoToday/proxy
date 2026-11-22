@@ -9,12 +9,14 @@ import (
 )
 
 type AuditPage[T any] struct {
-	Items []T
+	Items     []T
 	NextToken string
+	OpenCount int64
 }
 
 type FindingFilter struct {
 	GatewayID, BootID, TenantID, Kind, Status string
+	Resolution                                string `json:",omitempty"`
 }
 
 type FindingKey struct {
@@ -25,17 +27,17 @@ type FindingKey struct {
 
 type RecordAnomaly struct {
 	FindingKey
-	TenantID, Kind, FileID string
-	FileOffset             uint64
-	ResolvedAt             *time.Time
+	TenantID, TenantName, Kind, FileID string
+	FileOffset                         uint64
+	ResolvedAt                         *time.Time
 }
 
 type UsageGap struct {
 	FindingKey
-	TenantID, Kind, Status, SessionID string
-	FromAt                            time.Time
-	ResolvedAt                        *time.Time
-	ExitedAt                          *time.Time
+	TenantID, TenantName, Kind, Status, SessionID string
+	FromAt                                        time.Time
+	ResolvedAt                                    *time.Time
+	ExitedAt                                      *time.Time
 }
 
 func (s *Service) ListRecordAnomalies(ctx context.Context, token string, filter FindingFilter, size int, pageToken string) (AuditPage[RecordAnomaly], error) {
@@ -44,7 +46,9 @@ func (s *Service) ListRecordAnomalies(ctx context.Context, token string, filter 
 	}
 	return readFindingPage("anomalies", filter, size, pageToken, func(after *FindingKey, limit int) ([]RecordAnomaly, error) {
 		return s.repo.ListRecordAnomalies(ctx, filter, after, limit)
-	}, func(row RecordAnomaly) FindingKey { return row.FindingKey })
+	}, func(row RecordAnomaly) FindingKey { return row.FindingKey }, func() (int64, error) {
+		return s.repo.CountOpenRecordAnomalies(ctx, filter)
+	})
 }
 
 func (s *Service) ListUsageGaps(ctx context.Context, token string, filter FindingFilter, size int, pageToken string) (AuditPage[UsageGap], error) {
@@ -59,11 +63,16 @@ func (s *Service) ListUsageGaps(ctx context.Context, token string, filter Findin
 	}
 	return readFindingPage("gaps", filter, size, pageToken, func(after *FindingKey, limit int) ([]UsageGap, error) {
 		return s.repo.ListUsageGaps(ctx, filter, after, limit)
-	}, func(row UsageGap) FindingKey { return row.FindingKey })
+	}, func(row UsageGap) FindingKey { return row.FindingKey }, func() (int64, error) {
+		return s.repo.CountOpenUsageGaps(ctx, filter)
+	})
 }
 
-func readFindingPage[T any](list string, filter FindingFilter, size int, token string, load func(*FindingKey, int) ([]T, error), key func(T) FindingKey) (AuditPage[T], error) {
+func readFindingPage[T any](list string, filter FindingFilter, size int, token string, load func(*FindingKey, int) ([]T, error), key func(T) FindingKey, countOpen func() (int64, error)) (AuditPage[T], error) {
 	var page AuditPage[T]
+	if filter.Resolution != "" && filter.Resolution != "open" && filter.Resolution != "resolved" && filter.Resolution != "all" {
+		return page, errors.BadRequest("INVALID_FINDING_RESOLUTION", "resolution must be open, resolved, or all")
+	}
 	scope := struct {
 		List   string
 		Filter FindingFilter
@@ -80,5 +89,8 @@ func readFindingPage[T any](list string, filter FindingFilter, size int, token s
 		return page, err
 	}
 	page.Items, page.NextToken, err = finishPage(rows, size, cursor, key)
+	if err == nil && after == nil {
+		page.OpenCount, err = countOpen()
+	}
 	return page, err
 }

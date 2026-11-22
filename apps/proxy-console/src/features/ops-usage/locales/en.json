@@ -1,0 +1,29 @@
+{
+  "opsUsage": {
+    "gaps": "Usage gaps",
+    "anomalies": "Record anomalies",
+    "resolutionFilter": "Filter by resolution",
+    "statusFilter": "Filter by gap status",
+    "open": "Unresolved",
+    "resolved": "Resolved",
+    "all": "All",
+    "allStatuses": "All statuses",
+    "pending_replay": "Awaiting replay",
+    "possible_gap": "Possible gap",
+    "boot": "Boot",
+    "session": "Session",
+    "gapsHint": "Usage that has not been replayed after a gateway exit or interrupted session may be undercharged",
+    "anomaliesHint": "Records in Recorder files that could not be parsed",
+    "status": "Status",
+    "kind": "Type",
+    "anomalyKind": "Anomaly type",
+    "tenant": "Tenant",
+    "gatewayBoot": "Gateway / Boot",
+    "fileOffset": "File / Offset",
+    "fromAt": "Possible gap start",
+    "detectedResolved": "Detected / Resolved",
+    "resolvedAt": "Resolved at {time}",
+    "readOnly": "Read-only · Handled by gateway replay and engineering investigation",
+    "empty": "No records"
+  }
+}

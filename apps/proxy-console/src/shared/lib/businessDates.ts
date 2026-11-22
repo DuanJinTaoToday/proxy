@@ -22,12 +22,12 @@ export function dayFromNumber(ordinal: number) {
   return new Date(ordinal * dayMilliseconds).toISOString().slice(0, 10)
 }
 
-export function shanghaiDateTime(date: Date, locale: string, style: 'localized' | 'compact' = 'localized') {
+export function shanghaiDateTime(date: Date, locale: string, style: 'medium' | 'short' | 'compact' = 'medium') {
   if (style === 'compact' && locale === 'zh-CN') {
     return new Intl.DateTimeFormat(locale, {
       timeZone: shanghai, year: 'numeric', month: '2-digit', day: '2-digit',
       hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
     }).format(date)
   }
-  return new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short', timeZone: shanghai }).format(date)
+  return new Intl.DateTimeFormat(locale, { dateStyle: style === 'short' ? 'short' : 'medium', timeStyle: 'short', timeZone: shanghai }).format(date)
 }

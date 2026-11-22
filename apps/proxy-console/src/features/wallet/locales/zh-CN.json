@@ -1,5 +1,8 @@
 {
   "wallet": {
+    "opsHistoryCount": "共 {count} 条",
+    "opsHistoryEntryTime": "流水号 / 时间",
+    "opsBalanceChange": "变动前 → 后",
     "available": "可用余额",
     "balanceHint": "购买流量包、静态 IP 和续费都从余额扣款。",
     "totalRecharge": "累计充值",
@@ -52,6 +55,34 @@
       "unknown": "钱包余额变动"
     },
     "lowBalanceHint": "余额偏低，可能无法完成下次购买或续费。",
-    "pageEntries": "本页 {count} 条"
+    "pageEntries": "本页 {count} 条",
+    "opsRecharge": "钱包充值",
+    "opsReviewTitle": "核对充值信息",
+    "opsTenant": "租户",
+    "opsAmount": "充值金额（元）",
+    "opsReason": "充值原因",
+    "opsReasonExample": "例如：对公转账到账，回单尾号 3381",
+    "opsReasonHint": "充值原因和操作人只在运营后台可见，客户流水显示为「运营充值」。",
+    "opsTenantName": "租户名",
+    "opsPrimaryAccount": "主账号名",
+    "opsCurrent": "当前余额",
+    "opsAfter": "到账后余额",
+    "opsAmountSummary": "充值金额",
+    "opsReviewHint": "确认后立即入账，无法撤销。操作人：{operator}。",
+    "opsDone": "充值已到账",
+    "opsDoneBalance": "{tenant} 当前余额 {amount}",
+    "opsEntry": "流水号",
+    "opsOperator": "操作人",
+    "opsEntryTime": "到账时间",
+    "opsChange": "变动",
+    "opsBillingOnly": "仅计费运营可充值",
+    "opsMissingReason": "请填写充值原因",
+    "opsMissingAmount": "请输入有效的充值金额",
+    "opsNext": "下一步",
+    "opsEdit": "返回修改",
+    "opsConfirm": "确认充值 {amount}",
+    "opsFinish": "完成",
+    "opsUncertain": "暂未收到充值结果。请重试原提交，避免重复入账。",
+    "opsRetry": "重试原提交"
   }
 }

@@ -3,9 +3,9 @@ import { mapWalletEntry, type WalletEntryWire } from './wallet'
 
 export const orderProducts = ['dynamic', 'static'] as const
 export const orderStatuses = ['pending', 'succeeded', 'partial', 'failed'] as const
-const orderKinds = ['traffic_package', 'static_purchase', 'static_renewal'] as const
+export const orderKinds = ['traffic_package', 'static_purchase', 'static_renewal'] as const
 export type OrderProduct = (typeof orderProducts)[number]
-type OrderKind = (typeof orderKinds)[number]
+export type OrderKind = (typeof orderKinds)[number]
 export type OrderStatus = (typeof orderStatuses)[number]
 
 interface OrderItemWire {
@@ -16,6 +16,8 @@ interface OrderItemWire {
   unit_minor?: string
   quantity?: number
   delivered_count?: number
+  supplier_item_id?: string
+  outcome?: string
 }
 
 interface OrderWire {
@@ -34,13 +36,13 @@ interface OrderWire {
   item_count?: string
 }
 
-interface OrdersWire {
+export interface OrdersWire {
   orders?: OrderWire[]
   next_before_id?: string
   pending_count?: string
 }
 
-interface OrderDetailWire extends OrderWire {
+export interface OrderDetailWire extends OrderWire {
   items?: OrderItemWire[]
   wallet_entries?: WalletEntryWire[]
 }
@@ -63,6 +65,8 @@ function mapItem(wire: OrderItemWire) {
     unitMinor: BigInt(wire.unit_minor ?? 0),
     quantity: wire.quantity ?? 0,
     deliveredCount: wire.delivered_count ?? 0,
+    supplierItemId: wire.supplier_item_id,
+    outcome: wire.outcome,
   }
 }
 
@@ -103,6 +107,10 @@ export async function listOrders(filters: OrderFilters, signal: AbortSignal) {
     },
     signal,
   })
+  return mapOrders(wire)
+}
+
+export function mapOrders(wire: OrdersWire) {
   return {
     orders: (wire.orders ?? []).map(mapOrder),
     pendingCount: Number(wire.pending_count ?? 0),
@@ -117,6 +125,10 @@ export async function getPendingOrderCount(signal: AbortSignal) {
 
 export async function getOrder(orderId: string, signal: AbortSignal) {
   const wire = await request<OrderDetailWire>(`/v1/tenant/orders/${encodeURIComponent(orderId)}`, { signal })
+  return mapOrderDetail(wire)
+}
+
+export function mapOrderDetail(wire: OrderDetailWire) {
   return {
     ...mapOrder(wire),
     items: (wire.items ?? []).map(mapItem),

@@ -19,10 +19,10 @@ import (
 )
 
 type Principal struct {
-	ID, PasswordHash string
-	Version          int64
-	Tenant           Tenant
-	Permissions      map[Permission]bool
+	ID, Username, PasswordHash string
+	Version                    int64
+	Tenant                     Tenant
+	Permissions                map[Permission]bool
 }
 
 type Repository interface {
@@ -213,6 +213,33 @@ func (s *Service) Account(ctx context.Context, token string) (Tenant, error) {
 		return Tenant{}, errors.Forbidden("ACCESS_DENIED", "permission denied")
 	}
 	return user.Tenant, nil
+}
+
+func (s *Service) OperatorAccount(ctx context.Context, token string) (string, []string, error) {
+	if s.repo == nil {
+		return "", nil, accessUnavailable()
+	}
+	user, err := s.principal(ctx, token)
+	if err != nil {
+		return "", nil, err
+	}
+	if user.Tenant.ID != "" {
+		return "", nil, errors.Forbidden("ACCESS_DENIED", "permission denied")
+	}
+	var permissions []string
+	for _, pair := range []struct {
+		permission Permission
+		name       string
+	}{
+		{ReadOperations, "read_operations"},
+		{ManageBilling, "manage_billing"},
+		{ManageTenantAccounts, "manage_tenant_accounts"},
+	} {
+		if user.Permissions[pair.permission] {
+			permissions = append(permissions, pair.name)
+		}
+	}
+	return user.Username, permissions, nil
 }
 
 func (s *Service) ResetTenantPassword(ctx context.Context, token, tenant, password string) error {

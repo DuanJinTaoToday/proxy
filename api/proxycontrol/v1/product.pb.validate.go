@@ -442,6 +442,445 @@ var _ interface {
 	ErrorName() string
 } = TrafficPackagesValidationError{}
 
+// Validate checks the field values on ProductChanges with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *ProductChanges) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ProductChanges with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in ProductChangesMultiError,
+// or nil if none found.
+func (m *ProductChanges) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ProductChanges) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetChanges() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ProductChangesValidationError{
+						field:  fmt.Sprintf("Changes[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ProductChangesValidationError{
+						field:  fmt.Sprintf("Changes[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ProductChangesValidationError{
+					field:  fmt.Sprintf("Changes[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return ProductChangesMultiError(errors)
+	}
+
+	return nil
+}
+
+// ProductChangesMultiError is an error wrapping multiple validation errors
+// returned by ProductChanges.ValidateAll() if the designated constraints
+// aren't met.
+type ProductChangesMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ProductChangesMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ProductChangesMultiError) AllErrors() []error { return m }
+
+// ProductChangesValidationError is the validation error returned by
+// ProductChanges.Validate if the designated constraints aren't met.
+type ProductChangesValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ProductChangesValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ProductChangesValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ProductChangesValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ProductChangesValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ProductChangesValidationError) ErrorName() string { return "ProductChangesValidationError" }
+
+// Error satisfies the builtin error interface
+func (e ProductChangesValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sProductChanges.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ProductChangesValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ProductChangesValidationError{}
+
+// Validate checks the field values on ProductChange with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *ProductChange) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ProductChange with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in ProductChangeMultiError, or
+// nil if none found.
+func (m *ProductChange) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ProductChange) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Id
+
+	// no validation rules for TargetKind
+
+	// no validation rules for TargetId
+
+	// no validation rules for OperatorUsername
+
+	if all {
+		switch v := interface{}(m.GetCreatedAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ProductChangeValidationError{
+					field:  "CreatedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ProductChangeValidationError{
+					field:  "CreatedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCreatedAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ProductChangeValidationError{
+				field:  "CreatedAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetBefore()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ProductChangeValidationError{
+					field:  "Before",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ProductChangeValidationError{
+					field:  "Before",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetBefore()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ProductChangeValidationError{
+				field:  "Before",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetAfter()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ProductChangeValidationError{
+					field:  "After",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ProductChangeValidationError{
+					field:  "After",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetAfter()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ProductChangeValidationError{
+				field:  "After",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return ProductChangeMultiError(errors)
+	}
+
+	return nil
+}
+
+// ProductChangeMultiError is an error wrapping multiple validation errors
+// returned by ProductChange.ValidateAll() if the designated constraints
+// aren't met.
+type ProductChangeMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ProductChangeMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ProductChangeMultiError) AllErrors() []error { return m }
+
+// ProductChangeValidationError is the validation error returned by
+// ProductChange.Validate if the designated constraints aren't met.
+type ProductChangeValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ProductChangeValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ProductChangeValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ProductChangeValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ProductChangeValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ProductChangeValidationError) ErrorName() string { return "ProductChangeValidationError" }
+
+// Error satisfies the builtin error interface
+func (e ProductChangeValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sProductChange.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ProductChangeValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ProductChangeValidationError{}
+
+// Validate checks the field values on ProductChangeValue with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ProductChangeValue) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ProductChangeValue with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ProductChangeValueMultiError, or nil if none found.
+func (m *ProductChangeValue) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ProductChangeValue) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Open
+
+	// no validation rules for CapacityBytes
+
+	// no validation rules for PriceMinor
+
+	// no validation rules for Listed
+
+	if len(errors) > 0 {
+		return ProductChangeValueMultiError(errors)
+	}
+
+	return nil
+}
+
+// ProductChangeValueMultiError is an error wrapping multiple validation errors
+// returned by ProductChangeValue.ValidateAll() if the designated constraints
+// aren't met.
+type ProductChangeValueMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ProductChangeValueMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ProductChangeValueMultiError) AllErrors() []error { return m }
+
+// ProductChangeValueValidationError is the validation error returned by
+// ProductChangeValue.Validate if the designated constraints aren't met.
+type ProductChangeValueValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ProductChangeValueValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ProductChangeValueValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ProductChangeValueValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ProductChangeValueValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ProductChangeValueValidationError) ErrorName() string {
+	return "ProductChangeValueValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ProductChangeValueValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sProductChangeValue.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ProductChangeValueValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ProductChangeValueValidationError{}
+
 // Validate checks the field values on TrafficPackage with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.

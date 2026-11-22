@@ -1,0 +1,172 @@
+<script setup lang="ts">
+import { onScopeDispose, ref, shallowRef, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { ElAlert, ElButton, ElCard, ElLoading, ElMessage, ElTable, ElTableColumn, ElTag } from 'element-plus'
+import { CircleCheck } from '@element-plus/icons-vue'
+import { listOpsPendingOrders, refreshOpsPendingOrder, type OpsPendingOrder } from '@/api/opsOrders'
+import { hasOperatorPermission } from '@/features/auth'
+import { useErrorMessage } from '@/shared/lib/useErrorMessage'
+import { useOrderFormatting } from './format'
+import OpsRenewalResolutionDialog from './OpsRenewalResolutionDialog.vue'
+import OpsStaticPurchaseDialog from './OpsStaticPurchaseDialog.vue'
+
+const vLoading = ElLoading.directive
+const { t } = useI18n()
+const { money, dateTime, pendingDuration } = useOrderFormatting()
+const errorMessage = useErrorMessage()
+const records = shallowRef<OpsPendingOrder[]>([])
+const failure = shallowRef<unknown>()
+const active = shallowRef<OpsPendingOrder>()
+const open = ref(false)
+const loading = ref(false)
+const inspectingId = ref<string>()
+let inspection: AbortController | undefined
+const nextAfterId = ref<string>()
+const load = ref<{ afterId?: string }>({})
+
+onScopeDispose(() => inspection?.abort())
+
+watch(load, async ({ afterId }, _previous, onCleanup) => {
+  if (!hasOperatorPermission('read_operations')) return
+  const controller = new AbortController()
+  onCleanup(() => controller.abort())
+  loading.value = true
+  failure.value = undefined
+  try {
+    const page = await listOpsPendingOrders(afterId, controller.signal)
+    if (controller.signal.aborted) return
+    const pending = page.records.filter(({ order }) =>
+      order.status === 'pending' && (order.kind === 'static_purchase' || order.kind === 'static_renewal'),
+    )
+    records.value = afterId ? [...records.value, ...pending] : pending
+    nextAfterId.value = page.nextAfterId
+  } catch (error) {
+    if (!controller.signal.aborted) failure.value = error
+  } finally {
+    if (!controller.signal.aborted) loading.value = false
+  }
+}, { immediate: true })
+
+async function inspect(row: OpsPendingOrder) {
+  if (inspection || open.value) return
+  const controller = new AbortController()
+  inspection = controller
+  inspectingId.value = row.order.id
+  try {
+    const record = await refreshOpsPendingOrder(row, controller.signal)
+    if (controller.signal.aborted) return
+    if (!record) {
+      records.value = records.value.filter(item => item.order.id !== row.order.id)
+      ElMessage.info(t('orders.ops.noLongerPending'))
+      return
+    }
+    records.value = records.value.map(item => item.order.id === row.order.id ? record : item)
+    active.value = record
+    open.value = true
+  } catch (error) {
+    if (!controller.signal.aborted) ElMessage.error(errorMessage(error))
+  } finally {
+    inspection = undefined
+    inspectingId.value = undefined
+  }
+}
+
+function changed() {
+  load.value = {}
+}
+
+function requested({ order }: OpsPendingOrder) {
+  return order.items.reduce((total, item) => total + item.quantity, 0)
+}
+
+</script>
+
+<template>
+  <ElAlert v-if="!hasOperatorPermission('read_operations')" type="warning" :title="t('errors.ACCESS_DENIED')" :closable="false" show-icon />
+  <ElCard v-else shadow="never" class="pending-card">
+    <div class="pending-toolbar">
+      <h2 class="pending-title">{{ t('orders.ops.title') }}</h2>
+      <p class="pending-note">{{ t('orders.ops.description') }}</p>
+    </div>
+    <ElAlert v-if="failure" type="error" :title="errorMessage(failure)" :closable="false" show-icon>
+      <ElButton @click="load = { ...load }">{{ t('orders.retry') }}</ElButton>
+    </ElAlert>
+    <ElTable v-loading="loading" :data="records" row-key="order.id" class="pending-table"
+      :header-cell-style="{ height: 'var(--ops-history-header-height)', fontSize: 'var(--font-size-xs)', fontWeight: 'var(--font-weight-semibold)' }"
+      :cell-style="{ height: 'var(--ops-history-row-height)' }">
+      <!-- @vue-generic {OpsPendingOrder} -->
+      <ElTableColumn :label="t('orders.ops.stage')" width="130">
+        <template #default="{ row }">
+          <ElTag :type="row.canClose ? 'danger' : 'warning'" size="small" disable-transitions>{{ t(row.canClose ? 'orders.ops.closable' : 'orders.ops.review') }}</ElTag>
+        </template>
+      </ElTableColumn>
+      <!-- @vue-generic {OpsPendingOrder} -->
+      <ElTableColumn :label="t('orders.ops.order')" min-width="200">
+        <template #default="{ row }">
+          <span class="mono pending-order">{{ row.order.id }}</span>
+          <span class="pending-meta">{{ t(`orders.kinds.${row.order.kind}`) }} · {{ dateTime(row.order.createdAt, 'short') }}</span>
+        </template>
+      </ElTableColumn>
+      <!-- @vue-generic {OpsPendingOrder} -->
+      <ElTableColumn :label="t('orders.ops.tenant')" min-width="150">
+        <template #default="{ row }">
+          <RouterLink class="pending-link" :to="{ name: 'ops-tenant', params: { tenantId: row.tenant.id } }">{{ row.tenant.name }}</RouterLink>
+          <span class="pending-meta mono">{{ row.tenant.account }}</span>
+        </template>
+      </ElTableColumn>
+      <!-- @vue-generic {OpsPendingOrder} -->
+      <ElTableColumn :label="t('orders.ops.waited')" width="100" align="right">
+        <template #default="{ row }"><span class="tabular pending-amount">{{ pendingDuration(row.order.createdAt) }}</span></template>
+      </ElTableColumn>
+      <!-- @vue-generic {OpsPendingOrder} -->
+      <ElTableColumn :label="t('orders.ops.progress')" width="120" align="right">
+        <template #default="{ row }">{{ t('orders.quantityProgress', { delivered: row.order.deliveredCount, ordered: requested(row) }) }}</template>
+      </ElTableColumn>
+      <!-- @vue-generic {OpsPendingOrder} -->
+      <ElTableColumn :label="t('orders.prepaid')" width="110" align="right">
+        <template #default="{ row }"><span class="tabular pending-amount">{{ money(row.order.prepaidMinor) }}</span></template>
+      </ElTableColumn>
+      <!-- @vue-generic {OpsPendingOrder} -->
+      <ElTableColumn width="90" align="right">
+        <template #default="{ row }">
+          <ElButton class="pending-verify" link type="primary" :disabled="Boolean(inspectingId)" :loading="inspectingId === row.order.id"
+            @click="inspect(row)">{{ t('orders.ops.verify') }}</ElButton>
+        </template>
+      </ElTableColumn>
+      <template #empty>
+        <div v-if="!loading && !failure" class="pending-empty"><CircleCheck aria-hidden="true" />{{ t('orders.ops.empty') }}</div>
+      </template>
+    </ElTable>
+    <div class="pending-footer">
+      <span>{{ t('orders.ops.total', records.length) }}</span>
+      <ElButton v-if="nextAfterId" link type="primary" :disabled="loading" @click="load = { afterId: nextAfterId }">{{ t('orders.ops.more') }}</ElButton>
+    </div>
+  </ElCard>
+  <OpsRenewalResolutionDialog v-if="active?.order.kind === 'static_renewal'" :key="active.order.id" v-model="open"
+    :record="active" :waited="pendingDuration(active.order.createdAt)" @changed="changed" />
+  <OpsStaticPurchaseDialog v-else-if="active?.order.kind === 'static_purchase'" :key="active.order.id" v-model="open"
+    :record="active" :waited="pendingDuration(active.order.createdAt)" @changed="changed" />
+</template>
+
+<style scoped>
+.pending-card {
+  --el-card-padding: 0;
+  border-radius: var(--ops-card-radius);
+}
+.pending-toolbar {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+.pending-title { font-size: var(--font-size-lg); line-height: var(--space-5); font-weight: var(--font-weight-bold); }
+.pending-note { color: var(--color-text-secondary); font-size: var(--font-size-xs); line-height: normal; margin-block-start: var(--ops-detail-meta-gap); }
+.pending-table { width: 100%; font-size: var(--font-size-sm); --el-table-header-bg-color: var(--color-surface-muted); --el-table-row-hover-bg-color: var(--color-surface-muted); }
+.pending-meta { display: block; color: var(--color-text-secondary); font-size: var(--font-size-xs); }
+.pending-order { font-size: var(--font-size-xs); }
+.pending-link, .pending-amount { font-weight: var(--font-weight-semibold); }
+.pending-link { color: var(--color-primary); }
+.pending-link:hover { text-decoration: underline; }
+.pending-verify { font-size: var(--font-size-sm); }
+.pending-empty { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); color: var(--color-text-secondary); font-size: var(--font-size-sm); }
+.pending-empty svg { width: calc(var(--space-6) - var(--space-1)); height: calc(var(--space-6) - var(--space-1)); color: var(--color-focus); }
+.pending-footer { display: flex; align-items: center; justify-content: space-between; padding: var(--ops-search-result-padding) var(--space-4); color: var(--color-text-secondary); font-size: var(--font-size-xs); }
+</style>

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { screenshot, signInTenant } from '../support/console.mjs'
+import { screenshot, signInOperator, signInTenant } from '../support/console.mjs'
 
 // #68 前端工程骨架：三套布局、默认入口、深链回退、双语偏好和窄屏版式。控制台自 #69 起需要登录。
 
@@ -38,8 +38,13 @@ test('默认入口、深链和未找到页', async ({ page }, info) => {
   await expect(page).toHaveURL(/\/console\/static\/ips$/)
 
   await page.goto('/ops')
-  await expect(page).toHaveURL(/\/ops\/tenants$/)
-  await expect(page.getByRole('navigation', { name: '运营导航' }).getByRole('menuitem')).toHaveText(['租户管理', '商品管理', '订单处理'])
+  await expect(page).toHaveURL(/\/ops\/login\?redirect=/)
+  await signInOperator(page)
+  await expect(page).toHaveURL(new URL('/ops/tenants', page.url()).href)
+  await expect(page.getByRole('navigation', { name: '运营导航' }).getByRole('menuitem')).toHaveText(['租户', '订单处理', '商品与定价', '用量异常'])
+  await page.getByRole('menuitem', { name: '用量异常', exact: true }).click()
+  await expect(page).toHaveURL(new URL('/ops/usage', page.url()).href)
+  await expect(heading(page)).toHaveText('用量异常')
 
   await page.goto('/no-such-page/deeper')
   await expect(page.getByText('页面不存在')).toBeVisible()
@@ -71,9 +76,13 @@ for (const width of [390, 1280]) {
       await page.setViewportSize({ width, height: 844 })
       await signInTenant(page)
       await page.addInitScript(value => localStorage.setItem('proxy-console.locale', value), locale)
+      await signInOperator(page, '/ops', 'operator', locale)
+      await expect(page).toHaveURL(new URL('/ops/tenants', page.url()).href)
       for (const path of [`/${locale}/`, '/console/dynamic/setup', '/ops/products/dynamic']) {
         await page.goto(path)
+        await expect(page, path).toHaveURL(new URL(path, page.url()).href)
         await expect(heading(page)).toBeVisible()
+        await expect(page.getByRole('banner')).toBeVisible()
         const overflow = await page.evaluate(() => [document.documentElement, document.querySelector('header')]
           .map(el => el.scrollWidth - el.clientWidth))
         expect(overflow, path).toEqual([0, 0])

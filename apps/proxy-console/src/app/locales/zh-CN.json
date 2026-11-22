@@ -3,7 +3,7 @@
     "name": "Proxy",
     "consoleTitle": "用户控制台",
     "opsTitle": "运营控制台",
-    "opsBadge": "运营"
+    "opsBadge": "运营后台"
   },
   "locale": {
     "zh-CN": "简体中文",
@@ -22,9 +22,12 @@
     "subAccounts": "代理子账号",
     "wallet": "钱包",
     "account": "我的账户",
-    "opsTenants": "租户管理",
-    "opsProducts": "商品管理",
-    "opsOrders": "订单处理"
+    "opsTenants": "租户",
+    "opsProducts": "商品与定价",
+    "opsUsage": "用量异常",
+    "opsOrders": "订单处理",
+    "opsCustomers": "客户",
+    "opsOperations": "运营"
   },
   "tabs": {
     "dynamicSetup": "代理设置",
@@ -44,7 +47,8 @@
     "guestNotifications": "登录后可查看账户通知。",
     "language": "语言：{name}",
     "login": "登录",
-    "register": "注册"
+    "register": "注册",
+    "customerConsole": "打开客户控制台"
   },
   "page": {
     "pending": "这一页正在建设中",
@@ -53,7 +57,14 @@
   "home": {
     "title": "稳定的住宅代理，按需购买",
     "subtitle": "动态住宅代理按 GB 计费，静态住宅 IP 按租期购买，均通过 SOCKS5 接入。",
-    "console": "进入控制台"
+    "console": "进入控制台",
+    "products": "住宅代理商品",
+    "catalogError": "暂时无法加载住宅代理报价。",
+    "dynamicDescription": "按 GB 购买流量包，流量长期有效。",
+    "staticDescription": "按租期购买静态住宅 IP，支持到期前续费。",
+    "trafficTier": "{capacity} GB 流量包 · {price}",
+    "staticFrom": "{days} 天 · {price} 起",
+    "staticPricing": "查看静态 IP 报价"
   },
   "notFound": {
     "title": "页面不存在",
@@ -64,6 +75,7 @@
     "SUBACCOUNT_LIMIT_REACHED": "子账号名额已用完，禁用的账号也占用名额。",
     "INVALID_PHONE": "请输入有效的中国大陆手机号。",
     "INVALID_PASSWORD": "密码至少需要 12 位。",
+    "TENANT_NOT_FOUND": "找不到租户，请返回租户查找。",
     "PHONE_ALREADY_REGISTERED": "该手机号已注册，请直接登录。",
     "INVALID_LOGIN": "账号或密码错误。",
     "AUTHENTICATION_REQUIRED": "登录已失效，请重新登录。",
@@ -71,6 +83,13 @@
     "LOGIN_BUSY": "请求过于频繁，请稍后再试。",
     "ACCESS_UNAVAILABLE": "账号服务暂时不可用，请稍后重试。",
     "network": "网络连接失败，请检查网络后重试。",
-    "unknown": "请求失败，请稍后重试。（{status}）"
+    "unknown": "请求失败，请稍后重试。（{status}）",
+    "WALLET_RECORD_NOT_FOUND": "未找到该租户或钱包记录。",
+    "WALLET_BALANCE_CHANGED": "钱包余额已变化，请重新核对后确认。",
+    "WALLET_QUOTE_EXPIRED": "充值确认已过期，请重新核对。",
+    "WALLET_REQUEST_CONFLICT": "这次充值请求与已提交的请求冲突。",
+    "WALLET_BALANCE_LIMIT": "金额超出钱包余额上限。",
+    "WALLET_UNAVAILABLE": "钱包服务暂时不可用，请稍后重试。",
+    "INVALID_WALLET_REQUEST": "请求参数无效，请核对后重试。"
   }
 }
