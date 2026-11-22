@@ -13,7 +13,7 @@ test('账号运营核实目标后重置租户密码，原有会话与旧密码�
     expect(result.status()).toBe(200)
     return { Authorization: 'Bearer ' + (await result.json()).access_token }
   }
-  const customerHeaders = { Authorization: 'Bearer ' + (await registered.json()).access_token }
+  const customerHeaders = await headersFor('/v1/access/login', { phone })
   const accountResponse = await request.get('/v1/tenant/account', { headers: customerHeaders })
   expect(accountResponse.status()).toBe(200)
   const account = await accountResponse.json()
