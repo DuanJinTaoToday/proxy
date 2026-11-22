@@ -19,6 +19,31 @@ const { t } = useI18n()
 .density-compact {
   --el-border-radius-base: var(--ops-control-radius);
 }
+.density-compact .el-dialog, .el-dialog.ops-dialog {
+  --el-dialog-padding-primary: var(--space-5);
+  --el-dialog-border-radius: var(--ops-card-radius);
+  --el-border-radius-base: var(--ops-control-radius);
+  --el-component-size: var(--control-height);
+}
+.density-compact .el-dialog__title, .ops-dialog .el-dialog__title {
+  color: var(--color-text);
+  font-size: var(--font-size-brand);
+  font-weight: var(--font-weight-bold);
+}
+.density-compact .el-dialog__body, .ops-dialog .el-dialog__body {
+  color: var(--color-text);
+}
+.density-compact .el-dialog__footer, .ops-dialog .el-dialog__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding-block-start: var(--ops-dialog-footer-padding);
+}
+.density-compact .el-dialog__footer .el-button, .ops-dialog .el-dialog__footer .el-button {
+  margin-inline-start: 0;
+  padding-inline: var(--space-3);
+  font-size: var(--font-size-sm);
+}
 .ops-page-title {
   margin-block-end: var(--ops-page-heading-gap);
   font-size: var(--ops-display-size);
