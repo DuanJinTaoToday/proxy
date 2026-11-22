@@ -20,7 +20,7 @@ type DetailState =
 const state = shallowRef<DetailState>({ kind: 'loading' })
 const retry = ref(0)
 const commonTerm = computed(() => {
-  if (state.value.kind !== 'ready') return
+  if (props.tenantId || state.value.kind !== 'ready') return
   const { items } = state.value.order
   const days = items[0]?.termDays
   return days && items.every(item => item.termDays === days) ? days : undefined
@@ -51,7 +51,7 @@ watch([() => props.orderId, () => props.tenantId, retry], async ([id, tenantId],
       <p>{{ errorMessage(state.error) }}</p>
       <ElButton size="small" @click="retry++">{{ t('orders.retry') }}</ElButton>
     </ElAlert>
-    <div v-else class="order-detail" :class="{ 'order-detail--ops': tenantId }">
+    <div v-else class="order-detail" :class='tenantId ? "order-detail--ops" : "order-detail--tenant"'>
       <ElAlert v-if="state.order.status === 'pending'" type="info" show-icon :closable="false"
         :title="t('orders.pendingTitle')" :description="t('orders.pendingDescription')" />
       <ElDescriptions :column="2" border size="small">
@@ -84,8 +84,8 @@ watch([() => props.orderId, () => props.tenantId, retry], async ([id, tenantId],
           <!-- @vue-generic {OrderItem} -->
           <ElTableColumn :label="t('orders.lineProgress')" :min-width="tenantId ? 100 : 120" align="right">
             <template #default="{ row }">
-              <span class="tabular" :class="{ 'order-detail__partial': state.order.status !== 'pending' && row.deliveredCount < row.quantity }">
-                {{ state.order.status === 'pending' && !row.deliveredCount
+              <span class="tabular" :class="{ 'order-detail__partial': !tenantId && state.order.status !== 'pending' && row.deliveredCount < row.quantity }">
+                {{ !tenantId && state.order.status === 'pending' && !row.deliveredCount
                   ? t('orders.status.pending')
                   : t('orders.quantityProgress', { delivered: row.deliveredCount, ordered: row.quantity }) }}
               </span>
@@ -128,17 +128,9 @@ watch([() => props.orderId, () => props.tenantId, retry], async ([id, tenantId],
 
 <style scoped>
 .order-detail { display: grid; gap: var(--space-5); }
-.order-detail h3 { margin: 0 0 var(--space-2); font-size: var(--font-size-md); }
-.order-detail__table { --el-table-header-bg-color: var(--color-surface-muted); }
-.order-detail__partial { color: var(--color-warning-text); font-weight: var(--font-weight-semibold); }
+.order-detail h3 { margin: 0 0 var(--space-2); font-size: var(--font-size-lg); }
 .order-note { display: block; color: var(--color-text-secondary); font-size: var(--font-size-xs); }
-.order-totals {
-  margin: var(--space-4) 0 0;
-  padding-block-start: var(--space-2);
-  border-block-start: var(--border-width) solid var(--color-border);
-  font-size: var(--font-size-sm);
-}
-.order-totals dt { color: var(--color-text-secondary); }
+.order-totals { margin: var(--space-3) 0 0; }
 .order-totals > div, .order-ledger > li {
   display: flex;
   justify-content: space-between;
@@ -146,13 +138,10 @@ watch([() => props.orderId, () => props.tenantId, retry], async ([id, tenantId],
   gap: var(--space-3);
   padding-block: var(--space-1);
 }
-.order-totals dd { margin: 0; font-weight: var(--font-weight-semibold); font-variant-numeric: tabular-nums; }
+.order-totals dd { margin: 0; font-variant-numeric: tabular-nums; }
 .order-paid { border-top: var(--border-width) solid var(--color-border); font-weight: var(--font-weight-semibold); }
-.order-paid dd { font-size: var(--font-size-title); }
-.order-paid dt { color: var(--color-text); }
-.order-ledger { list-style: none; margin: 0; padding: 0; border: var(--border-width) solid var(--color-border); border-radius: var(--radius-card); }
-.order-ledger > li { padding: var(--space-2) var(--space-3); font-size: var(--font-size-sm); }
-.order-ledger > li + li { border-top: var(--border-width) solid var(--color-border); }
+.order-ledger { display: grid; gap: var(--space-2); list-style: none; margin: 0; padding: 0; }
+.order-ledger > li { border-bottom: var(--border-width) solid var(--color-border); }
 .credit-amount { color: var(--color-success-text); }
 .order-detail--ops { gap: var(--ops-order-section-space); }
 .order-detail--ops h3 { margin-block-end: var(--ops-order-heading-space); font-size: var(--font-size-md); }
@@ -175,4 +164,28 @@ watch([() => props.orderId, () => props.tenantId, retry], async ([id, tenantId],
 }
 .order-detail--ops .order-paid { align-items: end; border-block-start: 0; }
 .order-detail--ops .order-paid dd { font-size: var(--font-size-title); }
+.order-detail--tenant h3 { font-size: var(--font-size-md); }
+.order-detail--tenant .order-detail__table { --el-table-header-bg-color: var(--color-surface-muted); }
+.order-detail__partial { color: var(--color-warning-text); font-weight: var(--font-weight-semibold); }
+.order-detail--tenant .order-totals {
+  margin: var(--space-4) 0 0;
+  padding-block-start: var(--space-2);
+  border-block-start: var(--border-width) solid var(--color-border);
+  font-size: var(--font-size-sm);
+}
+.order-detail--tenant .order-totals dt { color: var(--color-text-secondary); }
+.order-detail--tenant .order-totals dd { font-weight: var(--font-weight-semibold); }
+.order-detail--tenant .order-paid dd { font-size: var(--font-size-title); }
+.order-detail--tenant .order-paid dt { color: var(--color-text); }
+.order-detail--tenant .order-ledger {
+  gap: 0;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-card);
+}
+.order-detail--tenant .order-ledger > li {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 0;
+  font-size: var(--font-size-sm);
+}
+.order-detail--tenant .order-ledger > li + li { border-top: var(--border-width) solid var(--color-border); }
 </style>
