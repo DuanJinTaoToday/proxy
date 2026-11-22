@@ -65,7 +65,7 @@ async function search() {
 
 <style scoped>
 .tenant-search { max-width: var(--content-narrow-width); --el-card-padding: var(--space-5); border-radius: var(--ops-card-radius); }
-.tenant-search h2 { font-size: var(--font-size-xl); font-weight: var(--font-weight-bold); }
+.tenant-search h2 { font-size: var(--font-size-xl); line-height: var(--ops-card-title-line-height); font-weight: var(--font-weight-bold); }
 .tenant-search__description { margin-block-start: var(--space-1); color: var(--color-text-secondary); font-size: var(--font-size-sm); }
 .tenant-search__row, .tenant-search__result { display: flex; margin-block-start: var(--space-4); }
 .tenant-search__row { gap: var(--space-2); }

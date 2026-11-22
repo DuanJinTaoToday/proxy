@@ -86,7 +86,7 @@ async function submit() {
 <template>
   <ElDialog v-model="open" :title="step.kind === 'confirm' ? t('wallet.opsReviewTitle') : t('wallet.opsRecharge')"
     width="min(var(--ops-dialog-width), calc(100vw - var(--space-6)))" align-center
-    class="recharge-dialog" :close-on-click-modal="mayClose"
+    class="ops-dialog" :close-on-click-modal="mayClose"
     :close-on-press-escape="mayClose" :show-close="mayClose">
     <ElAlert v-if="failure" type="error" :title="uncertain ? t('wallet.opsUncertain') : errorMessage(failure)" :closable="false" show-icon class="recharge-error" />
     <ElForm v-if="step.kind === 'form'" label-position="top" @submit.prevent="prepare">
@@ -145,11 +145,7 @@ async function submit() {
 
 <style scoped>
 .recharge-error { margin-block-end: var(--space-4); }
-.recharge-dialog {
-  --el-dialog-padding-primary: var(--space-5);
-  --el-dialog-border-radius: var(--ops-card-radius);
-  --el-border-radius-base: var(--ops-control-radius);
-}
+
 .recharge-amount { width: 100%; }
 .recharge-hint { margin-block-start: var(--space-1); color: var(--color-text-secondary); font-size: var(--font-size-xs); }
 .recharge-summary {

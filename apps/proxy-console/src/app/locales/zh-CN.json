@@ -67,6 +67,7 @@
     "SUBACCOUNT_LIMIT_REACHED": "子账号名额已用完，禁用的账号也占用名额。",
     "INVALID_PHONE": "请输入有效的中国大陆手机号。",
     "INVALID_PASSWORD": "密码至少需要 12 位。",
+    "TENANT_NOT_FOUND": "找不到租户，请返回租户查找。",
     "PHONE_ALREADY_REGISTERED": "该手机号已注册，请直接登录。",
     "INVALID_LOGIN": "账号或密码错误。",
     "AUTHENTICATION_REQUIRED": "登录已失效，请重新登录。",
