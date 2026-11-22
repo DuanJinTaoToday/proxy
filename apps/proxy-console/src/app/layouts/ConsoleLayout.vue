@@ -8,5 +8,5 @@ const { t } = useI18n()
 </script>
 
 <template>
-  <WorkspaceFrame :key="sessionPhone" :sections="consoleNav" :nav-label="t('nav.consoleNav')" />
+  <WorkspaceFrame tenant :key="sessionPhone" :sections="consoleNav" :nav-label="t('nav.consoleNav')" />
 </template>

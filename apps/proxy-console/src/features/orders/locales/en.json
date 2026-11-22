@@ -72,6 +72,8 @@
     "walletActivity": "Related wallet activity",
     "ledgerNumber": "Transaction #{id}",
     "creditAmount": "+{amount}",
-    "noWalletEntries": "No related wallet transactions"
+    "noWalletEntries": "No related wallet transactions",
+    "pageEntries": "{count} orders on this page",
+    "rentalTerm": "Rental term"
   }
 }

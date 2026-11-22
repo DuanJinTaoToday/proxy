@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, shallowRef } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
 import {
-  ElAlert, ElButton, ElCard, ElEmpty, ElIcon, ElInput, ElMessage, ElOption, ElSelect, ElTable, ElTableColumn, ElTag, ElTooltip,
+  ElAlert, ElButton, ElEmpty, ElIcon, ElInput, ElMessage, ElOption, ElSelect, ElTable, ElTableColumn, ElTooltip,
   type TableInstance, vLoading,
 } from 'element-plus'
-import { CircleCheck, Clock, CopyDocument, Download, Search } from '@element-plus/icons-vue'
+import { CircleCheck, Clock, CopyDocument, Download, Loading, Search } from '@element-plus/icons-vue'
 import { exportStaticIps, getStaticIpCredentials, listStaticIps, type RenewalSubmission, type StaticIp } from '@/api/staticIps'
 import { endpoint, useStaticIpPresentation } from './presentation'
 import { readRenewalSubmissions, type RenewalIntent } from './renewalIntent'
@@ -15,13 +14,11 @@ import RenewalDialog from './RenewalDialog.vue'
 const props = defineProps<{ accountPhone: string }>()
 const { t, locale } = useI18n()
 const { formatDate, errorMessage } = useStaticIpPresentation()
-const router = useRouter()
 const controller = new AbortController()
 const storageKey = `proxy-console.static-renewal.${props.accountPhone}`
 
 const statuses = ['active', 'expiring', 'pending', 'expired'] as const
 type Status = (typeof statuses)[number]
-const statusType = { active: 'success', expiring: 'warning', pending: 'info', expired: 'info' } as const
 const dayMs = 86_400_000
 const maxRenewalItems = 25
 const maxExportItems = 1000
@@ -207,45 +204,43 @@ onUnmounted(() => {
 
 <template>
   <section class="ip-workspace">
-    <div class="page-actions">
+    <div v-if="savedSubmissions.length" class="page-actions">
       <ElButton
         v-for="(submission, index) in savedSubmissions" :key="submission.request_key" type="warning"
         @click="resumeRenewal(submission)"
       >{{ retryLabel(submission, index) }}</ElButton>
-      <ElButton type="primary" @click="router.push({ name: 'console-static-pricing' })">{{ t('staticIps.buy') }}</ElButton>
     </div>
 
-    <ElAlert
-      v-if="expiring.length" type="warning" show-icon :closable="false"
-      :title="t('staticIps.expiryAlert', { count: expiring.length })"
-    >
-      <ElButton v-if="expiring.length <= maxRenewalItems" link type="warning" @click="openRenewal(expiring)">
-        {{ t('staticIps.renewNow') }}
-      </ElButton>
+    <ElAlert v-if="expiring.length" class="expiry-alert" type="warning" show-icon :closable="false">
+      <template #title>
+        <span class="expiry-message">
+          <span>{{ t('staticIps.expiryAlert', { count: expiring.length }) }}</span>
+          <ElButton v-if="expiring.length <= maxRenewalItems" link type="warning" @click="openRenewal(expiring)">
+            {{ t('staticIps.renewNow') }}
+          </ElButton>
+        </span>
+      </template>
     </ElAlert>
 
-    <div v-if="ips.length" class="ip-metrics" :aria-label="t('staticIps.summary')">
-      <ElCard shadow="never">
-        <div class="metric">
-          <div>
-            <h2><ElButton text class="metric-filter" :aria-pressed="statusFilter === 'available'"
-              @click="toggleStatusFilter('available')">{{ t('staticIps.active') }}</ElButton></h2>
-            <strong class="metric-value tabular">{{ activeCount }}</strong>
-          </div>
-          <ElIcon class="metric-icon active"><CircleCheck /></ElIcon>
+    <div v-if="!loading && !listError" class="ip-metrics" :aria-label="t('staticIps.summary')">
+      <button type="button" class="metric" :aria-label="t('staticIps.active')" :aria-pressed="statusFilter === 'available'"
+        @click="toggleStatusFilter('available')">
+        <div>
+          <h2>{{ t('staticIps.active') }}</h2>
+          <p class="metric-value tabular">{{ activeCount }} <span>{{ t('staticIps.unit', activeCount) }}</span></p>
+          <p class="metric-hint">{{ t('staticIps.activeHint') }}</p>
         </div>
-      </ElCard>
-      <ElCard shadow="never">
-        <div class="metric">
-          <div>
-            <h2><ElButton text class="metric-filter" :aria-pressed="statusFilter === 'expiring'"
-              @click="toggleStatusFilter('expiring')">{{ t('staticIps.expiring') }}</ElButton></h2>
-            <strong class="metric-value tabular">{{ expiring.length }}</strong>
-            <p>{{ t('staticIps.expiringHint') }}</p>
-          </div>
-          <ElIcon class="metric-icon expiring"><Clock /></ElIcon>
+        <ElIcon class="metric-icon active"><CircleCheck /></ElIcon>
+      </button>
+      <button type="button" class="metric" :aria-label="t('staticIps.expiring')" :aria-pressed="statusFilter === 'expiring'"
+        @click="toggleStatusFilter('expiring')">
+        <div>
+          <h2>{{ t('staticIps.expiring') }}</h2>
+          <p class="metric-value tabular">{{ expiring.length }} <span>{{ t('staticIps.unit', expiring.length) }}</span></p>
+          <p class="metric-hint">{{ t('staticIps.expiringHint') }}</p>
         </div>
-      </ElCard>
+        <ElIcon class="metric-icon expiring"><Clock /></ElIcon>
+      </button>
     </div>
 
     <ElAlert v-if="listError" type="error" show-icon :closable="false" :title="t('staticIps.listFailed')" role="alert">
@@ -253,19 +248,19 @@ onUnmounted(() => {
       <ElButton link type="primary" @click="loadIps">{{ t('staticIps.retry') }}</ElButton>
     </ElAlert>
 
-    <ElCard shadow="never" class="ip-table-card" v-loading="loading">
+    <section class="ip-table-card" :aria-label="t('staticIps.list')" v-loading="loading">
       <div class="table-toolbar">
         <div class="table-filters">
           <ElInput
-            v-model="keyword" :prefix-icon="Search" clearable
+            v-model="keyword" class="filter-search" :prefix-icon="Search" clearable
             :aria-label="t('staticIps.search')" :placeholder="t('staticIps.search')"
           />
-          <ElSelect v-model="statusFilter" :empty-values="[null, undefined]" :aria-label="t('staticIps.filterStatus')">
+          <ElSelect v-model="statusFilter" class="filter-status" :empty-values="[null, undefined]" :aria-label="t('staticIps.filterStatus')">
             <ElOption :label="t('staticIps.allStatuses')" value="" />
             <ElOption :label="t('staticIps.availableFilter')" value="available" />
             <ElOption v-for="status in statuses" :key="status" :label="t(`staticIps.status.${status}`)" :value="status" />
           </ElSelect>
-          <ElSelect v-model="regionFilter" :empty-values="[null, undefined]" :aria-label="t('staticIps.filterRegion')">
+          <ElSelect v-model="regionFilter" class="filter-region" :empty-values="[null, undefined]" :aria-label="t('staticIps.filterRegion')">
             <ElOption :label="t('staticIps.allRegions')" value="" />
             <ElOption v-for="region in regions" :key="region" :value="region" :label="region" />
           </ElSelect>
@@ -281,12 +276,15 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <ElTable ref="table" :data="visibleIps" row-key="id" :empty-text="loading ? ' ' : undefined" @selection-change="selected = $event">
-        <ElTableColumn type="selection" :selectable="isAvailable" reserve-selection width="48" />
-        <ElTableColumn :label="t('staticIps.address')" min-width="205">
+      <ElTable ref="table" :data="visibleIps" row-key="id" class="ip-table"
+        :header-cell-style="{ height: 'var(--tabs-height)', fontSize: 'var(--font-size-xs)' }"
+        :cell-style="{ height: 'calc(var(--space-7) + var(--space-2) + var(--border-width))' }"
+        :empty-text="loading ? ' ' : undefined" @selection-change="selected = $event">
+        <ElTableColumn type="selection" :selectable="isAvailable" reserve-selection width="52" />
+        <ElTableColumn :label="t('staticIps.address')" min-width="200">
           <template #default="{ row }">
             <div v-if="isStaticIp(row)" class="endpoint">
-              <span class="mono">{{ endpoint(row) }}</span>
+              <span>{{ endpoint(row) }}</span>
               <ElTooltip v-if="isAvailable(row)" :content="t('staticIps.copyTooltip')" placement="top">
                 <ElButton
                   link type="primary" :icon="CopyDocument" :loading="copying === row.id"
@@ -297,29 +295,31 @@ onUnmounted(() => {
             </div>
           </template>
         </ElTableColumn>
-        <ElTableColumn :label="t('staticIps.region')" min-width="140">
+        <ElTableColumn :label="t('staticIps.region')" min-width="170">
           <template #default="{ row }">
             <template v-if="isStaticIp(row)">
-              <div>{{ row.region || t('staticIps.unknownRegion') }}</div>
-              <p v-if="row.ipType" class="secondary">{{ row.ipType }}</p>
+              <span v-if="row.ipType" class="product-tag">{{ row.ipType }}</span>{{ row.region || t('staticIps.unknownRegion') }}
             </template>
           </template>
         </ElTableColumn>
-        <ElTableColumn :label="t('staticIps.state')" min-width="142">
+        <ElTableColumn :label="t('staticIps.state')" min-width="130">
           <template #default="{ row }">
-            <ElTag v-if="isStaticIp(row)" :type="statusType[statusOf(row)]">{{ t(`staticIps.status.${statusOf(row)}`) }}</ElTag>
+            <span v-if="isStaticIp(row)" class="status-badge" :class="statusOf(row)">
+              <ElIcon v-if="statusOf(row) === 'pending'" class="pending-icon"><Loading /></ElIcon>
+              {{ t(`staticIps.status.${statusOf(row)}`) }}
+            </span>
           </template>
         </ElTableColumn>
         <ElTableColumn :label="t('staticIps.expiresAt')" min-width="180">
           <template #default="{ row }">
             <template v-if="isStaticIp(row)">
               <time v-if="hasExpiry(row)" class="tabular" :datetime="row.expiry.toISOString()">{{ formatDate(row.expiry) }}</time>
-              <p v-if="isAvailable(row) && daysLeft(row) <= 5" class="secondary tabular">{{ t('staticIps.remaining', { days: daysLeft(row) }) }}</p>
+              <p v-if="isAvailable(row)" class="secondary tabular" :class="statusOf(row)">{{ t('staticIps.remaining', { days: daysLeft(row) }) }}</p>
               <p v-else-if="row.pendingOrderId && !isAvailable(row)" class="secondary">{{ t('staticIps.servicePaused') }}</p>
             </template>
           </template>
         </ElTableColumn>
-        <ElTableColumn :label="t('staticIps.actions')" min-width="130">
+        <ElTableColumn :label="t('staticIps.actions')" width="120" fixed="right">
           <template #default="{ row }">
             <template v-if="isStaticIp(row)">
               <ElButton v-if="row.pendingOrderId" size="small" @click="openPendingOrder(row.pendingOrderId)">{{ t('staticIps.check') }}</ElButton>
@@ -339,7 +339,7 @@ onUnmounted(() => {
       <p v-if="!loading && !listError" class="table-footer tabular">
         {{ t(filtersActive ? 'staticIps.filteredCount' : 'staticIps.count', { count: visibleIps.length, total: ips.length }) }}
       </p>
-    </ElCard>
+    </section>
 
     <RenewalDialog
       v-if="intent" :intent="intent" @closed="intent = undefined"
@@ -352,21 +352,105 @@ onUnmounted(() => {
 .ip-workspace { display: grid; gap: var(--space-4); min-width: 0; }
 .page-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-2); }
 .page-actions button { margin: 0; }
-.ip-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--subaccount-metric-width)), 1fr)); gap: var(--space-4); }
-.metric { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-3); }
-.metric-filter { font-size: var(--font-size-md); font-weight: var(--font-weight-medium); padding-inline: 0; }
-.metric-filter[aria-pressed='true'] { color: var(--color-primary); }
-.metric p, .secondary, .table-footer { font-size: var(--font-size-xs); color: var(--color-text-secondary); }
-.metric-value { font-size: var(--font-size-title); color: var(--color-text); }
-.metric-icon { border-radius: var(--radius-control); box-sizing: content-box; padding: var(--space-2); font-size: var(--font-size-xl); }
-.metric-icon.active { background: var(--color-success-bg); color: var(--color-success-text); }
-.metric-icon.expiring { background: var(--color-warning-bg); color: var(--color-warning-text); }
-.ip-table-card { min-width: 0; }
+.expiry-alert { border-radius: var(--radius-card); }
+.expiry-message { display: flex; align-items: center; gap: var(--space-3); }
+.ip-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
+.metric {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4) calc(var(--space-4) + var(--space-1) / 2);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+  font: inherit;
+  text-align: start;
+}
+.metric:hover { border-color: var(--color-primary-border); }
+.metric[aria-pressed='true'] {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 var(--border-width) var(--color-primary);
+}
+.metric h2 { font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); }
+.metric-value {
+  margin-top: var(--space-1);
+  font-size: calc(var(--font-size-display) - var(--space-1) * 1.5);
+  font-weight: var(--font-weight-bold);
+  line-height: 1.2;
+  letter-spacing: -.035em;
+}
+.metric-value span { font-size: var(--font-size-sm); font-weight: var(--font-weight-medium); color: var(--color-text-secondary); letter-spacing: 0; }
+.metric-hint, .secondary, .table-footer { font-size: var(--font-size-xs); color: var(--color-text-secondary); }
+.metric-icon {
+  flex: none;
+  width: var(--control-height);
+  height: var(--control-height);
+  border-radius: var(--space-2);
+  font-size: var(--font-size-xl);
+}
+.active, .product-tag { color: var(--color-success-text); background: var(--color-success-bg); }
+.expiring { color: var(--color-warning-text); background: var(--color-warning-bg); }
+.pending { color: var(--color-info-text); background: var(--color-info-bg); }
+.expired { color: var(--color-text-secondary); background: var(--color-canvas); }
+.secondary { background: none; }
+.ip-table-card {
+  min-width: 0;
+  overflow: hidden;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+}
 .table-toolbar, .table-actions, .table-filters { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
-.table-toolbar { justify-content: space-between; margin-block-end: var(--space-4); }
-.table-filters { flex: 1 1 auto; }
-.table-filters > * { flex: 1 1 var(--account-name-width); max-width: var(--subaccount-metric-width); min-width: 0; }
-.table-actions { color: var(--color-text-secondary); }
-.table-footer { margin-block-start: var(--space-3); }
-.endpoint { display: flex; align-items: center; gap: var(--space-2); overflow-wrap: anywhere; }
+.table-toolbar {
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+.filter-search { width: calc(var(--subaccount-metric-width) + var(--space-4)); max-width: 100%; }
+.filter-status, .filter-region { width: var(--business-date-filter-width); max-width: 100%; }
+.table-actions { color: var(--color-text-secondary); font-size: var(--font-size-sm); }
+.ip-table {
+  --el-table-header-bg-color: var(--color-surface-muted);
+  --el-table-row-hover-bg-color: var(--color-surface-muted);
+  --el-table-current-row-bg-color: var(--color-surface-muted);
+  font-size: var(--font-size-sm);
+}
+.table-footer { padding: var(--space-3) var(--space-4); }
+.endpoint {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+.product-tag, .status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  border-radius: var(--radius-control);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+}
+.product-tag { margin-inline-end: var(--space-1); padding-inline: var(--space-1); }
+.status-badge { padding-inline: var(--space-2); }
+.pending-icon { animation: renewal-pending 1.2s linear infinite; }
+@keyframes renewal-pending { to { transform: rotate(1turn); } }
+@media (prefers-reduced-motion: reduce) {
+  .pending-icon { animation: none; }
+}
+@media (max-width: 680px) {
+  .ip-metrics { gap: var(--space-2); }
+  .metric { padding-inline: var(--space-3); gap: var(--space-2); }
+  .metric-icon { width: var(--space-5); height: var(--space-5); font-size: var(--font-size-md); }
+  .table-toolbar { padding-inline: var(--space-3); }
+  .table-filters { width: 100%; }
+  .filter-search { width: 100%; }
+  .filter-status, .filter-region { flex: 1 1 0; min-width: 0; }
+}
 </style>

@@ -6,8 +6,8 @@
     "shared": "共享静态 IP",
     "exclusiveHint": "每个 IP 仅分配给一个客户，价格按地区和租期查询。",
     "sharedHint": "同一个 IP 可分配给多个客户，库存随用途变化。",
-    "chooseRegion": "选择国家或地区",
-    "search": "搜索地区或运营商",
+    "chooseRegion": "选择国家/地区",
+    "search": "搜索国家、城市或运营商",
     "purpose": "用途",
     "anyPurpose": "不指定用途",
     "purposeTikTok": "TikTok",
@@ -38,7 +38,7 @@
     "removeOffer": "移除 {region}",
     "quantity": "数量",
     "regionQuantity": "{region} 数量",
-    "selectRegion": "请选择一个或多个地区。",
+    "selectRegion": "请选择地区和数量",
     "unavailableLine": "该地区暂无所选租期的报价。",
     "adjustQuantity": "当前库存为 {stock}，请调整数量或移除此地区。",
     "lineLimit": "每笔订单最多选择 {count} 个报价。",
@@ -88,6 +88,12 @@
       "WALLET_INSUFFICIENT_FUNDS": "钱包余额不足，请充值后重试。",
       "WALLET_UNAVAILABLE": "钱包暂不可用，请稍后重试。",
       "INVALID_WALLET_REQUEST": "购买规格有误，请重新选择。"
-    }
+    },
+    "purposeHint": "不同用途的可购数量不同",
+    "cardQuantity": "调整 {region} 的数量",
+    "availableCount": "可购 {count}",
+    "pricePerIp": "{price}/IP",
+    "summaryProduct": "订单摘要 · {product}",
+    "ipCount": "IP 数量"
   }
 }

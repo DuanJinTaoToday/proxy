@@ -10,7 +10,6 @@
     "validityLabel": "Validity",
     "shared": "Shared across subaccounts",
     "chosen": "Package",
-    "traffic": "Available traffic",
     "afterTraffic": "Traffic after purchase",
     "wallet": "Wallet balance",
     "afterWallet": "Balance after payment",
@@ -32,6 +31,13 @@
       "PACKAGE_UNAVAILABLE": "This package is unavailable. Choose a currently listed package.",
       "PRODUCT_SALE_CLOSED": "Purchasing has closed. Try again later.",
       "WALLET_INSUFFICIENT_FUNDS": "Your wallet balance changed. Check it and confirm again."
-    }
+    },
+    "savingsBadge": "{percent}% less / GB",
+    "durationBenefit": "Traffic never expires",
+    "connectionBenefit": "SOCKS5 access, metered by bytes",
+    "selected": "Selected package",
+    "trafficChange": "{before} → {after}",
+    "confirmedPackage": "Dynamic Residential Proxies · {capacity}",
+    "trafficDebt": "The first {amount} will cover your negative traffic balance."
   }
 }

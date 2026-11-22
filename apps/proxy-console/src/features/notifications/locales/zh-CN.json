@@ -6,10 +6,12 @@
     "loading": "正在加载通知",
     "failed": "暂时无法加载通知。",
     "retry": "重试",
-    "lowTraffic": "动态流量余额偏低",
-    "trafficAction": "查看流量套餐",
-    "expiring": "{count} 个静态 IP 即将到期",
-    "staticAction": "查看并续费静态 IP",
+    "lowTraffic": "动态流量余额较低",
+    "trafficBalance": "剩余 {value} GB",
+    "trafficDebt": "欠量 {value} GB",
+    "trafficDetail": "{balance}，提醒阈值为 {threshold} GB。",
+    "expiring": "静态 IP 即将到期",
+    "expiryDetail": "{count} 个静态 IP 将在 5 天内到期，最早到期时间为 {expiry}。",
     "empty": "暂无通知"
   }
 }

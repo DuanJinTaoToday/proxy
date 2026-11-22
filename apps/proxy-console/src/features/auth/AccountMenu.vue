@@ -8,6 +8,7 @@ import { maskPhone } from './rules'
 import { accountLoadFailed, currentAccount, loadAccount, sessionPhone, signOut } from './session'
 
 // 已登录时顶栏的用户入口：显示主账号名和手机号，提供账户信息、订单记录和退出登录。
+defineProps<{ tenant?: boolean }>()
 const router = useRouter()
 const { t, locale } = useI18n()
 
@@ -28,7 +29,7 @@ async function confirmSignOut() {
 
 <template>
   <ElDropdown trigger="click" placement="bottom-end">
-    <ElButton text :aria-label="t('auth.accountMenu')">
+    <ElButton text :class="{ 'account-menu__trigger--tenant': tenant }" :aria-label="t('auth.accountMenu')">
       <User class="account-menu__icon" />
       <span class="account-menu__name">{{ accountName }}</span>
       <ArrowDown class="account-menu__chevron" />
@@ -64,7 +65,34 @@ async function confirmSignOut() {
 }
 .account-menu__head span { color: var(--color-text-secondary); font-size: var(--font-size-xs); }
 
+.account-menu__trigger--tenant {
+  height: var(--tenant-header-item-height);
+  margin-left: var(--space-1);
+  padding-inline: var(--tenant-header-item-padding);
+  border-radius: var(--space-2);
+  font-weight: var(--font-weight-semibold);
+}
+.account-menu__trigger--tenant[aria-expanded="true"] { background: var(--color-surface-muted); }
+.account-menu__trigger--tenant .account-menu__icon { display: none; }
+.account-menu__trigger--tenant .account-menu__chevron {
+  width: var(--font-size-xs);
+  margin-left: var(--tenant-header-item-gap);
+  color: var(--color-text-secondary);
+}
+
 @media (max-width: 767px) {
   .account-menu__name, .account-menu__chevron { display: none; }
+
+  .account-menu__trigger--tenant { margin-left: 0; }
+}
+
+@media (width < 390px) {
+  .account-menu__trigger--tenant .account-menu__icon { display: inline-block; margin-right: 0; }
+}
+
+@media (390px <= width <= 767px) {
+  .account-menu__trigger--tenant .account-menu__name,
+  .account-menu__trigger--tenant .account-menu__chevron { display: inline-block; }
+  .account-menu__trigger--tenant .account-menu__name { max-width: clamp(3em, calc(100vw - 348px), var(--account-name-width)); }
 }
 </style>

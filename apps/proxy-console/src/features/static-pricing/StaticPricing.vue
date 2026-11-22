@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
   ElAlert, ElButton, ElCard, ElDialog, ElEmpty, ElInput, ElInputNumber, ElOption,
-  ElRadioButton, ElRadioGroup, ElSelect, ElSkeleton, ElTag,
+  ElRadioButton, ElRadioGroup, ElSelect, ElSkeleton,
 } from 'element-plus'
 import { Search } from '@element-plus/icons-vue'
 import { ApiError } from '@/api/client'
@@ -13,6 +13,7 @@ import { useErrorMessage } from '@/shared/lib/useErrorMessage'
 import LinkButton from '@/shared/ui/LinkButton.vue'
 import { offerKey, staticSelectionTotal, useStaticPurchase } from './useStaticPurchase'
 
+const panelPadding = { padding: 'calc(var(--space-4) + var(--space-1))' }
 const props = defineProps<{ accountKey: string }>()
 const { t, te, locale } = useI18n()
 const errorMessage = useErrorMessage()
@@ -49,7 +50,12 @@ const continents = computed(() => catalogOptions('continent'))
 const proxyLines = computed(() => catalogOptions('line'))
 const terms = computed(() => [...new Map(offers.value.map(offer => [offer.term, { code: offer.term, days: offer.termDays }])).values()]
   .sort((a, b) => a.days - b.days))
-const currentTerm = computed(() => terms.value.find(option => option.code === term.value)?.code ?? terms.value[0]?.code)
+const defaultTerm = 'yp1'
+const currentTerm = computed(() => {
+  return (terms.value.find(option => option.code === term.value)
+    ?? terms.value.find(option => option.code === defaultTerm)
+    ?? terms.value[0])?.code
+})
 const termOffers = computed(() => offers.value.filter(offer => offer.term === currentTerm.value))
 const visibleOffers = computed(() => {
   const search = keyword.value.trim().toLocaleLowerCase(locale.value)
@@ -77,7 +83,8 @@ const cartLines = computed(() => {
 })
 const missingOffers = computed(() => cartLines.value.some(line => line.available === undefined))
 const insufficientStock = computed(() => cartLines.value.some(line => line.quantity > (line.available ?? 0)))
-const quantityExceeded = computed(() => cartLines.value.reduce((total, line) => total + line.quantity, 0) > maxStaticPurchaseQuantity)
+const selectedQuantity = computed(() => cartLines.value.reduce((total, line) => total + line.quantity, 0))
+const quantityExceeded = computed(() => selectedQuantity.value > maxStaticPurchaseQuantity)
 const selectedTotal = computed(() => staticSelectionTotal(cartLines.value))
 const selectedShortfall = computed(() => shortfall(selectedTotal.value))
 const canReview = computed(() => cartLines.value.length > 0 && !insufficientStock.value && !quantityExceeded.value
@@ -119,18 +126,18 @@ function resetCatalogFilters() {
   proxyLine.value = ''
   keyword.value = ''
 }
-function changeTerm(value: string) {
-  term.value = value
+function changeTerm(value: string | number | boolean | undefined) {
+  if (typeof value === 'string') term.value = value
 }
 function selectNode(offer: StaticPurchaseOffer) {
-  if (cart.value.delete(offer.nodeId)) return
   if (cart.value.size >= maxStaticPurchaseLines || offer.available <= 0) return
   term.value = offer.term
   cart.value.set(offer.nodeId, { offer, quantity: 1 })
 }
-function changeQuantity(line: StaticPurchaseLine, value: number | undefined) {
-  if (value !== undefined && Number.isInteger(value) && value > 0 && line.offer.available > 0) {
-    cart.value.set(line.offer.nodeId, { offer: line.offer, quantity: Math.min(value, line.offer.available) })
+function changeQuantity(offer: StaticPurchaseOffer, value: number | undefined) {
+  if (value === 0) cart.value.delete(offer.nodeId)
+  if (value !== undefined && Number.isInteger(value) && value > 0 && offer.available > 0) {
+    cart.value.set(offer.nodeId, { offer, quantity: Math.min(value, offer.available) })
   }
 }
 function startReview() {
@@ -154,8 +161,8 @@ function checkoutError(error: unknown) {
 </script>
 
 <template>
-  <ElCard v-if="catalog.kind === 'closed'" shadow="never">
-    <ElEmpty :description="t('staticPricing.closed')" />
+  <ElCard v-if="catalog.kind === 'closed'" class="pricing-closed" shadow="never">
+    <ElEmpty :description="t('staticPricing.closed')" :image-size="80" />
   </ElCard>
   <div v-if="pendingOrderIds.length" class="pending-orders pricing-notice">
     <ElButton v-for="id in pendingOrderIds" :key="id" :disabled="busy" @click="refreshOrder(id)">
@@ -164,18 +171,20 @@ function checkoutError(error: unknown) {
   </div>
   <ElAlert v-if="lastError" class="pricing-notice" type="warning" :title="checkoutError(lastError)" :closable="false" show-icon />
   <div v-if="catalog.kind !== 'closed'" class="pricing">
-    <ElCard shadow="never" class="pricing-catalog">
-      <ElRadioGroup :model-value="filters.shareMode" :aria-label="t('staticPricing.product')" @change="setShareMode">
-        <ElRadioButton value="exclusive">{{ t('staticPricing.exclusive') }}</ElRadioButton>
-        <ElRadioButton value="shared">{{ t('staticPricing.shared') }}</ElRadioButton>
-      </ElRadioGroup>
-      <p class="muted product-hint">
-        {{ filters.shareMode === 'exclusive' ? t('staticPricing.exclusiveHint') : t('staticPricing.sharedHint') }}
-      </p>
+    <ElCard shadow="never" class="pricing-catalog" :body-style="panelPadding">
+      <div class="product-switch">
+        <ElRadioGroup size="large" :model-value="filters.shareMode" :aria-label="t('staticPricing.product')" @change="setShareMode">
+          <ElRadioButton value="exclusive">{{ t('staticPricing.exclusive') }}</ElRadioButton>
+          <ElRadioButton value="shared">{{ t('staticPricing.shared') }}</ElRadioButton>
+        </ElRadioGroup>
+        <p class="muted product-hint">
+          {{ filters.shareMode === 'exclusive' ? t('staticPricing.exclusiveHint') : t('staticPricing.sharedHint') }}
+        </p>
+      </div>
 
       <div class="catalog-heading">
         <h2>{{ t('staticPricing.chooseRegion') }}</h2>
-        <ElInput v-model="keyword" class="filter-control" :prefix-icon="Search" clearable
+        <ElInput v-model="keyword" class="catalog-search" :prefix-icon="Search" clearable
           :aria-label="t('staticPricing.search')" :placeholder="t('staticPricing.search')" />
       </div>
       <div class="filters">
@@ -186,24 +195,25 @@ function checkoutError(error: unknown) {
             <ElOption :value="0" :label="t('staticPricing.anyPurpose')" />
             <ElOption v-for="purpose in purposes" :key="purpose.id" :value="purpose.id" :label="t(purpose.key)" />
           </ElSelect>
+          <span class="muted purpose-hint">{{ t('staticPricing.purposeHint') }}</span>
         </label>
-        <label v-if="continents.length" class="filter">
-          <span>{{ t('staticPricing.continent') }}</span>
-          <ElSelect v-model="continent" class="filter-control" :aria-label="t('staticPricing.continent')">
-            <ElOption value="" :label="t('staticPricing.allContinents')" />
-            <ElOption v-for="name in continents" :key="name" :value="name" :label="name" />
-          </ElSelect>
-        </label>
-        <label v-if="proxyLines.length > 1" class="filter">
+        <div v-if="proxyLines.length > 1" class="filter">
           <span>{{ t('staticPricing.proxyLine') }}</span>
-          <ElSelect v-model="proxyLine" class="filter-control" :aria-label="t('staticPricing.proxyLine')">
-            <ElOption value="" :label="t('staticPricing.allProxyLines')" />
-            <ElOption v-for="name in proxyLines" :key="name" :value="name" :label="name" />
-          </ElSelect>
-        </label>
+          <ElRadioGroup v-model="proxyLine" :aria-label="t('staticPricing.proxyLine')">
+            <ElRadioButton value="">{{ t('staticPricing.allProxyLines') }}</ElRadioButton>
+            <ElRadioButton v-for="name in proxyLines" :key="name" :value="name">{{ name }}</ElRadioButton>
+          </ElRadioGroup>
+        </div>
+        <div v-if="continents.length" class="filter">
+          <span>{{ t('staticPricing.continent') }}</span>
+          <ElRadioGroup v-model="continent" :aria-label="t('staticPricing.continent')">
+            <ElRadioButton value="">{{ t('staticPricing.allContinents') }}</ElRadioButton>
+            <ElRadioButton v-for="name in continents" :key="name" :value="name">{{ name }}</ElRadioButton>
+          </ElRadioGroup>
+        </div>
         <label class="filter">
           <span>{{ t('staticPricing.region') }}</span>
-          <ElSelect v-model="region" class="filter-control" :aria-label="t('staticPricing.region')">
+          <ElSelect v-model="region" class="filter-control" :empty-values="[null, undefined]" :aria-label="t('staticPricing.region')">
             <ElOption value="" :label="t('staticPricing.allRegions')" />
             <ElOption v-for="name in regions" :key="name" :value="name" :label="name" />
           </ElSelect>
@@ -215,82 +225,85 @@ function checkoutError(error: unknown) {
         <ElAlert type="error" :title="checkoutError(catalog.error)" :closable="false" show-icon />
         <ElButton @click="loadCatalog">{{ t('staticPricing.retry') }}</ElButton>
       </div>
-      <ElEmpty v-else-if="!visibleOffers.length" :description="t('staticPricing.empty')" />
+      <ElEmpty v-else-if="!visibleOffers.length" :description="t('staticPricing.empty')" :image-size="72" />
       <div v-else class="offer-groups">
         <section v-for="[group, items] in offerGroups" :key="group" class="offer-group">
           <h3 v-if="group || offerGroups.length > 1">{{ group || t('staticPricing.unknownContinent') }}</h3>
           <div class="offers">
-            <ElCard v-for="offer in items" :key="offerKey(offer)" shadow="never"
-              class="offer" :class="{ 'offer--selected': cart.has(offer.nodeId) }">
-              <div class="offer-heading">
-                <div>
-                  <h3>{{ offerRegion(offer) }}</h3>
-                  <p v-if="offer.isp || offer.line" class="muted">{{ offerLine(offer) }}</p>
+            <div v-for="offer in items" :key="offerKey(offer)" class="offer"
+              :class="{ 'offer--selected': cart.has(offer.nodeId), 'offer--sold-out': !offer.available }">
+              <span v-if="offer.line" class="line-tag">{{ offer.line }}</span>
+              <div v-if="cart.has(offer.nodeId)" class="offer-pick">
+                <div class="offer-text">
+                  <h3>{{ offerRegion(offer) }} <span v-if="offer.isp" class="isp">{{ offer.isp }}</span></h3>
+                  <ElInputNumber :model-value="cart.get(offer.nodeId)?.quantity" :min="0" size="small"
+                    :max="Math.max(cart.get(offer.nodeId)?.quantity ?? 0, offer.available)" :precision="0"
+                    :disabled="!offer.available"
+                    :aria-label="t('staticPricing.cardQuantity', { region: offerRegion(offer) })"
+                    @change="changeQuantity(offer, $event)" />
                 </div>
-                <ElTag v-if="!offer.available" type="info">{{ t('staticPricing.soldOut') }}</ElTag>
               </div>
-              <dl class="summary-list tabular">
-                <div><dt>{{ t('staticPricing.unitPrice') }}</dt><dd>{{ money(offer.unitMinor) }}</dd></div>
-                <div><dt>{{ t('staticPricing.stock') }}</dt><dd>{{ count(offer.available) }}</dd></div>
-              </dl>
-              <ElButton :type="cart.has(offer.nodeId) ? 'primary' : 'default'" plain
-                :disabled="!cart.has(offer.nodeId) && (offer.available <= 0 || cart.size >= maxStaticPurchaseLines)"
-                :aria-pressed="cart.has(offer.nodeId)"
+              <button v-else type="button" class="offer-pick"
+                :disabled="offer.available <= 0 || cart.size >= maxStaticPurchaseLines"
                 :aria-label="t('staticPricing.selectOffer', { region: offerRegion(offer) })"
                 @click="selectNode(offer)">
-                {{ cart.has(offer.nodeId) ? t('staticPricing.selected') : t('staticPricing.select') }}
-              </ElButton>
-            </ElCard>
+                <span class="offer-text">
+                  <strong>{{ offerRegion(offer) }} <span v-if="offer.isp" class="isp">{{ offer.isp }}</span></strong>
+                  <span class="offer-meta">
+                    <span>{{ offer.available ? t('staticPricing.availableCount', { count: count(offer.available) }) : t('staticPricing.soldOut') }}</span>
+                    <strong class="unit-price tabular">{{ t('staticPricing.pricePerIp', { price: money(offer.unitMinor) }) }}</strong>
+                  </span>
+                </span>
+              </button>
+            </div>
           </div>
         </section>
       </div>
     </ElCard>
 
-    <ElCard shadow="never" class="pricing-summary">
-      <template #header>
-        <div class="selection">
-          <h2>{{ t('staticPricing.summary') }}</h2>
-          <ElButton v-if="cart.size" text @click="cart.clear()">{{ t('staticPricing.clear') }}</ElButton>
+    <ElCard shadow="never" class="pricing-summary" :body-style="panelPadding">
+      <aside class="summary-content" :aria-label="t('staticPricing.summary')">
+        <div class="selection summary-heading">
+          <h2>{{ t('staticPricing.summaryProduct', { product: productLabel }) }}</h2>
+          <ElButton link :disabled="!cart.size" @click="cart.clear()">{{ t('staticPricing.clear') }}</ElButton>
         </div>
-      </template>
-      <div class="catalog-feedback">
-        <label class="filter">
+        <div class="summary-terms">
           <span>{{ t('staticPricing.term') }}</span>
-          <ElSelect :model-value="currentTerm" :aria-label="t('staticPricing.term')" :disabled="!terms.length" @change="changeTerm">
-            <ElOption v-for="option in terms" :key="option.code" :value="option.code"
-              :label="termDays(option.days)" />
-          </ElSelect>
-        </label>
-        <p v-if="filters.shareMode === 'shared'" class="muted">{{ t('staticPricing.summaryPurpose', { purpose: purposeLabel }) }}</p>
-        <section v-for="line in cartLines" :key="line.offer.nodeId" class="cart-line">
-          <div class="selection">
-            <div>
-              <h3>{{ offerRegion(line.offer) }}</h3>
-              <p v-if="line.offer.isp || line.offer.line" class="muted">{{ offerLine(line.offer) }}</p>
+          <ElRadioGroup :model-value="currentTerm" :aria-label="t('staticPricing.term')" :disabled="!terms.length" @change="changeTerm">
+            <ElRadioButton v-for="option in terms" :key="option.code" :value="option.code">{{ termDays(option.days) }}</ElRadioButton>
+          </ElRadioGroup>
+        </div>
+        <div class="summary-lines">
+          <section v-for="line in cartLines" :key="line.offer.nodeId" class="cart-line">
+            <div class="selection">
+              <div>
+                <h3>{{ offerRegion(line.offer) }}</h3>
+                <p v-if="line.offer.isp || line.offer.line" class="muted">{{ offerLine(line.offer) }}</p>
+                <p v-if="line.available !== undefined" class="muted tabular">
+                  {{ t('staticPricing.pricePerIp', { price: money(line.offer.unitMinor) }) }}
+                </p>
+              </div>
+              <ElInputNumber :model-value="line.quantity" :min="0" :max="Math.max(line.quantity, line.available ?? 0)"
+                size="small" :disabled="!line.available" :precision="0"
+                :aria-label="cart.size === 1 ? t('staticPricing.quantity') : t('staticPricing.regionQuantity', { region: offerRegion(line.offer) })"
+                @change="changeQuantity(line.offer, $event)" />
+              <ElButton v-if="!line.available" link :aria-label="t('staticPricing.removeOffer', { region: offerRegion(line.offer) })"
+                @click="cart.delete(line.offer.nodeId)">{{ t('staticPricing.remove') }}</ElButton>
             </div>
-            <ElButton text :aria-label="t('staticPricing.removeOffer', { region: offerRegion(line.offer) })"
-              @click="cart.delete(line.offer.nodeId)">{{ t('staticPricing.remove') }}</ElButton>
-          </div>
-          <label class="filter">
-            <span>{{ t('staticPricing.quantity') }}</span>
-            <ElInputNumber :model-value="line.quantity" :min="1" :max="Math.max(line.quantity, line.available ?? 0)"
-              :disabled="!line.available" :precision="0"
-              :aria-label="cart.size === 1 ? t('staticPricing.quantity') : t('staticPricing.regionQuantity', { region: offerRegion(line.offer) })"
-              @change="changeQuantity(line, $event)" />
-          </label>
-          <dl v-if="line.available !== undefined" class="summary-list tabular">
-            <div><dt>{{ t('staticPricing.subtotal') }}</dt><dd>{{ money(line.offer.unitMinor * BigInt(line.quantity)) }}</dd></div>
-          </dl>
-          <p v-if="catalog.kind === 'open' && line.available === undefined" class="muted">{{ t('staticPricing.unavailableLine') }}</p>
-          <p v-else-if="line.available !== undefined && line.quantity > line.available" class="muted">
-            {{ t('staticPricing.adjustQuantity', { stock: count(line.available) }) }}
-          </p>
-        </section>
-        <p v-if="!cart.size" class="muted">{{ t('staticPricing.selectRegion') }}</p>
-        <p v-else-if="cart.size === maxStaticPurchaseLines" class="muted">{{ t('staticPricing.lineLimit', { count: count(maxStaticPurchaseLines) }) }}</p>
+            <p v-if="catalog.kind === 'open' && line.available === undefined" class="muted">{{ t('staticPricing.unavailableLine') }}</p>
+            <p v-else-if="line.available !== undefined && line.quantity > line.available" class="muted">
+              {{ t('staticPricing.adjustQuantity', { stock: count(line.available) }) }}
+            </p>
+          </section>
+          <ElEmpty v-if="!cart.size" :description="t('staticPricing.selectRegion')" :image-size="56" />
+          <p v-else-if="cart.size === maxStaticPurchaseLines" class="muted">{{ t('staticPricing.lineLimit', { count: count(maxStaticPurchaseLines) }) }}</p>
+        </div>
         <ElAlert v-if="quantityExceeded" type="warning" :closable="false" show-icon
           :title="t('staticPricing.quantityLimit', { count: count(maxStaticPurchaseQuantity) })" />
-        <dl class="summary-list tabular">
+        <dl class="summary-list summary-total tabular">
+          <div><dt>{{ t('staticPricing.ipCount') }}</dt><dd>{{ count(selectedQuantity) }}</dd></div>
+          <div v-if="currentTerm"><dt>{{ t('staticPricing.term') }}</dt><dd>{{ termDays(termOffers[0]?.termDays ?? 0) }}</dd></div>
+          <div v-if="filters.shareMode === 'shared'"><dt>{{ t('staticPricing.purpose') }}</dt><dd>{{ purposeLabel }}</dd></div>
           <div>
             <dt>{{ t('staticPricing.balance') }}</dt>
             <dd v-if="wallet.kind === 'ready'">{{ money(wallet.balance) }}</dd>
@@ -301,12 +314,12 @@ function checkoutError(error: unknown) {
         </dl>
         <ElAlert v-if="selectedShortfall > 0n && !insufficientStock" class="tabular" type="warning" :closable="false" show-icon
           :title="t('staticPricing.shortfall', { amount: money(selectedShortfall) })" />
-        <ElButton type="primary" :disabled="!canReview" @click="startReview">{{ t('staticPricing.buy') }}</ElButton>
-      </div>
+        <ElButton type="primary" size="large" :disabled="!canReview" @click="startReview">{{ t('staticPricing.buy') }}</ElButton>
+      </aside>
     </ElCard>
   </div>
 
-  <ElDialog :model-value="checkout.kind !== 'closed'" :title="dialogTitle" width="var(--form-dialog-width)"
+  <ElDialog :model-value="checkout.kind !== 'closed'" :title="dialogTitle" width="var(--order-drawer-width)"
     class="static-purchase-dialog" align-center :show-close="dismissible" :close-on-press-escape="dismissible"
     :close-on-click-modal="false" @close="closeCheckout">
     <ElSkeleton v-if="checkout.kind === 'loading'" animated :rows="3" />
@@ -392,53 +405,134 @@ function checkoutError(error: unknown) {
 
 <style scoped>
 .pricing {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: var(--space-5);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, var(--static-checkout-width));
+  align-items: start;
+  gap: var(--space-4);
 }
-.pricing-catalog { flex: 3 1 var(--static-catalog-width); min-width: 0; }
-.pricing-summary { flex: 1 1 var(--static-checkout-width); min-width: 0; }
+.pricing-catalog, .pricing-summary, .pricing-closed { --el-card-border-radius: var(--radius-card); min-width: 0; }
+.pricing-summary { position: sticky; top: var(--space-4); }
 .pricing-notice { margin-bottom: var(--space-4); }
 .muted { color: var(--color-text-secondary); }
-.product-hint, .catalog-heading, .filters { margin-top: var(--space-4); }
 h2 { font-size: var(--font-size-lg); }
 h3 { font-size: var(--font-size-md); }
-.filters, .catalog-heading, .offer-heading, .selection, .dialog-actions, .pending-orders {
+.catalog-heading, .product-switch, .selection, .dialog-actions, .pending-orders {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-3);
 }
-.catalog-heading, .offer-heading, .selection { justify-content: space-between; }
-.filters { margin-bottom: var(--space-4); }
-.filter { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
-.filter-control { width: var(--static-offer-width); max-width: 100%; }
-.pricing-summary .filter { justify-content: space-between; }
-.pricing-summary .filter > :last-child { flex: 1 1 55%; }
-.offer-groups, .offer-group { display: grid; gap: var(--space-3); }
-.offers { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--static-offer-width)), 1fr)); gap: var(--space-3); }
-.offer--selected {
-  --el-card-border-color: var(--color-primary-border);
-  --el-card-bg-color: var(--color-primary-soft);
+.catalog-heading, .product-switch {
+  margin-block-end: var(--space-4);
+  padding-block-end: var(--space-4);
+  border-bottom: var(--border-width) solid var(--color-border);
 }
-.summary-list, .catalog-feedback, .dialog-content { display: grid; gap: var(--space-3); }
-.cart-line, .quote-line {
+.catalog-heading, .selection { justify-content: space-between; }
+.product-hint, .offer-group > h3 { font-size: var(--font-size-sm); }
+.catalog-search { width: var(--wallet-summary-card-width); max-width: 100%; }
+.filters { display: grid; gap: var(--space-3); margin-bottom: var(--space-5); }
+.filter { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.filter > :first-child { min-width: var(--space-7); font-weight: var(--font-weight-semibold); }
+.filter-control { width: calc(var(--account-name-width) + var(--space-4)); max-width: 100%; }
+.purpose-hint { font-size: var(--font-size-xs); }
+.offer-groups { display: grid; gap: var(--space-5); }
+.offer-group { display: grid; gap: var(--space-2); }
+.offer-group > h3 { color: var(--color-text-secondary); font-weight: var(--font-weight-semibold); }
+.offers {
   display: grid;
-  gap: var(--space-2);
-  border-top: var(--border-width) solid var(--color-border);
-  padding-block: var(--space-3);
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--static-offer-width)), 1fr));
+  gap: var(--space-3);
+}
+.offer {
+  position: relative;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+}
+.offer:not(.offer--sold-out):hover { border-color: var(--color-primary-border); }
+.offer--selected {
+  border-color: var(--color-primary);
+  background: var(--color-surface-muted);
+  box-shadow: 0 0 0 var(--border-width) var(--color-primary);
+}
+.offer--sold-out { opacity: .64; }
+.line-tag {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  border-radius: var(--radius-card) 0 var(--radius-control) 0;
+  padding-inline: var(--space-2);
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  pointer-events: none;
+}
+.offer-pick {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  min-height: calc(var(--space-7) + var(--space-5));
+  padding: var(--space-5) var(--space-3) var(--space-3);
+  border: 0;
+  border-radius: inherit;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+}
+button.offer-pick { cursor: pointer; }
+button.offer-pick:disabled { cursor: not-allowed; }
+.offer-text { display: grid; gap: var(--space-1); min-width: 0; overflow-wrap: anywhere; }
+.isp, .offer-meta { color: var(--color-text-secondary); font-size: var(--font-size-xs); }
+.isp {
+  padding-inline: var(--space-1);
+  border-radius: var(--space-1);
+  background: var(--color-canvas);
+  font-weight: var(--font-weight-medium);
+}
+.offer-meta { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.unit-price { color: var(--color-text); font-weight: var(--font-weight-semibold); }
+.summary-content, .summary-list, .catalog-feedback, .dialog-content { display: grid; gap: var(--space-3); }
+.summary-content { gap: var(--space-4); }
+.summary-heading { padding-block-end: var(--space-3); border-bottom: var(--border-width) solid var(--color-border); }
+.summary-terms { display: grid; gap: var(--space-2); font-weight: var(--font-weight-semibold); }
+.summary-terms > *, .filter > * { min-width: 0; }
+.summary-lines { display: grid; align-content: center; gap: var(--space-2); min-height: calc(var(--space-7) * 2 + var(--space-5)); }
+.cart-line, .quote-line { display: grid; gap: var(--space-2); }
+.cart-line { font-size: var(--font-size-xs); }
+.cart-line h3 { font-size: var(--font-size-sm); overflow-wrap: anywhere; }
+.cart-line :is(h3, p) { max-width: 100%; }
+.quote-line {
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: var(--space-3);
 }
 .summary-list { margin: 0; }
-.offer .summary-list { margin-block: var(--space-3); }
 .summary-list div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-2); }
 .summary-list dt { color: var(--color-text-secondary); }
-.summary-list dd { margin: 0; }
-.grand-total { color: var(--color-primary); font-size: var(--font-size-xl); font-weight: var(--font-weight-semibold); }
+.summary-list dd { margin: 0; font-weight: var(--font-weight-semibold); }
+.summary-total {
+  gap: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: var(--border-width) solid var(--color-border);
+  font-size: var(--font-size-sm);
+}
+.grand-total { color: var(--color-text); font-size: var(--font-size-title); font-weight: var(--font-weight-semibold); }
 .dialog-actions { justify-content: flex-end; }
 .dialog-actions > *, .pending-orders > * { margin: 0; }
+@media (max-width: 950px) {
+  .pricing { grid-template-columns: minmax(0, 1fr); }
+  .pricing-summary { position: static; }
+}
 </style>
 
 <style>
-.static-purchase-dialog { max-width: calc(100vw - var(--page-padding) * 2); }
+.static-purchase-dialog {
+  --el-dialog-border-radius: var(--radius-card);
+  --el-dialog-padding-primary: var(--space-5);
+  --el-dialog-box-shadow: var(--shadow-overlay);
+  max-width: calc(100vw - var(--space-4) * 2);
+}
 </style>

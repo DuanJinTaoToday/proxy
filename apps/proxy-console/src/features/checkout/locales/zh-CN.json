@@ -10,7 +10,6 @@
     "validityLabel": "有效期",
     "shared": "所有子账号共用",
     "chosen": "套餐",
-    "traffic": "可用流量",
     "afterTraffic": "到账后可用流量",
     "wallet": "钱包余额",
     "afterWallet": "支付后余额",
@@ -32,6 +31,13 @@
       "PACKAGE_UNAVAILABLE": "该套餐已下架，请选择当前在售套餐。",
       "PRODUCT_SALE_CLOSED": "购买已关闭，请稍后再试。",
       "WALLET_INSUFFICIENT_FUNDS": "钱包余额已变化，请核对余额后重新确认。"
-    }
+    },
+    "savingsBadge": "每 GB 省 {percent}%",
+    "durationBenefit": "流量长期有效，用完为止",
+    "connectionBenefit": "SOCKS5 接入，按实际字节扣减",
+    "selected": "已选套餐",
+    "trafficChange": "{before} → {after}",
+    "confirmedPackage": "动态住宅代理-GB · {capacity}",
+    "trafficDebt": "当前欠 {amount}，到账后先抵扣欠量。"
   }
 }

@@ -1,14 +1,14 @@
 {
   "wallet": {
     "available": "可用余额",
-    "balanceHint": "购买流量包、静态 IP 和续费均从钱包余额扣款。",
+    "balanceHint": "购买流量包、静态 IP 和续费都从余额扣款。",
     "totalRecharge": "累计充值",
     "rechargeHint": "运营确认到账的全部金额",
     "totalSpend": "累计支出",
-    "spendHint": "已结算扣款减去退款",
+    "spendHint": "全部扣款减去退款",
     "recharge": "联系运营充值",
     "rechargeTitle": "如何充值",
-    "rechargeInstructions": "请联系您的客户经理安排转账。运营确认到账后会为钱包充值，记录将出现在钱包流水中。",
+    "rechargeInstructions": "首版暂不支持在线支付。请联系您的客户经理安排转账。运营确认到账后会为钱包充值，记录将出现在钱包流水中。",
     "loadingSummary": "正在读取钱包余额",
     "summaryFailed": "钱包余额读取失败",
     "loadingLedger": "正在读取钱包流水",
@@ -50,6 +50,8 @@
       "release": "未结算款项退回钱包",
       "refund": "订单退款退回钱包",
       "unknown": "钱包余额变动"
-    }
+    },
+    "lowBalanceHint": "余额偏低，可能无法完成下次购买或续费。",
+    "pageEntries": "本页 {count} 条"
   }
 }

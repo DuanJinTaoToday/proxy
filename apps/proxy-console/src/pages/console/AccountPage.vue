@@ -2,7 +2,7 @@
 import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { ElAlert, ElButton, ElTag } from 'element-plus'
+import { ElAlert, ElButton } from 'element-plus'
 import { getPendingOrderCount } from '@/api/orders'
 import { sessionPhone } from '@/features/auth'
 import RouteTabs from '@/app/RouteTabs.vue'
@@ -38,10 +38,10 @@ watch([() => route.name, sessionPhone, retry], async ([name, phone], previous, o
   <RouteTabs>
     <template #label="{ tab }">
       {{ t(tab.labelKey) }}
-      <ElTag v-if="tab.name === 'console-account-orders' && pendingCount > 0" type="warning" round size="small"
-        class="pending-count tabular" :aria-label="t('orders.pendingCount', pendingCount)" disable-transitions>
+      <span v-if="tab.name === 'console-account-orders' && pendingCount > 0"
+        class="pending-count tabular" :aria-label="t('orders.pendingCount', pendingCount)">
         {{ n(pendingCount) }}
-      </ElTag>
+      </span>
     </template>
     <ElAlert v-if="countFailed" class="pending-count-alert" type="error" :title="t('orders.pendingCountFailed')"
       :closable="false" show-icon>
@@ -55,6 +55,18 @@ watch([() => route.name, sessionPhone, retry], async ([name, phone], previous, o
 </template>
 
 <style scoped>
-.pending-count { margin-inline-start: var(--space-2); }
+.pending-count {
+  display: inline-grid;
+  place-items: center;
+  min-inline-size: var(--dashboard-count-size);
+  block-size: var(--dashboard-count-size);
+  margin-inline-start: var(--dashboard-compact-gap);
+  padding-inline: var(--space-1);
+  border-radius: 1em;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  font-size: var(--font-size-usage-axis);
+  font-weight: var(--font-weight-bold);
+}
 .pending-count-alert { margin-bottom: var(--space-4); }
 </style>
