@@ -103,7 +103,7 @@ async function submit() {
                   <span class="resolve-hint">{{ t('orders.renewalOps.itemDetails', { id: item.supplierItemId, amount: money(item.unitMinor) }) }}</span>
                 </td>
                 <td class="renewal-status">
-                  <ElRadio v-if="isPending(item)" :value="item.supplierItemId" :aria-label="itemDescription(item)">{{ t('orders.status.pending') }}</ElRadio>
+                  <ElRadio v-if="isPending(item)" class="renewal-choice" :value="item.supplierItemId" :aria-label="itemDescription(item)">{{ t('orders.status.pending') }}</ElRadio>
                   <ElTag v-else size="small" disable-transitions :type="item.outcome === 'succeeded' ? 'success' : item.outcome === 'failed' ? 'danger' : 'info'">
                     {{ t(item.outcome === 'succeeded' ? 'orders.renewalOps.successStatus' : item.outcome === 'failed' ? 'orders.renewalOps.refundedStatus' : 'orders.status.pending') }}
                   </ElTag>
@@ -116,13 +116,13 @@ async function submit() {
       </ElFormItem>
       <ElFormItem :label="t('orders.ops.mode')">
         <ElRadioGroup v-model="mode" class="resolve-mode" :aria-label="t('orders.ops.mode')">
-          <ElRadio value="sync">{{ t('orders.renewalOps.sync') }}</ElRadio>
-          <ElRadio value="close">{{ t('orders.renewalOps.close') }}</ElRadio>
+          <ElRadio class="resolve-option" value="sync">{{ t('orders.renewalOps.sync') }}</ElRadio>
+          <ElRadio class="resolve-option" value="close">{{ t('orders.renewalOps.close') }}</ElRadio>
         </ElRadioGroup>
       </ElFormItem>
       <ElAlert v-if="needsConfirmation" type="warning" :closable="false" show-icon class="resolve-alert" :title="t('orders.ops.earlyTitle')">
         {{ t('orders.renewalOps.earlyDescription') }}
-        <ElCheckbox v-model="confirmedFailure" :disabled="pending || !canBill">{{ t('orders.renewalOps.confirmFailure') }}</ElCheckbox>
+        <ElCheckbox v-model="confirmedFailure" class="resolve-confirmation" :disabled="pending || !canBill">{{ t('orders.renewalOps.confirmFailure') }}</ElCheckbox>
       </ElAlert>
       <ElFormItem :label="t('orders.ops.evidence')" for="renewal-evidence" required>
         <ElInput id="renewal-evidence" v-model="evidence" type="textarea" :rows="3" maxlength="500" show-word-limit
@@ -147,5 +147,5 @@ async function submit() {
 <style scoped>
 .renewal-items { display: block; width: 100%; }
 .renewal-status { width: 1%; padding-inline-start: var(--space-4); text-align: end; white-space: nowrap; }
-.renewal-status .el-radio { margin: 0; }
+.renewal-choice { margin: 0; }
 </style>

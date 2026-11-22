@@ -98,7 +98,7 @@ async function submit() {
             <tr v-for="item in record.order.items" :key="item.position">
               <td>{{ itemDescription(item) }}<span class="resolve-hint">{{ t('orders.ops.unitPrice', { amount: money(item.unitMinor) }) }}</span></td>
               <td class="resolve-count">
-                <ElInputNumber :model-value="item.deliveredCount" :aria-label="itemDescription(item)" size="small" controls-position="right" disabled />
+                <ElInputNumber class="resolve-quantity" :model-value="item.deliveredCount" :aria-label="itemDescription(item)" size="small" controls-position="right" disabled />
                 <span>/ {{ item.quantity }}</span>
               </td>
             </tr>
@@ -108,13 +108,13 @@ async function submit() {
       </ElFormItem>
       <ElFormItem :label="t('orders.ops.mode')">
         <ElRadioGroup v-model="mode" class="resolve-mode">
-          <ElRadio value="sync">{{ t('orders.ops.sync') }}</ElRadio>
-          <ElRadio value="close">{{ t('orders.ops.close') }}</ElRadio>
+          <ElRadio class="resolve-option" value="sync">{{ t('orders.ops.sync') }}</ElRadio>
+          <ElRadio class="resolve-option" value="close">{{ t('orders.ops.close') }}</ElRadio>
         </ElRadioGroup>
       </ElFormItem>
       <ElAlert v-if="needsConfirmation" type="warning" :closable="false" show-icon class="resolve-alert" :title="t('orders.ops.earlyTitle')">
         {{ t('orders.ops.earlyDescription') }}
-        <ElCheckbox v-model="confirmedFailure">{{ t('orders.ops.confirmFailure') }}</ElCheckbox>
+        <ElCheckbox v-model="confirmedFailure" class="resolve-confirmation">{{ t('orders.ops.confirmFailure') }}</ElCheckbox>
       </ElAlert>
       <ElFormItem :label="t('orders.ops.evidence')" for="resolution-evidence" required>
         <ElInput id="resolution-evidence" v-model="evidence" type="textarea" :rows="3" maxlength="500" show-word-limit

@@ -133,7 +133,7 @@ function waited({ order }: OpsPendingOrder) {
       <!-- @vue-generic {OpsPendingOrder} -->
       <ElTableColumn width="90" align="right">
         <template #default="{ row }">
-          <ElButton link type="primary" :disabled="Boolean(inspectingId)" :loading="inspectingId === row.order.id"
+          <ElButton class="pending-verify" link type="primary" :disabled="Boolean(inspectingId)" :loading="inspectingId === row.order.id"
             @click="inspect(row)">{{ t('orders.ops.verify') }}</ElButton>
         </template>
       </ElTableColumn>
@@ -162,13 +162,15 @@ function waited({ order }: OpsPendingOrder) {
   border-bottom: var(--border-width) solid var(--color-border);
 }
 .pending-title { font-size: var(--font-size-lg); line-height: var(--space-5); font-weight: var(--font-weight-bold); }
-.pending-note { color: var(--color-text-secondary); font-size: var(--font-size-xs); margin-block-start: var(--ops-detail-meta-gap); }
+.pending-note { color: var(--color-text-secondary); font-size: var(--font-size-xs); line-height: normal; margin-block-start: var(--ops-detail-meta-gap); }
 .pending-table { width: 100%; font-size: var(--font-size-sm); --el-table-header-bg-color: var(--color-surface-muted); --el-table-row-hover-bg-color: var(--color-surface-muted); }
 .pending-meta { display: block; color: var(--color-text-secondary); font-size: var(--font-size-xs); }
-.pending-order, .pending-link, .pending-amount { font-weight: var(--font-weight-semibold); }
+.pending-order { font-size: var(--font-size-xs); }
+.pending-link, .pending-amount { font-weight: var(--font-weight-semibold); }
 .pending-link { color: var(--color-primary); }
 .pending-link:hover { text-decoration: underline; }
-.pending-empty { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); font-size: var(--font-size-sm); }
+.pending-verify { font-size: var(--font-size-sm); }
+.pending-empty { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); color: var(--color-text-secondary); font-size: var(--font-size-sm); }
 .pending-empty svg { width: calc(var(--space-6) - var(--space-1)); height: calc(var(--space-6) - var(--space-1)); color: var(--color-focus); }
 .pending-footer { display: flex; align-items: center; justify-content: space-between; padding: var(--ops-search-result-padding) var(--space-4); color: var(--color-text-secondary); font-size: var(--font-size-xs); }
 </style>
