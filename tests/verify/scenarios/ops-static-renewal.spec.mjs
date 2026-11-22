@@ -4,7 +4,8 @@ import { expect, test } from '@playwright/test'
 import { screenshot, signInOperator } from '../support/console.mjs'
 
 const password = 'proxy-local-test'
-const extend30Days = time => new Date(Date.parse(time) + 30 * 86_400_000).toISOString()
+
+test.use({ actionTimeout: 8000 })
 
 async function json(response) {
   expect(response.ok(), `${response.url()} returned ${response.status()}`).toBe(true)
@@ -26,7 +27,7 @@ function setOrderAge(id, seconds) {
   expect(updated.trim()).toBe('UPDATE 1')
 }
 
-async function comparePrototype(browser, info, order, closeEvidence) {
+async function comparePrototype(browser, info, order, confirmedItemId, closeEvidence) {
   const url = process.env.VERIFY_OPERATOR_PROTOTYPE
   if (!url) return
   const prototype = await browser.newContext({ viewport: { width: 1440, height: 1000 }, locale: 'zh-CN' })
@@ -40,11 +41,11 @@ async function comparePrototype(browser, info, order, closeEvidence) {
         kind: 'static-renewal',
         status: 'processing',
         createdAt: snapshotTime - hours * 3_600_000,
-        lines: order.items.map((item, index) => ({
+        lines: order.items.map(item => ({
           label: item.specification,
           quantity: 1,
           unitCents: Number(item.unit_minor),
-          delivered: index === 0 ? delivered : 0,
+          delivered: item.supplier_item_id === confirmedItemId ? delivered : 0,
         })),
       }
       await reference.evaluate(order => {
@@ -171,7 +172,7 @@ test('续费满 24 小时转运营，按 IP 确认与退款，迟到和重复通
   await dialog.getByRole('textbox', { name: /核实依据/ }).fill(close.evidence)
   await expect(dialog.getByText('下单未满 72 小时', { exact: true })).toBeVisible()
   await expect(dialog.getByRole('button', { name: '确认关闭' })).toBeDisabled()
-  await dialog.getByRole('checkbox').check()
+  await dialog.getByText('已向皇冠确认该 IP 续费失败', { exact: true }).click()
   await expect(dialog.getByRole('button', { name: '确认关闭' })).toBeEnabled()
   await dialog.getByRole('button', { name: '取消' }).click()
 
@@ -223,9 +224,9 @@ test('续费满 24 小时转运营，按 IP 确认与退款，迟到和重复通
     expect.objectContaining({ kind: 'release', before_minor: '6400', after_minor: '7300' }),
   ]))
   const currentIPs = await ips()
-  expect(currentIPs.find(ip => ip.supplier_item_id === confirmed.supplier_item_id)).toMatchObject({
-    ip: confirmed.ip, expires_at: extend30Days(confirmed.expires_at),
-  })
+  const renewed = currentIPs.find(ip => ip.supplier_item_id === confirmed.supplier_item_id)
+  expect(renewed.ip).toBe(confirmed.ip)
+  expect(Date.parse(renewed.expires_at)).toBe(Date.parse(confirmed.expires_at) + 30 * 86_400_000)
   expect(currentIPs.find(ip => ip.supplier_item_id === refunded.supplier_item_id)).toMatchObject({
     ip: refunded.ip, expires_at: refunded.expires_at,
   })
@@ -234,5 +235,5 @@ test('续费满 24 小时转运营，按 IP 确认与退款，迟到和重复通
     body: JSON.stringify({ order: final, ips: currentIPs.map(({ supplier_item_id, ip, expires_at }) => ({ supplier_item_id, ip, expires_at })) }, null, 2),
     contentType: 'application/json',
   })
-  await comparePrototype(browser, info, order, close.evidence)
+  await comparePrototype(browser, info, order, confirmed.supplier_item_id, close.evidence)
 })
