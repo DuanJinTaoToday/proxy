@@ -125,8 +125,8 @@ const openFaq = ref(['0'])
       </div>
     </section>
 
-    <!-- 2 买完怎么接入：换底色的重点段落 -->
-    <section id="integration" class="d-sec band">
+    <!-- 2 买完怎么接入：深海蓝叠层段落 -->
+    <section id="integration" class="d-sec band-navy">
       <div class="wrap split">
         <div class="copy">
           <p class="kicker">接入</p>
@@ -139,21 +139,24 @@ const openFaq = ref(['0'])
           <p class="format"><code>主账号名.子账号名</code><code class="opt">-sid-会话标识</code></p>
           <p class="note">加上会话标识，同一会话尽量沿用同一出口；不加则自动轮换。右侧为示例账号，真实网关和账密登录后在控制台查看。</p>
         </div>
-        <div class="panel">
-          <div class="panel-tabs">
-            <button v-for="t in tabs" :key="t" type="button" :class="{ active: t === tab }" @click="tab = t">{{ t }}</button>
-            <button v-if="tab !== live" type="button" class="copy-btn" @click="copyCode"><CopyDocument />复制</button>
-          </div>
-          <div class="panel-body">
-            <LiveTerminal v-if="tab === live" embedded />
-            <pre v-else><code>{{ code }}</code></pre>
+        <div class="panel-stage">
+          <div class="panel">
+            <div class="panel-tabs">
+              <span class="win-dots" aria-hidden="true"><i /><i /><i /></span>
+              <button v-for="t in tabs" :key="t" type="button" :class="{ active: t === tab }" @click="tab = t">{{ t }}</button>
+              <button v-if="tab !== live" type="button" class="copy-btn" @click="copyCode"><CopyDocument />复制</button>
+            </div>
+            <div class="panel-body">
+              <LiveTerminal v-if="tab === live" embedded />
+              <pre v-else><code>{{ code }}</code></pre>
+            </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- 3 用了以后怎么查账和管理：控制台局部 -->
-    <section id="manage" class="d-sec">
+    <!-- 3 用了以后怎么查账和管理：深松绿叠层段落 + 暗色画框承托控制台局部 -->
+    <section id="manage" class="d-sec band-pine">
       <div class="wrap split">
         <div class="copy">
           <p class="kicker">查账与管理</p>
@@ -164,43 +167,45 @@ const openFaq = ref(['0'])
             <li><strong>余额和到期提醒</strong>流量低于你设的阈值、静态 IP 到期前 5 天，控制台各提醒一次。</li>
           </ul>
         </div>
-        <figure class="console" aria-label="控制台示例">
-          <div class="console-bar"><i /><i /><i /><span>控制台 · 动态住宅代理-GB · 数据统计</span><em>示例数据</em></div>
-          <div class="console-body">
-            <div class="kpis">
-              <div><span>可用流量</span><strong>{{ gb(trafficBalanceGb) }} GB</strong></div>
-              <div><span>近 7 天扣减</span><strong>{{ gb(weekGb) }} GB</strong></div>
-              <div><span>数据更新</span><strong class="small">{{ formatExpiry(usageUpdatedAt) }}</strong></div>
-            </div>
-            <div class="chart">
-              <div v-for="d in dailyUsage" :key="d.day" class="col-bar">
-                <i :style="{ height: `${(d.gb / maxDay) * 100}%` }" :title="`${d.gb} GB`" />
-                <span>{{ d.day.slice(5) }}</span>
+        <div class="console-frame">
+          <figure class="console" aria-label="控制台示例">
+            <div class="console-bar"><i /><i /><i /><span>控制台 · 动态住宅代理-GB · 数据统计</span><em>示例数据</em></div>
+            <div class="console-body">
+              <div class="kpis">
+                <div><span>可用流量</span><strong>{{ gb(trafficBalanceGb) }} GB</strong></div>
+                <div><span>近 7 天扣减</span><strong>{{ gb(weekGb) }} GB</strong></div>
+                <div><span>数据更新</span><strong class="small">{{ formatExpiry(usageUpdatedAt) }}</strong></div>
               </div>
+              <div class="chart">
+                <div v-for="d in dailyUsage" :key="d.day" class="col-bar">
+                  <i :style="{ height: `${(d.gb / maxDay) * 100}%` }" :title="`${d.gb} GB`" />
+                  <span>{{ d.day.slice(5) }}</span>
+                </div>
+              </div>
+              <div class="subs-head"><strong>代理子账号</strong><span class="csv"><Download />导出 CSV</span></div>
+              <table class="subs">
+                <thead><tr><th>子账号</th><th>备注</th><th>状态</th><th>累计用量 / 上限</th></tr></thead>
+                <tbody>
+                  <tr v-for="a in subAccounts" :key="a.name">
+                    <td><code>{{ a.name }}</code></td>
+                    <td>{{ a.remark || '—' }}</td>
+                    <td><span class="state" :class="{ off: !a.active }">{{ a.active ? '启用' : '已禁用' }}</span></td>
+                    <td>
+                      <div class="usage">
+                        <span class="meter"><i :class="{ full: a.limitGb && a.usedGb >= a.limitGb }" :style="{ width: `${a.limitGb ? Math.min(100, (a.usedGb / a.limitGb) * 100) : 100}%`, opacity: a.limitGb ? 1 : .35 }" /></span>
+                        <small>{{ gb(a.usedGb) }} / {{ a.limitGb ? `${a.limitGb} GB` : '不限' }}</small>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
-            <div class="subs-head"><strong>代理子账号</strong><span class="csv"><Download />导出 CSV</span></div>
-            <table class="subs">
-              <thead><tr><th>子账号</th><th>备注</th><th>状态</th><th>累计用量 / 上限</th></tr></thead>
-              <tbody>
-                <tr v-for="a in subAccounts" :key="a.name">
-                  <td><code>{{ a.name }}</code></td>
-                  <td>{{ a.remark || '—' }}</td>
-                  <td><span class="state" :class="{ off: !a.active }">{{ a.active ? '启用' : '已禁用' }}</span></td>
-                  <td>
-                    <div class="usage">
-                      <span class="meter"><i :class="{ full: a.limitGb && a.usedGb >= a.limitGb }" :style="{ width: `${a.limitGb ? Math.min(100, (a.usedGb / a.limitGb) * 100) : 100}%`, opacity: a.limitGb ? 1 : .35 }" /></span>
-                      <small>{{ gb(a.usedGb) }} / {{ a.limitGb ? `${a.limitGb} GB` : '不限' }}</small>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </figure>
+          </figure>
+        </div>
       </div>
     </section>
 
-    <section id="faq" class="d-sec">
+    <section id="faq" class="d-sec band-dark">
       <div class="wrap faq-grid">
         <div class="copy">
           <p class="kicker">常见问题</p>
@@ -213,7 +218,7 @@ const openFaq = ref(['0'])
       </div>
     </section>
 
-    <!-- 收尾：第二处换底色 -->
+    <!-- 收尾：深绿光晕收口 + 纯白胶囊主按钮 -->
     <section class="d-sec closing">
       <div class="wrap">
         <h2>今天注册，<span>当天接入。</span></h2>
@@ -223,8 +228,8 @@ const openFaq = ref(['0'])
           <li><span>03</span><strong>购买并接入</strong><p>选好代理，复制配置开始使用。</p></li>
         </ol>
         <div class="closing-ctas">
-          <a class="cta primary lg" href="/">免费注册</a>
-          <a class="text-link" :href="telegram.url" target="_blank" rel="noopener"><Promotion />联系客服</a>
+          <a class="pill primary" href="/">免费注册</a>
+          <a class="pill ghost" :href="telegram.url" target="_blank" rel="noopener"><Promotion />联系客服</a>
         </div>
       </div>
     </section>
@@ -251,92 +256,122 @@ const openFaq = ref(['0'])
 
 <style scoped>
 .d-page {
-  --bg: #050e0c; --band: #0b1a17; --surface: #0e1f1b; --line: rgba(179, 240, 215, .11);
-  --text: #e8f3ef; --muted: #93aca5; --faint: #6f8d84; --cyan: #8ee3f5;
+  --bg: #020808; --navy: #020c1f; --pine: #041b16; --line: rgba(255, 255, 255, .09);
+  --text: #f3f7f6; --muted: rgba(255, 255, 255, .64); --faint: rgba(255, 255, 255, .42); --cyan: #7fd4f5;
   background: var(--bg); color: var(--text);
 }
 .wrap { max-width: 1240px; margin: 0 auto; padding: 0 24px; }
-.d-sec { padding: 104px 0; }
-.d-sec.band { background: var(--band); border-block: 1px solid var(--line); }
-.kicker { color: var(--mint); font-weight: 700; font-size: 13px; letter-spacing: .12em; margin-bottom: 14px; }
-h2 { font-size: clamp(30px, 3.4vw, 48px); font-weight: 850; line-height: 1.18; letter-spacing: -.015em; color: #fff; }
-.note { color: var(--muted); line-height: 1.75; font-size: 14px; }
-.cta.primary { background: var(--mint); color: var(--shell); }
-.cta.primary:hover { background: #d4fbea; }
-.text-link { display: inline-flex; align-items: center; gap: 6px; color: var(--text); font-weight: 650; text-decoration: none; border-bottom: 1px solid rgba(232, 243, 239, .4); padding-bottom: 2px; }
-.text-link:hover { color: var(--mint); border-color: var(--mint); }
+.d-sec { position: relative; padding: 112px 0; }
+.d-sec.band-navy {
+  background: radial-gradient(62% 68% at 78% 18%, rgba(28, 92, 196, .22), transparent 64%), var(--navy);
+  border-radius: 36px 36px 0 0;
+  padding: 120px 0 144px;
+}
+.d-sec.band-pine {
+  background: radial-gradient(58% 66% at 76% 24%, rgba(22, 134, 98, .2), transparent 64%), var(--pine);
+  border-radius: 36px 36px 0 0;
+  margin-top: -32px;
+  padding: 120px 0 144px;
+}
+.d-sec.band-dark {
+  background: var(--bg);
+  border-radius: 36px 36px 0 0;
+  margin-top: -32px;
+  padding: 116px 0 120px;
+}
+.kicker { color: rgba(255, 255, 255, .52); font-weight: 500; font-size: 13px; letter-spacing: .14em; margin-bottom: 16px; }
+h2 { font-size: clamp(32px, 3.8vw, 54px); font-weight: 500; line-height: 1.15; letter-spacing: -.025em; color: #fff; }
+.note { color: var(--muted); line-height: 1.75; font-size: 14.5px; }
+.pill { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 52px; padding: 0 30px; border-radius: 9999px; font-size: 15.5px; text-decoration: none; white-space: nowrap; transition: background .2s, border-color .2s, transform .15s, color .2s; }
+.pill:hover { transform: translateY(-1px); }
+.pill.primary { background: #fff; color: #050909; font-weight: 600; }
+.pill.primary:hover { background: #e4e8e7; }
+.pill.ghost { border: 1px solid rgba(255, 255, 255, .28); background: rgba(255, 255, 255, .04); color: #fff; font-weight: 500; }
+.pill.ghost:hover { border-color: rgba(255, 255, 255, .65); background: rgba(255, 255, 255, .09); }
+.pill svg { width: 16px; height: 16px; }
 
-/* 1 选型：两列共享底色，字段用 subgrid 逐行对齐 */
-.choose { padding-top: 32px; }
-.statement { font-size: clamp(30px, 3.6vw, 52px); max-width: 16em; margin-bottom: 48px; }
+/* 1 选型：两张独立沉浸式大圆角展板，无表格横线，微弱环境光区分产品 */
+.choose { padding: 108px 0 120px; }
+.statement { font-size: clamp(34px, 4vw, 58px); max-width: 15.5em; margin-bottom: 56px; font-weight: 500; }
 .statement span { display: block; color: var(--faint); }
-.compare { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(6, auto); border-radius: 22px; background: var(--surface); border: 1px solid var(--line); }
-.col { display: grid; grid-row: span 6; grid-template-rows: subgrid; padding: 36px 40px 40px; min-width: 0; }
-.col + .col { border-left: 1px solid var(--line); }
-.col-head { display: flex; align-items: center; gap: 12px; padding-bottom: 22px; }
-.col-head h3 { font-size: 26px; font-weight: 800; color: #fff; }
-.closed-tag { font-size: 12px; font-weight: 650; color: #ffd28a; background: rgba(255, 196, 102, .12); padding: 4px 10px; border-radius: 99px; }
-.field { padding: 16px 0; border-top: 1px solid var(--line); }
+.compare { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(6, auto); gap: 0 24px; }
+.col { display: grid; grid-row: span 6; grid-template-rows: subgrid; padding: 40px 42px 42px; min-width: 0; border-radius: 26px; border: 1px solid rgba(255, 255, 255, .08); }
+.col.dynamic { background: radial-gradient(88% 68% at 92% 0%, rgba(56, 198, 144, .16) 0%, #091311 54%, #060b0a 100%); }
+.col.static { background: radial-gradient(88% 68% at 92% 0%, rgba(76, 182, 232, .16) 0%, #081218 54%, #060a0e 100%); }
+.col-head { display: flex; align-items: center; gap: 12px; padding-bottom: 24px; }
+.col-head h3 { font-size: 28px; font-weight: 550; letter-spacing: -.015em; color: #fff; }
+.closed-tag { font-size: 12px; font-weight: 500; color: #ffd28a; background: rgba(255, 196, 102, .12); padding: 4px 10px; border-radius: 99px; }
+.field { padding: 14px 0; }
 .label { display: block; font-size: 12px; color: var(--faint); letter-spacing: .06em; margin-bottom: 6px; }
-.field p { line-height: 1.7; color: #d2e2dd; }
+.field p { line-height: 1.7; color: rgba(255, 255, 255, .82); font-size: 15px; }
+.price { padding-top: 20px; }
 .price p { color: var(--muted); }
-.price strong { font-size: 44px; font-weight: 850; letter-spacing: -.02em; margin-right: 6px; }
-.dynamic .price strong { color: var(--mint); }
-.static .price strong { color: var(--cyan); }
+.price strong { font-size: 46px; font-weight: 500; letter-spacing: -.03em; margin-right: 6px; font-variant-numeric: tabular-nums; color: #fff; }
 .price .soon { font-size: 18px; padding: 12px 0; }
-.entry { padding-top: 2px; border-top: 0; }
-.entry-link { font-weight: 650; text-decoration: none; color: var(--mint); }
-.static .entry-link { color: var(--cyan); }
-.entry-link.muted { color: var(--muted); }
-.entry-link:hover { text-decoration: underline; }
-.shot { margin: 24px 0 0; padding: 18px 20px 20px; border-radius: 16px; background: #071411; border: 1px solid var(--line); display: flex; flex-direction: column; gap: 12px; }
+.entry { padding-top: 4px; padding-bottom: 8px; }
+.entry-link { font-weight: 500; text-decoration: none; color: #fff; border-bottom: 1px solid rgba(255, 255, 255, .32); padding-bottom: 3px; transition: border-color .2s, color .2s; }
+.dynamic .entry-link:hover { color: var(--mint); border-color: var(--mint); }
+.static .entry-link:hover { color: var(--cyan); border-color: var(--cyan); }
+.entry-link.muted { color: var(--muted); border-color: rgba(255, 255, 255, .18); }
+.shot { margin: 24px 0 0; padding: 20px 22px 22px; border-radius: 18px; background: rgba(0, 0, 0, .42); border: 1px solid rgba(255, 255, 255, .07); display: flex; flex-direction: column; gap: 12px; }
 .shot code { background: none; padding: 0; border-radius: 0; color: inherit; }
 .shot figcaption { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
-.shot figcaption em { font-style: normal; color: var(--faint); border: 1px solid var(--line); border-radius: 99px; padding: 1px 8px; }
-.shot-user { font: 13px ui-monospace, Consolas, monospace; color: #bcd0ca; }
+.shot figcaption em { font-style: normal; color: var(--faint); border: 1px solid rgba(255, 255, 255, .1); border-radius: 99px; padding: 1px 9px; }
+.shot-user { font: 13px ui-monospace, Consolas, monospace; color: rgba(255, 255, 255, .74); }
 .shot-user b { color: var(--mint); font-weight: 600; }
 .sessions { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .sessions li { display: grid; grid-template-columns: 88px 20px 1fr 64px; align-items: center; padding: 9px 12px; border-radius: 10px; background: rgba(255, 255, 255, .03); color: var(--muted); font-size: 13px; transition: background .4s, color .4s; }
-.sessions li.now { background: rgba(95, 227, 176, .12); color: #fff; }
+.sessions li.now { background: rgba(125, 232, 190, .12); color: #fff; }
 .sessions code { font: 12.5px ui-monospace, Consolas, monospace; }
 .sessions small { font-size: 11px; color: var(--mint); text-align: right; }
-.ip-card { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 10px; background: rgba(255, 255, 255, .04); }
+.ip-card { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; background: rgba(255, 255, 255, .04); }
 .ip-main { display: grid; gap: 2px; min-width: 0; }
-.ip-main code { font: 600 13.5px ui-monospace, Consolas, monospace; color: #fff; }
+.ip-main code { font: 500 13.5px ui-monospace, Consolas, monospace; color: #fff; }
 .ip-main span { font-size: 12px; color: var(--muted); }
-.ip-warn { font-size: 12px; font-weight: 650; color: #ffd28a; background: rgba(255, 196, 102, .12); padding: 3px 9px; border-radius: 99px; white-space: nowrap; }
+.ip-warn { font-size: 12px; font-weight: 500; color: #ffd28a; background: rgba(255, 196, 102, .12); padding: 3px 10px; border-radius: 99px; white-space: nowrap; }
 .renew { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; font-size: 13px; color: var(--muted); }
-.renew-tag { color: #05222b; background: var(--cyan); font-weight: 650; padding: 4px 10px; border-radius: 8px; }
+.renew-tag { color: #04151e; background: #fff; font-weight: 600; padding: 4px 12px; border-radius: 999px; }
 .renew i { font-style: normal; margin: 0 6px; }
-.renew b { color: var(--cyan); }
+.renew b { color: var(--cyan); font-weight: 500; }
 .renew-note { font-size: 12.5px; color: var(--cyan); }
-.footnote { margin-top: 18px; font-size: 13px; color: var(--faint); }
+.footnote { margin-top: 24px; font-size: 13px; color: var(--faint); }
 
 /* 2 接入、3 管理：左文右图 */
-.split { display: grid; grid-template-columns: minmax(0, .82fr) minmax(0, 1.18fr); gap: 64px; align-items: center; }
-.copy h2 { margin-bottom: 22px; }
-.how { margin: 0 0 18px; padding-left: 20px; display: grid; gap: 8px; color: #d2e2dd; line-height: 1.6; }
-.how li::marker { color: var(--mint); font-weight: 700; }
-.format { margin: 0 0 14px; display: flex; flex-wrap: wrap; gap: 6px; }
-.format code { font: 14px ui-monospace, Consolas, monospace; padding: 6px 10px; border-radius: 8px; background: rgba(179, 240, 215, .12); color: var(--mint); }
-.format code.opt { background: transparent; border: 1px dashed rgba(179, 240, 215, .35); color: var(--muted); }
-.panel { border-radius: 18px; background: #061210; border: 1px solid rgba(179, 240, 215, .16); overflow: hidden; box-shadow: 0 40px 80px -40px rgba(0, 0, 0, .8); }
-.panel-tabs { display: flex; gap: 4px; padding: 10px; border-bottom: 1px solid var(--line); }
-.panel-tabs button { border: 0; background: none; color: var(--muted); padding: 7px 14px; border-radius: 8px; cursor: pointer; white-space: nowrap; }
-.panel-tabs button.active { background: rgba(179, 240, 215, .12); color: var(--mint); }
+.split { display: grid; grid-template-columns: minmax(0, .82fr) minmax(0, 1.18fr); gap: 68px; align-items: center; }
+.copy h2 { margin-bottom: 24px; }
+.how { margin: 0 0 22px; padding-left: 20px; display: grid; gap: 10px; color: rgba(255, 255, 255, .82); line-height: 1.65; font-size: 15px; }
+.how li::marker { color: #8ab4ff; font-weight: 600; }
+.format { margin: 0 0 16px; display: flex; flex-wrap: wrap; gap: 8px; }
+.format code { font: 13.5px ui-monospace, Consolas, monospace; padding: 7px 12px; border-radius: 10px; background: rgba(138, 180, 255, .12); color: #d6e4ff; border: 1px solid rgba(138, 180, 255, .2); }
+.format code.opt { background: transparent; border: 1px dashed rgba(255, 255, 255, .26); color: var(--muted); }
+
+/* 终端外层舞台：柔和蓝光 + 玻璃底托增强景深 */
+.panel-stage { padding: 14px; border-radius: 26px; background: linear-gradient(145deg, rgba(120, 168, 255, .12), rgba(255, 255, 255, .02)); border: 1px solid rgba(154, 192, 255, .14); box-shadow: 0 44px 90px -36px rgba(0, 0, 0, .85); }
+.panel { border-radius: 16px; background: #040914; border: 1px solid rgba(255, 255, 255, .08); overflow: hidden; }
+.panel-tabs { display: flex; align-items: center; gap: 4px; padding: 10px 12px; border-bottom: 1px solid rgba(255, 255, 255, .08); background: rgba(255, 255, 255, .02); }
+.win-dots { display: inline-flex; gap: 6px; margin-right: 10px; padding-left: 4px; }
+.win-dots i { width: 10px; height: 10px; border-radius: 50%; }
+.win-dots i:nth-child(1) { background: #e0665c; }
+.win-dots i:nth-child(2) { background: #e6b450; }
+.win-dots i:nth-child(3) { background: #5fc77c; }
+.panel-tabs button { border: 0; background: none; color: var(--muted); padding: 6px 13px; border-radius: 999px; cursor: pointer; white-space: nowrap; font-size: 13px; transition: background .2s, color .2s; }
+.panel-tabs button:hover { color: #fff; }
+.panel-tabs button.active { background: rgba(255, 255, 255, .12); color: #fff; }
 .panel-tabs .copy-btn { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; }
 .panel-body { height: 360px; display: flex; flex-direction: column; }
 .panel-body :deep(.terminal) { flex: 1; display: flex; flex-direction: column; min-height: 0; }
 .panel-body :deep(.term-body) { flex: 1; height: auto !important; min-height: 0; }
-pre { flex: 1; margin: 0; padding: 22px 24px; overflow: auto; font: 13.5px/1.75 ui-monospace, "Cascadia Code", Consolas, monospace; color: #d9e6e2; white-space: pre-wrap; word-break: break-all; }
+pre { flex: 1; margin: 0; padding: 22px 24px; overflow: auto; font: 13.5px/1.75 ui-monospace, "Cascadia Code", Consolas, monospace; color: #dbe7f8; white-space: pre-wrap; word-break: break-all; }
 pre code { all: unset; }
 
-.points { list-style: none; margin: 0; padding: 0; display: grid; gap: 18px; }
-.points li { color: var(--muted); line-height: 1.7; padding-left: 16px; border-left: 2px solid rgba(95, 227, 176, .35); }
-.points strong { display: block; color: #fff; font-size: 16px; margin-bottom: 2px; }
-/* 控制台局部：沿用真实控制台的浅色界面，和深色页面形成明确的画面边界 */
-.console { margin: 0; border-radius: 16px; overflow: hidden; background: #f4f6f5; color: var(--ink); box-shadow: 0 40px 90px -40px rgba(0, 0, 0, .9), 0 0 0 1px rgba(179, 240, 215, .15); }
-.console-bar { display: flex; align-items: center; gap: 7px; padding: 11px 16px; background: var(--shell); color: #9fb3ad; font-size: 12px; }
+.points { list-style: none; margin: 0; padding: 0; display: grid; gap: 22px; }
+.points li { color: var(--muted); line-height: 1.75; padding-left: 18px; border-left: 1.5px solid rgba(125, 232, 190, .35); font-size: 14.5px; }
+.points strong { display: block; color: #fff; font-size: 16.5px; font-weight: 550; margin-bottom: 4px; }
+
+/* 控制台画框：用深绿磨砂底托柔和承托浅色真实后台界面 */
+.console-frame { padding: 16px; border-radius: 26px; background: linear-gradient(155deg, rgba(125, 232, 190, .14), rgba(255, 255, 255, .03)); border: 1px solid rgba(255, 255, 255, .1); box-shadow: 0 44px 90px -36px rgba(0, 0, 0, .85); }
+.console { margin: 0; border-radius: 16px; overflow: hidden; background: #f4f6f5; color: var(--ink); box-shadow: 0 20px 44px -20px rgba(0, 0, 0, .65); }
+.console-bar { display: flex; align-items: center; gap: 7px; padding: 11px 16px; background: #0b1614; color: #9fb3ad; font-size: 12px; }
 .console-bar i { width: 10px; height: 10px; border-radius: 50%; background: #3b4d48; }
 .console-bar span { margin-left: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .console-bar em { margin-left: auto; flex: none; font-style: normal; color: var(--mint); border: 1px solid rgba(179, 240, 215, .3); border-radius: 99px; padding: 1px 8px; }
@@ -366,43 +401,45 @@ pre code { all: unset; }
 
 /* FAQ */
 .faq-grid { display: grid; grid-template-columns: minmax(0, .82fr) minmax(0, 1.18fr); gap: 64px; }
-.faq { --el-collapse-header-font-size: 16px; --el-collapse-header-height: 62px; --el-collapse-border-color: var(--line); --el-collapse-header-bg-color: transparent; --el-collapse-content-bg-color: transparent; --el-collapse-header-text-color: #fff; border-top: 0; border-bottom-color: var(--line); }
-.faq :deep(.el-collapse-item__header) { font-weight: 650; }
-.faq :deep(.el-collapse-item__arrow) { color: var(--mint); }
-.faq :deep(.el-collapse-item__content) { color: #bcd0ca; line-height: 1.85; max-width: 42em; }
+.faq { --el-collapse-header-font-size: 16.5px; --el-collapse-header-height: 66px; --el-collapse-border-color: var(--line); --el-collapse-header-bg-color: transparent; --el-collapse-content-bg-color: transparent; --el-collapse-header-text-color: #fff; border-top: 0; border-bottom-color: var(--line); }
+.faq :deep(.el-collapse-item__header) { font-weight: 500; }
+.faq :deep(.el-collapse-item__arrow) { color: rgba(255, 255, 255, .6); }
+.faq :deep(.el-collapse-item__content) { color: var(--muted); line-height: 1.85; max-width: 42em; font-size: 14.5px; }
 
-/* 收尾 */
-.closing { background: radial-gradient(70% 140% at 15% 0%, #1b5a48, var(--band) 65%); border-top: 1px solid var(--line); }
-.closing h2 { font-size: clamp(34px, 4.4vw, 60px); }
+/* 收尾：大圆角绿色环境光展板 */
+.closing { background: radial-gradient(72% 130% at 18% 0%, #124d3d 0%, #051914 48%, #020808 100%); border-radius: 36px 36px 0 0; padding: 116px 0 124px; }
+.closing h2 { font-size: clamp(36px, 4.6vw, 64px); font-weight: 500; }
 .closing h2 span { color: var(--mint); }
-.steps { list-style: none; padding: 0; margin: 44px 0 40px; max-width: 900px; display: grid; grid-template-columns: repeat(3, 1fr); }
-.steps li { padding-right: 28px; display: grid; gap: 6px; }
-.steps li + li { padding-left: 28px; border-left: 1px solid rgba(179, 240, 215, .18); }
-.steps span { font-size: 13px; font-weight: 700; color: var(--mint); letter-spacing: .1em; }
-.steps strong { font-size: 19px; color: #fff; }
-.steps p { color: var(--muted); }
-.closing-ctas { display: flex; gap: 28px; align-items: center; }
+.steps { list-style: none; padding: 0; margin: 48px 0 44px; max-width: 920px; display: grid; grid-template-columns: repeat(3, 1fr); }
+.steps li { padding-right: 28px; display: grid; gap: 8px; }
+.steps li + li { padding-left: 28px; border-left: 1px solid rgba(255, 255, 255, .12); }
+.steps span { font-size: 13px; font-weight: 500; color: rgba(255, 255, 255, .48); letter-spacing: .12em; }
+.steps strong { font-size: 19px; font-weight: 550; color: #fff; }
+.steps p { color: var(--muted); font-size: 14.5px; }
+.closing-ctas { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
 
-.home-footer { color: var(--muted); padding: 56px 0 28px; }
+/* 页脚：纯黑底，干净中性灰 */
+.home-footer { background: #000; color: #a1a1aa; padding: 72px 0 36px; border-top: 1px solid rgba(255, 255, 255, .08); }
 .footer-grid { display: grid; grid-template-columns: 1.6fr repeat(4, 1fr); gap: 32px; }
-.footer-grid h4 { margin: 0 0 14px; color: var(--text); font-size: 14px; }
-.footer-grid a { display: flex; align-items: center; gap: 6px; color: inherit; text-decoration: none; margin-bottom: 10px; }
-.footer-grid a:hover { color: var(--mint); }
-.footer-brand strong { font-size: 20px; color: #fff; }
+.footer-grid h4 { margin: 0 0 16px; color: #fff; font-size: 14px; font-weight: 550; }
+.footer-grid a { display: flex; align-items: center; gap: 6px; color: inherit; text-decoration: none; margin-bottom: 11px; font-size: 14px; transition: color .2s; }
+.footer-grid a:hover { color: #fff; }
+.footer-brand strong { font-size: 20px; font-weight: 600; color: #fff; }
 .footer-brand p { margin: 10px 0 16px; }
-.footer-bottom { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; font-size: 12px; color: var(--faint); }
+.footer-bottom { margin-top: 48px; padding-top: 22px; border-top: 1px solid rgba(255, 255, 255, .08); display: flex; justify-content: space-between; font-size: 12px; color: #71717a; }
 
 @media (max-width: 960px) {
   .wrap { padding: 0 18px; }
-  .d-sec { padding: 72px 0; }
-  .choose { padding-top: 28px; }
-  .statement { margin-bottom: 32px; }
-  .compare { grid-template-columns: 1fr; grid-template-rows: none; }
-  .col { grid-row: auto; grid-template-rows: none; padding: 28px 22px; }
-  .col + .col { border-left: 0; border-top: 1px solid var(--line); }
+  .d-sec { padding: 76px 0; }
+  .d-sec.band-navy, .d-sec.band-pine, .d-sec.band-dark, .closing { border-radius: 24px 24px 0 0; padding: 80px 0 96px; }
+  .choose { padding: 64px 0 76px; }
+  .statement { margin-bottom: 36px; }
+  .compare { grid-template-columns: 1fr; grid-template-rows: none; gap: 20px; }
+  .col { grid-row: auto; grid-template-rows: none; padding: 28px 22px; border-radius: 22px; }
   .price strong { font-size: 38px; }
   .sessions li { grid-template-columns: 78px 16px 1fr 56px; padding: 8px 10px; }
   .split, .faq-grid { grid-template-columns: 1fr; gap: 36px; }
+  .panel-stage, .console-frame { padding: 10px; border-radius: 20px; }
   .panel-tabs { overflow-x: auto; }
   .panel-body { height: 340px; }
   .console-body { padding: 12px; }

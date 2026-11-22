@@ -18,10 +18,9 @@ const exits = ['美国 洛杉矶', '英国 伦敦', '日本 东京', '德国 法
 
 <template>
   <section class="hero hero-d">
-    <HeroCanvas :mode="hero" :globe-x="0.72" :globe-scale="0.36" :opacity="hero === 'map' ? 0.85 : 1" />
+    <HeroCanvas :mode="hero" :globe-x="0.72" :globe-scale="0.38" :opacity="hero === 'map' ? 0.95 : 1" />
     <div class="hero-shade" />
     <div class="d-inner">
-      <p class="eyebrow"><span class="live-dot" />全球住宅代理网络</p>
       <h1>
         <span class="line">用真实住宅 IP</span>
         <span class="line rotator" aria-live="polite">
@@ -30,8 +29,8 @@ const exits = ['美国 洛杉矶', '英国 伦敦', '日本 东京', '德国 法
       </h1>
       <p class="lead">动态住宅按流量计费，静态住宅 IP 按个租用。注册一个账户，两种都能用。</p>
       <div class="d-ctas">
-        <a class="cta primary lg" href="/">免费注册</a>
-        <a class="text-link" href="#products">先看看怎么选 ↓</a>
+        <a class="pill primary" href="/">免费注册</a>
+        <a class="pill ghost" href="#products">先看看怎么选 ↓</a>
       </div>
     </div>
     <div class="exit-strip" aria-hidden="true">
@@ -44,33 +43,37 @@ const exits = ['美国 洛杉矶', '英国 伦敦', '日本 东京', '德国 法
 </template>
 
 <style scoped>
-.hero-d { min-height: clamp(560px, calc(100vh - 120px), 860px); display: flex; flex-direction: column; background: radial-gradient(80% 70% at 75% 40%, #12382f 0%, #0a1d19 55%, #050e0c 100%); }
+.hero-d { min-height: 100svh; display: flex; flex-direction: column; background: radial-gradient(68% 68% at 74% 42%, #0e332a 0%, #051210 52%, #020808 100%); }
 .hero-d::after { display: none; }
-.hero-shade { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, rgba(5, 14, 12, .94) 0%, rgba(5, 14, 12, .6) 40%, rgba(5, 14, 12, 0) 70%), linear-gradient(0deg, #050e0c 0%, rgba(5, 14, 12, 0) 22%); }
-.d-inner { position: relative; flex: 1; width: 100%; max-width: 1240px; margin: 0 auto; padding: 120px 24px 48px; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; pointer-events: none; }
+.hero-shade { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, rgba(2, 8, 8, .92) 0%, rgba(2, 8, 8, .58) 42%, rgba(2, 8, 8, .08) 72%), linear-gradient(0deg, #020808 0%, rgba(2, 8, 8, 0) 24%); }
+.d-inner { position: relative; flex: 1; width: 100%; max-width: 1240px; margin: 0 auto; padding: 132px 24px 56px; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; pointer-events: none; }
 .d-inner a { pointer-events: auto; }
-h1 { display: grid; font-size: clamp(42px, 5vw, 96px); line-height: 1.12; font-weight: 850; letter-spacing: -.02em; margin: 22px 0 24px; }
+h1 { display: grid; font-size: clamp(46px, 5.4vw, 84px); line-height: 1.12; font-weight: 500; letter-spacing: -.028em; margin: 0 0 26px; color: #fff; }
 .line { display: block; white-space: nowrap; }
 /* 固定一行高度并让新旧两个词叠在同一格里，切换不改变布局。 */
-.rotator { display: grid; height: 1.12em; overflow: hidden; }
-.rotator em { grid-area: 1 / 1; font-style: normal; background: linear-gradient(90deg, #b3f0d7, #5fe3b0 60%, #d8fff0); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.rotator { display: grid; height: 1.14em; overflow: hidden; }
+.rotator em { grid-area: 1 / 1; font-style: normal; background: linear-gradient(90deg, #ffffff 0%, #cef7e6 55%, #7de8be 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .swap-enter-active { transition: transform .5s cubic-bezier(.2, .8, .2, 1) .12s, opacity .4s .12s; }
 .swap-leave-active { transition: transform .3s ease-in, opacity .25s; }
 .swap-enter-from { transform: translateY(70%); opacity: 0; }
 .swap-leave-to { transform: translateY(-70%); opacity: 0; }
-.lead { max-width: 30em; font-size: clamp(17px, 1.1vw, 21px); line-height: 1.75; color: #b7cdc6; }
-.d-ctas { display: flex; align-items: center; gap: 28px; margin-top: 34px; }
-.text-link { color: #e8f3ef; font-weight: 650; text-decoration: none; border-bottom: 1px solid rgba(232, 243, 239, .4); padding-bottom: 2px; }
-.text-link:hover { color: var(--mint); border-color: var(--mint); }
-/* 弱化的出口条：无底色、无边框、低对比，只在首屏底部安静地滚动。 */
-.exit-strip { position: relative; width: 100%; max-width: 1240px; margin: 0 auto; padding: 0 24px 22px; display: flex; align-items: center; gap: 16px; opacity: .55; }
-.exit-label { flex: none; font-size: 12px; color: #6f8d84; letter-spacing: .08em; }
+.lead { max-width: 28em; font-size: clamp(17px, 1.18vw, 20px); line-height: 1.7; font-weight: 400; color: rgba(255, 255, 255, .72); }
+.d-ctas { display: flex; align-items: center; gap: 16px; margin-top: 38px; flex-wrap: wrap; }
+.pill { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 52px; padding: 0 30px; border-radius: 9999px; font-size: 15.5px; text-decoration: none; white-space: nowrap; transition: background .2s, border-color .2s, transform .15s, color .2s; }
+.pill:hover { transform: translateY(-1px); }
+.pill.primary { background: #fff; color: #050909; font-weight: 600; }
+.pill.primary:hover { background: #e4e8e7; }
+.pill.ghost { border: 1px solid rgba(255, 255, 255, .28); background: rgba(255, 255, 255, .04); color: #fff; font-weight: 500; backdrop-filter: blur(8px); }
+.pill.ghost:hover { border-color: rgba(255, 255, 255, .65); background: rgba(255, 255, 255, .09); }
+/* 弱化的出口条：安静压在完整首屏底部。 */
+.exit-strip { position: relative; width: 100%; max-width: 1240px; margin: 0 auto; padding: 18px 24px 26px; border-top: 1px solid rgba(255, 255, 255, .07); display: flex; align-items: center; gap: 18px; }
+.exit-label { flex: none; font-size: 12px; color: rgba(255, 255, 255, .42); letter-spacing: .08em; }
 .exit-rail { flex: 1; min-width: 0; overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); }
-.exit-track { display: flex; gap: 36px; width: max-content; animation: marquee 50s linear infinite; font-size: 12.5px; color: #8fb0a6; }
+.exit-track { display: flex; gap: 36px; width: max-content; animation: marquee 50s linear infinite; font-size: 12.5px; color: rgba(255, 255, 255, .52); }
 .exit-track span { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
-.exit-track i { width: 5px; height: 5px; border-radius: 50%; background: #5fe3b0; }
+.exit-track i { width: 4px; height: 4px; border-radius: 50%; background: rgba(125, 232, 190, .8); }
 @keyframes marquee { to { transform: translateX(-50%) } }
 @media (prefers-reduced-motion: reduce) { .exit-track { animation: none; } }
-@media (min-width: 1680px) { .d-ctas .cta.lg { height: 58px; padding: 0 38px; font-size: 18px; } .text-link { font-size: 17px; } .eyebrow { font-size: 15px; } }
-@media (max-width: 860px) { .hero-d { min-height: 0; } .d-inner { padding: 112px 18px 40px; justify-content: flex-start; } h1 { font-size: 40px; } .exit-strip { padding: 0 18px 18px; } }
+@media (min-width: 1680px) { .pill { height: 56px; padding: 0 36px; font-size: 17px; } }
+@media (max-width: 860px) { .hero-d { min-height: 92svh; } .d-inner { padding: 112px 18px 40px; justify-content: flex-start; } h1 { font-size: 40px; } .exit-strip { padding: 14px 18px 20px; } }
 </style>

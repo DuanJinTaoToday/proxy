@@ -32,7 +32,7 @@ watch([variant, hero], ([v, h]) => {
 </script>
 
 <template>
-  <div id="top" class="home">
+  <div id="top" class="home" :class="{ 'variant-d': variant === 'D' }">
     <HomeHeader :dark="variant === 'D'" />
     <template v-if="variant === 'D'">
       <HeroD :key="`D-${hero}`" :hero="hero" />
