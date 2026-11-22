@@ -55,16 +55,7 @@
     "pendingHint": "It will appear here once the feature is available."
   },
   "home": {
-    "title": "Reliable residential proxies, bought as you need them",
-    "subtitle": "Rotating residential proxies are billed per GB and static residential IPs by rental period, both over SOCKS5.",
-    "console": "Open console",
-    "products": "Residential proxy products",
-    "catalogError": "Residential proxy prices are temporarily unavailable.",
-    "dynamicDescription": "Buy traffic in GB packages that do not expire.",
-    "staticDescription": "Rent static residential IPs and renew them before expiration.",
-    "trafficTier": "{capacity} GB package · {price}",
-    "staticFrom": "{days} days from {price}",
-    "staticPricing": "View static IP prices"
+    "console": "Open console"
   },
   "notFound": {
     "title": "Page not found",

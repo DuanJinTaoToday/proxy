@@ -10,7 +10,7 @@ import { NotificationBell } from '@/features/notifications'
 import { applyLocale, isLocale, locales, rememberLocale, type Locale } from '../i18n'
 
 // 三个入口共用的顶栏。右侧顺序固定为「通知铃铛 → 语言切换 → 用户入口」。
-defineProps<{ menuButton?: boolean, ops?: boolean, tenant?: boolean }>()
+defineProps<{ menuButton?: boolean, ops?: boolean, tenant?: boolean, marketing?: boolean }>()
 defineEmits<{ openMenu: [] }>()
 
 const route = useRoute()
@@ -30,7 +30,7 @@ function switchLocale(next: Locale) {
 </script>
 
 <template>
-  <header class="app-header" :class="{ 'app-header--ops': ops, 'app-header--tenant': tenant }">
+  <header class="app-header" :class="{ 'app-header--ops': ops, 'app-header--tenant': tenant, 'app-header--marketing': marketing }">
     <div class="app-header__start">
       <ElButton v-if="menuButton" class="app-header__menu" text :icon="Menu" :aria-label="t('nav.openMenu')" @click="$emit('openMenu')" />
       <RouterLink :to="ops ? '/ops' : homePath" class="app-header__brand">
@@ -40,6 +40,12 @@ function switchLocale(next: Locale) {
       <slot name="brand-extra" />
     </div>
 
+    <nav v-if="marketing" class="app-header__marketing-menu" :aria-label="t('marketing.resources')">
+      <a href="#products">{{ t('marketing.products') }}</a>
+      <a href="#integration">{{ t('marketing.guide') }}</a>
+      <a href="#manage">{{ t('marketing.manage') }}</a>
+      <a href="#faq">{{ t('marketing.faq') }}</a>
+    </nav>
     <div class="app-header__tools">
       <RouterLink v-if="ops" to="/console" target="_blank" rel="noopener" class="app-header__customer-link">
         <DataLine aria-hidden="true" /><span>{{ t('header.customerConsole') }}</span>
@@ -63,7 +69,7 @@ function switchLocale(next: Locale) {
       <AccountMenu v-else-if="hasSession()" :tenant="tenant" />
       <template v-else>
         <LinkButton :to="`/${locale}/login`" text>{{ t('header.login') }}</LinkButton>
-        <LinkButton :to="`/${locale}/register`" type="primary">{{ t('header.register') }}</LinkButton>
+        <LinkButton :to="`/${locale}/register`" type="primary" :class="{ 'home-header-register': marketing }">{{ t('header.register') }}</LinkButton>
       </template>
     </div>
   </header>

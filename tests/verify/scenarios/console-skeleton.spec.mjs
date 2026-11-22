@@ -13,11 +13,11 @@ async function switchLanguage(page, name) {
 test('默认入口、深链和未找到页', async ({ page }, info) => {
   await page.goto('/')
   await expect(page).toHaveURL(/\/zh-CN\/$/)
-  await expect(heading(page)).toHaveText('稳定的住宅代理，按需购买')
+  await expect(heading(page)).toContainText('用真实住宅 IP')
   await expect(page.locator('html')).toHaveAttribute('lang', 'zh-CN')
 
   await page.goto('/en/')
-  await expect(heading(page)).toHaveText('Reliable residential proxies, bought as you need them')
+  await expect(heading(page)).toContainText('Real residential IPs to')
 
   await signInTenant(page)
   await page.goto('/console/wallet')
@@ -64,10 +64,10 @@ test('控制台切换语言保持 URL 并记住偏好，官网切换到对应语
   await screenshot(page, info, 'console-dynamic-en')
 
   await page.goto('/zh-CN/?ref=verify')
-  await expect(heading(page)).toHaveText('稳定的住宅代理，按需购买')
+  await expect(heading(page)).toContainText('用真实住宅 IP')
   await switchLanguage(page, 'English')
   await expect(page).toHaveURL(/\/en\/\?ref=verify$/)
-  await expect(heading(page)).toHaveText('Reliable residential proxies, bought as you need them')
+  await expect(heading(page)).toContainText('Real residential IPs to')
 })
 
 for (const width of [390, 1280]) {
