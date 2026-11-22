@@ -1,10 +1,15 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 import AppHeader from './AppHeader.vue'
+
+const route = useRoute()
+const marketing = computed(() => route.name === 'home')
 </script>
 
 <template>
-  <AppHeader />
-  <main class="public-main">
+  <AppHeader :marketing="marketing" />
+  <main :class="{ 'public-main': !marketing }">
     <RouterView />
   </main>
 </template>

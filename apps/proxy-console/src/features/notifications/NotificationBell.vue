@@ -281,10 +281,10 @@ function markRead(kind: 'traffic' | 'static' | 'all') {
   border: 0;
   border-radius: var(--radius-card);
   background: transparent;
-  color: var(--color-text);
+  color: var(--notification-trigger-color, var(--color-text));
   cursor: pointer;
 }
-.notification-bell__trigger:hover, .notification-bell__trigger.is-open { background: var(--color-primary-soft); }
+.notification-bell__trigger:hover, .notification-bell__trigger.is-open { background: var(--notification-trigger-hover, var(--color-primary-soft)); }
 .notification-bell__trigger svg { width: var(--notification-bell-size); height: var(--notification-bell-size); }
 .notification-bell__badge {
   position: absolute;

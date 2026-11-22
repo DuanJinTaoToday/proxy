@@ -1,0 +1,49 @@
+.homepage { background: var(--home-background); color: var(--home-text); }
+.homepage .wrap { max-width: var(--home-size-1240); margin: 0 auto; padding: 0 var(--space-5); }
+:where(.homepage) .d-sec { position: relative; padding: var(--home-space-120) 0; }
+.homepage :where(section[id], article[id]) { scroll-margin-block-start: var(--home-header-height); }
+:where(.homepage) .d-sec h2 { font-size: var(--home-section-title-size); font-weight: var(--home-weight-display); line-height: 1.12; letter-spacing: -.03em; color: var(--home-white); margin: 0; }
+.homepage .sub { margin-top: var(--space-4); max-width: 34em; color: var(--home-muted); font-size: var(--home-type-16-5); line-height: 1.65; }
+.homepage .note { color: var(--home-muted); line-height: 1.75; font-size: var(--home-type-15); margin-top: var(--space-4); }
+.homepage .pill { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); height: var(--home-size-54); padding: 0 var(--space-6); border-radius: var(--home-pill); font-size: var(--home-type-16); text-decoration: none; white-space: nowrap; transition: background .2s, border-color .2s, transform .15s; }
+.homepage .pill:hover { transform: translateY(-1px); }
+.homepage .pill.primary { background: var(--home-white); color: var(--home-ink); font-weight: var(--font-weight-semibold); }
+.homepage .pill.primary:hover { background: var(--home-white-hover); }
+.homepage .pill.ghost { border: var(--border-width) solid color-mix(in srgb, var(--home-white) 28%, transparent); background: color-mix(in srgb, var(--home-white) 4%, transparent); color: var(--home-white); font-weight: var(--font-weight-medium); }
+.homepage .pill.ghost:hover { border-color: color-mix(in srgb, var(--home-white) 65%, transparent); background: color-mix(in srgb, var(--home-white) 10%, transparent); }
+.homepage .pill svg { width: var(--home-size-16); height: var(--home-size-16); }
+
+header.app-header.app-header--marketing {
+  --notification-trigger-color: var(--home-white);
+  --notification-trigger-hover: var(--home-line);
+  position: fixed;
+  inset: 0 0 auto;
+  height: var(--home-header-height);
+  padding-inline: var(--home-edge);
+  border-bottom-color: var(--home-line);
+  background: var(--home-header-background);
+  backdrop-filter: blur(var(--home-header-blur));
+  color: var(--home-white);
+}
+header.app-header.app-header--marketing .app-header__brand-text { display: inline; }
+.app-header__marketing-menu { display: flex; align-items: center; gap: var(--space-6); }
+.app-header__marketing-menu a { font-weight: var(--font-weight-medium); }
+header.app-header.app-header--marketing .app-header__language,
+header.app-header.app-header--marketing .app-header__tools > .el-button:not(.home-header-register) {
+  --el-button-text-color: var(--home-white);
+  --el-button-hover-text-color: var(--home-white);
+  --el-button-hover-bg-color: var(--home-header-background);
+}
+header.app-header.app-header--marketing .home-header-register {
+  --el-button-bg-color: var(--home-white);
+  --el-button-text-color: var(--home-ink);
+  --el-button-border-color: var(--home-white);
+  --el-button-hover-bg-color: var(--home-white-hover);
+  --el-button-hover-border-color: var(--home-white-hover);
+  --el-button-hover-text-color: var(--home-ink);
+  border-radius: var(--home-pill);
+}
+@media (max-width: 1040px) {
+  .app-header__marketing-menu { display: none; }
+  .homepage .wrap { padding-inline: var(--home-edge-mobile); }
+}
