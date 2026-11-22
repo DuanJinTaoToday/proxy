@@ -48,7 +48,7 @@ async function search() {
     <form class="tenant-search__row" @submit.prevent="search">
       <ElInput v-model="query" size="large" :prefix-icon="Search" clearable maxlength="128"
         :aria-label="t('users.opsSearchLabel')" :placeholder="t('users.opsSearchPlaceholder')" @input="clear" />
-      <ElButton type="primary" size="large" native-type="submit" :loading="state.kind === 'loading'">{{ t('users.opsSearch') }}</ElButton>
+      <ElButton class="tenant-search__button" type="primary" size="large" native-type="submit" :loading="state.kind === 'loading'">{{ t('users.opsSearch') }}</ElButton>
     </form>
 
     <RouterLink v-if="state.kind === 'found'" class="tenant-search__result" :to="{ name: 'ops-tenant', params: { tenantId: state.tenant.id } }">
@@ -58,7 +58,7 @@ async function search() {
       </div>
       <span class="tabular">{{ t('users.opsSearchBalance', { amount: formatYuan(state.tenant.availableMinor, locale) }) }}</span>
     </RouterLink>
-    <ElEmpty v-else-if="state.kind === 'empty'" :description="t('users.opsNoTenant')" :image-size="64" />
+    <ElEmpty v-else-if="state.kind === 'empty'" class="tenant-search__empty" :description="t('users.opsNoTenant')" :image-size="64" />
     <ElAlert v-else-if="state.kind === 'error'" class="tenant-search__result" type="error" :title="errorMessage(state.error)" :closable="false" show-icon />
   </ElCard>
 </template>
@@ -69,6 +69,8 @@ async function search() {
 .tenant-search__description { margin-block-start: var(--space-1); color: var(--color-text-secondary); font-size: var(--font-size-sm); }
 .tenant-search__row, .tenant-search__result { display: flex; margin-block-start: var(--space-4); }
 .tenant-search__row { gap: var(--space-2); }
+.tenant-search__button { padding-inline: var(--space-3); font-size: var(--font-size-sm); }
+.tenant-search__empty { --el-empty-description-margin-top: var(--space-5); }
 .tenant-search__result {
   flex-wrap: wrap;
   align-items: center;
@@ -81,6 +83,12 @@ async function search() {
 }
 a.tenant-search__result:hover { border-color: var(--color-primary-border); background: var(--color-surface-muted); }
 .tenant-search__result div { color: var(--color-text-secondary); font-size: var(--font-size-sm); }
-.tenant-search__result strong { display: block; color: var(--color-text); font-size: var(--font-size-md); }
+.tenant-search__result strong {
+  display: block;
+  margin-block-end: var(--ops-detail-meta-gap);
+  color: var(--color-text-secondary);
+  font-size: var(--ops-tenant-result-name-size);
+}
+.tenant-search__result .mono { font-size: var(--font-size-xs); }
 .tenant-search__result > span { font-weight: var(--font-weight-semibold); }
 </style>

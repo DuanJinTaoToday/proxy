@@ -11,8 +11,8 @@ import OpsRenewalResolutionDialog from './OpsRenewalResolutionDialog.vue'
 import OpsStaticPurchaseDialog from './OpsStaticPurchaseDialog.vue'
 
 const vLoading = ElLoading.directive
-const { t, n } = useI18n()
-const { money, dateTime } = useOrderFormatting()
+const { t } = useI18n()
+const { money, dateTime, pendingDuration } = useOrderFormatting()
 const errorMessage = useErrorMessage()
 const records = shallowRef<OpsPendingOrder[]>([])
 const failure = shallowRef<unknown>()
@@ -79,10 +79,6 @@ function requested({ order }: OpsPendingOrder) {
   return order.items.reduce((total, item) => total + item.quantity, 0)
 }
 
-function waited({ order }: OpsPendingOrder) {
-  const hours = Math.max(0, Math.floor((Date.now() - order.createdAt.getTime()) / 3_600_000))
-  return t('orders.ops.hours', { hours: n(hours) }, hours)
-}
 </script>
 
 <template>
@@ -120,7 +116,7 @@ function waited({ order }: OpsPendingOrder) {
       </ElTableColumn>
       <!-- @vue-generic {OpsPendingOrder} -->
       <ElTableColumn :label="t('orders.ops.waited')" width="100" align="right">
-        <template #default="{ row }"><span class="tabular pending-amount">{{ waited(row) }}</span></template>
+        <template #default="{ row }"><span class="tabular pending-amount">{{ pendingDuration(row.order.createdAt) }}</span></template>
       </ElTableColumn>
       <!-- @vue-generic {OpsPendingOrder} -->
       <ElTableColumn :label="t('orders.ops.progress')" width="120" align="right">
@@ -147,9 +143,9 @@ function waited({ order }: OpsPendingOrder) {
     </div>
   </ElCard>
   <OpsRenewalResolutionDialog v-if="active?.order.kind === 'static_renewal'" :key="active.order.id" v-model="open"
-    :record="active" :waited="waited(active)" @changed="changed" />
+    :record="active" :waited="pendingDuration(active.order.createdAt)" @changed="changed" />
   <OpsStaticPurchaseDialog v-else-if="active?.order.kind === 'static_purchase'" :key="active.order.id" v-model="open"
-    :record="active" :waited="waited(active)" @changed="changed" />
+    :record="active" :waited="pendingDuration(active.order.createdAt)" @changed="changed" />
 </template>
 
 <style scoped>

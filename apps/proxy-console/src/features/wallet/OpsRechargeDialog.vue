@@ -91,7 +91,7 @@ async function submit() {
     :close-on-press-escape="mayClose" :show-close="mayClose">
     <ElAlert v-if="failure" type="error" :title="uncertain ? t('wallet.opsUncertain') : errorMessage(failure)" :closable="false" show-icon class="recharge-error" />
     <ElForm v-if="step.kind === 'form'" label-position="top" @submit.prevent="prepare">
-      <ElFormItem :label="t('wallet.opsTenant')"><span>{{ tenant.name }} · <span class="mono">{{ tenant.account }}</span></span></ElFormItem>
+      <ElFormItem :label="t('wallet.opsTenant')"><span>{{ tenant.name }} · <span class="recharge-account mono">{{ tenant.account }}</span></span></ElFormItem>
       <ElFormItem :label="t('wallet.opsAmount')" for="recharge-amount" required>
         <ElInputNumber id="recharge-amount" v-model="amount" :min="0.01" :max="100000" :precision="2" :controls="false" placeholder="0.00" class="recharge-amount" />
       </ElFormItem>
@@ -119,7 +119,7 @@ async function submit() {
         <dl class="recharge-summary recharge-summary--receipt">
           <div><dt>{{ t('wallet.opsEntry') }}</dt><dd class="mono">{{ step.receipt.id }}</dd></div>
           <div><dt>{{ t('wallet.opsOperator') }}</dt><dd>{{ step.receipt.operatorName }}</dd></div>
-          <div><dt>{{ t('wallet.opsEntryTime') }}</dt><dd>{{ shanghaiDateTime(step.receipt.createdAt, locale) }}</dd></div>
+          <div><dt>{{ t('wallet.opsEntryTime') }}</dt><dd>{{ shanghaiDateTime(step.receipt.createdAt, locale, 'short') }}</dd></div>
           <div><dt>{{ t('wallet.opsChange') }}</dt><dd>{{ format(step.receipt.afterMinor - step.receipt.amountMinor) }} → {{ format(step.receipt.afterMinor) }}</dd></div>
         </dl>
       </template>
@@ -147,8 +147,14 @@ async function submit() {
 <style scoped>
 .recharge-error { margin-block-end: var(--space-4); }
 
+.recharge-account, .recharge-summary .mono { font-size: var(--font-size-xs); }
 .recharge-amount { width: 100%; }
-.recharge-hint { margin-block-start: var(--space-1); color: var(--color-text-secondary); font-size: var(--font-size-xs); }
+.recharge-hint {
+  margin-block-start: var(--space-1);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  line-height: var(--ops-usage-count-size);
+}
 .recharge-summary {
   display: flex;
   flex-direction: column;
@@ -157,12 +163,13 @@ async function submit() {
   padding-block-start: var(--space-3);
   border-top: var(--border-width) solid var(--color-border);
   font-size: var(--font-size-sm);
+  line-height: normal;
 }
 .recharge-summary div { display: flex; justify-content: space-between; gap: var(--space-3); }
 .recharge-summary dt { color: var(--color-text-secondary); flex: none; }
-.recharge-summary dd { margin: 0; overflow-wrap: anywhere; font-weight: var(--font-weight-semibold); font-variant-numeric: tabular-nums; }
+.recharge-summary dd { margin: 0; text-align: end; overflow-wrap: anywhere; font-weight: var(--font-weight-semibold); font-variant-numeric: tabular-nums; }
 .recharge-summary__amount dt { align-self: flex-end; font-weight: var(--font-weight-semibold); color: var(--color-text); }
-.recharge-summary__amount dd { font-size: var(--font-size-title); }
+.recharge-summary__amount dd { font-size: var(--font-size-title); letter-spacing: var(--ops-recharge-amount-tracking); }
 .recharge-summary--receipt { margin-block-start: var(--space-4); }
 .recharge-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; column-gap: var(--space-2); row-gap: var(--space-2); }
 .recharge-actions__error { color: var(--color-danger-text); font-size: var(--font-size-sm); }

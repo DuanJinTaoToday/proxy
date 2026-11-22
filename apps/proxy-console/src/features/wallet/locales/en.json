@@ -1,7 +1,7 @@
 {
   "wallet": {
-    "opsEntryTime": "Entry ID / time",
-    "opsOperator": "Operator",
+    "opsHistoryCount": "{count} result | {count} results",
+    "opsHistoryEntryTime": "Entry ID / time",
     "opsBalanceChange": "Before → after",
     "available": "Available balance",
     "balanceHint": "Traffic packages, static IPs, and renewals are paid from your wallet.",

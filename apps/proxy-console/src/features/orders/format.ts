@@ -28,7 +28,7 @@ export function readOrderId(value: unknown) {
 }
 
 export function useOrderFormatting() {
-  const { t, locale } = useI18n()
+  const { t, locale, n } = useI18n()
   const money = (minor: bigint) => formatYuan(minor, locale.value)
   const dateTime = (date: Date, dateStyle?: 'medium' | 'short') => shanghaiDateTime(date, locale.value, dateStyle)
   const capacity = (bytes: bigint) => t('orders.gb', { value: formatGB(bytes, locale.value) })
@@ -43,5 +43,10 @@ export function useOrderFormatting() {
     return t('orders.ipCount', { count: new Intl.NumberFormat(locale.value).format(order.deliveredCount) })
   }
 
-  return { money, dateTime, itemDescription, delivery, statusTypes }
+  function pendingDuration(createdAt: Date) {
+    const hours = Math.max(0, Math.floor((Date.now() - createdAt.getTime()) / 3_600_000))
+    return t('orders.ops.hours', { hours: n(hours) }, hours)
+  }
+
+  return { money, dateTime, itemDescription, delivery, pendingDuration, statusTypes }
 }

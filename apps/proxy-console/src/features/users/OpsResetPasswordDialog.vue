@@ -115,7 +115,8 @@ async function copy(password: string) {
 .reset-target div { display: grid; grid-template-columns: minmax(max-content, 1fr) 2fr; gap: var(--space-3); }
 .reset-target dt, .reset-hint { color: var(--color-text-secondary); }
 .reset-target dd { margin: 0; overflow-wrap: anywhere; }
+.reset-target .mono { font-size: var(--font-size-xs); }
 .reset-hint { margin-block-start: var(--space-1); font-size: var(--font-size-xs); }
-.temp-password { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); margin-block: var(--space-3); padding: var(--space-3) var(--space-4); border-radius: var(--radius-card); background: var(--color-surface-muted); font-size: var(--font-size-xl); }
+.temp-password { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); margin-block: var(--space-3); padding: var(--space-3) var(--ops-search-result-padding); border-radius: var(--radius-card); background: var(--color-surface-muted); font-size: var(--font-size-xl); letter-spacing: var(--ops-password-tracking); }
 .temp-password .mono { overflow-wrap: anywhere; }
 </style>

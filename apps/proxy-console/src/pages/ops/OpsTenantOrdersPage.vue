@@ -16,7 +16,7 @@ const emit = defineEmits<{ pendingCount: [count: number] }>()
 const route = useRoute()
 const router = useRouter()
 const { t, locale } = useI18n()
-const { itemDescription, money, statusTypes } = useOrderFormatting()
+const { itemDescription, money, pendingDuration, statusTypes } = useOrderFormatting()
 const kind = computed(() => orderKinds.find(value => value === route.query.kind))
 const status = computed(() => orderStatuses.find(value => value === route.query.status))
 const orderQuery = computed(() => readOrderSearch(route.query.orderQuery))
@@ -56,7 +56,7 @@ function filter(nextKind?: unknown, nextStatus?: unknown, nextQuery = orderQuery
     @retry="history.load" @previous="history.previous" @next="history.next">
     <template #filters>
       <form class="ops-order-search" @submit.prevent="search">
-        <ElInput v-model="orderSearch" :prefix-icon="Search" clearable maxlength="20" inputmode="numeric"
+        <ElInput v-model="orderSearch" class="ops-order-input" :prefix-icon="Search" clearable maxlength="20" inputmode="numeric"
           :aria-label="t('orders.orderSearch')" :placeholder="t('orders.orderSearch')" @change="search" />
       </form>
       <ElSelect class="ops-order-kind" :model-value="kind ?? 'all'" :aria-label="t('orders.kindFilter')"
@@ -97,14 +97,15 @@ function filter(nextKind?: unknown, nextStatus?: unknown, nextQuery = orderQuery
       <!-- @vue-generic {OrderSummary} -->
       <ElTableColumn :label="t('orders.paid')" align="right" min-width="100">
         <template #default="{ row }">
-          <strong class="tabular">{{ money(row.settledMinor) }}</strong>
+          <strong class="ops-order-amount tabular">{{ money(row.settledMinor) }}</strong>
           <span v-if="row.refundedMinor" class="ops-history-note">{{ t('orders.refundNote', { amount: money(row.refundedMinor) }) }}</span>
         </template>
       </ElTableColumn>
       <!-- @vue-generic {OrderSummary} -->
       <ElTableColumn :label="t('orders.state')" min-width="110">
         <template #default="{ row }">
-          <ElTag :type="statusTypes[row.status]" size="small" disable-transitions>{{ t(`orders.status.${row.status}`) }}</ElTag>
+          <ElTag :type="row.status === 'pending' ? 'primary' : statusTypes[row.status]" size="small" disable-transitions>{{ t(`orders.status.${row.status}`) }}</ElTag>
+          <span v-if="row.status === 'pending'" class="ops-history-note">{{ t('orders.ops.waited', { duration: pendingDuration(row.createdAt) }) }}</span>
         </template>
       </ElTableColumn>
       <!-- @vue-generic {OrderSummary} -->
@@ -121,10 +122,12 @@ function filter(nextKind?: unknown, nextStatus?: unknown, nextQuery = orderQuery
 </template>
 
 <style scoped>
+.ops-order-input { --el-component-size: var(--control-height); }
 .ops-order-search { width: min(100%, var(--ops-history-search-width)); }
 .ops-order-kind { width: var(--ops-history-kind-width); }
 .ops-order-status { width: var(--ops-history-status-width); }
-.ops-orders { cursor: pointer; }
-.ops-order-number { color: var(--color-text); font-size: var(--font-size-xs); font-weight: var(--font-weight-regular); }
+.ops-orders.ops-orders { cursor: pointer; --el-table-row-hover-bg-color: var(--color-surface-muted); }
+.ops-order-number { padding: 0; color: var(--color-text); font-size: var(--font-size-xs); font-weight: var(--font-weight-regular); }
+.ops-order-amount { font-weight: var(--font-weight-semibold); }
 .ops-order-number:hover { color: var(--color-primary); }
 </style>

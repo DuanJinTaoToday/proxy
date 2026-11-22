@@ -70,6 +70,9 @@ test('运营按租户筛选和分页，核对订单交付、退款和钱包流�
     await expect(page.getByRole('heading', { name: tenantDetails.name, exact: true })).toBeVisible()
     await expect(page.getByRole('tab', { name: /^订单/ })).toHaveAttribute('aria-selected', 'true')
     await expect(page.getByLabel('1 笔订单确认中')).toBeVisible()
+    const pendingRow = page.getByRole('row').filter({ has: page.getByRole('button', { name: pending.id, exact: true }) })
+    await expect(pendingRow.getByText(/已等待 [\d,]+ 小时/)).toBeVisible()
+    await expect(page.getByText('共 3 条', { exact: true })).toBeVisible()
     await expect(page.getByText('50 GB 流量套餐', { exact: true })).toBeVisible()
     await expect(page.getByText('已退 ¥10.00', { exact: true })).toBeVisible()
     await screenshot(page, info, '03-tenant-orders')
@@ -128,6 +131,9 @@ test('运营按租户筛选和分页，核对订单交付、退款和钱包流�
     await expect(refundRow).toHaveCount(0)
     await page.goto(tenantPage + '/ledger?start=2000-01-01&end=2000-01-02')
     await expect(page.getByText('没有符合条件的流水')).toBeVisible()
+    await page.getByRole('button', { name: '清除筛选', exact: true }).click()
+    await expect(page).toHaveURL(new RegExp(tenantPage + '/ledger$'))
+    await expect(rechargeRow).toBeVisible()
 
     const { tenant_id: emptyId } = await json(await request.post('/v1/access/register', {
       data: { phone: '13900008802', password: 'proxy-local-test' },

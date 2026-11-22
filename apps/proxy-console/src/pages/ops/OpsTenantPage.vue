@@ -2,7 +2,7 @@
 import { computed, ref, shallowRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { ElAlert, ElButton, ElCard, ElSkeleton, ElTabPane, ElTabs, ElTag, ElTooltip } from 'element-plus'
+import { ElAlert, ElButton, ElCard, ElSkeleton, ElTabPane, ElTabs, ElTooltip } from 'element-plus'
 import { ArrowLeft } from '@element-plus/icons-vue'
 import { getOpsTenant, listOpsTenantOrders, type OpsTenant } from '@/api/opsTenants'
 import { hasOperatorPermission } from '@/features/auth'
@@ -95,16 +95,16 @@ function trafficBalance(bytes: bigint) {
         <h1 class="ops-page-title tenant-head__title">{{ detail.tenant.name }}</h1>
         <p class="tenant-head__meta">
           <span class="mono">{{ detail.tenant.account }}</span><template v-if="detail.tenant.phone"> · {{ detail.tenant.phone }}</template>
-          <template v-if="detail.tenant.registeredAt"> · {{ t('users.opsRegisteredAt', { date: shanghaiDateTime(detail.tenant.registeredAt, locale) }) }}</template>
+          <template v-if="detail.tenant.registeredAt"> · {{ t('users.opsRegisteredAt', { date: shanghaiDateTime(detail.tenant.registeredAt, locale, 'short') }) }}</template>
         </p>
       </div>
       <div class="tenant-head__actions">
         <slot name="actions" :tenant="detail.tenant" />
         <ElTooltip :disabled="hasOperatorPermission('manage_tenant_accounts')" :content="t('users.reset.permission')" placement="bottom-end">
-          <span><ElButton :disabled="!hasOperatorPermission('manage_tenant_accounts')" @click="resetOpen = true">{{ t('users.reset.title') }}</ElButton></span>
+          <span><ElButton class="tenant-head__button" :disabled="!hasOperatorPermission('manage_tenant_accounts')" @click="resetOpen = true">{{ t('users.reset.title') }}</ElButton></span>
         </ElTooltip>
         <ElTooltip :disabled="hasOperatorPermission('manage_billing')" :content="t('wallet.opsBillingOnly')" placement="bottom-end">
-          <span><ElButton type="primary" :disabled="!hasOperatorPermission('manage_billing')" @click="rechargeOpen = true">{{ t('wallet.opsRecharge') }}</ElButton></span>
+          <span><ElButton class="tenant-head__button" type="primary" :disabled="!hasOperatorPermission('manage_billing')" @click="rechargeOpen = true">{{ t('wallet.opsRecharge') }}</ElButton></span>
         </ElTooltip>
       </div>
     </div>
@@ -122,18 +122,19 @@ function trafficBalance(bytes: bigint) {
       </ElCard>
     </div>
 
-    <ElTabs class="tenant-history-tabs" :model-value="tab" @update:model-value="selectTab">
-      <ElTabPane name="orders" :label="t('users.opsOrders')">
+    <ElTabs class="tenant-history-tabs ops-page-tabs" :model-value="tab" @update:model-value="selectTab">
+      <ElTabPane name="orders" class="tenant-history-panel" :label="t('users.opsOrders')">
         <template #label>
-          {{ t('users.opsOrders') }}
-          <ElTag v-if="pendingCount" class="tenant-pending-count" type="success" size="small" round
-            :aria-label="t('orders.pendingCount', pendingCount)" disable-transitions>{{ n(pendingCount) }}</ElTag>
+          <span :class="{ 'tenant-tab-label--active': tab === 'orders' }">{{ t('users.opsOrders') }}</span>
+          <span v-if="pendingCount" class="tenant-pending-count"
+            :aria-label="t('orders.pendingCount', pendingCount)">{{ n(pendingCount) }}</span>
         </template>
         <RouterView v-if="tab === 'orders'" v-slot="{ Component }">
           <component :is="Component" :key="detail.tenant.id" :tenant-id="detail.tenant.id" @pending-count="pendingCount = $event" />
         </RouterView>
       </ElTabPane>
-      <ElTabPane name="ledger" :label="t('wallet.ledger')">
+      <ElTabPane name="ledger" class="tenant-history-panel" :label="t('wallet.ledger')">
+        <template #label><span :class="{ 'tenant-tab-label--active': tab === 'ledger' }">{{ t('wallet.ledger') }}</span></template>
         <RouterView v-if="tab === 'ledger'" :key="`${detail.tenant.id}:${ledgerRevision}`" :tenant-id="detail.tenant.id" />
       </ElTabPane>
     </ElTabs>
@@ -145,18 +146,34 @@ function trafficBalance(bytes: bigint) {
 
 <style scoped>
 .tenant-history-tabs { --el-tabs-header-height: var(--tabs-height); }
-.tenant-pending-count { margin-inline-start: var(--space-2); }
+.tenant-history-panel { padding-block-start: var(--ops-tenant-history-gap); }
+.tenant-tab-label--active { font-weight: var(--font-weight-bold); }
+.tenant-pending-count {
+  display: inline-grid;
+  place-items: center;
+  min-inline-size: var(--ops-usage-count-size);
+  min-block-size: var(--ops-usage-count-size);
+  margin-inline-start: var(--ops-usage-count-gap);
+  padding-inline: var(--space-1);
+  border-radius: var(--ops-usage-count-size);
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  font-size: var(--ops-usage-count-font);
+  font-weight: var(--font-weight-bold);
+}
 .tenant-back { display: inline-flex; align-items: center; gap: var(--space-1); margin-block-end: var(--space-2); color: var(--color-text-secondary); font-size: var(--font-size-sm); }
 .tenant-back svg { width: 1em; }
 .tenant-back:hover { color: var(--color-primary); }
 .tenant-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--space-4); margin-block-end: var(--ops-page-heading-gap); }
 .tenant-head__title { margin: 0; overflow-wrap: anywhere; }
-.tenant-head__meta { margin-block-start: var(--ops-detail-meta-gap); font-size: var(--font-size-sm); color: var(--color-text-secondary); overflow-wrap: anywhere; }
+.tenant-head__meta { margin-block-start: var(--ops-detail-meta-gap); font-size: var(--font-size-sm); color: var(--color-text-secondary); overflow-wrap: anywhere; line-height: normal; }
+.tenant-head__meta .mono { font-size: var(--font-size-xs); }
 .tenant-head__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.tenant-head__button { padding-inline: var(--space-3); font-size: var(--font-size-sm); }
 .tenant-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--wallet-summary-card-width)), 1fr)); gap: var(--space-4); margin-block-end: var(--space-2); }
 .tenant-metrics__card { --el-card-padding: var(--ops-detail-card-block-padding) var(--ops-detail-card-inline-padding); border-radius: var(--ops-card-radius); }
 .tenant-metrics__card h2 { font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); }
-.tenant-metrics__amount { margin-block-start: var(--space-1); font-size: var(--ops-display-size); font-weight: var(--font-weight-heavy); line-height: var(--line-height-tight); letter-spacing: var(--ops-display-tracking); overflow-wrap: anywhere; }
+.tenant-metrics__amount { margin-block-start: var(--space-1); font-size: var(--ops-display-size); font-weight: var(--font-weight-heavy); line-height: calc(var(--space-6) + var(--space-1)); letter-spacing: var(--ops-display-tracking); overflow-wrap: anywhere; }
 .tenant-metrics__debt { color: var(--color-warning-text); }
-.tenant-metrics__hint { color: var(--color-text-secondary); font-size: var(--font-size-xs); }
+.tenant-metrics__hint { margin-block-start: var(--ops-detail-meta-gap); line-height: normal; color: var(--color-text-secondary); font-size: var(--font-size-xs); }
 </style>
