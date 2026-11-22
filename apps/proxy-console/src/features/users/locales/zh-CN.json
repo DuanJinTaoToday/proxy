@@ -16,7 +16,30 @@
     "opsWalletHint": "购买和续费从余额扣款",
     "opsTrafficBalance": "动态流量余额",
     "opsTrafficDebt": "负值为待抵扣的用量",
-    "opsTrafficHint": "1 GB = 10⁹ 字节"
+    "opsTrafficHint": "1 GB = 10⁹ 字节",
+    "reset": {
+      "title": "重置登录密码",
+      "permission": "仅有账号管理权限的运营可重置登录密码",
+      "tenant": "租户",
+      "verifyTitle": "先核实对方是租户本人",
+      "verifyDescription": "忘记密码由运营核实租户归属后协助重置。重置后旧密码和旧会话立即失效。",
+      "method": "核实方式",
+      "selectMethod": "选择核实方式",
+      "note": "核实记录",
+      "noteExample": "例如：11/20 回拨 138****6021，本人确认",
+      "methods": {
+        "phone": "注册手机号回拨核实",
+        "transfer": "对公转账回单核实",
+        "license": "营业执照与联系人核实"
+      },
+      "confirm": "确认重置",
+      "resultHint": "临时密码只显示这一次，请通过已核实的渠道发给客户，并提醒客户登录后修改。",
+      "resultOperator": "操作人 {operator} · 核实方式 {method}",
+      "copy": "复制",
+      "copied": "已复制临时密码",
+      "copyFailed": "复制失败，请检查浏览器剪贴板权限",
+      "finish": "完成"
+    }
   },
   "accessLocation": {
     "title": "当前 IP 地址及归属地",
