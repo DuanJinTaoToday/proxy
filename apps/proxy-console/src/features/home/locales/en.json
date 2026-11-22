@@ -36,12 +36,12 @@
     "renewKeeps": "Dedicated residential IP · Keep the same IP on renewal",
     "renew30": "Renew for 30 days",
     "oldExpiry": "Expires {date}",
-    "staticPrice": "per IP / {days} days",
+    "staticPrice": "per dedicated IP / {days} days",
     "buyTier": "Buy {capacity} GB of data",
     "seeStatic": "View static prices",
     "closed": "Not yet available",
     "comingPrice": "Pricing available at launch",
-    "noStatic": "No offers available",
+    "noStatic": "No dedicated IP offers available",
     "staticFailed": "Could not load static offers",
     "retry": "Retry",
     "catalogFailed": "Could not load product pricing",
@@ -55,7 +55,7 @@
     "username": "main-account.subaccount",
     "autoRotate": "Default exit rotation",
     "session": "-sid-session-id",
-    "sameExit": "Reuse the exit for a session",
+    "sameExit": "Reuse the upstream entry for a session",
     "sampleResponse": "Sample exit response",
     "protocol": "SOCKS5 protocol",
     "metered": "Metered by total bytes",
@@ -80,7 +80,7 @@
     "expiryDesc": "Renew before expiry to keep the same IP. Renew individually or in bulk.",
     "faqIntro": "Learn about billing, renewal, and setup.",
     "closeFirst": "Create an account.",
-    "closeSecond": "Connect today.",
+    "closeSecond": "Connect when ready.",
     "stepRegister": "Create an account",
     "stepRegisterBody": "Sign up with your phone number to open the console.",
     "stepTopUp": "Top up your wallet",
@@ -126,7 +126,7 @@
       },
       "protocol": {
         "q": "Which proxy protocols are supported?",
-        "a": "Rotating residential proxies use SOCKS5. After a static IP is delivered, find its address, port, and credentials in the console."
+        "a": "Rotating residential proxies use SOCKS5. A session uses the same provider entry point, and reconnecting can change the exit IP. After a static IP is delivered, find its address, port, and credentials in the console."
       },
       "regions": {
         "q": "Can I connect from mainland China?",

@@ -62,6 +62,7 @@ homepage('双语首页、两种视口、直接访问和刷新', async ({ page, o
         await reference.emulateMedia({ reducedMotion: 'reduce' })
         await reference.goto(process.env.VERIFY_HOME_PROTOTYPE_URL)
         await expect(reference.getByRole('heading', { level: 1 })).toContainText('用真实住宅 IP')
+        await reference.locator('canvas').evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
         await screenshot(reference, info, `reference-D-zh-CN-${width}`)
       } finally {
         await reference.close()
@@ -100,8 +101,8 @@ homepage('真实商品价格、暂停开售、空报价和失败重试', async (
   await page.reload()
   await expect(dynamicProduct.getByText('暂未开放购买')).toBeVisible()
   await expect(dynamicProduct.getByRole('link')).toHaveCount(0)
-  await expect(staticProduct.getByText('暂无可用报价')).toBeVisible()
-  await expect(staticProduct.getByRole('link')).toHaveCount(0)
+  await expect(staticProduct.getByText('暂无独享 IP 报价')).toBeVisible()
+  await expect(staticProduct.getByRole('link', { name: /查看静态价格/ })).toBeVisible()
   await screenshot(page, info, 'closed-dynamic-empty-static')
 
   await page.route(paths.staticOffers, route => route.fulfill({ status: 503, json: {} }), { times: 1 })
@@ -133,7 +134,25 @@ homepage('英文注册和登录入口、动态套餐登录回跳', async ({ page
   await screenshot(page, info, 'returned-to-50gb-plan')
 })
 
-test('首屏与四种语言的示例可复制，公开页仅请求公开接口', async ({ page, context, browserName, baseURL }, info) => {
+test('切换轮换标题时页面不跳动，顶栏在滚动中保留', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/en/')
+  const heading = page.getByRole('heading', { level: 1 })
+  await expect(heading).toHaveAccessibleName(/run global stores/)
+  const top = () => heading.evaluate(el => el.getBoundingClientRect().top)
+  const initial = await top()
+  await expect(heading).toHaveAccessibleName(/manage social accounts/)
+  expect(await top()).toBeCloseTo(initial, 0)
+
+  await page.getByRole('link', { name: /Explore products/ }).click()
+  await expect(page).toHaveURL(/#products$/)
+  const banner = await page.getByRole('banner').boundingBox()
+  expect(banner.y).toBe(0)
+  const products = await page.locator('#products').boundingBox()
+  expect(products.y).toBeGreaterThanOrEqual(banner.height - 1)
+})
+
+test('首屏与四种语言的示例可复制，游客首页仅请求公开接口', async ({ page, context, browserName, baseURL }, info) => {
   test.skip(browserName !== 'chromium', 'Clipboard read permissions are available in Chromium.')
   await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: new URL(baseURL).origin })
   const privateRequests = []

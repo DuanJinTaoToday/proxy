@@ -87,7 +87,7 @@ async function copyCode() {
                 <div class="term-foot">
                   <div><span>{{ t('marketing.currentExit') }}</span><strong>{{ exitCity }}</strong></div>
                   <div><span>{{ t('marketing.exitIp') }}</span><strong class="mono">{{ exit.ip }}</strong></div>
-                  <div><span>{{ t('marketing.totalMetered') }}</span><strong class="mono">{{ n(metered) }} B</strong></div>
+                  <div><span>{{ t('marketing.totalMetered') }}</span><strong class="mono">{{ gb(metered / 1_000_000_000) }} GB</strong></div>
                 </div>
               </div>
               <pre v-else><code>{{ code }}</code></pre>
@@ -157,7 +157,8 @@ async function copyCode() {
     <div class="wrap faq-grid">
       <div><h2>{{ t('marketing.faq') }}</h2><p class="note">{{ t('marketing.faqIntro') }}</p></div>
       <ElCollapse v-model="openFaq" class="faq">
-        <ElCollapseItem v-for="topic in faqTopics" :key="topic" :name="topic" :title="t(`marketing.faqs.${topic}.q`)">
+        <ElCollapseItem v-for="topic in faqTopics" :key="topic" :name="topic">
+          <template #title><span class="faq-question">{{ t(`marketing.faqs.${topic}.q`) }}</span></template>
           <p class="faq-answer">{{ t(`marketing.faqs.${topic}.a`) }}</p>
         </ElCollapseItem>
       </ElCollapse>

@@ -248,6 +248,7 @@
   --home-pill: 9999px;
   --home-header-height: 72px;
   --home-header-background: rgba(2, 8, 8, .44);
+  --home-header-blur: 14px;
   --home-black: #000;
   --home-hero-ambient-background-color: rgba(22, 118, 92, .34);
   --home-hero-ambient-background-color-2: rgba(7, 36, 32, .16);
@@ -301,7 +302,7 @@
   --home-space-156: 156px;
   --home-space-5: 5px;
   --home-type-13-5: 13.5px;
-  --home-copy-pill-color-color: #93c5fd;
+  --home-terminal-accent: #93c5fd;
   --home-size-14: 14px;
   --home-space-28: 28px;
   --home-space-34: 34px;
@@ -381,7 +382,7 @@
   --home-closing-display-size: clamp(38px, 5vw, 70px);
   --home-space-52: 52px;
   --home-size-960: 960px;
-  --home-steps-color-color: #a1a1aa;
+  --home-footer-text: #a1a1aa;
   --home-space-76: 76px;
   --home-space-38: 38px;
   --home-footer-bottom-color-color: #71717a;
@@ -451,4 +452,10 @@
   --home-size-310: 310px;
   --home-section-title-size: clamp(34px, 4.2vw, 58px);
   --home-size-16: 16px;
+  --home-weight-display: 450;
+  --home-weight-label: 550;
+  --home-space-60: 60px;
+  --home-callout-dot-stroke: 1.5px;
+  --home-space-negative-36: -36px;
+  --home-space-11: 11px;
 }

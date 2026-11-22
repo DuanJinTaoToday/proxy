@@ -46,6 +46,7 @@ async function copyCommand() {
         <h1>
           <span class="line">{{ t('marketing.title') }}</span>
           <span class="line rotator">
+            <em v-for="phrase in heroPhrases" :key="phrase" class="rotation-size" aria-hidden="true">{{ t(`marketing.${phrase}`) }}</em>
             <Transition name="swap"><em :key="index">{{ t(`marketing.${heroPhrases[index]}`) }}</em></Transition>
           </span>
         </h1>
@@ -58,9 +59,11 @@ async function copyCommand() {
           <a class="pill ghost" href="#products">{{ t('marketing.learn') }} ↓</a>
         </div>
         <ElButton class="agent-pill" :class="{ copied }" @click="copyCommand">
-          <span class="agent-dots" aria-hidden="true"><i /><i /><i /></span>
-          <span aria-live="polite">{{ t(copied ? 'marketing.copiedCommand' : 'marketing.copyCommand') }}</span>
-          <component :is="copied ? Check : CopyDocument" class="agent-icon" aria-hidden="true" />
+          <span class="agent-content">
+            <span class="agent-dots" aria-hidden="true"><i /><i /><i /></span>
+            <span aria-live="polite">{{ t(copied ? 'marketing.copiedCommand' : 'marketing.copyCommand') }}</span>
+            <component :is="copied ? Check : CopyDocument" class="agent-icon" aria-hidden="true" />
+          </span>
         </ElButton>
       </div>
     </div>

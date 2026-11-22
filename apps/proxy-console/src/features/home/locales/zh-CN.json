@@ -36,12 +36,12 @@
     "renewKeeps": "独享静态住宅 · 续费后原 IP 不变",
     "renew30": "保号续费 30 天",
     "oldExpiry": "原到期 {date}",
-    "staticPrice": "每个 / {days} 天起",
+    "staticPrice": "独享 IP / {days} 天起",
     "buyTier": "购买 {capacity} GB 流量包",
     "seeStatic": "查看静态价格",
     "closed": "暂未开放购买",
     "comingPrice": "开售后公布报价",
-    "noStatic": "暂无可用报价",
+    "noStatic": "暂无独享 IP 报价",
     "staticFailed": "静态报价暂时无法加载",
     "retry": "重试",
     "catalogFailed": "商品报价暂时无法加载",
@@ -55,7 +55,7 @@
     "username": "主账号名.子账号名",
     "autoRotate": "默认出口轮换",
     "session": "-sid-会话标识",
-    "sameExit": "同一会话沿用出口",
+    "sameExit": "同一会话沿用上游入口",
     "sampleResponse": "出口响应示例",
     "protocol": "协议 SOCKS5",
     "metered": "1:1 按总字节计量",
@@ -80,7 +80,7 @@
     "expiryDesc": "到期前续费保留原 IP，支持单个或批量续费。",
     "faqIntro": "了解计费、续费和接入规则。",
     "closeFirst": "今天注册，",
-    "closeSecond": "当天接入。",
+    "closeSecond": "按需接入。",
     "stepRegister": "注册账号",
     "stepRegisterBody": "使用手机号注册，开通即有控制台。",
     "stepTopUp": "联系运营充值",
@@ -126,7 +126,7 @@
       },
       "protocol": {
         "q": "支持哪些接入协议？",
-        "a": "动态住宅通过 SOCKS5 隧道接入。静态住宅 IP 交付后可在控制台查看 IP、端口和账密。"
+        "a": "动态住宅通过 SOCKS5 隧道接入。同一会话沿用供应商入口，重新连接时出口 IP 可能变化。静态住宅 IP 交付后可在控制台查看 IP、端口和账密。"
       },
       "regions": {
         "q": "能在中国大陆使用吗？",

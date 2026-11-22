@@ -118,18 +118,16 @@ void loadProducts()
             <p class="stage-desc">{{ t('marketing.staticDesc') }}</p>
             <ElSkeleton v-if="state.kind === 'loading'" :rows="1" :aria-label="t('marketing.loading')" />
             <div v-else-if="state.kind === 'ready'" class="stage-footer">
-              <template v-if="state.staticPrice.kind === 'priced'">
-                <div class="stage-price">
-                  <strong>{{ formatYuan(state.staticPrice.offer.unitMinor, locale) }}</strong>
-                  <span>{{ t('marketing.staticPrice', { days: state.staticPrice.offer.termDays }) }}</span>
-                </div>
-                <RouterLink class="stage-link" :to="{ name: 'console-static-pricing' }">{{ t('marketing.seeStatic') }} →</RouterLink>
-              </template>
+              <div v-if="state.staticPrice.kind === 'priced'" class="stage-price">
+                <strong>{{ formatYuan(state.staticPrice.offer.unitMinor, locale) }}</strong>
+                <span>{{ t('marketing.staticPrice', { days: state.staticPrice.offer.termDays }) }}</span>
+              </div>
               <template v-else-if="state.staticPrice.kind === 'failed'">
                 <span class="stage-status" role="status">{{ t('marketing.staticFailed') }}</span>
                 <ElButton size="small" @click="loadProducts">{{ t('marketing.retry') }}</ElButton>
               </template>
               <span v-else class="stage-status">{{ t(state.staticPrice.kind === 'closed' ? 'marketing.comingPrice' : 'marketing.noStatic') }}</span>
+              <RouterLink v-if="state.staticPrice.kind === 'priced' || state.staticPrice.kind === 'unavailable'" class="stage-link" :to="{ name: 'console-static-pricing' }">{{ t('marketing.seeStatic') }} →</RouterLink>
             </div>
           </div>
         </article>
