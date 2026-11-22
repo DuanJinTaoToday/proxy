@@ -83,7 +83,7 @@ function waited({ order }: OpsPendingOrder) {
       <ElTableColumn :label="t('orders.ops.order')" min-width="200">
         <template #default="{ row }">
           <span class="mono pending-order">{{ row.order.id }}</span>
-          <span class="pending-meta">{{ t(`orders.kinds.${row.order.kind}`) }} · {{ dateTime(row.order.createdAt) }}</span>
+          <span class="pending-meta">{{ t(`orders.kinds.${row.order.kind}`) }} · {{ dateTime(row.order.createdAt, 'short') }}</span>
         </template>
       </ElTableColumn>
       <!-- @vue-generic {OpsPendingOrder} -->

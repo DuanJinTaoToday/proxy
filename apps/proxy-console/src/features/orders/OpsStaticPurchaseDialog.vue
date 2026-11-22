@@ -81,10 +81,10 @@ async function submit() {
   <ElDialog v-model="open" :title="t('orders.ops.verifyTitle')" class="ops-dialog"
     width="min(var(--ops-resolve-width), calc(100vw - var(--space-6)))" align-center
     :close-on-click-modal="!pending" :close-on-press-escape="!pending" :show-close="!pending">
-    <dl class="resolve-summary">
+    <dl class="resolve-summary resolve-heading">
       <div><dt>{{ t('orders.ops.order') }}</dt><dd><span class="mono">{{ record.order.id }}</span> · {{ t(`orders.kinds.${record.order.kind}`) }}</dd></div>
       <div><dt>{{ t('orders.ops.tenant') }}</dt><dd>{{ record.tenant.name }} · {{ record.tenant.account }}</dd></div>
-      <div><dt>{{ t('orders.placedAt') }}</dt><dd>{{ dateTime(record.order.createdAt) }} · {{ t('orders.ops.waitedValue', { duration: waited }) }}</dd></div>
+      <div><dt>{{ t('orders.placedAt') }}</dt><dd>{{ dateTime(record.order.createdAt, 'short') }} · {{ t('orders.ops.waitedValue', { duration: waited }) }}</dd></div>
       <div><dt>{{ t('orders.ops.stage') }}</dt><dd><ElTag :type="record.canClose ? 'danger' : 'warning'" size="small" disable-transitions>{{ t(record.canClose ? 'orders.ops.closable' : 'orders.ops.review') }}</ElTag></dd></div>
     </dl>
     <ElForm label-position="top" class="resolve-form" :disabled="pending || !canBill" @submit.prevent="submit">
@@ -103,7 +103,7 @@ async function submit() {
             </tr>
           </tbody>
         </table>
-        <p class="resolve-hint">{{ t('orders.ops.deliveredHint') }}</p>
+        <p class="resolve-hint resolve-delivery-hint">{{ t('orders.ops.deliveredHint') }}</p>
       </ElFormItem>
       <ElFormItem :label="t('orders.ops.mode')">
         <ElRadioGroup v-model="mode" class="resolve-mode">
@@ -139,12 +139,14 @@ async function submit() {
 .resolve-summary div { display: flex; gap: var(--space-3); justify-content: space-between; }
 .resolve-summary dt { color: var(--color-text-secondary); flex: none; }
 .resolve-summary dd { margin: 0; font-weight: var(--font-weight-semibold); text-align: end; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.resolve-heading { margin-block-start: var(--space-4); }
 .resolve-form { margin-block-start: var(--ops-resolve-form-gap); }
 .resolve-lines { width: 100%; border-collapse: collapse; font-size: var(--font-size-sm); }
 .resolve-lines td { padding-block: var(--space-2); border-bottom: var(--border-width) solid var(--color-border); }
 .resolve-count { width: 1%; padding-inline-start: var(--space-4); white-space: nowrap; }
 .resolve-count .el-input-number { width: var(--ops-resolve-count-width); margin-inline-end: var(--space-2); }
 .resolve-hint { display: block; font-size: var(--font-size-xs); color: var(--color-text-secondary); }
+.resolve-delivery-hint { line-height: var(--line-height-normal); margin-block-start: var(--space-1); }
 .resolve-mode { align-items: flex-start; flex-direction: column; gap: var(--space-1); }
 .resolve-mode .el-radio { margin: 0; white-space: normal; height: auto; min-height: var(--control-height); }
 .resolve-alert { margin-block-end: var(--space-4); }
@@ -153,5 +155,5 @@ async function submit() {
 .resolve-refund dt { align-self: end; color: var(--color-text); font-weight: var(--font-weight-semibold); }
 .resolve-refund dd { font-size: var(--font-size-title); }
 .resolve-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; width: 100%; gap: var(--space-2); }
-.resolve-error { color: var(--color-danger-text); font-size: var(--font-size-sm); }
+.resolve-error { margin-inline-end: auto; color: var(--color-danger-text); font-size: var(--font-size-sm); }
 </style>
