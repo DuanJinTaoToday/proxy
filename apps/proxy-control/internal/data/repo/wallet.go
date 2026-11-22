@@ -171,16 +171,12 @@ func readOrders(db *gorm.DB, tenantID string, f wallet.Filter) ([]wallet.Order, 
 	return orders, err
 }
 
-func (r *WalletRepository) Orders(ctx context.Context, tenantID string, f wallet.Filter, customer bool) (wallet.OrderPage, error) {
+func (r *WalletRepository) Orders(ctx context.Context, tenantID string, f wallet.Filter) (wallet.OrderPage, error) {
 	var page wallet.OrderPage
 	if r.db == nil {
 		return page, errWalletUnavailable
 	}
 	db := r.db.WithContext(ctx)
-	if !customer {
-		orders, err := readOrders(db, tenantID, f)
-		return wallet.OrderPage{Orders: orders}, err
-	}
 	err := db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Table("purchase_orders").Where("tenant_id = ? AND status = ?", tenantID, wallet.Pending).
 			Count(&page.PendingCount).Error; err != nil {
@@ -227,7 +223,7 @@ func (r *WalletRepository) Order(ctx context.Context, tenantID string, id int64)
 	return r.readOrder(ctx, tenantID, id, false)
 }
 
-func (r *WalletRepository) CustomerOrder(ctx context.Context, tenantID string, id int64) (wallet.Order, error) {
+func (r *WalletRepository) OrderDetail(ctx context.Context, tenantID string, id int64) (wallet.Order, error) {
 	return r.readOrder(ctx, tenantID, id, true)
 }
 

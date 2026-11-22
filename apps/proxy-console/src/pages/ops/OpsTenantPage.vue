@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ref, shallowRef, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, ref, shallowRef, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { ElAlert, ElButton, ElCard, ElSkeleton, ElTooltip } from 'element-plus'
+import { ElAlert, ElButton, ElCard, ElSkeleton, ElTabPane, ElTabs, ElTag, ElTooltip } from 'element-plus'
 import { ArrowLeft } from '@element-plus/icons-vue'
-import { getOpsTenant, type OpsTenant } from '@/api/opsTenants'
+import { getOpsTenant, listOpsTenantOrders, type OpsTenant } from '@/api/opsTenants'
 import { hasOperatorPermission } from '@/features/auth'
+import { OrderDrawer, readOrderId } from '@/features/orders'
 import { OpsResetPasswordDialog } from '@/features/users'
 import { OpsRechargeDialog } from '@/features/wallet'
 import { shanghaiDateTime } from '@/shared/lib/businessDates'
@@ -13,8 +14,35 @@ import { formatYuan } from '@/shared/lib/money'
 import { bytesPerGB } from '@/shared/lib/trafficUnits'
 import { useErrorMessage } from '@/shared/lib/useErrorMessage'
 
-const { t, locale } = useI18n()
+const { t, locale, n } = useI18n()
 const route = useRoute()
+const router = useRouter()
+const tab = computed(() => route.name === 'ops-tenant-ledger' ? 'ledger' : 'orders')
+const orderId = computed(() => readOrderId(route.query.order))
+const ledgerRevision = ref(0)
+const pendingCount = ref(0)
+
+watch([tab, () => route.params.tenantId], async ([section, id], _previous, onCleanup) => {
+  if (section !== 'ledger' || typeof id !== 'string' || !hasOperatorPermission('read_operations')) return
+  const controller = new AbortController()
+  onCleanup(() => controller.abort())
+  try {
+    const { pendingCount: count } = await listOpsTenantOrders(id, { status: 'pending' }, controller.signal)
+    if (!controller.signal.aborted) pendingCount.value = count
+  } catch {
+    // The pending count is supplementary to the ledger.
+  }
+}, { immediate: true })
+
+function selectTab(nextTab: string | number) {
+  if (nextTab !== tab.value) {
+    void router.push({ name: nextTab === 'ledger' ? 'ops-tenant-ledger' : 'ops-tenant' })
+  }
+}
+
+function closeOrder() {
+  void router.replace({ query: { ...route.query, order: undefined } })
+}
 const errorMessage = useErrorMessage()
 type Detail = { kind: 'loading' } | { kind: 'error', error: unknown } | { kind: 'ready', tenant: OpsTenant }
 const detail = shallowRef<Detail>({ kind: 'loading' })
@@ -27,6 +55,7 @@ watch([() => route.params.tenantId, retry], async ([id], _previous, onCleanup) =
   const controller = new AbortController()
   onCleanup(() => controller.abort())
   rechargeOpen.value = false
+  pendingCount.value = 0
   resetOpen.value = false
   detail.value = { kind: 'loading' }
   try {
@@ -38,6 +67,7 @@ watch([() => route.params.tenantId, retry], async ([id], _previous, onCleanup) =
 }, { immediate: true })
 
 function updateBalance(availableMinor: bigint) {
+  ledgerRevision.value++
   if (detail.value.kind === 'ready') detail.value = { kind: 'ready', tenant: { ...detail.value.tenant, availableMinor } }
 }
 
@@ -92,13 +122,30 @@ function trafficBalance(bytes: bigint) {
       </ElCard>
     </div>
 
-    <RouterView />
+    <ElTabs class="tenant-history-tabs" :model-value="tab" @update:model-value="selectTab">
+      <ElTabPane name="orders" :label="t('users.opsOrders')">
+        <template #label>
+          {{ t('users.opsOrders') }}
+          <ElTag v-if="pendingCount" class="tenant-pending-count" type="success" size="small" round
+            :aria-label="t('orders.pendingCount', pendingCount)" disable-transitions>{{ n(pendingCount) }}</ElTag>
+        </template>
+        <RouterView v-if="tab === 'orders'" v-slot="{ Component }">
+          <component :is="Component" :key="detail.tenant.id" :tenant-id="detail.tenant.id" @pending-count="pendingCount = $event" />
+        </RouterView>
+      </ElTabPane>
+      <ElTabPane name="ledger" :label="t('wallet.ledger')">
+        <RouterView v-if="tab === 'ledger'" :key="`${detail.tenant.id}:${ledgerRevision}`" :tenant-id="detail.tenant.id" />
+      </ElTabPane>
+    </ElTabs>
+    <OrderDrawer :key="detail.tenant.id" :tenant-id="detail.tenant.id" :order-id="orderId" @close="closeOrder" />
     <OpsResetPasswordDialog v-if="hasOperatorPermission('manage_tenant_accounts')" :key="detail.tenant.id" v-model="resetOpen" :tenant="detail.tenant" />
     <OpsRechargeDialog :key="detail.tenant.id" v-model="rechargeOpen" :tenant="detail.tenant" @recharged="updateBalance" />
   </template>
 </template>
 
 <style scoped>
+.tenant-history-tabs { --el-tabs-header-height: var(--tabs-height); }
+.tenant-pending-count { margin-inline-start: var(--space-2); }
 .tenant-back { display: inline-flex; align-items: center; gap: var(--space-1); margin-block-end: var(--space-2); color: var(--color-text-secondary); font-size: var(--font-size-sm); }
 .tenant-back svg { width: 1em; }
 .tenant-back:hover { color: var(--color-primary); }
