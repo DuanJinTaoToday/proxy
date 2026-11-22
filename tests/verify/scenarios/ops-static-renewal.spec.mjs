@@ -73,6 +73,7 @@ async function comparePrototype(browser, info, order, closeEvidence) {
 }
 
 test('续费满 24 小时转运营，按 IP 确认与退款，迟到和重复通知不改变结果', async ({ page, request, browser }, info) => {
+  test.setTimeout(90_000)
   const staff = await authenticate(request, '/v1/operations/access/login', { username: 'operator' })
   const readonly = await authenticate(request, '/v1/operations/access/login', { username: 'operator-readonly' })
   const phone = '13800009201'
@@ -139,6 +140,18 @@ test('续费满 24 小时转运营，按 IP 确认与退款，迟到和重复通
   await expect(dialog.getByText(confirmed.ip, { exact: true })).toBeVisible()
   await expect(dialog.getByText(refunded.ip, { exact: true })).toBeVisible()
   await screenshot(page, info, '12b-renewal-dialog')
+  await dialog.getByRole('button', { name: '取消' }).click()
+  await page.getByRole('button', { name: /^语言/ }).click()
+  await page.getByRole('menuitem', { name: 'English', exact: true }).click()
+  await targetInQueue(page).getByRole('button', { name: 'Verify' }).click()
+  const englishDialog = page.getByRole('dialog', { name: 'Verify Static Order' })
+  await expect(englishDialog.getByRole('radiogroup', { name: 'Renewal items' })).toBeVisible()
+  await expect(englishDialog.getByText('Sync Crown renewal results')).toBeVisible()
+  await screenshot(page, info, '12b-renewal-dialog-en')
+  await englishDialog.getByRole('button', { name: 'Cancel' }).click()
+  await page.getByRole('button', { name: /^Language/ }).click()
+  await page.getByRole('menuitem', { name: '简体中文', exact: true }).click()
+  await targetInQueue(page).getByRole('button', { name: '核实' }).click()
   await fixture('/fixture/renewals/confirm', { id: Number(confirmed.supplier_item_id) })
   await dialog.getByRole('row').filter({ hasText: confirmed.ip }).getByRole('radio').press('Space')
   await dialog.getByRole('textbox', { name: /核实依据/ }).fill('核对皇冠明细的顺延时间')
