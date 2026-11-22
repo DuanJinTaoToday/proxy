@@ -44,7 +44,7 @@ test('计费运营独立开售、调价和下架，公开报价及成交快照�
     await openProducts(page, 'operator-billing')
     const dynamicSwitch = page.getByRole('switch', { name: '动态住宅代理-GB开售' })
     const staticSwitch = page.getByRole('switch', { name: '静态住宅代理开售' })
-    const five = page.getByRole('row', { name: /^5 GB/ })
+    const five = page.getByRole('region', { name: '动态流量包' }).getByRole('row', { name: /^5 GB/ })
     await expect(five).toContainText('¥20.00')
     await expect(dynamicSwitch).toBeChecked()
     await expect(staticSwitch).toBeChecked()
@@ -138,7 +138,7 @@ test('计费运营独立开售、调价和下架，公开报价及成交快照�
 
 test('只读运营可查看目录与记录，服务端拒绝改动', async ({ page }, info) => {
   await openProducts(page, 'operator-readonly')
-  const five = page.getByRole('row', { name: /^5 GB/ })
+  const five = page.getByRole('region', { name: '动态流量包' }).getByRole('row', { name: /^5 GB/ })
   await expect(five).toBeVisible()
   await expect(page.getByRole('heading', { name: '修改记录' })).toBeVisible()
   await expect(five.getByRole('button', { name: '调价' })).toBeDisabled()

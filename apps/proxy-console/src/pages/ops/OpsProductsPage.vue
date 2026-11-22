@@ -41,8 +41,13 @@ const productName = (kind: string) => t('catalog.' + kind)
 const perGB = (priceMinor: bigint, bytes: bigint) => (priceMinor * bytesPerGB + bytes / 2n) / bytes
 
 const dateTime = computed(() => new Intl.DateTimeFormat(locale.value, {
-  timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
+  timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
 }))
+const headerCellStyle = {
+  height: 'var(--catalog-table-header-height)', color: 'var(--color-text-secondary)',
+  fontSize: 'var(--font-size-xs)', fontWeight: 'var(--font-weight-semibold)',
+}
+const cellStyle = { height: 'var(--catalog-table-row-height)' }
 
 function packageComparison(priceMinor: bigint, capacityBytes: bigint) {
   const baseline = opsCatalog.value?.packages.find(pkg => pkg.id === '5gb')
@@ -56,8 +61,9 @@ function packageComparison(priceMinor: bigint, capacityBytes: bigint) {
 
 const audit = computed(() => (opsCatalog.value?.changes ?? []).flatMap(change => {
   const { before, after } = change
+  const when = dateTime.value.format(new Date(change.at))
   const row = (field: string, target: string, oldValue: string, newValue: string) => ({
-    id: change.id + '-' + field, at: change.at, operator: change.operator, target, before: oldValue, after: newValue,
+    id: change.id + '-' + field, at: change.at, when, operator: change.operator, target, before: oldValue, after: newValue,
   })
   if (change.kind === 'sale') {
     return [row('sale', t('catalog.auditSale', { name: productName(change.target) }), saleLabel(before.open), saleLabel(after.open))]
@@ -228,7 +234,7 @@ if (canRead.value) void load()
           <p class="card-desc">{{ t('catalog.packageHint') }}</p>
         </div>
         <ElTable :data="opsCatalog.packages" row-key="id" class="catalog-table" :empty-text="t('catalog.noPackages')"
-          :header-cell-style="{ height: 'var(--catalog-table-header-height)' }" :cell-style="{ height: 'var(--catalog-table-row-height)' }">
+          :header-cell-style="headerCellStyle" :cell-style="cellStyle">
           <ElTableColumn :label="t('catalog.capacity')" min-width="100">
             <template #default="{ row }"><strong>{{ capacityLabel(row.capacityBytes) }} GB</strong></template>
           </ElTableColumn>
@@ -260,15 +266,15 @@ if (canRead.value) void load()
       <section class="catalog-card table-card" aria-labelledby="audit-title">
         <div class="table-toolbar"><h2 id="audit-title">{{ t('catalog.auditTitle') }}</h2></div>
         <ElTable :data="audit" row-key="id" class="catalog-table" :empty-text="t('catalog.noChanges')"
-          :header-cell-style="{ height: 'var(--catalog-table-header-height)' }" :cell-style="{ height: 'var(--catalog-table-row-height)' }">
+          :header-cell-style="headerCellStyle" :cell-style="cellStyle">
           <ElTableColumn :label="t('catalog.auditTime')" min-width="150">
-            <template #default="{ row }"><time :datetime="row.at">{{ dateTime.format(new Date(row.at)) }}</time></template>
+            <template #default="{ row }"><time :datetime="row.at">{{ row.when }}</time></template>
           </ElTableColumn>
           <ElTableColumn prop="target" :label="t('catalog.auditTarget')" min-width="200" />
           <ElTableColumn :label="t('catalog.auditValues')" min-width="200">
             <template #default="{ row }"><span class="audit-before">{{ row.before }}</span> → <strong>{{ row.after }}</strong></template>
           </ElTableColumn>
-          <ElTableColumn prop="operator" :label="t('catalog.auditOperator')" width="130" />
+          <ElTableColumn prop="operator" :label="t('catalog.auditOperator')" width="100" show-overflow-tooltip />
         </ElTable>
       </section>
     </template>
@@ -335,7 +341,12 @@ if (canRead.value) void load()
 }
 .sale-card > div:first-child { flex: 1 1 var(--catalog-sale-text-width); }
 .sale-card h2, .table-toolbar h2 { font-size: var(--font-size-lg); line-height: var(--space-5); }
-.card-desc { margin-block-start: var(--ops-detail-meta-gap); color: var(--color-text-secondary); font-size: var(--font-size-xs); }
+.card-desc {
+  margin-block-start: var(--ops-detail-meta-gap);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-tight);
+}
 .sale-card .card-desc { margin-block-start: var(--catalog-sale-description-gap); }
 .sale-switch { display: flex; align-items: center; gap: var(--space-3); flex: none; }
 .page-alert, .sale-hint { margin-block-end: var(--space-4); }
@@ -352,7 +363,7 @@ if (canRead.value) void load()
 }
 .price { font-weight: var(--font-weight-semibold); }
 .row-actions { display: inline-flex; flex-wrap: wrap; justify-content: end; gap: var(--space-3); }
-.row-actions .el-button { margin-inline-start: 0; }
+.row-actions .el-button { margin-inline-start: 0; font-size: var(--font-size-sm); }
 .audit-before { color: var(--color-text-secondary); text-decoration: line-through; }
 .summary-total {
   display: grid;
