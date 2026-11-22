@@ -68,15 +68,24 @@ function readPackage(tier: TrafficPackageWire): OpsTrafficPackage {
   }
 }
 
-export async function getTrafficCatalog(signal: AbortSignal) {
-  const dynamic = (await listProducts(signal)).find(product => product.kind === 'dynamic')
+export async function getPublicCatalog(signal: AbortSignal) {
+  const products = await listProducts(signal)
+  const dynamic = products.find(product => product.kind === 'dynamic')
+  const staticProduct = products.find(product => product.kind === 'static')
   const packages: TrafficPackage[] = (dynamic?.packages ?? [])
     .filter(tier => tier.listed && BigInt(tier.price_minor ?? 0) > 0n)
     .map(tier => ({
       ...readPackage(tier),
       discountPercent: tier.discount_percent ?? 0,
     }))
-  return { open: dynamic?.open === true, canPurchase: dynamic?.can_purchase === true, packages }
+  return {
+    dynamic: { open: dynamic?.open === true, canPurchase: dynamic?.can_purchase === true, packages },
+    staticOpen: staticProduct?.open === true && staticProduct.can_purchase === true,
+  }
+}
+
+export async function getTrafficCatalog(signal: AbortSignal) {
+  return (await getPublicCatalog(signal)).dynamic
 }
 
 export async function getOpsCatalog(signal: AbortSignal) {

@@ -13,9 +13,13 @@ test('游客通过 /v1 查询商品目录，旧接口返回 404', async ({ playw
     expect(access_token).toBeTruthy()
     const headers = { Authorization: 'Bearer ' + access_token }
 
+    const listed = await operator.get('/v1/operations/traffic-packages', { headers })
+    expect(listed.ok()).toBe(true)
+    const { packages } = await listed.json()
+    const current = packages.find(tier => tier.id === '5gb')
     const tier = await operator.patch('/v1/operations/traffic-packages/5gb', {
       headers,
-      data: { version: '1', capacity_bytes: '5000000000', price_minor: '500', listed: true },
+      data: { version: current.version, capacity_bytes: '5000000000', price_minor: '500', listed: true },
     })
     expect(tier.ok()).toBe(true)
 
