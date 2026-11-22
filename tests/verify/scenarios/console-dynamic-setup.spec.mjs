@@ -63,12 +63,13 @@ test('租户从代理设置获取 SOCKS5 凭据并使用双语教程', async ({ 
     const host = config.host.includes(':') ? '[' + config.host + ']' : config.host
     const defaultConnection = `socks5h://${config.username}:${config.password}@${host}:${config.port}`
     await copy('连接串', defaultConnection)
-    await copy('curl 示例', `curl -x "${defaultConnection}" https://api.ipify.org`)
+    await copy('测试命令', `curl -x "${defaultConnection}" https://api.ipify.org`)
 
     const sticky = setup.getByRole('radio', { name: '指定会话标识' })
     await sticky.press('Space')
     await expect(sticky).toBeChecked()
     const sid = setup.getByRole('textbox', { name: '会话标识（sid）' })
+    await expect(sid).toHaveValue(/^[a-z0-9]{1,32}$/)
     for (const invalid of ['Invalid-', 'a'.repeat(33)]) {
       await sid.fill(invalid)
       await expect(setup.getByText('请输入 1–32 位小写字母或数字。', { exact: true })).toBeVisible()
@@ -89,7 +90,12 @@ test('租户从代理设置获取 SOCKS5 凭据并使用双语教程', async ({ 
 
     await expect(setup.getByRole('heading', { name: 'SOCKS5 接入信息' })).toBeVisible()
     const alertSettings = setup.getByRole('region', { name: '低余额提醒' })
-    await alertSettings.getByRole('textbox', { name: '提醒阈值（GB）' }).fill('0.75')
+    const threshold = alertSettings.getByRole('textbox', { name: '提醒阈值（GB）' })
+    await threshold.fill('0.75')
+    await alertSettings.getByRole('button', { name: '增加 5 GB' }).click()
+    await expect(threshold).toHaveValue('5.75')
+    await alertSettings.getByRole('button', { name: '减少 5 GB' }).click()
+    await expect(threshold).toHaveValue('0.75')
     await alertSettings.getByRole('button', { name: '保存阈值' }).click()
     await expect(alertSettings.getByText('已保存低余额阈值。')).toBeVisible()
     await expect(setup.getByText(account.primary_account_name + '.next72-sid-session72', { exact: true })).toBeVisible()
@@ -98,6 +104,7 @@ test('租户从代理设置获取 SOCKS5 凭据并使用双语教程', async ({ 
     await page.getByRole('tab', { name: '使用教程' }).click()
     await expect(page.getByRole('heading', { name: '通过 SOCKS5 接入动态住宅代理' })).toBeVisible()
     await expect(page.getByText('<主账号名>.<子账号名>', { exact: true })).toBeVisible()
+    await expect(page.locator('pre')).toContainText('requests.get(')
     await expect(page.getByRole('heading', { name: '常见问题' })).toBeVisible()
     await screenshot(page, info, 'guide-zh')
     await page.getByRole('button', { name: /^语言[:：]/ }).click()

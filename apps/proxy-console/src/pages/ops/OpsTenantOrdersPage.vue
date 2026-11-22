@@ -105,7 +105,7 @@ function filter(nextKind?: unknown, nextStatus?: unknown, nextQuery = orderQuery
       <ElTableColumn :label="t('orders.state')" min-width="110">
         <template #default="{ row }">
           <ElTag :type="row.status === 'pending' ? 'primary' : statusTypes[row.status]" size="small" disable-transitions>{{ t(`orders.status.${row.status}`) }}</ElTag>
-          <span v-if="row.status === 'pending'" class="ops-history-note">{{ t('orders.ops.waited', { duration: pendingDuration(row.createdAt) }) }}</span>
+          <span v-if="row.status === 'pending'" class="ops-history-note">{{ t('orders.ops.pendingDuration', { duration: pendingDuration(row.createdAt) }) }}</span>
         </template>
       </ElTableColumn>
       <!-- @vue-generic {OrderSummary} -->

@@ -34,15 +34,18 @@ const { t } = useI18n()
 <style scoped>
 .account-profile {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--account-profile-card-min-width)), 1fr));
-  align-items: start;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
   gap: var(--space-4);
+  line-height: normal;
 }
-.profile-card { --el-card-padding: var(--space-5); }
-h2 { margin: 0 0 var(--space-4); font-size: var(--font-size-xl); }
+.profile-card { --el-card-padding: var(--space-5); border-radius: var(--dashboard-card-radius); }
+.profile-card h2 { margin-block-end: var(--space-4); font-size: var(--font-size-xl); line-height: var(--tenant-profile-heading-height); }
 dl { display: grid; gap: var(--space-3); margin: 0; }
-dl > div { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: var(--space-4); }
+dl > div { display: flex; justify-content: space-between; gap: var(--space-4); }
+dl > div + div { padding-block-start: var(--space-3); border-block-start: var(--border-width) solid var(--color-border); }
 dt { color: var(--color-text-secondary); }
-dd { margin: 0; overflow-wrap: anywhere; }
+dd { margin: 0; font-weight: var(--font-weight-semibold); overflow-wrap: anywhere; text-align: end; }
 .account-error { display: grid; justify-items: start; gap: var(--space-3); }
+@media (max-width: 950px) { .account-profile { grid-template-columns: minmax(0, 1fr); } }
 </style>

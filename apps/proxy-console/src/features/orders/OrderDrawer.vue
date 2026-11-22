@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, shallowRef, watch } from 'vue'
+import { computed, ref, shallowRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElAlert, ElButton, ElDescriptions, ElDescriptionsItem, ElDrawer, ElSkeleton, ElTable, ElTableColumn, ElTag } from 'element-plus'
 import { getOpsTenantOrder } from '@/api/opsTenants'
@@ -19,6 +19,12 @@ type DetailState =
   | { kind: 'ready', order: Awaited<ReturnType<typeof getOrder>> }
 const state = shallowRef<DetailState>({ kind: 'loading' })
 const retry = ref(0)
+const commonTerm = computed(() => {
+  if (state.value.kind !== 'ready') return
+  const { items } = state.value.order
+  const days = items[0]?.termDays
+  return days && items.every(item => item.termDays === days) ? days : undefined
+})
 
 watch([() => props.orderId, () => props.tenantId, retry], async ([id, tenantId], _previous, onCleanup) => {
   if (!id) return
@@ -57,8 +63,9 @@ watch([() => props.orderId, () => props.tenantId, retry], async ([id, tenantId],
           <ElTag :type="tenantId && state.order.status === 'pending' ? 'primary' : statusTypes[state.order.status]" size="small" disable-transitions>{{ t(`orders.status.${state.order.status}`) }}</ElTag>
         </ElDescriptionsItem>
         <ElDescriptionsItem :label="t('orders.placedAt')">
-          <time :datetime="state.order.createdAt.toISOString()">{{ dateTime(state.order.createdAt) }}</time>
+          <time :datetime="state.order.createdAt.toISOString()">{{ dateTime(state.order.createdAt, tenantId ? 'medium' : 'compact') }}</time>
         </ElDescriptionsItem>
+        <ElDescriptionsItem v-if="commonTerm" :label="t('orders.rentalTerm')">{{ t('orders.termDays', commonTerm) }}</ElDescriptionsItem>
         <ElDescriptionsItem :label="t('orders.delivery')">
           <span class="tabular">{{ delivery(state.order) }}</span>
         </ElDescriptionsItem>
@@ -66,7 +73,7 @@ watch([() => props.orderId, () => props.tenantId, retry], async ([id, tenantId],
 
       <section aria-labelledby="locked-items-title">
         <h3 id="locked-items-title">{{ t('orders.lockedItems') }}</h3>
-        <ElTable :data="state.order.items" row-key="position" size="small" :empty-text="t('orders.noItems')">
+        <ElTable :data="state.order.items" class="order-detail__table" row-key="position" size="small" :empty-text="t('orders.noItems')">
           <!-- @vue-generic {OrderItem} -->
           <ElTableColumn :label="t('orders.item')" :min-width="tenantId ? 200 : 130">
             <template #default="{ row }">
@@ -77,7 +84,11 @@ watch([() => props.orderId, () => props.tenantId, retry], async ([id, tenantId],
           <!-- @vue-generic {OrderItem} -->
           <ElTableColumn :label="t('orders.lineProgress')" :min-width="tenantId ? 100 : 120" align="right">
             <template #default="{ row }">
-              <span class="tabular">{{ t('orders.quantityProgress', { delivered: row.deliveredCount, ordered: row.quantity }) }}</span>
+              <span class="tabular" :class="{ 'order-detail__partial': state.order.status !== 'pending' && row.deliveredCount < row.quantity }">
+                {{ state.order.status === 'pending' && !row.deliveredCount
+                  ? t('orders.status.pending')
+                  : t('orders.quantityProgress', { delivered: row.deliveredCount, ordered: row.quantity }) }}
+              </span>
             </template>
           </ElTableColumn>
           <!-- @vue-generic {OrderItem} -->
@@ -101,7 +112,7 @@ watch([() => props.orderId, () => props.tenantId, retry], async ([id, tenantId],
             <div>
               <strong>{{ t(`wallet.kinds.${entry.kind}`) }}</strong>
               <span class="order-note">{{ t('orders.ledgerNumber', { id: entry.id }) }} ·
-                <time :datetime="entry.createdAt.toISOString()">{{ dateTime(entry.createdAt) }}</time>
+                <time :datetime="entry.createdAt.toISOString()">{{ dateTime(entry.createdAt, tenantId ? 'medium' : 'compact') }}</time>
               </span>
             </div>
             <span class="tabular" :class="{ 'credit-amount': entry.amountMinor > 0n }">
@@ -117,9 +128,17 @@ watch([() => props.orderId, () => props.tenantId, retry], async ([id, tenantId],
 
 <style scoped>
 .order-detail { display: grid; gap: var(--space-5); }
-.order-detail h3 { margin: 0 0 var(--space-2); font-size: var(--font-size-lg); }
+.order-detail h3 { margin: 0 0 var(--space-2); font-size: var(--font-size-md); }
+.order-detail__table { --el-table-header-bg-color: var(--color-surface-muted); }
+.order-detail__partial { color: var(--color-warning-text); font-weight: var(--font-weight-semibold); }
 .order-note { display: block; color: var(--color-text-secondary); font-size: var(--font-size-xs); }
-.order-totals { margin: var(--space-3) 0 0; }
+.order-totals {
+  margin: var(--space-4) 0 0;
+  padding-block-start: var(--space-2);
+  border-block-start: var(--border-width) solid var(--color-border);
+  font-size: var(--font-size-sm);
+}
+.order-totals dt { color: var(--color-text-secondary); }
 .order-totals > div, .order-ledger > li {
   display: flex;
   justify-content: space-between;
@@ -127,10 +146,13 @@ watch([() => props.orderId, () => props.tenantId, retry], async ([id, tenantId],
   gap: var(--space-3);
   padding-block: var(--space-1);
 }
-.order-totals dd { margin: 0; font-variant-numeric: tabular-nums; }
+.order-totals dd { margin: 0; font-weight: var(--font-weight-semibold); font-variant-numeric: tabular-nums; }
 .order-paid { border-top: var(--border-width) solid var(--color-border); font-weight: var(--font-weight-semibold); }
-.order-ledger { display: grid; gap: var(--space-2); list-style: none; margin: 0; padding: 0; }
-.order-ledger > li { border-bottom: var(--border-width) solid var(--color-border); }
+.order-paid dd { font-size: var(--font-size-title); }
+.order-paid dt { color: var(--color-text); }
+.order-ledger { list-style: none; margin: 0; padding: 0; border: var(--border-width) solid var(--color-border); border-radius: var(--radius-card); }
+.order-ledger > li { padding: var(--space-2) var(--space-3); font-size: var(--font-size-sm); }
+.order-ledger > li + li { border-top: var(--border-width) solid var(--color-border); }
 .credit-amount { color: var(--color-success-text); }
 .order-detail--ops { gap: var(--ops-order-section-space); }
 .order-detail--ops h3 { margin-block-end: var(--ops-order-heading-space); font-size: var(--font-size-md); }

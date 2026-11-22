@@ -14,6 +14,7 @@ declare module 'vue-router' {
     operatorGuestOnly?: boolean
     // 带页签的页面：子路由各自独立，可直接访问、刷新和后退。
     tabs?: { name: string, labelKey: string }[]
+    tabAction?: { name: string, labelKey: string }
   }
 }
 
@@ -27,12 +28,12 @@ const AuthPage = () => import('@/pages/public/AuthPage.vue')
 interface Tab { path: string, labelKey: string, component?: RouteRecordSingleView['component'] }
 
 // 页签页：父路由显示标题和页签，第一个页签为默认子页，子路由名为「前缀-路径」。
-function tabbed(path: string, prefix: string, titleKey: string, tabs: Tab[], component = RouteTabs): RouteRecordRaw {
+function tabbed(path: string, prefix: string, titleKey: string, tabs: Tab[], options: { component?: RouteRecordSingleView['component'], action?: { name: string, labelKey: string } } = {}): RouteRecordRaw {
   const name = (tab: Tab) => `${prefix}-${tab.path}`
   return {
     path,
-    component,
-    meta: { titleKey, tabs: tabs.map(tab => ({ name: name(tab), labelKey: tab.labelKey })) },
+    component: options.component ?? RouteTabs,
+    meta: { titleKey, tabAction: options.action, tabs: tabs.map(tab => ({ name: name(tab), labelKey: tab.labelKey })) },
     redirect: { name: name(tabs[0]) },
     children: tabs.map(tab => ({ path: tab.path, name: name(tab), component: tab.component ?? RoutePlaceholder, meta: { titleKey: tab.labelKey } })),
   }
@@ -62,18 +63,18 @@ export const routes: RouteRecordRaw[] = [
         { path: 'pricing', labelKey: 'tabs.dynamicPricing', component: () => import('@/pages/console/DynamicPricingPage.vue') },
         { path: 'usage', labelKey: 'tabs.dynamicUsage', component: () => import('@/pages/console/DynamicUsagePage.vue') },
         { path: 'guide', labelKey: 'tabs.guide', component: () => import('@/pages/console/DynamicGuidePage.vue') },
-      ]),
+      ], { action: { name: 'console-dynamic-pricing', labelKey: 'dynamicSetup.buy' } }),
       tabbed('static', 'console-static', 'nav.static', [
         { path: 'ips', labelKey: 'tabs.staticIps', component: () => import('@/pages/console/StaticIpsPage.vue') },
         { path: 'pricing', labelKey: 'tabs.staticPricing', component: () => import('@/pages/console/StaticPricingPage.vue') },
         { path: 'guide', labelKey: 'tabs.guide', component: () => import('@/pages/console/StaticGuidePage.vue') },
-      ]),
+      ], { action: { name: 'console-static-pricing', labelKey: 'staticIps.buy' } }),
       { path: 'sub-accounts', name: 'console-sub-accounts', component: () => import('@/pages/console/SubAccountsPage.vue'), meta: { titleKey: 'nav.subAccounts' } },
       { path: 'wallet', name: 'console-wallet', component: () => import('@/pages/console/WalletPage.vue'), meta: { titleKey: 'nav.wallet' } },
       tabbed('account', 'console-account', 'nav.account', [
         { path: 'profile', labelKey: 'tabs.accountProfile', component: () => import('@/pages/console/AccountProfilePage.vue') },
         { path: 'orders', labelKey: 'tabs.accountOrders', component: () => import('@/pages/console/OrdersPage.vue') },
-      ], () => import('@/pages/console/AccountPage.vue')),
+      ], { component: () => import('@/pages/console/AccountPage.vue') }),
     ],
   },
   { path: '/ops/login', name: 'ops-login', component: () => import('@/pages/ops/OpsLoginPage.vue'), meta: { titleKey: 'auth.opsLoginTitle', operatorGuestOnly: true } },

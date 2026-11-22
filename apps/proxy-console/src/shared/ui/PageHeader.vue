@@ -17,12 +17,13 @@ defineProps<{ title: string }>()
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  margin-bottom: var(--space-4);
+  margin-bottom: var(--page-heading-gap, var(--space-4));
 }
 .page-header__title {
-  font-size: var(--font-size-title);
-  font-weight: var(--font-weight-bold);
-  line-height: var(--line-height-tight);
+  font-size: var(--page-heading-size, var(--font-size-title));
+  font-weight: var(--page-heading-weight, var(--font-weight-bold));
+  line-height: var(--page-heading-height, var(--line-height-tight));
+  letter-spacing: var(--page-heading-tracking, normal);
   overflow-wrap: anywhere;
 }
 .page-header__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }

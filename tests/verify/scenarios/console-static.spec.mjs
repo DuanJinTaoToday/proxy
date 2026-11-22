@@ -75,6 +75,12 @@ async function selectOption(page, combobox, option) {
   await page.getByRole('option', { name: option, exact: true }).click({ timeout: 5000 })
 }
 
+async function chooseRadio(page, group, option) {
+  const choices = page.getByRole('radiogroup', { name: group, exact: true })
+  await choices.getByText(option, { exact: true }).click()
+  await expect(choices.getByRole('radio', { name: option, exact: true })).toBeChecked()
+}
+
 async function selectIp(page, ip) {
   const checkbox = rowFor(page, ip).getByRole('checkbox')
   if (!(await checkbox.isChecked())) await checkbox.press('Space', { timeout: 5000 })
@@ -119,14 +125,14 @@ staticSalesTest('跨地区购物车一次下单，逐次复核价格和库存，
   await expect(chooseUS).toBeVisible()
   await expect(page.getByRole('heading', { name: 'North America', exact: true })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Asia', exact: true })).toBeVisible()
-  await selectOption(page, '大洲', 'Asia')
+  await chooseRadio(page, '大洲', 'Asia')
   await expect(chooseJP).toBeVisible()
   await expect(chooseUS).toHaveCount(0)
-  await selectOption(page, '大洲', '全部大洲')
-  await selectOption(page, '代理线路', 'Residential')
+  await chooseRadio(page, '大洲', '全部大洲')
+  await chooseRadio(page, '代理线路', 'Residential')
   await expect(chooseUS).toBeVisible()
   await expect(chooseJP).toHaveCount(0)
-  await selectOption(page, '代理线路', '全部线路')
+  await chooseRadio(page, '代理线路', '全部线路')
   await selectOption(page, '地区', 'Japan')
   await expect(chooseJP).toBeVisible()
   await expect(chooseUS).toHaveCount(0)
@@ -142,9 +148,8 @@ staticSalesTest('跨地区购物车一次下单，逐次复核价格和库存，
   expect(shared.offers.find(offer => offer.term === 'yp1')).toMatchObject({
     share_mode: 'shared', purpose_id: 10, unit_minor: '1100', available: 5,
   })
-  await selectOption(page, '租期', '30 天')
-  await expect(page.locator('.offer').filter({ has: page.getByRole('heading', { name: 'Singapore' }) }))
-    .toContainText(/¥11\.00.*5/s)
+  await chooseRadio(page, '租期', '30 天')
+  await expect(page.getByRole('button', { name: '选择 Singapore' })).toContainText(/可购 5.*¥11\.00/s)
   await screenshot(page, info, 'shared-chatgpt-price-stock')
 
   await page.getByText('独享静态 IP', { exact: true }).click()

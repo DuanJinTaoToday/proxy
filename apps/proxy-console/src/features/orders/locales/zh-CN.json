@@ -76,6 +76,8 @@
     "ledgerNumber": "流水 #{id}",
     "creditAmount": "+{amount}",
     "noWalletEntries": "暂无关联流水",
+    "pageEntries": "本页 {count} 条",
+    "rentalTerm": "租期",
     "ops": {
       "title": "确认中的静态订单",
       "description": "下单满 24 小时转运营核实，满 72 小时可关闭剩余并退款。",
@@ -85,7 +87,7 @@
       "order": "订单",
       "tenant": "租户",
       "waited": "已等待",
-      "waited": "已等待 {duration}",
+      "pendingDuration": "已等待 {duration}",
       "hours": "{hours} 小时",
       "waitedValue": "已等待 {duration}",
       "progress": "已交付 / 申请",

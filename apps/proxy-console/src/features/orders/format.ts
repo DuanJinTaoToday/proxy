@@ -30,7 +30,7 @@ export function readOrderId(value: unknown) {
 export function useOrderFormatting() {
   const { t, locale, n } = useI18n()
   const money = (minor: bigint) => formatYuan(minor, locale.value)
-  const dateTime = (date: Date, dateStyle?: 'medium' | 'short') => shanghaiDateTime(date, locale.value, dateStyle)
+  const dateTime = (date: Date, style: 'medium' | 'short' | 'compact' = 'compact') => shanghaiDateTime(date, locale.value, style)
   const capacity = (bytes: bigint) => t('orders.gb', { value: formatGB(bytes, locale.value) })
   function itemDescription(item: OrderItem) {
     if (item.capacityBytes > 0n) return t('orders.trafficPackage', { capacity: capacity(item.capacityBytes) })

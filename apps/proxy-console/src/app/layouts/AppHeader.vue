@@ -10,7 +10,7 @@ import { NotificationBell } from '@/features/notifications'
 import { applyLocale, isLocale, locales, rememberLocale, type Locale } from '../i18n'
 
 // 三个入口共用的顶栏。右侧顺序固定为「通知铃铛 → 语言切换 → 用户入口」。
-defineProps<{ menuButton?: boolean, ops?: boolean }>()
+defineProps<{ menuButton?: boolean, ops?: boolean, tenant?: boolean }>()
 defineEmits<{ openMenu: [] }>()
 
 const route = useRoute()
@@ -30,7 +30,7 @@ function switchLocale(next: Locale) {
 </script>
 
 <template>
-  <header class="app-header" :class="{ 'app-header--ops': ops }">
+  <header class="app-header" :class="{ 'app-header--ops': ops, 'app-header--tenant': tenant }">
     <div class="app-header__start">
       <ElButton v-if="menuButton" class="app-header__menu" text :icon="Menu" :aria-label="t('nav.openMenu')" @click="$emit('openMenu')" />
       <RouterLink :to="ops ? '/ops' : homePath" class="app-header__brand">
@@ -47,7 +47,7 @@ function switchLocale(next: Locale) {
       <NotificationBell v-else :key="sessionPhone" :account-key="sessionPhone" />
 
       <ElDropdown trigger="click" placement="bottom-end" @command="switchLocale">
-        <ElButton text class="app-header__language" :aria-label="t('header.language', { name: t(`locale.${locale}`) })">
+        <ElButton class="app-header__language" text :aria-label="t('header.language', { name: t(`locale.${locale}`) })">
           <svg class="app-header__globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 2.7 3.8 5.7 3.8 9s-1.3 6.3-3.8 9c-2.5-2.7-3.8-5.7-3.8-9S9.5 5.7 12 3z" /></svg><span class="app-header__locale-name">{{ t(`locale.${locale}`) }}</span><ArrowDown class="app-header__chevron" />
         </ElButton>
         <template #dropdown>
@@ -60,7 +60,7 @@ function switchLocale(next: Locale) {
       </ElDropdown>
 
       <OperatorMenu v-if="ops" />
-      <AccountMenu v-else-if="hasSession()" />
+      <AccountMenu v-else-if="hasSession()" :tenant="tenant" />
       <template v-else>
         <LinkButton :to="`/${locale}/login`" text>{{ t('header.login') }}</LinkButton>
         <LinkButton :to="`/${locale}/register`" type="primary">{{ t('header.register') }}</LinkButton>
@@ -132,6 +132,31 @@ function switchLocale(next: Locale) {
 .app-header__customer-link svg { width: var(--icon-size); color: var(--color-text-secondary); }
 .app-header__customer-link:hover { background: var(--color-surface-muted); border-radius: var(--ops-control-radius); }
 
+.app-header--tenant {
+  --tenant-header-item-height: 36px;
+  --tenant-header-item-padding: 10px;
+  --tenant-header-item-gap: var(--space-2);
+}
+.app-header--tenant .app-header__brand {
+  column-gap: 10px;
+  font-size: 21px;
+  font-weight: 750;
+  line-height: normal;
+}
+.app-header--tenant .app-header__mark { border-radius: 9px; }
+.app-header--tenant .app-header__mark svg { width: 1em; height: 1em; }
+.app-header--tenant .app-header__language {
+  height: var(--tenant-header-item-height);
+  padding-inline: var(--tenant-header-item-padding);
+  border-radius: var(--space-2);
+  font-weight: var(--font-weight-semibold);
+}
+.app-header--tenant .app-header__language[aria-expanded="true"] { background: var(--color-surface-muted); }
+.app-header--tenant .app-header__chevron,
+.app-header--tenant .app-header__globe { color: var(--color-text-secondary); }
+.app-header--tenant .app-header__chevron { width: var(--font-size-xs); margin-left: var(--tenant-header-item-gap); }
+.app-header--tenant .app-header__globe { margin-right: var(--tenant-header-item-gap); }
+
 @media (max-width: 767px) {
   .app-header { padding-inline: var(--space-2); }
   .app-header__menu { display: inline-flex; }
@@ -140,5 +165,20 @@ function switchLocale(next: Locale) {
   .app-header--ops .app-header__language { border-color: transparent; }
   .app-header__tools { gap: 0; }
   .app-header__customer-link, .app-header__brand-text, .app-header__locale-name, .app-header__chevron { display: none; }
+
+  .app-header--tenant {
+    --tenant-header-item-padding: 7px;
+    --tenant-header-item-gap: var(--space-1);
+    gap: var(--space-1);
+    padding-inline: var(--space-4);
+  }
+  .app-header--tenant .app-header__menu { order: 1; width: var(--space-5); padding-inline: 0; }
+  .app-header--tenant .app-header__tools { gap: var(--space-1); }
+}
+
+@media (390px <= width <= 767px) {
+  .app-header--tenant .app-header__brand-text,
+  .app-header--tenant .app-header__locale-name,
+  .app-header--tenant .app-header__chevron { display: inline-block; }
 }
 </style>

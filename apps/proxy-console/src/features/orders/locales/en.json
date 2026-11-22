@@ -76,6 +76,8 @@
     "ledgerNumber": "Transaction #{id}",
     "creditAmount": "+{amount}",
     "noWalletEntries": "No related wallet transactions",
+    "pageEntries": "{count} orders on this page",
+    "rentalTerm": "Rental term",
     "ops": {
       "title": "Static Orders Under Review",
       "description": "Orders go to Operations after 24 hours. Any remaining delivery can be closed and refunded after 72 hours.",
@@ -85,7 +87,7 @@
       "order": "Order",
       "tenant": "Tenant",
       "waited": "Wait time",
-      "waited": "Waiting for {duration}",
+      "pendingDuration": "Waiting for {duration}",
       "hours": "{hours} hour | {hours} hours",
       "waitedValue": "Waiting for {duration}",
       "progress": "Delivered / Requested",

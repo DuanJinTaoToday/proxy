@@ -7,9 +7,11 @@
     "failed": "Notifications could not be loaded.",
     "retry": "Retry",
     "lowTraffic": "Rotating traffic balance is low",
-    "trafficAction": "View traffic packages",
-    "expiring": "{count} static IPs expire soon | {count} static IP expires soon | {count} static IPs expire soon",
-    "staticAction": "View and renew your static IPs",
+    "trafficBalance": "{value} GB remaining",
+    "trafficDebt": "{value} GB owed",
+    "trafficDetail": "{balance}. Alert threshold is {threshold} GB.",
+    "expiring": "Static IPs expiring soon",
+    "expiryDetail": "{count} static IPs expire within 5 days. Earliest expiry is {expiry}. | {count} static IP expires within 5 days, on {expiry}. | {count} static IPs expire within 5 days. Earliest expiry is {expiry}.",
     "empty": "No notifications"
   }
 }

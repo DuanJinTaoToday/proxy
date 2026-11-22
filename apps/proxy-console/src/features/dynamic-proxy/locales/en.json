@@ -19,7 +19,6 @@
     "accountsFailed": "Could not load subaccounts",
     "retry": "Retry",
     "empty": "No usage in this range",
-    "total": "Total debited",
     "average": "Daily average",
     "peak": "Highest day",
     "gb": "{value} GB",
@@ -30,7 +29,9 @@
     "debitedBytes": "Bytes debited",
     "updated": "Data updated {time}",
     "unknownUpdate": "Last update time unavailable",
-    "usageBasis": "Daily traffic debited · Business dates use Shanghai time · 1 GB = 10⁹ bytes"
+    "usageBasis": "Daily traffic debited · Business dates use Shanghai time · 1 GB = 10⁹ bytes",
+    "accountTotal": "{account} · Total debited",
+    "below": "Below {amount}"
   },
   "trafficAlert": {
     "title": "Low balance alerts",
@@ -44,20 +45,27 @@
     "loading": "Loading low balance alerts",
     "loadFailed": "Could not load low balance alerts.",
     "updateFailed": "Could not confirm the alert settings. Try again.",
-    "retry": "Retry"
+    "retry": "Retry",
+    "increase": "Increase by 5 GB",
+    "decrease": "Decrease by 5 GB",
+    "saveShort": "Save"
   },
   "subaccounts": {
-    "intro": "Use subaccounts to give each project its own SOCKS5 credentials and usage limit for dynamic residential proxies.",
-    "usernameHint": "Use a SOCKS5 username such as {account}.shop01. Append -sid- followed by a session ID to select a session. Each static residential IP has its own credentials.",
+    "intro": "Use subaccounts to give each project its own SOCKS5 credentials and usage limit for Dynamic Residential Proxy (GB).",
+    "usernameHint": "Use {username} as the SOCKS5 username. Append {session} to keep a session. Each static residential IP uses its own delivery credentials.",
+    "sessionSuffix": "-sid-sessionID",
+    "overview": "Subaccount overview",
     "quota": "Slots used",
-    "quotaValue": "{used} / {quota}",
+    "quotaValue": "{used} {quota}",
     "quotaHint": "Enabled and disabled accounts both count.",
     "quotaFull": "All {quota} subaccount slots are used. Enabled and disabled accounts both count.",
     "active": "Enabled",
+    "activeMetric": "Enabled",
+    "accountUnit": "account | accounts",
     "inactive": "Disabled",
     "activeHint": "Disabled accounts cannot start new connections.",
     "usage": "Total usage",
-    "usageHint": "Across all subaccounts. 1 GB = 1 billion bytes.",
+    "usageHint": "Across all subaccounts. 1 GB = 10⁹ bytes.",
     "gb": "{value} GB",
     "usageValue": "{used} / {limit}",
     "list": "Subaccount list",
@@ -66,19 +74,23 @@
     "allStatuses": "All statuses",
     "capped": "Limit reached",
     "name": "Subaccount name",
+    "account": "Subaccount",
+    "namePlaceholder": "For example, shop01",
     "username": "SOCKS5 username",
     "remark": "Note",
-    "remarkPlaceholder": "Describe how this account is used",
+    "remarkPlaceholder": "Describe what this account is for",
     "noRemark": "No note",
     "password": "Password",
     "newPassword": "New password",
     "showPassword": "Show password",
     "hidePassword": "Hide password",
     "copyPassword": "Copy password",
-    "copyUsername": "Copy SOCKS5 username",
+    "copyUsernameHint": "Copy SOCKS5 username {username}",
     "usageAndLimit": "Total usage / limit",
     "limit": "Cumulative usage limit",
     "limitInGB": "Limit (GB)",
+    "increaseLimit": "Increase usage limit",
+    "decreaseLimit": "Decrease usage limit",
     "limited": "Limited",
     "unlimited": "Unlimited",
     "status": "Status",
@@ -92,13 +104,11 @@
     "editTitle": "Edit subaccount",
     "changePassword": "Change password",
     "disable": "Disable",
-    "enable": "Enable",
     "disableTitle": "Disable {name}?",
-    "enableTitle": "Enable {name}?",
-    "disableImpact": "Disabling this account blocks new connections. Existing connections stay open and usage continues to be counted. The account still uses a slot.",
-    "enableImpact": "New connections still need sufficient tenant balance and available usage. Existing connections stay open.",
+    "enableTitle": "Enable {name}",
+    "disableImpact": "Disabling {name} blocks new connections. Existing connections stay open and usage continues to be counted. Usage history is kept, and the account still uses a slot.",
     "passwordImpact": "New connections use the new password. Existing connections stay open.",
-    "limitImpact": "At the limit, new connections are blocked and existing usage continues to be counted.",
+    "limitImpact": "At the limit, new connections are blocked and existing usage continues to be counted. Without a limit, only your tenant traffic balance applies.",
     "limitEditHint": "You can raise or remove the limit. Usage so far is {used} GB.",
     "nameRule": "Use 4–8 lowercase letters or digits, starting with a letter. The name is fixed after creation.",
     "passwordRule": "Use 6–12 ASCII letters and digits, with at least one of each.",
@@ -114,9 +124,14 @@
     "loading": "Loading subaccounts",
     "noMatches": "No subaccounts match your filters.",
     "clearFilters": "Clear filters",
-    "noAccounts": "No proxy subaccounts yet.",
-    "visibleCount": "Showing {visible} of {total} subaccounts",
+    "noAccounts": "Create a subaccount to connect to Dynamic Residential Proxy.",
+    "totalCount": "{count} subaccount | {count} subaccounts",
+    "visibleCount": "Showing {visible} of {total}",
     "saved": "Saved {name}.",
+    "created": "Created subaccount {name}.",
+    "passwordSaved": "Changed the password for {name}.",
+    "disabled": "Disabled {name}.",
+    "enabled": "Enabled {name}.",
     "copied": "Copied to the clipboard.",
     "revealToCopy": "Show the password first, then click Copy.",
     "copyFailed": "Copy failed. Check your browser’s clipboard permissions.",
@@ -154,7 +169,7 @@
     "copied": "Copied to the clipboard.",
     "copyFailed": "Copy failed. Check the browser clipboard permissions.",
     "connection": "Connection string",
-    "curl": "curl example",
+    "curl": "Test command",
     "retry": "Reload",
     "balance": "Available traffic",
     "balanceHint": "Traffic does not expire. A positive traffic balance is required for new connections.",
@@ -167,7 +182,7 @@
     "faq": "Frequently asked questions",
     "purchase": {
       "title": "Buy traffic",
-      "body": "Buy a traffic package from Pricing. Traffic does not expire and is shared among the tenant’s subaccounts."
+      "body": "Buy a traffic package from Pricing. Traffic never expires and is shared across your subaccounts. New connections require a positive traffic balance."
     },
     "account": {
       "title": "Create a subaccount",
@@ -175,22 +190,21 @@
     },
     "credentials": {
       "title": "Get connection details",
-      "body": "Select an enabled subaccount in Proxy Setup and copy its gateway host, port, username, and password. The default SOCKS5 username uses this format."
+      "body": "Select an enabled subaccount in Proxy Setup and copy the gateway host, port, username, and password. The username format is {username}."
     },
     "usernameFormat": "<primary-account>.<subaccount>",
     "session": {
-      "title": "Choose a session",
-      "body": "For the default session, use the base username. To specify a session, append the suffix below. The session ID must contain 1–32 lowercase letters or digits."
+      "title": "Keep a session when needed",
+      "body": "To specify a session, use {session} with a session ID of 1–32 lowercase letters or digits. New connections in the same session try to reuse the same exit IP, which can change on reconnect."
     },
     "sessionFormat": "<primary-account>.<subaccount>-sid-<session-id>",
     "connect": {
-      "title": "Configure and test the client",
-      "body": "Choose SOCKS5 in your client and enter the connection details. Use socks5h where supported to resolve the destination hostname through the proxy. You can also copy the curl command from Proxy Setup to check the exit IP."
+      "title": "Connect from your code",
+      "body": "Use socks5h to resolve hostnames through the proxy. Install requests[socks], then replace the example proxy address with the connection string from Proxy Setup."
     },
-    "command": "curl -x 'socks5h://<username>:<password>{'@'}<gateway-host>:<port>' https://api.ipify.org",
     "usage": {
       "title": "Check your usage",
-      "body": "Traffic is deducted by metered bytes. One GB is 1,000,000,000 bytes."
+      "body": "View daily traffic debits in Usage Statistics, filter by subaccount, and export a CSV. Debits use the actual metered bytes. One GB is 10⁹ bytes."
     },
     "authentication": {
       "title": "Why did authentication fail?",

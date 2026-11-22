@@ -2,9 +2,10 @@
 import { computed, onScopeDispose, ref, shallowRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElAlert, ElButton, ElCard, ElForm, ElFormItem, ElInput, ElSkeleton } from 'element-plus'
+import { Minus, Plus } from '@element-plus/icons-vue'
 import { getTrafficAlert, setTrafficAlert } from '@/api/trafficAlert'
 import { refreshTrafficNotice } from '@/features/notifications'
-import { formatGB, parseLimitGB } from '@/shared/lib/trafficUnits'
+import { bytesPerGB, formatGB, parseLimitGB } from '@/shared/lib/trafficUnits'
 import { useErrorMessage } from '@/shared/lib/useErrorMessage'
 
 const { t, locale } = useI18n()
@@ -27,6 +28,18 @@ const controller = new AbortController()
 onScopeDispose(() => controller.abort())
 
 const isConfigured = computed(() => state.value.kind === 'ready' && state.value.bytes !== undefined)
+const inputBytes = computed(() => parseLimitGB(input.value))
+const saving = computed(() => updateState.value.kind === 'saving')
+const unchanged = computed(() => state.value.kind === 'ready' && inputBytes.value !== undefined && inputBytes.value === state.value.bytes)
+
+function stepThreshold(direction: -1n | 1n) {
+  const stepped = (inputBytes.value ?? 0n) + direction * 5n * bytesPerGB
+  const value = formatGB(stepped < 0n ? 0n : stepped, locale.value, false)
+  if (parseLimitGB(value) !== undefined) {
+    input.value = value
+    clearFeedback()
+  }
+}
 
 function showThreshold(bytes: bigint | undefined) {
   state.value = { kind: 'ready', bytes }
@@ -72,7 +85,7 @@ void load()
 </script>
 
 <template>
-  <ElCard role="region" aria-labelledby="traffic-alert-title" shadow="never">
+  <ElCard class="traffic-alert" role="region" aria-labelledby="traffic-alert-title" shadow="never">
     <h2 id="traffic-alert-title">{{ t('trafficAlert.title') }}</h2>
     <p class="traffic-alert__hint">{{ t('trafficAlert.hint') }}</p>
     <div v-if="state.kind === 'loading'" role="status" :aria-label="t('trafficAlert.loading')">
@@ -83,34 +96,45 @@ void load()
       <ElButton size="small" @click="load">{{ t('trafficAlert.retry') }}</ElButton>
     </ElAlert>
     <ElForm v-else label-position="top" @submit.prevent="update('save')">
-      <ElFormItem :label="t('trafficAlert.threshold')" :error="invalid ? t('trafficAlert.invalid') : undefined">
-        <ElInput
-          v-model="input"
-          class="traffic-alert__input tabular"
-          inputmode="decimal"
-          :aria-label="t('trafficAlert.threshold')"
-          :disabled="updateState.kind === 'saving'"
-          @input="clearFeedback"
-        />
-      </ElFormItem>
       <div class="traffic-alert__actions">
+        <ElFormItem :error="invalid ? t('trafficAlert.invalid') : undefined">
+          <ElInput
+            v-model="input"
+            class="traffic-alert__input tabular"
+            inputmode="decimal"
+            :aria-label="t('trafficAlert.threshold')"
+            :disabled="saving"
+            :input-style="{ textAlign: 'center' }"
+            @input="clearFeedback"
+          >
+            <template #prepend>
+              <ElButton class="traffic-alert__step" :aria-label="t('trafficAlert.decrease')" :icon="Minus" :disabled="saving || !inputBytes" @click="stepThreshold(-1n)" />
+            </template>
+            <template #append>
+              <ElButton class="traffic-alert__step" :aria-label="t('trafficAlert.increase')" :icon="Plus" :disabled="saving" @click="stepThreshold(1n)" />
+            </template>
+          </ElInput>
+          <span aria-hidden="true" class="traffic-alert__unit">GB</span>
+        </ElFormItem>
         <ElButton
-          type="primary"
           native-type="submit"
           :loading="updateState.kind === 'saving' && updateState.action === 'save'"
-          :disabled="updateState.kind === 'saving'"
+          :disabled="saving || unchanged || !input.trim()"
+          :aria-label="t('trafficAlert.save')"
         >
-          {{ t('trafficAlert.save') }}
-        </ElButton>
-        <ElButton
-          v-if="isConfigured"
-          :loading="updateState.kind === 'saving' && updateState.action === 'disable'"
-          :disabled="updateState.kind === 'saving'"
-          @click="update('disable')"
-        >
-          {{ t('trafficAlert.disable') }}
+          {{ t('trafficAlert.saveShort') }}
         </ElButton>
       </div>
+      <ElButton
+        v-if="isConfigured"
+        class="traffic-alert__disable"
+        link
+        :loading="updateState.kind === 'saving' && updateState.action === 'disable'"
+        :disabled="saving"
+        @click="update('disable')"
+      >
+        {{ t('trafficAlert.disable') }}
+      </ElButton>
       <ElAlert
         v-if="updateState.kind === 'succeeded'"
         class="traffic-alert__feedback"
@@ -135,10 +159,16 @@ void load()
 </template>
 
 <style scoped>
-h2 { font-size: var(--font-size-lg); font-weight: var(--font-weight-semibold); }
-.traffic-alert__hint { margin-block: var(--space-2) var(--space-4); color: var(--color-text-secondary); }
-.traffic-alert__input { max-inline-size: var(--traffic-alert-input-width); }
-.traffic-alert__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.traffic-alert { --el-card-padding: var(--space-5); border-radius: var(--radius-card); }
+h2 { font-size: var(--font-size-xl); font-weight: var(--font-weight-semibold); }
+.traffic-alert__hint { margin-block: var(--space-1) var(--space-3); color: var(--color-text-secondary); font-size: var(--font-size-xs); }
+.traffic-alert__input { inline-size: var(--traffic-alert-stepper-width); max-inline-size: 100%; }
+.traffic-alert__step { inline-size: var(--brand-mark-size); padding-inline: 0; }
+.traffic-alert__actions { display: flex; align-items: flex-start; flex-wrap: wrap; gap: var(--space-2); }
+.traffic-alert__actions .el-form-item { margin-block-end: 0; }
+.traffic-alert__actions .el-form-item.is-error { margin-block-end: var(--space-6); }
+.traffic-alert__unit { margin-inline-start: var(--space-2); color: var(--color-text-secondary); }
 .traffic-alert__actions > button { margin-inline: 0; }
+.traffic-alert__disable { margin-block-start: var(--space-3); }
 .traffic-alert__feedback { margin-block-start: var(--space-3); }
 </style>

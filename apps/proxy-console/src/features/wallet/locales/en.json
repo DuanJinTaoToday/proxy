@@ -54,6 +54,8 @@
       "refund": "Order refund credited to the wallet",
       "unknown": "Wallet balance adjustment"
     },
+    "lowBalanceHint": "The balance is low and may not cover your next purchase or renewal.",
+    "pageEntries": "{count} entries on this page",
     "opsRecharge": "Wallet recharge",
     "opsReviewTitle": "Review recharge details",
     "opsTenant": "Tenant",

@@ -2,25 +2,29 @@
 import { computed, onScopeDispose, ref, shallowRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
-import { ElBadge, ElButton, ElEmpty, ElPopover, ElSkeleton } from 'element-plus'
-import { Bell, Check, Close } from '@element-plus/icons-vue'
+import { ElButton, ElEmpty, ElPopover, ElSkeleton } from 'element-plus'
+import { Bell, Check, CircleCheck, Close } from '@element-plus/icons-vue'
 import { claimStaticExpiryNotices, getOverview, listActiveStaticExpiries } from '@/api/dashboard'
 import { getTrafficAlert } from '@/api/trafficAlert'
+import { dayNumber, shanghaiDateTime, shanghaiToday } from '@/shared/lib/businessDates'
+import { formatGB } from '@/shared/lib/trafficUnits'
 import LinkButton from '@/shared/ui/LinkButton.vue'
 import { trafficNoticeRevision } from './trafficNotice'
 
 const props = defineProps<{ accountKey: string }>()
 const { t, locale } = useI18n()
 const route = useRoute()
-const bell = ref<InstanceType<typeof ElPopover>>()
+const open = ref(false)
 const trafficLoading = ref(false)
 const staticLoading = ref(false)
 const trafficFailed = ref(false)
 const staticFailed = ref(false)
 const loading = computed(() => trafficLoading.value || staticLoading.value)
 const failed = computed(() => trafficFailed.value || staticFailed.value)
-const trafficOccurrence = ref<string>()
-const expiringKeys = ref<string[]>([])
+const trafficAlert = shallowRef<Awaited<ReturnType<typeof getTrafficAlert>>>()
+const trafficOccurrence = computed(() => trafficAlert.value?.occurrence)
+const expiringAllocations = shallowRef<Awaited<ReturnType<typeof listActiveStaticExpiries>>>([])
+const earliestExpiry = computed(() => expiringAllocations.value[0]?.expiresAt)
 const controller = new AbortController()
 let trafficRequest: AbortController | undefined
 onScopeDispose(() => {
@@ -63,8 +67,26 @@ function loadReadState(): ReadState {
 }
 const readState = shallowRef<ReadState>(props.accountKey ? loadReadState() : { staticStatus: {} })
 const unreadTraffic = computed(() => trafficOccurrence.value !== undefined && trafficOccurrence.value !== readState.value.trafficRead)
-const unreadStatic = computed(() => expiringKeys.value.some(key => readState.value.staticStatus[key] === 'unread'))
+const unreadStatic = computed(() => expiringAllocations.value.some(({ key }) => readState.value.staticStatus[key] === 'unread'))
 const unread = computed(() => unreadTraffic.value || unreadStatic.value)
+const trafficDetail = computed(() => {
+  const alert = trafficAlert.value
+  if (!alert) return ''
+  const balance = alert.availableBytes
+  const balanceText = t(balance < 0n ? 'notifications.trafficDebt' : 'notifications.trafficBalance', {
+    value: formatGB(balance < 0n ? -balance : balance, locale.value),
+  })
+  if (alert.thresholdBytes === undefined) return balanceText
+  return t('notifications.trafficDetail', { balance: balanceText, threshold: formatGB(alert.thresholdBytes, locale.value) })
+})
+const shanghaiDate = new Intl.DateTimeFormat('sv-SE', { dateStyle: 'short', timeZone: 'Asia/Shanghai' })
+
+function relativeTriggerDate(date: Date) {
+  const days = dayNumber(shanghaiDate.format(date)) - dayNumber(shanghaiToday())
+  return days > 0
+    ? shanghaiDateTime(date, locale.value)
+    : new Intl.RelativeTimeFormat(locale.value, { numeric: 'auto' }).format(days, 'day')
+}
 
 function saveReadState(next: ReadState) {
   readState.value = next
@@ -88,10 +110,10 @@ async function loadTraffic() {
   trafficFailed.value = false
   try {
     const traffic = await getTrafficAlert(request.signal)
-    if (!request.signal.aborted) trafficOccurrence.value = traffic.occurrence
+    if (!request.signal.aborted) trafficAlert.value = traffic
   } catch {
     if (!request.signal.aborted) {
-      trafficOccurrence.value = undefined
+      trafficAlert.value = undefined
       trafficFailed.value = true
     }
   } finally {
@@ -110,7 +132,8 @@ async function loadStatic() {
       ? await listActiveStaticExpiries(overview.activeStaticIpCount, controller.signal)
       : []
     if (controller.signal.aborted) return
-    const keys = active.slice(0, overview.expiringIpCount).map(allocation => allocation.key)
+    const expiring = active.slice(0, overview.expiringIpCount)
+    const keys = expiring.map(allocation => allocation.key)
     let newStatus: StaticReadStatus = 'read'
     if (keys.some(key => !readState.value.staticStatus[key])) {
       const recoverClaim = claimPending
@@ -124,10 +147,10 @@ async function loadStatic() {
     saveReadState({ ...previous, staticStatus })
     setClaimPending(false)
     if (controller.signal.aborted) return
-    expiringKeys.value = keys
+    expiringAllocations.value = expiring
   } catch {
     if (!controller.signal.aborted) {
-      expiringKeys.value = []
+      expiringAllocations.value = []
       staticFailed.value = true
     }
   } finally {
@@ -151,29 +174,49 @@ function markRead(kind: 'traffic' | 'static' | 'all') {
   const next = { ...readState.value }
   if (kind === 'traffic' || kind === 'all') next.trafficRead = trafficOccurrence.value
   if (kind === 'static' || kind === 'all') {
-    next.staticStatus = Object.fromEntries(expiringKeys.value.map(key => [key, 'read']))
+    next.staticStatus = Object.fromEntries(expiringAllocations.value.map(({ key }) => [key, 'read']))
   }
   saveReadState(next)
-  if (kind !== 'all') bell.value?.hide()
+  if (kind !== 'all') open.value = false
 }
 </script>
 
 <template>
-  <ElPopover ref="bell" placement="bottom-end" trigger="click" :teleported="false" width="min(var(--notification-panel-width), calc(100vw - var(--space-5)))" @before-enter="refreshOnOpen">
+  <ElPopover
+    v-model:visible="open"
+    placement="bottom-end"
+    trigger="click"
+    :teleported="false"
+    :show-arrow="false"
+    :offset="10"
+    width="min(var(--notification-panel-width), calc(100vw - var(--space-5)))"
+    :popper-style="{ padding: 0, borderRadius: '14px', boxShadow: 'var(--shadow-overlay)' }"
+    @before-enter="refreshOnOpen"
+  >
     <template #reference>
-      <ElButton text circle :aria-label="t(unread ? 'notifications.unreadLabel' : 'header.notifications')">
-        <ElBadge is-dot :hidden="!unread"><Bell class="notification-bell__icon" /></ElBadge>
-      </ElButton>
+      <button
+        type="button"
+        class="notification-bell__trigger"
+        :class="{ 'is-open': open }"
+        :aria-expanded="open"
+        :aria-label="t(unread ? 'notifications.unreadLabel' : 'header.notifications')"
+      >
+        <Bell aria-hidden="true" />
+        <span v-if="unread" class="notification-bell__badge" aria-hidden="true" />
+      </button>
     </template>
 
     <div class="notification-bell__panel">
       <div class="notification-bell__heading">
         <h2>{{ t('header.notifications') }}</h2>
         <div class="notification-bell__actions">
-          <ElButton v-if="!failed && unread" :disabled="loading" :icon="Check" link type="primary" @click="markRead('all')">
+          <button v-if="!failed && unread" type="button" :disabled="loading" @click="markRead('all')">
+            <Check aria-hidden="true" />
             {{ t('notifications.markAllRead') }}
-          </ElButton>
-          <ElButton text circle size="small" :icon="Close" :aria-label="t('notifications.close')" @click="bell?.hide()" />
+          </button>
+          <button type="button" class="notification-bell__close" :aria-label="t('notifications.close')" @click="open = false">
+            <Close aria-hidden="true" />
+          </button>
         </div>
       </div>
       <ElEmpty v-if="!accountKey" :description="t('header.guestNotifications')" :image-size="56">
@@ -184,51 +227,139 @@ function markRead(kind: 'traffic' | 'static' | 'all') {
           <p role="alert">{{ t('notifications.failed') }}</p>
           <ElButton size="small" @click="load">{{ t('notifications.retry') }}</ElButton>
         </div>
-        <ul v-if="trafficOccurrence || expiringKeys.length">
+        <ul v-if="trafficOccurrence || earliestExpiry" class="notification-bell__list">
           <li v-if="trafficOccurrence">
-            <RouterLink :to="{ name: 'console-dynamic-pricing' }" @click="markRead('traffic')">
-              <ElBadge is-dot :hidden="!unreadTraffic"><strong>{{ t('notifications.lowTraffic') }}</strong></ElBadge>
-              <span>{{ t('notifications.trafficAction') }}</span>
+            <RouterLink class="notification-bell__item" :class="{ 'is-unread': unreadTraffic }" :to="{ name: 'console-dynamic-pricing' }" @click="markRead('traffic')">
+              <span class="notification-bell__dot" aria-hidden="true" />
+              <span class="notification-bell__body">
+                <strong>{{ t('notifications.lowTraffic') }}</strong>
+                <span>{{ trafficDetail }}</span>
+              </span>
+              <time
+                v-if="trafficAlert?.triggeredAt"
+                class="notification-bell__time"
+                :datetime="trafficAlert.triggeredAt.toISOString()"
+                :title="shanghaiDateTime(trafficAlert.triggeredAt, locale)"
+              >{{ relativeTriggerDate(trafficAlert.triggeredAt) }}</time>
             </RouterLink>
           </li>
-          <li v-if="expiringKeys.length">
-            <RouterLink :to="{ name: 'console-static-ips' }" @click="markRead('static')">
-              <ElBadge is-dot :hidden="!unreadStatic"><strong class="tabular">{{ t('notifications.expiring', expiringKeys.length) }}</strong></ElBadge>
-              <span>{{ t('notifications.staticAction') }}</span>
+          <li v-if="earliestExpiry">
+            <RouterLink class="notification-bell__item" :class="{ 'is-unread': unreadStatic }" :to="{ name: 'console-static-ips' }" @click="markRead('static')">
+              <span class="notification-bell__dot" aria-hidden="true" />
+              <span class="notification-bell__body">
+                <strong>{{ t('notifications.expiring') }}</strong>
+                <i18n-t keypath="notifications.expiryDetail" tag="span" :plural="expiringAllocations.length">
+                  <template #expiry>
+                    <time :datetime="earliestExpiry.toISOString()">{{ shanghaiDateTime(earliestExpiry, locale) }}</time>
+                  </template>
+                </i18n-t>
+              </span>
             </RouterLink>
           </li>
         </ul>
-        <div v-else-if="!failed && loading" role="status" :aria-label="t('notifications.loading')">
+        <div v-else-if="!failed && loading" class="notification-bell__loading" role="status" :aria-label="t('notifications.loading')">
           <ElSkeleton animated :rows="2" />
         </div>
-        <ElEmpty v-else-if="!failed" :description="t('notifications.empty')" :image-size="56" />
+        <div v-else-if="!failed" class="notification-bell__empty">
+          <CircleCheck aria-hidden="true" />
+          <span>{{ t('notifications.empty') }}</span>
+        </div>
       </template>
     </div>
   </ElPopover>
 </template>
 
 <style scoped>
-.notification-bell__icon { display: block; width: var(--icon-size); height: var(--icon-size); }
-.notification-bell__heading, .notification-bell__actions {
+.notification-bell__trigger {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-card);
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+}
+.notification-bell__trigger:hover, .notification-bell__trigger.is-open { background: var(--color-primary-soft); }
+.notification-bell__trigger svg { width: var(--notification-bell-size); height: var(--notification-bell-size); }
+.notification-bell__badge {
+  position: absolute;
+  top: 7px;
+  right: var(--space-2);
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-notification-unread);
+  box-shadow: 0 0 0 var(--focus-ring-width) var(--color-surface-muted);
+}
+.notification-bell__heading {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-2);
+  padding: 14px var(--space-4);
+  border-bottom: var(--border-width) solid var(--color-border);
 }
-.notification-bell__actions { margin-inline-start: auto; }
-.notification-bell__panel h2 { font-size: var(--font-size-md); font-weight: var(--font-weight-semibold); }
-.notification-bell__panel ul { list-style: none; padding: 0; margin: var(--space-2) 0 0; }
-.notification-bell__panel li + li { border-block-start: var(--border-width) solid var(--color-border); }
-.notification-bell__panel a {
-  display: grid;
+.notification-bell__heading h2 { font-size: 15px; }
+.notification-bell__actions { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-inline-start: auto; }
+.notification-bell__actions button {
+  display: inline-flex;
+  align-items: center;
   gap: var(--space-1);
-  padding: var(--space-2);
+  padding: var(--space-1) 6px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+}
+.notification-bell__actions button:disabled { color: var(--color-text-disabled); cursor: default; }
+.notification-bell__actions button:hover:not(:disabled) { background: var(--color-surface-muted); color: var(--color-text); }
+.notification-bell__actions .notification-bell__close { font-size: 15px; }
+.notification-bell__actions svg { flex: none; width: 1em; height: 1em; }
+.notification-bell__list {
+  max-height: min(var(--notification-panel-width), 60vh);
+  overflow-y: auto;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.notification-bell__list li + li { border-block-start: var(--border-width) solid var(--color-border); }
+.notification-bell__item {
+  display: grid;
+  grid-template-columns: var(--space-2) minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 10px;
+  padding: 14px var(--space-4);
   color: var(--color-text);
   text-decoration: none;
   overflow-wrap: anywhere;
 }
-.notification-bell__panel a:hover, .notification-bell__panel a:focus-visible { background: var(--color-surface-muted); }
-.notification-bell__panel a > span { color: var(--color-text-secondary); font-size: var(--font-size-xs); }
-.notification-bell__failure { display: grid; justify-items: start; gap: var(--space-2); margin-block-start: var(--space-2); }
+.notification-bell__item:hover { background: var(--color-surface-muted); }
+.notification-bell__item:focus-visible { outline-offset: calc(-1 * var(--focus-ring-width)); }
+.notification-bell__dot { width: 6px; height: 6px; margin-top: var(--space-2); border-radius: 50%; }
+.notification-bell__item.is-unread .notification-bell__dot { background: var(--color-primary); }
+.notification-bell__body { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
+.notification-bell__item:not(.is-unread) strong { color: var(--color-text-secondary); font-weight: var(--font-weight-medium); }
+.notification-bell__body > span, .notification-bell__time { color: var(--color-text-secondary); font-size: var(--font-size-xs); }
+.notification-bell__body > span { line-height: 1.5; }
+.notification-bell__time { margin-top: 2px; max-width: 8em; }
+.notification-bell__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 28px var(--space-4);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+.notification-bell__empty svg { width: var(--space-5); height: var(--space-5); color: var(--color-primary); }
+.notification-bell__failure, .notification-bell__loading { padding: var(--space-3) var(--space-4); }
+.notification-bell__failure { display: grid; justify-items: start; gap: var(--space-2); }
 </style>
