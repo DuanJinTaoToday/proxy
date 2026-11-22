@@ -22,6 +22,6 @@ export function dayFromNumber(ordinal: number) {
   return new Date(ordinal * dayMilliseconds).toISOString().slice(0, 10)
 }
 
-export function shanghaiDateTime(date: Date, locale: string) {
-  return new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short', timeZone: shanghai }).format(date)
+export function shanghaiDateTime(date: Date, locale: string, dateStyle: 'medium' | 'short' = 'medium') {
+  return new Intl.DateTimeFormat(locale, { dateStyle, timeStyle: 'short', timeZone: shanghai }).format(date)
 }

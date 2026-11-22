@@ -1,5 +1,6 @@
 {
   "users": {
+    "opsOrders": "Orders",
     "account": "Account",
     "primaryAccount": "Primary account",
     "phone": "Phone number",

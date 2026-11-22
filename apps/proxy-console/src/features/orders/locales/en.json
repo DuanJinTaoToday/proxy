@@ -1,5 +1,8 @@
 {
   "orders": {
+    "opsNoExpiry": "No expiration",
+    "kindFilter": "Filter by type",
+    "allKinds": "All types",
     "products": {
       "dynamic": "Dynamic residential (GB)",
       "static": "Static residential"
