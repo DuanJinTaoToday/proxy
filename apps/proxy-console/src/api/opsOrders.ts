@@ -18,10 +18,33 @@ export interface OpsPendingOrder {
   pendingRenewalItems: string[]
 }
 
-export async function listOpsPendingOrders(afterId: string | undefined, signal: AbortSignal) {
-  const wire = await request<{ purchases?: PendingOrderWire[], next_after_id?: string }>(
+function pendingOrders(afterId: string | undefined, signal: AbortSignal) {
+  return request<{ purchases?: PendingOrderWire[], next_after_id?: string }>(
     '/v1/operations/orders/static-pending', { query: { after_id: afterId }, signal },
   )
+}
+
+function pendingFields(item: PendingOrderWire) {
+  return {
+    supplierOrderId: item.supplier_order_id ?? '',
+    canClose: item.can_close ?? false,
+    pendingRenewalItems: item.pending_renewal_items ?? [],
+  }
+}
+
+export async function refreshOpsPendingOrder(row: OpsPendingOrder, signal: AbortSignal): Promise<OpsPendingOrder | undefined> {
+  const { tenant, order: { id } } = row
+  // The queue sorts by ascending numeric ID. Start immediately before this order.
+  const page = await pendingOrders((BigInt(id) - 1n).toString(), signal)
+  const item = page.purchases?.[0]
+  if (item?.order_id !== id || item.tenant_id !== tenant.id) return
+  const order = await getOpsTenantOrder(tenant.id, id, signal)
+  if (order.status !== 'pending') return
+  return { tenant, order, ...pendingFields(item) }
+}
+
+export async function listOpsPendingOrders(afterId: string | undefined, signal: AbortSignal) {
+  const wire = await pendingOrders(afterId, signal)
   const tenants = new Map<string, ReturnType<typeof getOpsTenant>>()
   function tenantFor(id: string) {
     const cached = tenants.get(id)
@@ -35,10 +58,7 @@ export async function listOpsPendingOrders(afterId: string | undefined, signal: 
       tenantFor(item.tenant_id),
       getOpsTenantOrder(item.tenant_id, item.order_id, signal),
     ])
-    return {
-      tenant, order, supplierOrderId: item.supplier_order_id ?? '',
-      canClose: item.can_close ?? false, pendingRenewalItems: item.pending_renewal_items ?? [],
-    }
+    return { tenant, order, ...pendingFields(item) }
   }))
   return { records, nextAfterId: wire.next_after_id && wire.next_after_id !== '0' ? wire.next_after_id : undefined }
 }

@@ -118,6 +118,7 @@
       "closedRefund": "Order closed and {amount} refunded",
       "completed": "Order completed",
       "orderState": "The order can no longer be resolved or is ineligible for closure. Refresh the list to check its status.",
+      "noLongerPending": "This order is no longer in the review queue.",
       "supplierUnavailable": "Crown verification is temporarily unavailable. Try again later."
     },
     "renewalOps": {

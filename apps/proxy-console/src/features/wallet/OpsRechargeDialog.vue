@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, ref, shallowRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { ElAlert, ElButton, ElDialog, ElForm, ElFormItem, ElInput, ElInputNumber, ElResult } from 'element-plus'
+import { ElAlert, ElButton, ElForm, ElFormItem, ElInput, ElInputNumber, ElResult } from 'element-plus'
+import OpsDialog from '@/shared/ui/OpsDialog.vue'
 import { ApiError } from '@/api/client'
 import { quoteWalletRecharge, rechargeWallet, type OpsTenant } from '@/api/opsTenants'
 import { currentOperator, hasOperatorPermission } from '@/features/auth'
@@ -84,9 +85,9 @@ async function submit() {
 </script>
 
 <template>
-  <ElDialog v-model="open" :title="step.kind === 'confirm' ? t('wallet.opsReviewTitle') : t('wallet.opsRecharge')"
-    width="min(var(--ops-dialog-width), calc(100vw - var(--space-6)))" align-center
-    class="ops-dialog" :close-on-click-modal="mayClose"
+  <OpsDialog v-model="open" :title="step.kind === 'confirm' ? t('wallet.opsReviewTitle') : t('wallet.opsRecharge')"
+    width="min(var(--ops-dialog-width), calc(100vw - var(--space-6)))"
+    :close-on-click-modal="mayClose"
     :close-on-press-escape="mayClose" :show-close="mayClose">
     <ElAlert v-if="failure" type="error" :title="uncertain ? t('wallet.opsUncertain') : errorMessage(failure)" :closable="false" show-icon class="recharge-error" />
     <ElForm v-if="step.kind === 'form'" label-position="top" @submit.prevent="prepare">
@@ -128,19 +129,19 @@ async function submit() {
       <div class="recharge-actions">
         <template v-if="step.kind === 'form'">
           <span v-if="amount !== undefined && !validForm" class="recharge-actions__error">{{ t(validAmount ? 'wallet.opsMissingReason' : 'wallet.opsMissingAmount') }}</span>
-          <ElButton :disabled="pending" @click="open = false">{{ t('auth.cancel') }}</ElButton>
-          <ElButton type="primary" :disabled="!validForm" :loading="pending" @click="prepare">{{ t('wallet.opsNext') }}</ElButton>
+          <ElButton class="ops-dialog-action" :disabled="pending" @click="open = false">{{ t('auth.cancel') }}</ElButton>
+          <ElButton class="ops-dialog-action" type="primary" :disabled="!validForm" :loading="pending" @click="prepare">{{ t('wallet.opsNext') }}</ElButton>
         </template>
         <template v-else-if="step.kind === 'confirm'">
-          <ElButton v-if="!uncertain" :disabled="pending" @click="edit">{{ t('wallet.opsEdit') }}</ElButton>
-          <ElButton type="primary" :loading="pending" @click="submit">
+          <ElButton class="ops-dialog-action" v-if="!uncertain" :disabled="pending" @click="edit">{{ t('wallet.opsEdit') }}</ElButton>
+          <ElButton class="ops-dialog-action" type="primary" :loading="pending" @click="submit">
             {{ uncertain ? t('wallet.opsRetry') : t('wallet.opsConfirm', { amount: format(step.quote.amountMinor) }) }}
           </ElButton>
         </template>
-        <ElButton v-else type="primary" @click="open = false">{{ t('wallet.opsFinish') }}</ElButton>
+        <ElButton class="ops-dialog-action" v-else type="primary" @click="open = false">{{ t('wallet.opsFinish') }}</ElButton>
       </div>
     </template>
-  </ElDialog>
+  </OpsDialog>
 </template>
 
 <style scoped>
@@ -164,6 +165,5 @@ async function submit() {
 .recharge-summary__amount dd { font-size: var(--font-size-title); }
 .recharge-summary--receipt { margin-block-start: var(--space-4); }
 .recharge-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; column-gap: var(--space-2); row-gap: var(--space-2); }
-.recharge-actions .el-button { margin: 0; }
 .recharge-actions__error { color: var(--color-danger-text); font-size: var(--font-size-sm); }
 </style>

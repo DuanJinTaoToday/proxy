@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref, shallowRef, watch } from 'vue'
+import { onScopeDispose, ref, shallowRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { ElAlert, ElButton, ElCard, ElLoading, ElTable, ElTableColumn, ElTag } from 'element-plus'
+import { ElAlert, ElButton, ElCard, ElLoading, ElMessage, ElTable, ElTableColumn, ElTag } from 'element-plus'
 import { CircleCheck } from '@element-plus/icons-vue'
-import { listOpsPendingOrders, type OpsPendingOrder } from '@/api/opsOrders'
+import { listOpsPendingOrders, refreshOpsPendingOrder, type OpsPendingOrder } from '@/api/opsOrders'
 import { hasOperatorPermission } from '@/features/auth'
 import { useErrorMessage } from '@/shared/lib/useErrorMessage'
 import { useOrderFormatting } from './format'
@@ -19,8 +19,12 @@ const failure = shallowRef<unknown>()
 const active = shallowRef<OpsPendingOrder>()
 const open = ref(false)
 const loading = ref(false)
+const inspectingId = ref<string>()
+let inspection: AbortController | undefined
 const nextAfterId = ref<string>()
 const load = ref<{ afterId?: string }>({})
+
+onScopeDispose(() => inspection?.abort())
 
 watch(load, async ({ afterId }, _previous, onCleanup) => {
   if (!hasOperatorPermission('read_operations')) return
@@ -43,9 +47,28 @@ watch(load, async ({ afterId }, _previous, onCleanup) => {
   }
 }, { immediate: true })
 
-function inspect(row: OpsPendingOrder) {
-  active.value = row
-  open.value = true
+async function inspect(row: OpsPendingOrder) {
+  if (inspection || open.value) return
+  const controller = new AbortController()
+  inspection = controller
+  inspectingId.value = row.order.id
+  try {
+    const record = await refreshOpsPendingOrder(row, controller.signal)
+    if (controller.signal.aborted) return
+    if (!record) {
+      records.value = records.value.filter(item => item.order.id !== row.order.id)
+      ElMessage.info(t('orders.ops.noLongerPending'))
+      return
+    }
+    records.value = records.value.map(item => item.order.id === row.order.id ? record : item)
+    active.value = record
+    open.value = true
+  } catch (error) {
+    if (!controller.signal.aborted) ElMessage.error(errorMessage(error))
+  } finally {
+    inspection = undefined
+    inspectingId.value = undefined
+  }
 }
 
 function changed() {
@@ -110,7 +133,8 @@ function waited({ order }: OpsPendingOrder) {
       <!-- @vue-generic {OpsPendingOrder} -->
       <ElTableColumn width="90" align="right">
         <template #default="{ row }">
-          <ElButton link type="primary" @click="inspect(row)">{{ t('orders.ops.verify') }}</ElButton>
+          <ElButton link type="primary" :disabled="Boolean(inspectingId)" :loading="inspectingId === row.order.id"
+            @click="inspect(row)">{{ t('orders.ops.verify') }}</ElButton>
         </template>
       </ElTableColumn>
       <template #empty>

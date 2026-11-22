@@ -1763,31 +1763,43 @@ components:
             properties:
                 id:
                     type: string
+                    description: 审计记录编号。
                 targetKind:
                     type: string
-                    description: sale 或 package。
+                    description: 变更目标类型。sale 表示商品开售状态，package 表示流量包配置。
                 targetId:
                     type: string
+                    description: sale 为商品类型（dynamic 或 static），package 为稳定套餐 ID。
                 operatorUsername:
                     type: string
+                    description: 执行变更的运营账号用户名。
                 createdAt:
                     type: string
+                    description: 记录变更的时间。
                     format: date-time
                 before:
-                    $ref: '#/components/schemas/proxycontrol.v1.ProductChangeValue'
+                    allOf:
+                        - $ref: '#/components/schemas/proxycontrol.v1.ProductChangeValue'
+                    description: 变更前的目标快照。
                 after:
-                    $ref: '#/components/schemas/proxycontrol.v1.ProductChangeValue'
+                    allOf:
+                        - $ref: '#/components/schemas/proxycontrol.v1.ProductChangeValue'
+                    description: 变更后的目标快照。
         proxycontrol.v1.ProductChangeValue:
             type: object
             properties:
                 open:
                     type: boolean
+                    description: 商品是否开售。仅适用于 sale；字段省略时表示未开售。
                 capacityBytes:
                     type: string
+                    description: 套餐容量，单位字节，1 GB 等于 1,000,000,000 字节。仅适用于 package。
                 priceMinor:
                     type: string
+                    description: 套餐总价，单位分。仅适用于 package；字段省略或为 0 时表示未定价。
                 listed:
                     type: boolean
+                    description: 套餐是否上架。仅适用于 package；字段省略时表示下架。
         proxycontrol.v1.ProductChanges:
             type: object
             properties:
@@ -1795,6 +1807,7 @@ components:
                     type: array
                     items:
                         $ref: '#/components/schemas/proxycontrol.v1.ProductChange'
+                    description: 商品与套餐的配置变更审计记录。
         proxycontrol.v1.Products:
             type: object
             properties:

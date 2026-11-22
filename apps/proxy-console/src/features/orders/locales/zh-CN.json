@@ -118,6 +118,7 @@
       "closedRefund": "订单已关闭，已退回 {amount}",
       "completed": "订单已完成",
       "orderState": "订单已不在可处理状态，或未达到关闭条件。请刷新列表核对最新结果。",
+      "noLongerPending": "该订单已不在待核实队列中。",
       "supplierUnavailable": "暂时无法向皇冠核实，请稍后重试。"
     },
     "renewalOps": {

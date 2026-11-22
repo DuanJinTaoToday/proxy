@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, ref, shallowRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { ElAlert, ElButton, ElDialog, ElForm, ElFormItem, ElInput, ElMessage, ElOption, ElSelect } from 'element-plus'
+import { ElAlert, ElButton, ElForm, ElFormItem, ElInput, ElMessage, ElOption, ElSelect } from 'element-plus'
+import OpsDialog from '@/shared/ui/OpsDialog.vue'
 import { CopyDocument } from '@element-plus/icons-vue'
 import { ApiError } from '@/api/client'
 import { resetOpsTenantPassword, type OpsTenant } from '@/api/opsTenants'
@@ -68,7 +69,7 @@ async function copy(password: string) {
 </script>
 
 <template>
-  <ElDialog v-model="open" :title="t('users.reset.title')" width="min(var(--ops-dialog-width), calc(100vw - var(--space-6)))" align-center
+  <OpsDialog v-model="open" :title="t('users.reset.title')" width="min(var(--ops-dialog-width), calc(100vw - var(--space-6)))"
     :close-on-click-modal="!pending" :close-on-press-escape="!pending" :show-close="!pending">
     <template v-if="!receipt">
       <ElAlert type="warning" :closable="false" show-icon :title="t('users.reset.verifyTitle')"
@@ -100,12 +101,12 @@ async function copy(password: string) {
     </template>
     <template #footer>
       <template v-if="!receipt">
-        <ElButton :disabled="pending" @click="open = false">{{ t('auth.cancel') }}</ElButton>
-        <ElButton type="danger" :disabled="!validForm" :loading="pending" @click="submit">{{ t('users.reset.confirm') }}</ElButton>
+        <ElButton class="ops-dialog-action" :disabled="pending" @click="open = false">{{ t('auth.cancel') }}</ElButton>
+        <ElButton class="ops-dialog-action" type="danger" :disabled="!validForm" :loading="pending" @click="submit">{{ t('users.reset.confirm') }}</ElButton>
       </template>
-      <ElButton v-else type="primary" @click="open = false">{{ t('users.reset.finish') }}</ElButton>
+      <ElButton class="ops-dialog-action" v-else type="primary" @click="open = false">{{ t('users.reset.finish') }}</ElButton>
     </template>
-  </ElDialog>
+  </OpsDialog>
 </template>
 
 <style scoped>

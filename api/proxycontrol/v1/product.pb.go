@@ -195,8 +195,9 @@ func (x *TrafficPackages) GetPackages() []*TrafficPackage {
 }
 
 type ProductChanges struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Changes       []*ProductChange       `protobuf:"bytes,1,rep,name=changes,proto3" json:"changes,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 商品与套餐的配置变更审计记录。
+	Changes       []*ProductChange `protobuf:"bytes,1,rep,name=changes,proto3" json:"changes,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -240,16 +241,22 @@ func (x *ProductChanges) GetChanges() []*ProductChange {
 
 type ProductChange struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	Id    int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	// sale 或 package。
-	TargetKind       string                 `protobuf:"bytes,2,opt,name=target_kind,json=targetKind,proto3" json:"target_kind,omitempty"`
-	TargetId         string                 `protobuf:"bytes,3,opt,name=target_id,json=targetId,proto3" json:"target_id,omitempty"`
-	OperatorUsername string                 `protobuf:"bytes,4,opt,name=operator_username,json=operatorUsername,proto3" json:"operator_username,omitempty"`
-	CreatedAt        *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	Before           *ProductChangeValue    `protobuf:"bytes,6,opt,name=before,proto3" json:"before,omitempty"`
-	After            *ProductChangeValue    `protobuf:"bytes,7,opt,name=after,proto3" json:"after,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	// 审计记录编号。
+	Id int64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	// 变更目标类型。sale 表示商品开售状态，package 表示流量包配置。
+	TargetKind string `protobuf:"bytes,2,opt,name=target_kind,json=targetKind,proto3" json:"target_kind,omitempty"`
+	// sale 为商品类型（dynamic 或 static），package 为稳定套餐 ID。
+	TargetId string `protobuf:"bytes,3,opt,name=target_id,json=targetId,proto3" json:"target_id,omitempty"`
+	// 执行变更的运营账号用户名。
+	OperatorUsername string `protobuf:"bytes,4,opt,name=operator_username,json=operatorUsername,proto3" json:"operator_username,omitempty"`
+	// 记录变更的时间。
+	CreatedAt *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	// 变更前的目标快照。
+	Before *ProductChangeValue `protobuf:"bytes,6,opt,name=before,proto3" json:"before,omitempty"`
+	// 变更后的目标快照。
+	After         *ProductChangeValue `protobuf:"bytes,7,opt,name=after,proto3" json:"after,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ProductChange) Reset() {
@@ -332,11 +339,15 @@ func (x *ProductChange) GetAfter() *ProductChangeValue {
 }
 
 type ProductChangeValue struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Open          bool                   `protobuf:"varint,1,opt,name=open,proto3" json:"open,omitempty"`
-	CapacityBytes int64                  `protobuf:"varint,2,opt,name=capacity_bytes,json=capacityBytes,proto3" json:"capacity_bytes,omitempty"`
-	PriceMinor    int64                  `protobuf:"varint,3,opt,name=price_minor,json=priceMinor,proto3" json:"price_minor,omitempty"`
-	Listed        bool                   `protobuf:"varint,4,opt,name=listed,proto3" json:"listed,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 商品是否开售。仅适用于 sale；字段省略时表示未开售。
+	Open bool `protobuf:"varint,1,opt,name=open,proto3" json:"open,omitempty"`
+	// 套餐容量，单位字节，1 GB 等于 1,000,000,000 字节。仅适用于 package。
+	CapacityBytes int64 `protobuf:"varint,2,opt,name=capacity_bytes,json=capacityBytes,proto3" json:"capacity_bytes,omitempty"`
+	// 套餐总价，单位分。仅适用于 package；字段省略或为 0 时表示未定价。
+	PriceMinor int64 `protobuf:"varint,3,opt,name=price_minor,json=priceMinor,proto3" json:"price_minor,omitempty"`
+	// 套餐是否上架。仅适用于 package；字段省略时表示下架。
+	Listed        bool `protobuf:"varint,4,opt,name=listed,proto3" json:"listed,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

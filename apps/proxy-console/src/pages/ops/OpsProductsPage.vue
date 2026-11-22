@@ -2,9 +2,10 @@
 import { computed, onScopeDispose, ref, shallowRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
-  ElAlert, ElButton, ElCheckbox, ElDialog, ElForm, ElFormItem, ElInput, ElMessage,
+  ElAlert, ElButton, ElCheckbox, ElForm, ElFormItem, ElInput, ElMessage,
   ElMessageBox, ElSwitch, ElTable, ElTableColumn, ElTag, ElTooltip,
 } from 'element-plus'
+import OpsDialog from '@/shared/ui/OpsDialog.vue'
 import { ApiError } from '@/api/client'
 import { getOpsCatalog, setProductSale, updateTrafficPackage, type OpsTrafficPackage, type ProductKind } from '@/api/products'
 import { hasOperatorPermission } from '@/features/auth'
@@ -213,7 +214,7 @@ if (canRead.value) void load()
     <p v-if="loading && !opsCatalog" role="status">{{ t('catalog.loading') }}</p>
 
     <template v-if="opsCatalog">
-      <div class="sale-grid">
+      <div class="sale-grid workspace-two-columns">
         <section v-for="kind in saleProducts" :key="kind" class="catalog-card sale-card">
           <div>
             <h2>{{ productName(kind) }}</h2>
@@ -257,7 +258,7 @@ if (canRead.value) void load()
               <ElTooltip :disabled="canBill && (row.listed || Boolean(row.priceMinor))" :content="t(canBill ? 'catalog.priceRequired' : 'catalog.billingOnly')" placement="left">
                 <span class="row-actions">
                   <ElButton link type="primary" :disabled="locked" @click="edit(row.id)">{{ t('catalog.editPrice') }}</ElButton>
-                  <ElButton link :type="row.listed ? 'danger' : 'primary'" :disabled="locked || (!row.listed && !row.priceMinor)" @click="toggleListed(row.id)">{{ t(row.listed ? 'catalog.unlist' : 'catalog.listed') }}</ElButton>
+                  <ElButton link :type="row.listed ? 'danger' : 'primary'" :disabled="locked || (!row.listed && !row.priceMinor)" @click="toggleListed(row.id)">{{ t(row.listed ? 'catalog.unlist' : 'catalog.list') }}</ElButton>
                 </span>
               </ElTooltip>
             </template>
@@ -281,8 +282,8 @@ if (canRead.value) void load()
       </section>
     </template>
 
-    <ElDialog :model-value="Boolean(editing)" :title="editing && t('catalog.editTitle', { capacity: capacityLabel(editing.capacityBytes) })"
-      width="min(var(--catalog-price-dialog-width), calc(100vw - var(--space-6)))" align-center append-to-body class="ops-dialog"
+    <OpsDialog :model-value="Boolean(editing)" :title="editing && t('catalog.editTitle', { capacity: capacityLabel(editing.capacityBytes) })"
+      width="min(var(--catalog-price-dialog-width), calc(100vw - var(--space-6)))" append-to-body
       :show-close="!busy" :close-on-click-modal="!busy" :close-on-press-escape="!busy" @update:model-value="editing = undefined">
       <ElForm v-if="editing" label-position="top" @submit.prevent="savePrice">
         <ElFormItem :label="t('catalog.yuanPrice')" :error="price && !newPrice ? t('catalog.invalidPrice') : undefined">
@@ -295,13 +296,13 @@ if (canRead.value) void load()
         <ElAlert v-if="mutationError" type="error" :closable="false" show-icon :title="errorMessage(mutationError)" />
       </ElForm>
       <template #footer>
-        <ElButton :disabled="busy" @click="editing = undefined">{{ t('catalog.cancel') }}</ElButton>
-        <ElButton type="primary" :loading="busy" :disabled="locked || !newPrice" @click="savePrice">{{ t('catalog.save') }}</ElButton>
+        <ElButton class="ops-dialog-action" :disabled="busy" @click="editing = undefined">{{ t('catalog.cancel') }}</ElButton>
+        <ElButton class="ops-dialog-action" type="primary" :loading="busy" :disabled="locked || !newPrice" @click="savePrice">{{ t('catalog.save') }}</ElButton>
       </template>
-    </ElDialog>
+    </OpsDialog>
 
-    <ElDialog :model-value="Boolean(opening)" :title="opening && t('catalog.openTitle', { name: productName(opening) })"
-      width="min(var(--catalog-price-dialog-width), calc(100vw - var(--space-6)))" align-center append-to-body class="ops-dialog"
+    <OpsDialog :model-value="Boolean(opening)" :title="opening && t('catalog.openTitle', { name: productName(opening) })"
+      width="min(var(--catalog-price-dialog-width), calc(100vw - var(--space-6)))" append-to-body
       :show-close="!busy" :close-on-click-modal="!busy" :close-on-press-escape="!busy" @update:model-value="opening = undefined">
       <p v-if="opening" class="sale-hint">{{ t('catalog.openHint', { name: productName(opening) }) }}</p>
       <ElForm label-position="top" @submit.prevent="openSale">
@@ -312,10 +313,10 @@ if (canRead.value) void load()
         <ElAlert v-if="mutationError" type="error" :closable="false" show-icon :title="errorMessage(mutationError)" />
       </ElForm>
       <template #footer>
-        <ElButton :disabled="busy" @click="opening = undefined">{{ t('catalog.cancel') }}</ElButton>
-        <ElButton type="primary" :loading="busy" :disabled="locked || !quoteReady || !acceptanceEvidence.trim()" @click="openSale">{{ t('catalog.open') }}</ElButton>
+        <ElButton class="ops-dialog-action" :disabled="busy" @click="opening = undefined">{{ t('catalog.cancel') }}</ElButton>
+        <ElButton class="ops-dialog-action" type="primary" :loading="busy" :disabled="locked || !quoteReady || !acceptanceEvidence.trim()" @click="openSale">{{ t('catalog.open') }}</ElButton>
       </template>
-    </ElDialog>
+    </OpsDialog>
   </template>
 </template>
 
@@ -328,8 +329,6 @@ if (canRead.value) void load()
   border-radius: var(--ops-card-radius);
 }
 .sale-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-4);
   margin-block-end: var(--space-4);
 }
@@ -379,7 +378,4 @@ if (canRead.value) void load()
 .summary-total dt { color: var(--color-text-secondary); }
 .summary-total dd { margin: 0; font-weight: var(--font-weight-semibold); font-variant-numeric: tabular-nums; }
 .summary-total + .el-alert { margin-block-start: var(--space-3); }
-@media (max-width: 767px) {
-  .sale-grid { grid-template-columns: minmax(0, 1fr); }
-}
 </style>

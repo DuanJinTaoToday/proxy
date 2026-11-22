@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, ref, shallowRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { ElAlert, ElButton, ElCheckbox, ElDialog, ElForm, ElFormItem, ElInput, ElMessage, ElRadio, ElRadioGroup, ElTag } from 'element-plus'
+import { ElAlert, ElButton, ElCheckbox, ElForm, ElFormItem, ElInput, ElMessage, ElRadio, ElRadioGroup, ElTag } from 'element-plus'
+import OpsDialog from '@/shared/ui/OpsDialog.vue'
 import { ApiError } from '@/api/client'
 import type { OpsPendingOrder } from '@/api/opsOrders'
 import { resolveOpsStaticRenewal } from '@/api/opsStaticRenewals'
@@ -82,8 +83,8 @@ async function submit() {
 </script>
 
 <template>
-  <ElDialog v-model="open" :title="t('orders.ops.verifyTitle')" class="ops-dialog"
-    width="min(var(--ops-resolve-width), calc(100vw - var(--space-6)))" align-center
+  <OpsDialog v-model="open" :title="t('orders.ops.verifyTitle')"
+    width="min(var(--ops-resolve-width), calc(100vw - var(--space-6)))"
     :close-on-click-modal="!pending" :close-on-press-escape="!pending" :show-close="!pending">
     <dl class="resolve-summary resolve-heading">
       <div><dt>{{ t('orders.ops.order') }}</dt><dd><span class="mono">{{ record.order.id }}</span> · {{ t('orders.kinds.static_renewal') }}</dd></div>
@@ -135,11 +136,11 @@ async function submit() {
     <template #footer>
       <div class="resolve-actions">
         <span v-if="validation" class="resolve-error">{{ t(validation) }}</span>
-        <ElButton :disabled="pending" @click="open = false">{{ t('auth.cancel') }}</ElButton>
-        <ElButton type="primary" :disabled="Boolean(validation)" :loading="pending" @click="submit">{{ t(closing ? 'orders.ops.confirmClose' : 'orders.ops.save') }}</ElButton>
+        <ElButton class="ops-dialog-action" :disabled="pending" @click="open = false">{{ t('auth.cancel') }}</ElButton>
+        <ElButton class="ops-dialog-action" type="primary" :disabled="Boolean(validation)" :loading="pending" @click="submit">{{ t(closing ? 'orders.ops.confirmClose' : 'orders.ops.save') }}</ElButton>
       </div>
     </template>
-  </ElDialog>
+  </OpsDialog>
 </template>
 
 <style scoped src="./opsResolutionDialog.css"></style>
