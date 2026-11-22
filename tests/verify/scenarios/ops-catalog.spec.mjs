@@ -77,11 +77,18 @@ test('计费运营独立开售、调价和下架，公开报价及成交快照�
     await expect(priceAudit.locator('time')).toHaveAttribute('datetime', /^\d{4}-\d{2}-\d{2}T/)
 
     const customerContext = await page.context().browser().newContext({ baseURL, ignoreHTTPSErrors: true })
+    const visitorContext = await page.context().browser().newContext({ baseURL, ignoreHTTPSErrors: true })
     try {
       const customer = await customerContext.newPage()
       await signInTenant(customer, phone)
       await customer.goto('/console/dynamic/pricing')
       await expect(customer.getByRole('radio', { name: '5 GB 流量包' })).toBeVisible()
+      const visitor = await visitorContext.newPage()
+      await visitor.goto('/zh-CN/')
+      const publicDynamic = visitor.getByRole('region').filter({ has: visitor.getByRole('heading', { name: /动态住宅代理/ }) })
+      const publicStatic = visitor.getByRole('region').filter({ has: visitor.getByRole('heading', { name: /静态住宅代理/ }) })
+      await expect(publicDynamic.getByText(/5 GB 流量包 · ¥22.50/)).toBeVisible()
+      await expect(publicStatic.getByRole('link', { name: '查看静态 IP 报价' })).toBeVisible()
 
       await five.getByRole('button', { name: '下架', exact: true }).click()
       await expect(five.getByText('已下架', { exact: true })).toBeVisible()
@@ -90,6 +97,9 @@ test('计费运营独立开售、调价和下架，公开报价及成交快照�
       await expect(page.getByRole('row', { name: /5 GB 流量包 · 状态.*上架.*已下架.*operator-billing/ })).toBeVisible()
       const publicProducts = () => request.get(publicProductsPath).then(json)
       let { products } = await publicProducts()
+      await visitor.reload()
+      await expect(publicDynamic.getByText(/50 GB 流量包/)).toBeVisible()
+      await expect(publicDynamic.getByText(/^5 GB 流量包/)).toHaveCount(0)
       expect(products.find(product => product.kind === 'dynamic').packages.map(tier => tier.id)).not.toContain('5gb')
       await customer.reload()
       await expect(customer.getByRole('radio', { name: '50 GB 流量包' })).toBeVisible()
@@ -123,6 +133,9 @@ test('计费运营独立开售、调价和下架，公开报价及成交快照�
       await expect(dynamicSwitch).toBeChecked()
       await customer.goto('/console/static/pricing')
       await expect(customer.getByText('静态住宅代理暂未开放购买', { exact: true })).toBeVisible()
+      await visitor.reload()
+      await expect(publicStatic.getByText('暂未开放购买', { exact: true })).toBeVisible()
+      await expect(publicStatic.getByRole('link', { name: '查看静态 IP 报价' })).toHaveCount(0)
       await reason(await tenant.post(staticQuotePath, { data: selection }), 409, 'PRODUCT_SALE_CLOSED')
       await reason(await tenant.post(staticPurchasePath, { data: {
         ...selection, unit_minor: staticQuote.offer.unit_minor, confirmation_token: staticQuote.confirmation_token, request_key: randomUUID(),
@@ -131,9 +144,17 @@ test('计费运营独立开售、调价和下架，公开报价及成交快照�
       expect(products.find(product => product.kind === 'dynamic').open).toBe(true)
       expect(products.find(product => product.kind === 'static').open ?? false).toBe(false)
     } finally {
+      await visitorContext.close()
       await customerContext.close()
     }
   } finally {
+    await setSale(operator, false)
+    await json(await operator.put(staticSalePath, { data: { open: false } }))
+    const { packages } = await json(await operator.get(tiersPath))
+    const current = packages.find(tier => tier.id === '5gb')
+    await json(await operator.patch(tiersPath + '/5gb', { data: {
+      capacity_bytes: current.capacity_bytes, version: current.version, price_minor: '2000', listed: true,
+    } }))
     await operator.dispose()
     await tenant.dispose()
   }
