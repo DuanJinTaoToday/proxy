@@ -119,6 +119,23 @@
       "completed": "订单已完成",
       "orderState": "订单已不在可处理状态，或未达到关闭条件。请刷新列表核对最新结果。",
       "supplierUnavailable": "暂时无法向皇冠核实，请稍后重试。"
+    },
+    "renewalOps": {
+      "items": "续费明细",
+      "itemDetails": "皇冠明细 {id} · 单价 {amount}",
+      "itemHint": "选择一条待核实的 IP 明细。平台以皇冠查单结果更新续费状态。",
+      "selectItem": "请选择待核实的 IP 明细",
+      "sync": "同步皇冠续费结果",
+      "close": "关闭该明细，退回对应金额",
+      "earlyDescription": "只有拿到该 IP 的明确续费失败结果时才能提前关闭。",
+      "confirmFailure": "已向皇冠确认该 IP 续费失败",
+      "closeBlocked": "未满 72 小时，请先确认该 IP 续费失败",
+      "evidenceTooLong": "核实依据最多 500 字节",
+      "successStatus": "续费成功",
+      "refundedStatus": "已退款",
+      "succeeded": "已核实续费成功",
+      "refunded": "已关闭明细并退回钱包",
+      "stillPending": "该明细仍在确认中"
     }
   }
 }

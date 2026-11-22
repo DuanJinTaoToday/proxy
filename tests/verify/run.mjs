@@ -59,7 +59,7 @@ try {
   const supplierURL = 'http://127.0.0.1:' + hostPort('ipcrown', 8080)
   run.stage = 'browser'
   execFileSync(process.execPath, [
-    fileURLToPath(import.meta.resolve('@playwright/test/cli')), 'test',
+    fileURLToPath(import.meta.resolve('@playwright/test/cli')), 'test', ...process.argv.slice(2),
   ], {
     cwd: suite, stdio: 'inherit',
     env: { ...process.env, VERIFY_URL: run.baseURL, VERIFY_OUTPUT: evidence, VERIFY_ID: runId, VERIFY_IPCROWN_URL: supplierURL },

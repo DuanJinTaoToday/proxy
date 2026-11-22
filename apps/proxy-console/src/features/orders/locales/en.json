@@ -119,6 +119,23 @@
       "completed": "Order completed",
       "orderState": "The order can no longer be resolved or is ineligible for closure. Refresh the list to check its status.",
       "supplierUnavailable": "Crown verification is temporarily unavailable. Try again later."
+    },
+    "renewalOps": {
+      "items": "Renewal items",
+      "itemDetails": "Crown item {id} · Unit price {amount}",
+      "itemHint": "Select a pending IP. The platform updates renewal status from Crown’s order details.",
+      "selectItem": "Select a pending IP to verify",
+      "sync": "Sync Crown renewal results",
+      "close": "Close this item and refund its amount",
+      "earlyDescription": "Early closure requires confirmation that renewal failed for this IP.",
+      "confirmFailure": "I confirmed with Crown that renewal failed for this IP",
+      "closeBlocked": "Before 72 hours, confirm that renewal failed for this IP",
+      "evidenceTooLong": "Verification evidence can be up to 500 bytes",
+      "successStatus": "Renewed",
+      "refundedStatus": "Refunded",
+      "succeeded": "Renewal confirmed",
+      "refunded": "Item closed and refunded to the wallet",
+      "stillPending": "This renewal item is still pending"
     }
   }
 }

@@ -1,0 +1,21 @@
+.resolve-summary { display: flex; flex-direction: column; gap: var(--space-2); margin: 0; font-size: var(--font-size-sm); }
+.resolve-summary div { display: flex; gap: var(--space-3); justify-content: space-between; }
+.resolve-summary dt { color: var(--color-text-secondary); flex: none; }
+.resolve-summary dd { margin: 0; font-weight: var(--font-weight-semibold); text-align: end; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.resolve-heading { margin-block-start: var(--space-4); }
+.resolve-form { margin-block-start: var(--ops-resolve-form-gap); }
+.resolve-lines { width: 100%; border-collapse: collapse; font-size: var(--font-size-sm); }
+.resolve-lines td { padding-block: var(--space-2); border-bottom: var(--border-width) solid var(--color-border); }
+.resolve-count { width: 1%; padding-inline-start: var(--space-4); white-space: nowrap; }
+.resolve-count .el-input-number { width: var(--ops-resolve-count-width); margin-inline-end: var(--space-2); }
+.resolve-hint { display: block; font-size: var(--font-size-xs); color: var(--color-text-secondary); }
+.resolve-delivery-hint { line-height: var(--line-height-normal); margin-block-start: var(--space-1); }
+.resolve-mode { align-items: flex-start; flex-direction: column; gap: var(--space-1); }
+.resolve-mode .el-radio { margin: 0; white-space: normal; height: auto; min-height: var(--space-6); }
+.resolve-alert { margin-block-end: var(--space-4); }
+.resolve-alert .el-checkbox { display: flex; white-space: normal; }
+.resolve-refund { padding-block: var(--space-3); border-top: var(--border-width) solid var(--color-border); }
+.resolve-refund dt { align-self: end; color: var(--color-text); font-weight: var(--font-weight-semibold); }
+.resolve-refund dd { font-size: var(--font-size-title); }
+.resolve-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; width: 100%; gap: var(--space-2); }
+.resolve-error { margin-inline-end: auto; color: var(--color-danger-text); font-size: var(--font-size-sm); }
