@@ -31,4 +31,3 @@ async function confirmLogout() {
 .operator-menu { font-weight: var(--font-weight-semibold); }
 .operator-menu__arrow { width: 1em; margin-inline-start: var(--space-2); color: var(--color-text-secondary); }
 </style>
-
