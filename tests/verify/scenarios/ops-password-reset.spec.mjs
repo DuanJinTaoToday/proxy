@@ -58,10 +58,20 @@ test('账号运营核实目标后重置租户密码，原有会话与旧密码�
   await expect(dialog).toContainText(tenant.primary_account_name)
   const confirm = dialog.getByRole('button', { name: '确认重置' })
   await expect(confirm).toBeDisabled()
-  await dialog.getByRole('combobox', { name: '核实方式' }).click()
+  await dialog.getByText('选择核实方式', { exact: true }).click()
   await supportPage.getByRole('option', { name: '注册手机号回拨核实' }).click()
   await expect(confirm).toBeDisabled()
   await field(dialog, '核实记录').fill('回拨已完成，本人确认开户信息')
+
+  // Give the browser a real not-found response from the control plane on the first attempt.
+  await supportPage.route('**' + api + ':reset-password', async route => {
+    const missing = await route.fetch({ url: new URL('/v1/operations/tenants/missing-reset-tenant:reset-password', page.url()).href })
+    await route.fulfill({ response: missing })
+  }, { times: 1 })
+  await confirm.click()
+  await expect(dialog.getByText('找不到租户，请返回租户查找。')).toBeVisible()
+  await expect(confirm).toBeEnabled()
+
   await confirm.click()
   await expect(dialog.getByText('临时密码只显示这一次', { exact: false })).toBeVisible()
   await expect(dialog).toContainText('operator-support')
@@ -69,7 +79,7 @@ test('账号运营核实目标后重置租户密码，原有会话与旧密码�
   const newPassword = await password.textContent()
   expect(newPassword.length).toBeGreaterThanOrEqual(12)
   const evidence = info.outputPath('08-reset-result.png')
-  await supportPage.screenshot({ path: evidence, fullPage: true, mask: [password] })
+  await supportPage.screenshot({ path: evidence, fullPage: true, animations: 'disabled', mask: [password] })
   await info.attach('08-reset-result (password masked)', { path: evidence, contentType: 'image/png' })
   await dialog.getByRole('button', { name: '完成' }).click()
   await supportPage.getByRole('button', { name: '重置登录密码', exact: true }).click()
