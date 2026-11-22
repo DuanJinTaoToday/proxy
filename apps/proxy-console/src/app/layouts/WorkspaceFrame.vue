@@ -15,13 +15,13 @@ const drawerOpen = ref(false)
     <template #brand-extra><slot name="brand-extra" /></template>
   </AppHeader>
   <div class="workspace">
-    <AppSidebar class="workspace__sidebar" :sections="sections" :label="navLabel" />
+    <AppSidebar :ops="ops" class="workspace__sidebar" :sections="sections" :label="navLabel" />
     <main class="workspace__main">
       <RouterView />
     </main>
   </div>
   <ElDrawer v-model="drawerOpen" direction="ltr" size="min(var(--sidebar-width), 80vw)" :with-header="false" style="--el-drawer-padding-primary: 0">
-    <AppSidebar :sections="sections" :label="navLabel" @navigate="drawerOpen = false" />
+    <AppSidebar :ops="ops" :sections="sections" :label="navLabel" @navigate="drawerOpen = false" />
   </ElDrawer>
 </template>
 

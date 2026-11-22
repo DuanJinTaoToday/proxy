@@ -26,6 +26,23 @@ ON CONFLICT (tenant_id) DO NOTHING;
 INSERT INTO tenant_balances (tenant_id, updated_at) VALUES ('alpha', now()), ('beta', now())
 ON CONFLICT (tenant_id) DO NOTHING;
 
+-- The recharge verification uses the same tenant and balance as the operator prototype.
+INSERT INTO tenants (id, name, primary_account_name, created_at)
+VALUES ('visual-recharge-tenant', '陈小岚工作室', 'chenxl-studio', '2026-10-31T13:14:00Z')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO tenant_admins (tenant_id, phone_e164, password_hash)
+VALUES ('visual-recharge-tenant', '+8613800136021', '2bd806c97f0e00af1a1fc3328fa763a9:38c0e51748906648e4e5318e2990cea0f17670ee335eafe9556e85bbb437a725')
+ON CONFLICT (tenant_id) DO NOTHING;
+
+INSERT INTO wallets (tenant_id, available_minor)
+VALUES ('visual-recharge-tenant', 22900)
+ON CONFLICT (tenant_id) DO NOTHING;
+
+INSERT INTO tenant_balances (tenant_id, available_bytes, updated_at)
+VALUES ('visual-recharge-tenant', 20150000000, now())
+ON CONFLICT (tenant_id) DO NOTHING;
+
 INSERT INTO operators (id, username, password_hash)
 VALUES ('local-operator', 'operator', '06e55b633481f7bb072957eabcf110c9:53683f816375ff5369a9d2b7d62b18d3d790341b14b425f87422353219d5c229'),
        ('local-operator-readonly', 'operator-readonly', '06e55b633481f7bb072957eabcf110c9:53683f816375ff5369a9d2b7d62b18d3d790341b14b425f87422353219d5c229'),

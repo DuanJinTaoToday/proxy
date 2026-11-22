@@ -6,7 +6,7 @@ test('运营独立登录后返回租户详情，退出保留客户会话', async
   await page.goto('/ops/tenants/alpha')
   await expect(page).toHaveURL(/\/ops\/login\?redirect=/)
   await login(page, '/ops/tenants/alpha', '运营账号', 'operator')
-  await expect(page).toHaveURL(/\/ops\/tenants\/alpha$/)
+  await expect(page).toHaveURL(new URL('/ops/tenants/alpha', page.url()).href)
   await expect(page.getByRole('heading', { name: 'Alpha' })).toBeVisible()
   await page.reload()
   await expect(page.getByRole('heading', { name: 'Alpha' })).toBeVisible()

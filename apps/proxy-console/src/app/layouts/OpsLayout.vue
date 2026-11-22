@@ -16,6 +16,9 @@ const { t } = useI18n()
 </template>
 
 <style>
+.density-compact {
+  --el-border-radius-base: var(--ops-control-radius);
+}
 .ops-page-title {
   margin-block-end: var(--ops-page-heading-gap);
   font-size: var(--ops-display-size);

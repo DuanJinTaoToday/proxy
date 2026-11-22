@@ -97,10 +97,10 @@ function trafficBalance(bytes: bigint) {
 .tenant-back:hover { color: var(--color-primary); }
 .tenant-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--space-4); margin-block-end: var(--ops-page-heading-gap); }
 .tenant-head__title { margin: 0; overflow-wrap: anywhere; }
-.tenant-head__meta { margin-block-start: var(--space-1); font-size: var(--font-size-sm); color: var(--color-text-secondary); overflow-wrap: anywhere; }
+.tenant-head__meta { margin-block-start: var(--ops-detail-meta-gap); font-size: var(--font-size-sm); color: var(--color-text-secondary); overflow-wrap: anywhere; }
 .tenant-head__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .tenant-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--wallet-summary-card-width)), 1fr)); gap: var(--space-4); margin-block-end: var(--space-2); }
-.tenant-metrics__card { --el-card-padding: var(--space-4); }
+.tenant-metrics__card { --el-card-padding: var(--ops-detail-card-block-padding) var(--ops-detail-card-inline-padding); border-radius: var(--ops-card-radius); }
 .tenant-metrics__card h2 { font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); }
 .tenant-metrics__amount { margin-block-start: var(--space-1); font-size: var(--ops-display-size); font-weight: var(--font-weight-heavy); line-height: var(--line-height-tight); letter-spacing: var(--ops-display-tracking); overflow-wrap: anywhere; }
 .tenant-metrics__debt { color: var(--color-warning-text); }
