@@ -73,15 +73,23 @@ test('运营在 24 小时后核实静态采购，72 小时后关闭剩余并只�
   setAge(order.id, 24 * 3600)
   expect((await pending(reader)).find(item => item.order_id === order.id)).toMatchObject({ delivered_count: '2' })
   expect((await request.post(resolvePath, { headers: reader, data: closeBody })).status()).toBe(403)
-  const other = await browser.newContext({ ignoreHTTPSErrors: true })
+  const other = await browser.newContext({ baseURL: process.env.VERIFY_URL, ignoreHTTPSErrors: true, viewport: { width: 1440, height: 1000 } })
   try {
     const readonly = await other.newPage()
-    await signInOperator(readonly, new URL('/ops/orders', process.env.VERIFY_URL).href, 'operator-readonly')
+    await signInOperator(readonly, '/ops/orders', 'operator-readonly')
     await readonly.getByRole('row').filter({ hasText: order.id }).getByRole('button', { name: '核实' }).click()
     await expect(readonly.getByRole('dialog').getByRole('button', { name: '保存' })).toBeDisabled()
   } finally {
     await other.close()
   }
+
+  await page.reload()
+  await expect(row).toContainText('待运营核实')
+  await row.getByRole('button', { name: '核实' }).click()
+  await field(page, '核实依据').fill('已核对皇冠查单：交付两项，剩余仍待确认')
+  await page.getByRole('button', { name: '保存' }).click()
+  await expect(page.getByText('已同步交付结果，订单仍在确认中')).toBeVisible()
+  await expect(row).toContainText('2 / 3')
 
   setAge(order.id, 71 * 3600 + 59 * 60)
   expect((await request.post(resolvePath, { headers: ops, data: closeBody })).status()).toBe(409)
@@ -100,9 +108,13 @@ test('运营在 24 小时后核实静态采购，72 小时后关闭剩余并只�
   await expect(row).toContainText('2 / 3')
   await screenshot(page, info, '11-pending-orders')
   const detail = await json(await request.get(`${tenantPath}/orders/${order.id}`, { headers: ops }))
-  const account = await json(await request.get(tenantPath, { headers: ops }))
+  const { name, primary_account_name } = await json(await request.get(tenantPath, { headers: ops }))
+  const { supplier_order_id } = (await pending(ops)).find(item => item.order_id === order.id)
   await info.attach('visual-fixture', {
-    body: Buffer.from(JSON.stringify({ detail, account })), contentType: 'application/json',
+    body: Buffer.from(JSON.stringify({
+      id: order.id, name, primary_account_name, supplier_order_id, created_at: detail.created_at, items: detail.items,
+    })),
+    contentType: 'application/json',
   })
   await row.getByRole('button', { name: '核实' }).click()
   await screenshot(page, info, '12-resolve-dialog')
