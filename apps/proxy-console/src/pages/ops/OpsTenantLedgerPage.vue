@@ -48,9 +48,11 @@ watch([kind, () => dates.value.start, () => dates.value.end], history.reset, { i
         <ElRadioButton value="all">{{ t('wallet.all') }}</ElRadioButton>
         <ElRadioButton v-for="item in filterKinds" :key="item" :value="item">{{ t(`wallet.kinds.${item}`) }}</ElRadioButton>
       </ElRadioGroup>
-      <ElDatePicker class="ops-ledger-dates" :model-value="range" type="daterange" value-format="YYYY-MM-DD"
-        :aria-label="t('wallet.dateFilter')" :start-placeholder="t('wallet.startDate')" :end-placeholder="t('wallet.endDate')"
-        :range-separator="t('wallet.dateSeparator')" @update:model-value="filterDates" />
+      <div class="ops-ledger-dates">
+        <ElDatePicker :model-value="range" type="daterange" value-format="YYYY-MM-DD"
+          :aria-label="t('wallet.dateFilter')" :start-placeholder="t('wallet.startDate')" :end-placeholder="t('wallet.endDate')"
+          :range-separator="t('wallet.dateSeparator')" @update:model-value="filterDates" />
+      </div>
     </template>
     <ElTable v-if="state.kind === 'ready'" :data="state.rows" row-key="id" class="ops-history-table" cell-class-name="ops-history-cell" header-cell-class-name="ops-history-heading">
       <!-- @vue-generic {WalletEntry} -->
@@ -92,7 +94,7 @@ watch([kind, () => dates.value.start, () => dates.value.end], history.reset, { i
 </template>
 
 <style scoped>
-.ops-ledger-dates { max-width: min(100%, var(--ops-history-dates-width)); }
+.ops-ledger-dates { width: min(100%, var(--ops-history-dates-width)); --el-date-editor-daterange-width: 100%; }
 .ops-ledger-order { margin-inline-start: var(--space-2); }
 .ops-ledger-credit { color: var(--color-success-text); }
 </style>
