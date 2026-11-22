@@ -13,15 +13,23 @@ const props = withDefaults(defineProps<{
   globeScale?: number
   /** 整体不透明度，用作背景时调低。 */
   opacity?: number
-}>(), { theme: 'dark', globeX: 0.7, globeScale: 0.42, opacity: 1 })
+  /** 电影级高对比光影模式（用于方案 D）：增加暖金城市光点、双层大气光晕与高对比彗尾。 */
+  cinematic?: boolean
+}>(), { theme: 'dark', globeX: 0.7, globeScale: 0.42, opacity: 1, cinematic: false })
 
 const canvas = ref<HTMLCanvasElement>()
 const deg = Math.PI / 180
 const mapDots = gridDots(2)
 const globeDots = sphereDots(2.2)
-const palette = () => props.theme === 'dark'
-  ? { dot: '179, 240, 215', arc: '120, 255, 200', node: '179, 240, 215', sphere: ['rgba(20, 60, 50, 0.55)', 'rgba(8, 20, 18, 0.2)'], rim: 'rgba(120, 255, 200, 0.28)' }
-  : { dot: '8, 105, 80', arc: '8, 140, 105', node: '8, 105, 80', sphere: ['rgba(231, 246, 239, 0.9)', 'rgba(231, 246, 239, 0.3)'], rim: 'rgba(8, 105, 80, 0.22)' }
+const palette = () => {
+  if (props.theme !== 'dark') {
+    return { dot: '8, 105, 80', arc: '8, 140, 105', node: '8, 105, 80', nodeWarm: '8, 140, 105', sphere: ['rgba(231, 246, 239, 0.9)', 'rgba(231, 246, 239, 0.3)'], rim: 'rgba(8, 105, 80, 0.22)' }
+  }
+  if (props.cinematic) {
+    return { dot: '148, 232, 206', arc: '190, 255, 232', node: '125, 242, 198', nodeWarm: '255, 214, 138', sphere: ['rgba(24, 96, 80, 0.72)', 'rgba(4, 14, 22, 0.92)'], rim: 'rgba(92, 234, 194, 0.42)' }
+  }
+  return { dot: '179, 240, 215', arc: '120, 255, 200', node: '179, 240, 215', nodeWarm: '179, 240, 215', sphere: ['rgba(20, 60, 50, 0.55)', 'rgba(8, 20, 18, 0.2)'], rim: 'rgba(120, 255, 200, 0.28)' }
+}
 
 interface Arc { from: number, to: number, t: number, speed: number }
 let arcs: Arc[] = []
@@ -59,9 +67,9 @@ function renderMapLayer() {
   const ctx = mapLayer.getContext('2d')!
   ctx.scale(dpr, dpr)
   const { s } = mapFit()
-  const r = Math.max(s * 0.55, 1)
+  const r = Math.max(s * (props.cinematic ? 0.62 : 0.55), 1)
   const c = palette()
-  ctx.fillStyle = `rgba(${c.dot}, ${props.theme === 'dark' ? 0.32 : 0.28})`
+  ctx.fillStyle = `rgba(${c.dot}, ${props.theme === 'dark' ? (props.cinematic ? 0.44 : 0.32) : 0.28})`
   for (const [lon, lat] of mapDots) {
     const p = mapPoint(lon, lat)
     ctx.beginPath()
@@ -193,12 +201,21 @@ function drawNodes(ctx: CanvasRenderingContext2D, time: number, place: (city: ty
   cities.forEach((city, i) => {
     const p = place(city)
     if (p.visible <= 0) return
+    const warm = props.cinematic && i % 3 === 0
+    const rgb = warm ? c.nodeWarm : c.node
     const pulse = ((time / 1800 + i * 0.37) % 1)
-    ctx.strokeStyle = `rgba(${c.node}, ${(1 - pulse) * 0.6 * p.visible})`
+    if (props.cinematic) {
+      const halo = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, warm ? 18 : 13)
+      halo.addColorStop(0, `rgba(${rgb}, ${0.55 * p.visible})`)
+      halo.addColorStop(1, `rgba(${rgb}, 0)`)
+      ctx.fillStyle = halo
+      ctx.beginPath(); ctx.arc(p.x, p.y, warm ? 18 : 13, 0, Math.PI * 2); ctx.fill()
+    }
+    ctx.strokeStyle = `rgba(${rgb}, ${(1 - pulse) * (props.cinematic ? 0.72 : 0.6) * p.visible})`
     ctx.lineWidth = 1.2
-    ctx.beginPath(); ctx.arc(p.x, p.y, 3 + pulse * 12, 0, Math.PI * 2); ctx.stroke()
-    ctx.fillStyle = `rgba(${c.node}, ${p.visible})`
-    ctx.beginPath(); ctx.arc(p.x, p.y, 2.6, 0, Math.PI * 2); ctx.fill()
+    ctx.beginPath(); ctx.arc(p.x, p.y, 3 + pulse * (props.cinematic ? 15 : 12), 0, Math.PI * 2); ctx.stroke()
+    ctx.fillStyle = `rgba(${rgb}, ${p.visible})`
+    ctx.beginPath(); ctx.arc(p.x, p.y, props.cinematic ? 3 : 2.6, 0, Math.PI * 2); ctx.fill()
   })
 }
 
