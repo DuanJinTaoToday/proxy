@@ -37,9 +37,25 @@
   --color-info-bg: #e8f1fb;
   --color-info-border: #bcd4ef;
 
+  /* 运营原型使用的控件状态色。正文和需要对比度的错误说明沿用全局语义色。 */
+  --ops-success: #67c23a;
+  --ops-success-bg: #f0f9eb;
+  --ops-success-border: #e1f3d8;
+  --ops-warning: #e6a23c;
+  --ops-warning-bg: #fdf6ec;
+  --ops-warning-border: #faecd8;
+  --ops-danger: #f56c6c;
+  --ops-danger-bg: #fef0f0;
+  --ops-danger-border: #fde2e2;
+  --ops-info: #909399;
+  --ops-info-bg: #f4f4f5;
+  --ops-info-border: #e9e9eb;
+  --ops-placeholder: #a8abb2;
+
   /* 字体 */
   --font-sans: "Noto Sans SC", "Microsoft YaHei UI", "PingFang SC", "Helvetica Neue", system-ui, sans-serif;
   --font-mono: ui-monospace, "Cascadia Mono", Consolas, "SFMono-Regular", monospace;
+  --ops-font-mono: ui-monospace, Consolas, monospace;
   --font-size-xs: 12px;
   --font-size-sm: 13px;
   --font-size-md: 14px;
@@ -87,6 +103,11 @@
   --usage-chart-axis-width: 100px;
   --notification-panel-width: 360px;
   --recharge-panel-width: 280px;
+  --ops-tenant-result-name-size: 15px;
+  --ops-tenant-history-gap: 5px;
+  --ops-tenant-chip-line-height: 20px;
+  --ops-recharge-amount-tracking: -.02em;
+  --ops-password-tracking: .04em;
   --ops-dialog-width: 480px;
   --ops-resolve-width: 620px;
   --ops-resolve-count-width: 96px;
@@ -113,6 +134,18 @@
   --ops-detail-card-inline-padding: 18px;
   --ops-detail-card-block-padding: 15px;
   --ops-detail-meta-gap: 2px;
+  --ops-top-control-height: 36px;
+  --ops-top-control-inline-padding: 10px;
+  --ops-nav-top-padding: 22px;
+  --ops-nav-section-gap: 21px;
+  --ops-nav-item-radius: 7px;
+  --ops-nav-icon-size: 17px;
+  --ops-nav-icon-gap: 10px;
+  --ops-nav-label-line-height: 18px;
+  --ops-badge-offset: 2px;
+  --ops-badge-line-height: 17px;
+  --ops-compact-sidebar-width: 186px;
+  --ops-compact-page-padding: 20px;
   --ops-brand-size: 21px;
   --ops-brand-mark-radius: 9px;
   --ops-brand-gap: 10px;

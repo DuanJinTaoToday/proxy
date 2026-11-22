@@ -53,3 +53,20 @@
 .density-compact {
   --el-component-size: var(--control-height-compact);
 }
+
+.density-compact, :root .ops-dialog {
+  --font-mono: var(--ops-font-mono);
+  --el-color-success: var(--ops-success);
+  --el-color-success-light-8: var(--ops-success-border);
+  --el-color-success-light-9: var(--ops-success-bg);
+  --el-color-warning: var(--ops-warning);
+  --el-color-warning-light-8: var(--ops-warning-border);
+  --el-color-warning-light-9: var(--ops-warning-bg);
+  --el-color-danger: var(--ops-danger);
+  --el-color-danger-light-8: var(--ops-danger-border);
+  --el-color-danger-light-9: var(--ops-danger-bg);
+  --el-color-info: var(--ops-info);
+  --el-color-info-light-8: var(--ops-info-border);
+  --el-color-info-light-9: var(--ops-info-bg);
+  --el-text-color-placeholder: var(--ops-placeholder);
+}

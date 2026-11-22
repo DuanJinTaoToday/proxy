@@ -35,6 +35,11 @@
     "registeredSignInFailed": "Your account was created, but signing in automatically failed: {reason} Sign in to continue.",
     "opsLoginTitle": "Operations sign-in",
     "opsUsername": "Operator username",
-    "opsLogoutHint": "Sign in again to continue using the operations console."
+    "opsLogoutHint": "Sign in again to continue using the operations console.",
+    "operatorPermission": {
+      "read_operations": "Read operations",
+      "manage_billing": "Manage billing",
+      "manage_tenant_accounts": "Manage tenant accounts"
+    }
   }
 }

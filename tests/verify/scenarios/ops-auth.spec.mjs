@@ -13,6 +13,9 @@ test('运营独立登录后返回租户详情，退出保留客户会话', async
   await screenshot(page, info, 'operator-tenant-detail')
 
   await page.getByRole('button', { name: 'operator', exact: true }).click()
+  await expect(page.getByText('运营读取', { exact: true })).toBeVisible()
+  await expect(page.getByText('计费管理', { exact: true })).toBeVisible()
+  await expect(page.getByText('租户账号管理', { exact: true })).toBeVisible()
   await page.getByRole('menuitem', { name: '退出登录' }).click()
   await page.getByRole('dialog').getByRole('button', { name: '退出登录', exact: true }).click()
   await expect(page).toHaveURL(/\/ops\/login$/)

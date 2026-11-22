@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import { ElTag } from 'element-plus'
 import WorkspaceFrame from './WorkspaceFrame.vue'
 import { opsNav } from '../navigation'
 
@@ -10,7 +9,7 @@ const { t } = useI18n()
 <template>
   <div class="density-compact">
     <WorkspaceFrame ops :sections="opsNav" :nav-label="t('nav.opsNav')">
-      <template #brand-extra><ElTag effect="dark" size="small" disable-transitions class="ops-badge">{{ t('app.opsBadge') }}</ElTag></template>
+      <template #brand-extra><span class="ops-badge">{{ t('app.opsBadge') }}</span></template>
     </WorkspaceFrame>
   </div>
 </template>
@@ -30,9 +29,14 @@ const { t } = useI18n()
 
 <style scoped>
 .ops-badge {
-  --el-tag-bg-color: var(--color-shell);
-  --el-tag-border-color: var(--color-shell);
-  --el-tag-text-color: var(--color-accent);
+  margin-inline-start: var(--ops-badge-offset);
+  padding: var(--ops-badge-offset) var(--space-2);
+  border-radius: var(--radius-control);
+  background: var(--color-shell);
+  color: var(--color-accent);
+  font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
+  line-height: var(--ops-badge-line-height);
+  white-space: nowrap;
 }
 </style>

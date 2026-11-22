@@ -47,7 +47,7 @@ function switchLocale(next: Locale) {
       <NotificationBell v-else :key="sessionPhone" :account-key="sessionPhone" />
 
       <ElDropdown trigger="click" placement="bottom-end" @command="switchLocale">
-        <ElButton text :aria-label="t('header.language', { name: t(`locale.${locale}`) })">
+        <ElButton text class="app-header__language" :aria-label="t('header.language', { name: t(`locale.${locale}`) })">
           <svg class="app-header__globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 2.7 3.8 5.7 3.8 9s-1.3 6.3-3.8 9c-2.5-2.7-3.8-5.7-3.8-9S9.5 5.7 12 3z" /></svg><span class="app-header__locale-name">{{ t(`locale.${locale}`) }}</span><ArrowDown class="app-header__chevron" />
         </ElButton>
         <template #dropdown>
@@ -108,21 +108,36 @@ function switchLocale(next: Locale) {
 .app-header__menu { display: none; }
 .app-header--ops .app-header__brand { gap: var(--ops-brand-gap); font-size: var(--ops-brand-size); font-weight: var(--font-weight-heavy); }
 .app-header--ops .app-header__mark { border-radius: var(--ops-brand-mark-radius); }
+.app-header--ops .app-header__mark svg { width: 1em; height: 1em; }
+.app-header--ops .app-header__start { gap: var(--ops-brand-gap); }
+.app-header--ops .app-header__language {
+  height: var(--ops-top-control-height);
+  padding-inline: var(--ops-top-control-inline-padding);
+  color: var(--color-text-secondary);
+  border: var(--border-width) dashed var(--color-border);
+  border-radius: var(--ops-control-radius);
+  font-weight: var(--font-weight-medium);
+}
+.app-header--ops .app-header__globe { display: none; }
+.app-header--ops .app-header__chevron { width: var(--font-size-xs); margin-inline-start: var(--space-2); }
 .app-header__customer-link {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  padding: var(--space-2);
+  height: var(--ops-top-control-height);
+  padding-inline: var(--ops-top-control-inline-padding);
   font-weight: var(--font-weight-semibold);
   text-decoration: none;
 }
 .app-header__customer-link svg { width: var(--icon-size); color: var(--color-text-secondary); }
-.app-header__customer-link:hover { background: var(--color-surface-muted); border-radius: var(--radius-control); }
+.app-header__customer-link:hover { background: var(--color-surface-muted); border-radius: var(--ops-control-radius); }
 
 @media (max-width: 767px) {
   .app-header { padding-inline: var(--space-2); }
   .app-header__menu { display: inline-flex; }
-  .app-header__start { gap: var(--space-1); }
+  .app-header__start, .app-header--ops .app-header__start { gap: var(--space-1); }
+  .app-header--ops .app-header__globe { display: inline-block; margin-inline-end: 0; }
+  .app-header--ops .app-header__language { border-color: transparent; }
   .app-header__tools { gap: 0; }
   .app-header__customer-link, .app-header__brand-text, .app-header__locale-name, .app-header__chevron { display: none; }
 }

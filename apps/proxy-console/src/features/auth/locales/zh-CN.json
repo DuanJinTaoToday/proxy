@@ -35,6 +35,11 @@
     "registeredSignInFailed": "账号已创建，但自动登录失败：{reason}请前往登录。",
     "opsLoginTitle": "运营登录",
     "opsUsername": "运营账号",
-    "opsLogoutHint": "退出后需要重新登录运营后台。"
+    "opsLogoutHint": "退出后需要重新登录运营后台。",
+    "operatorPermission": {
+      "read_operations": "运营读取",
+      "manage_billing": "计费管理",
+      "manage_tenant_accounts": "租户账号管理"
+    }
   }
 }

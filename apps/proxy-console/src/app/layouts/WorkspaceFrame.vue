@@ -14,7 +14,7 @@ const drawerOpen = ref(false)
   <AppHeader menu-button :ops="ops" @open-menu="drawerOpen = true">
     <template #brand-extra><slot name="brand-extra" /></template>
   </AppHeader>
-  <div class="workspace">
+  <div class="workspace" :class="{ 'workspace--ops': ops }">
     <AppSidebar :ops="ops" class="workspace__sidebar" :sections="sections" :label="navLabel" />
     <main class="workspace__main">
       <RouterView />
@@ -40,6 +40,12 @@ const drawerOpen = ref(false)
 .workspace__main :deep(.workspace-two-columns) {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (min-width: 768px) and (max-width: 950px) {
+  .workspace--ops { grid-template-columns: var(--ops-compact-sidebar-width) minmax(0, 1fr); }
+  .workspace--ops .workspace__sidebar { padding-inline: var(--space-3); }
+  .workspace--ops .workspace__main { padding: var(--ops-compact-page-padding); }
 }
 
 @media (max-width: 767px) {
