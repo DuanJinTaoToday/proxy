@@ -7,6 +7,8 @@ export interface WalletEntryWire {
   before_minor?: string
   after_minor?: string
   created_at: string
+  operator_name?: string
+  reason?: string
 }
 
 type WalletEntryKind = 'recharge' | 'debit' | 'hold' | 'release' | 'refund' | 'unknown'
@@ -26,6 +28,7 @@ function entryKind(value: string): WalletEntryKind {
 
 export function mapWalletEntry(wire: WalletEntryWire) {
   const afterMinor = BigInt(wire.after_minor ?? 0)
+  const beforeMinor = BigInt(wire.before_minor ?? 0)
   const createdAt = new Date(wire.created_at)
   if (!Number.isFinite(createdAt.getTime())) throw new Error('Invalid wallet entry timestamp')
   return {
@@ -33,8 +36,11 @@ export function mapWalletEntry(wire: WalletEntryWire) {
     orderId: wire.order_id && wire.order_id !== '0' ? wire.order_id : undefined,
     kind: entryKind(wire.kind),
     createdAt,
+    beforeMinor,
     afterMinor,
-    amountMinor: afterMinor - BigInt(wire.before_minor ?? 0),
+    amountMinor: afterMinor - beforeMinor,
+    operatorName: wire.operator_name,
+    reason: wire.reason,
   }
 }
 
@@ -53,7 +59,7 @@ export async function getWalletSummary(signal: AbortSignal) {
   }
 }
 
-interface WalletEntriesWire {
+export interface WalletEntriesWire {
   entries?: WalletEntryWire[]
   next_before_id?: string
 }
@@ -71,6 +77,10 @@ export async function listWalletEntries(query: WalletEntriesQuery, signal: Abort
     query: { ...query },
     signal,
   })
+  return mapWalletEntries(wire)
+}
+
+export function mapWalletEntries(wire: WalletEntriesWire) {
   return {
     entries: (wire.entries ?? []).map(mapWalletEntry),
     nextBeforeId: wire.next_before_id === '0' ? undefined : wire.next_before_id,
