@@ -88,6 +88,9 @@
   --notification-panel-width: 360px;
   --recharge-panel-width: 280px;
   --ops-dialog-width: 480px;
+  --ops-resolve-width: 620px;
+  --ops-resolve-count-width: 96px;
+  --ops-resolve-form-gap: 18px;
   --ops-history-search-width: 220px;
   --ops-history-dates-width: 280px;
   --ops-history-kind-width: 170px;
