@@ -139,7 +139,7 @@ function waited({ order }: OpsPendingOrder) {
 .pending-order, .pending-link, .pending-amount { font-weight: var(--font-weight-semibold); }
 .pending-link { color: var(--color-primary); }
 .pending-link:hover { text-decoration: underline; }
-.pending-empty { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); padding: var(--space-4); font-size: var(--font-size-sm); }
-.pending-empty svg { width: var(--space-6); height: var(--space-6); color: var(--color-focus); }
+.pending-empty { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); font-size: var(--font-size-sm); }
+.pending-empty svg { width: calc(var(--space-6) - var(--space-1)); height: calc(var(--space-6) - var(--space-1)); color: var(--color-focus); }
 .pending-footer { display: flex; align-items: center; justify-content: space-between; padding: var(--ops-search-result-padding) var(--space-4); color: var(--color-text-secondary); font-size: var(--font-size-xs); }
 </style>

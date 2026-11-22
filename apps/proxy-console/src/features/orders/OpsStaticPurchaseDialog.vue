@@ -148,7 +148,7 @@ async function submit() {
 .resolve-hint { display: block; font-size: var(--font-size-xs); color: var(--color-text-secondary); }
 .resolve-delivery-hint { line-height: var(--line-height-normal); margin-block-start: var(--space-1); }
 .resolve-mode { align-items: flex-start; flex-direction: column; gap: var(--space-1); }
-.resolve-mode .el-radio { margin: 0; white-space: normal; height: auto; min-height: var(--control-height); }
+.resolve-mode .el-radio { margin: 0; white-space: normal; height: auto; min-height: var(--space-6); }
 .resolve-alert { margin-block-end: var(--space-4); }
 .resolve-alert .el-checkbox { display: flex; white-space: normal; }
 .resolve-refund { padding-block: var(--space-3); border-top: var(--border-width) solid var(--color-border); }
