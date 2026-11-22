@@ -88,7 +88,9 @@
   --notification-panel-width: 360px;
   --recharge-panel-width: 280px;
   --ops-dialog-width: 480px;
+  --ops-dialog-footer-padding: 20px;
   --ops-card-radius: 14px;
+  --ops-card-title-line-height: 26px;
   --ops-control-radius: 8px;
   --ops-search-result-padding: 14px;
   --ops-detail-card-inline-padding: 18px;
