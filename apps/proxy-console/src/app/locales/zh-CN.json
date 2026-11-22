@@ -57,7 +57,14 @@
   "home": {
     "title": "稳定的住宅代理，按需购买",
     "subtitle": "动态住宅代理按 GB 计费，静态住宅 IP 按租期购买，均通过 SOCKS5 接入。",
-    "console": "进入控制台"
+    "console": "进入控制台",
+    "products": "住宅代理商品",
+    "catalogError": "暂时无法加载住宅代理报价。",
+    "dynamicDescription": "按 GB 购买流量包，流量长期有效。",
+    "staticDescription": "按租期购买静态住宅 IP，支持到期前续费。",
+    "trafficTier": "{capacity} GB 流量包 · {price}",
+    "staticFrom": "{days} 天 · {price} 起",
+    "staticPricing": "查看静态 IP 报价"
   },
   "notFound": {
     "title": "页面不存在",
