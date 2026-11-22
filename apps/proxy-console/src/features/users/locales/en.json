@@ -16,7 +16,30 @@
     "opsWalletHint": "Purchases and renewals draw from this balance",
     "opsTrafficBalance": "Rotating traffic balance",
     "opsTrafficDebt": "A negative balance represents usage to offset",
-    "opsTrafficHint": "1 GB = 10⁹ bytes"
+    "opsTrafficHint": "1 GB = 10⁹ bytes",
+    "reset": {
+      "title": "Reset sign-in password",
+      "permission": "Only operators who can manage tenant accounts can reset sign-in passwords",
+      "tenant": "Tenant",
+      "verifyTitle": "Verify the tenant’s identity first",
+      "verifyDescription": "Verify ownership of the tenant before helping with a password reset. The old password and existing sessions expire immediately after the reset.",
+      "method": "Verification method",
+      "selectMethod": "Select a verification method",
+      "note": "Verification note",
+      "noteExample": "For example, called 138****6021 on 11/20 and verified ownership",
+      "methods": {
+        "phone": "Call back the registered mobile number",
+        "transfer": "Verify a corporate bank transfer receipt",
+        "license": "Verify the business licence and contact"
+      },
+      "confirm": "Confirm reset",
+      "resultHint": "The temporary password is shown once. Send it to the customer through the verified channel.",
+      "resultOperator": "Operator {operator} · Verification method {method}",
+      "copy": "Copy",
+      "copied": "Temporary password copied",
+      "copyFailed": "Could not copy the password. Check your browser’s clipboard permissions.",
+      "finish": "Done"
+    }
   },
   "accessLocation": {
     "title": "Current IP address and location",
