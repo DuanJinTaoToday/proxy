@@ -101,6 +101,11 @@
   --ops-heading-line-height: 40px;
   --ops-display-tracking: -.035em;
   --ops-page-heading-gap: 19px;
+  --catalog-price-dialog-width: 420px;
+  --catalog-sale-text-width: 220px;
+  --catalog-sale-description-gap: 7px;
+  --catalog-table-header-height: 42px;
+  --catalog-table-row-height: 58px;
   --wallet-summary-card-width: 240px;
   --business-date-filter-width: 145px;
   --static-catalog-width: 520px;

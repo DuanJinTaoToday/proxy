@@ -12,6 +12,7 @@ import (
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -193,6 +194,211 @@ func (x *TrafficPackages) GetPackages() []*TrafficPackage {
 	return nil
 }
 
+type ProductChanges struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Changes       []*ProductChange       `protobuf:"bytes,1,rep,name=changes,proto3" json:"changes,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ProductChanges) Reset() {
+	*x = ProductChanges{}
+	mi := &file_proxycontrol_v1_product_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ProductChanges) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ProductChanges) ProtoMessage() {}
+
+func (x *ProductChanges) ProtoReflect() protoreflect.Message {
+	mi := &file_proxycontrol_v1_product_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ProductChanges.ProtoReflect.Descriptor instead.
+func (*ProductChanges) Descriptor() ([]byte, []int) {
+	return file_proxycontrol_v1_product_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *ProductChanges) GetChanges() []*ProductChange {
+	if x != nil {
+		return x.Changes
+	}
+	return nil
+}
+
+type ProductChange struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Id    int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	// sale 或 package。
+	TargetKind       string                 `protobuf:"bytes,2,opt,name=target_kind,json=targetKind,proto3" json:"target_kind,omitempty"`
+	TargetId         string                 `protobuf:"bytes,3,opt,name=target_id,json=targetId,proto3" json:"target_id,omitempty"`
+	OperatorUsername string                 `protobuf:"bytes,4,opt,name=operator_username,json=operatorUsername,proto3" json:"operator_username,omitempty"`
+	CreatedAt        *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	Before           *ProductChangeValue    `protobuf:"bytes,6,opt,name=before,proto3" json:"before,omitempty"`
+	After            *ProductChangeValue    `protobuf:"bytes,7,opt,name=after,proto3" json:"after,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *ProductChange) Reset() {
+	*x = ProductChange{}
+	mi := &file_proxycontrol_v1_product_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ProductChange) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ProductChange) ProtoMessage() {}
+
+func (x *ProductChange) ProtoReflect() protoreflect.Message {
+	mi := &file_proxycontrol_v1_product_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ProductChange.ProtoReflect.Descriptor instead.
+func (*ProductChange) Descriptor() ([]byte, []int) {
+	return file_proxycontrol_v1_product_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *ProductChange) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *ProductChange) GetTargetKind() string {
+	if x != nil {
+		return x.TargetKind
+	}
+	return ""
+}
+
+func (x *ProductChange) GetTargetId() string {
+	if x != nil {
+		return x.TargetId
+	}
+	return ""
+}
+
+func (x *ProductChange) GetOperatorUsername() string {
+	if x != nil {
+		return x.OperatorUsername
+	}
+	return ""
+}
+
+func (x *ProductChange) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+func (x *ProductChange) GetBefore() *ProductChangeValue {
+	if x != nil {
+		return x.Before
+	}
+	return nil
+}
+
+func (x *ProductChange) GetAfter() *ProductChangeValue {
+	if x != nil {
+		return x.After
+	}
+	return nil
+}
+
+type ProductChangeValue struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Open          bool                   `protobuf:"varint,1,opt,name=open,proto3" json:"open,omitempty"`
+	CapacityBytes int64                  `protobuf:"varint,2,opt,name=capacity_bytes,json=capacityBytes,proto3" json:"capacity_bytes,omitempty"`
+	PriceMinor    int64                  `protobuf:"varint,3,opt,name=price_minor,json=priceMinor,proto3" json:"price_minor,omitempty"`
+	Listed        bool                   `protobuf:"varint,4,opt,name=listed,proto3" json:"listed,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ProductChangeValue) Reset() {
+	*x = ProductChangeValue{}
+	mi := &file_proxycontrol_v1_product_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ProductChangeValue) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ProductChangeValue) ProtoMessage() {}
+
+func (x *ProductChangeValue) ProtoReflect() protoreflect.Message {
+	mi := &file_proxycontrol_v1_product_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ProductChangeValue.ProtoReflect.Descriptor instead.
+func (*ProductChangeValue) Descriptor() ([]byte, []int) {
+	return file_proxycontrol_v1_product_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *ProductChangeValue) GetOpen() bool {
+	if x != nil {
+		return x.Open
+	}
+	return false
+}
+
+func (x *ProductChangeValue) GetCapacityBytes() int64 {
+	if x != nil {
+		return x.CapacityBytes
+	}
+	return 0
+}
+
+func (x *ProductChangeValue) GetPriceMinor() int64 {
+	if x != nil {
+		return x.PriceMinor
+	}
+	return 0
+}
+
+func (x *ProductChangeValue) GetListed() bool {
+	if x != nil {
+		return x.Listed
+	}
+	return false
+}
+
 type TrafficPackage struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 稳定套餐 ID。
@@ -213,7 +419,7 @@ type TrafficPackage struct {
 
 func (x *TrafficPackage) Reset() {
 	*x = TrafficPackage{}
-	mi := &file_proxycontrol_v1_product_proto_msgTypes[3]
+	mi := &file_proxycontrol_v1_product_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -225,7 +431,7 @@ func (x *TrafficPackage) String() string {
 func (*TrafficPackage) ProtoMessage() {}
 
 func (x *TrafficPackage) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_product_proto_msgTypes[3]
+	mi := &file_proxycontrol_v1_product_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -238,7 +444,7 @@ func (x *TrafficPackage) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TrafficPackage.ProtoReflect.Descriptor instead.
 func (*TrafficPackage) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_product_proto_rawDescGZIP(), []int{3}
+	return file_proxycontrol_v1_product_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *TrafficPackage) GetId() string {
@@ -301,7 +507,7 @@ type UpdateTrafficPackageRequest struct {
 
 func (x *UpdateTrafficPackageRequest) Reset() {
 	*x = UpdateTrafficPackageRequest{}
-	mi := &file_proxycontrol_v1_product_proto_msgTypes[4]
+	mi := &file_proxycontrol_v1_product_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -313,7 +519,7 @@ func (x *UpdateTrafficPackageRequest) String() string {
 func (*UpdateTrafficPackageRequest) ProtoMessage() {}
 
 func (x *UpdateTrafficPackageRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_product_proto_msgTypes[4]
+	mi := &file_proxycontrol_v1_product_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -326,7 +532,7 @@ func (x *UpdateTrafficPackageRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateTrafficPackageRequest.ProtoReflect.Descriptor instead.
 func (*UpdateTrafficPackageRequest) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_product_proto_rawDescGZIP(), []int{4}
+	return file_proxycontrol_v1_product_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *UpdateTrafficPackageRequest) GetId() string {
@@ -380,7 +586,7 @@ type SetProductSaleRequest struct {
 
 func (x *SetProductSaleRequest) Reset() {
 	*x = SetProductSaleRequest{}
-	mi := &file_proxycontrol_v1_product_proto_msgTypes[5]
+	mi := &file_proxycontrol_v1_product_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -392,7 +598,7 @@ func (x *SetProductSaleRequest) String() string {
 func (*SetProductSaleRequest) ProtoMessage() {}
 
 func (x *SetProductSaleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_product_proto_msgTypes[5]
+	mi := &file_proxycontrol_v1_product_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -405,7 +611,7 @@ func (x *SetProductSaleRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetProductSaleRequest.ProtoReflect.Descriptor instead.
 func (*SetProductSaleRequest) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_product_proto_rawDescGZIP(), []int{5}
+	return file_proxycontrol_v1_product_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *SetProductSaleRequest) GetKind() string {
@@ -440,7 +646,7 @@ var File_proxycontrol_v1_product_proto protoreflect.FileDescriptor
 
 const file_proxycontrol_v1_product_proto_rawDesc = "" +
 	"\n" +
-	"\x1dproxycontrol/v1/product.proto\x12\x0fproxycontrol.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1bopenapiv3/annotations.proto\x1a\x1cproxycontrol/v1/common.proto\x1a\x17validate/validate.proto\"@\n" +
+	"\x1dproxycontrol/v1/product.proto\x12\x0fproxycontrol.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bopenapiv3/annotations.proto\x1a\x1cproxycontrol/v1/common.proto\x1a\x17validate/validate.proto\"@\n" +
 	"\bProducts\x124\n" +
 	"\bproducts\x18\x01 \x03(\v2\x18.proxycontrol.v1.ProductR\bproducts\"\xb3\x01\n" +
 	"\aProduct\x12\x12\n" +
@@ -450,7 +656,25 @@ const file_proxycontrol_v1_product_proto_rawDesc = "" +
 	"\fcan_purchase\x18\x04 \x01(\bR\vcanPurchase\x12;\n" +
 	"\bpackages\x18\x05 \x03(\v2\x1f.proxycontrol.v1.TrafficPackageR\bpackages\"N\n" +
 	"\x0fTrafficPackages\x12;\n" +
-	"\bpackages\x18\x01 \x03(\v2\x1f.proxycontrol.v1.TrafficPackageR\bpackages\"\xc5\x01\n" +
+	"\bpackages\x18\x01 \x03(\v2\x1f.proxycontrol.v1.TrafficPackageR\bpackages\"J\n" +
+	"\x0eProductChanges\x128\n" +
+	"\achanges\x18\x01 \x03(\v2\x1e.proxycontrol.v1.ProductChangeR\achanges\"\xbd\x02\n" +
+	"\rProductChange\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1f\n" +
+	"\vtarget_kind\x18\x02 \x01(\tR\n" +
+	"targetKind\x12\x1b\n" +
+	"\ttarget_id\x18\x03 \x01(\tR\btargetId\x12+\n" +
+	"\x11operator_username\x18\x04 \x01(\tR\x10operatorUsername\x129\n" +
+	"\n" +
+	"created_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12;\n" +
+	"\x06before\x18\x06 \x01(\v2#.proxycontrol.v1.ProductChangeValueR\x06before\x129\n" +
+	"\x05after\x18\a \x01(\v2#.proxycontrol.v1.ProductChangeValueR\x05after\"\x88\x01\n" +
+	"\x12ProductChangeValue\x12\x12\n" +
+	"\x04open\x18\x01 \x01(\bR\x04open\x12%\n" +
+	"\x0ecapacity_bytes\x18\x02 \x01(\x03R\rcapacityBytes\x12\x1f\n" +
+	"\vprice_minor\x18\x03 \x01(\x03R\n" +
+	"priceMinor\x12\x16\n" +
+	"\x06listed\x18\x04 \x01(\bR\x06listed\"\xc5\x01\n" +
 	"\x0eTrafficPackage\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12%\n" +
 	"\x0ecapacity_bytes\x18\x02 \x01(\x03R\rcapacityBytes\x12\x1f\n" +
@@ -473,11 +697,12 @@ const file_proxycontrol_v1_product_proto_rawDesc = "" +
 	"\vquote_ready\x18\x03 \x01(\bR\n" +
 	"quoteReady\x129\n" +
 	"\x13acceptance_evidence\x18\x04 \x01(\tB\b\xfaB\x05r\x03\x18\xe8\aR\x12acceptanceEvidenceB\a\n" +
-	"\x05_open2\xcf\x05\n" +
+	"\x05_open2\x8c\a\n" +
 	"\x0eProductService\x12\x99\x01\n" +
 	"\fListProducts\x12\x1c.proxycontrol.v1.BaseRequest\x1a\x19.proxycontrol.v1.Products\"P\xbaG2\x120查看两类商品的开售状态及公开套餐\x82\xd3\xe4\x93\x02\x15\x12\x13/v1/public/products\x12\xb6\x01\n" +
 	"\x13ListTrafficPackages\x12\x1c.proxycontrol.v1.BaseRequest\x1a .proxycontrol.v1.TrafficPackages\"_\xbaG5\x123查看运营套餐目录，含未定价及下架项\x82\xd3\xe4\x93\x02!\x12\x1f/v1/operations/traffic-packages\x12\xbc\x01\n" +
-	"\x14UpdateTrafficPackage\x12,.proxycontrol.v1.UpdateTrafficPackageRequest\x1a\x1f.proxycontrol.v1.TrafficPackage\"U\xbaG#\x12!修改流量套餐并记录变更\x82\xd3\xe4\x93\x02):\x01*2$/v1/operations/traffic-packages/{id}\x12\xa8\x01\n" +
+	"\x14UpdateTrafficPackage\x12,.proxycontrol.v1.UpdateTrafficPackageRequest\x1a\x1f.proxycontrol.v1.TrafficPackage\"U\xbaG#\x12!修改流量套餐并记录变更\x82\xd3\xe4\x93\x02):\x01*2$/v1/operations/traffic-packages/{id}\x12\xba\x01\n" +
+	"\x12ListProductChanges\x12\x1c.proxycontrol.v1.BaseRequest\x1a\x1f.proxycontrol.v1.ProductChanges\"e\xbaG<\x12:读取最近 50 条商品开售及套餐配置修改记录\x82\xd3\xe4\x93\x02 \x12\x1e/v1/operations/product-changes\x12\xa8\x01\n" +
 	"\x0eSetProductSale\x12&.proxycontrol.v1.SetProductSaleRequest\x1a\x18.proxycontrol.v1.Product\"T\xbaG#\x12!手动开启或关闭指定商品\x82\xd3\xe4\x93\x02(:\x01*\x1a#/v1/operations/product-sales/{kind}BEZCgithub.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1b\x06proto3"
 
 var (
@@ -492,33 +717,43 @@ func file_proxycontrol_v1_product_proto_rawDescGZIP() []byte {
 	return file_proxycontrol_v1_product_proto_rawDescData
 }
 
-var file_proxycontrol_v1_product_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_proxycontrol_v1_product_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_proxycontrol_v1_product_proto_goTypes = []any{
 	(*Products)(nil),                    // 0: proxycontrol.v1.Products
 	(*Product)(nil),                     // 1: proxycontrol.v1.Product
 	(*TrafficPackages)(nil),             // 2: proxycontrol.v1.TrafficPackages
-	(*TrafficPackage)(nil),              // 3: proxycontrol.v1.TrafficPackage
-	(*UpdateTrafficPackageRequest)(nil), // 4: proxycontrol.v1.UpdateTrafficPackageRequest
-	(*SetProductSaleRequest)(nil),       // 5: proxycontrol.v1.SetProductSaleRequest
-	(*BaseRequest)(nil),                 // 6: proxycontrol.v1.BaseRequest
+	(*ProductChanges)(nil),              // 3: proxycontrol.v1.ProductChanges
+	(*ProductChange)(nil),               // 4: proxycontrol.v1.ProductChange
+	(*ProductChangeValue)(nil),          // 5: proxycontrol.v1.ProductChangeValue
+	(*TrafficPackage)(nil),              // 6: proxycontrol.v1.TrafficPackage
+	(*UpdateTrafficPackageRequest)(nil), // 7: proxycontrol.v1.UpdateTrafficPackageRequest
+	(*SetProductSaleRequest)(nil),       // 8: proxycontrol.v1.SetProductSaleRequest
+	(*timestamppb.Timestamp)(nil),       // 9: google.protobuf.Timestamp
+	(*BaseRequest)(nil),                 // 10: proxycontrol.v1.BaseRequest
 }
 var file_proxycontrol_v1_product_proto_depIdxs = []int32{
-	1, // 0: proxycontrol.v1.Products.products:type_name -> proxycontrol.v1.Product
-	3, // 1: proxycontrol.v1.Product.packages:type_name -> proxycontrol.v1.TrafficPackage
-	3, // 2: proxycontrol.v1.TrafficPackages.packages:type_name -> proxycontrol.v1.TrafficPackage
-	6, // 3: proxycontrol.v1.ProductService.ListProducts:input_type -> proxycontrol.v1.BaseRequest
-	6, // 4: proxycontrol.v1.ProductService.ListTrafficPackages:input_type -> proxycontrol.v1.BaseRequest
-	4, // 5: proxycontrol.v1.ProductService.UpdateTrafficPackage:input_type -> proxycontrol.v1.UpdateTrafficPackageRequest
-	5, // 6: proxycontrol.v1.ProductService.SetProductSale:input_type -> proxycontrol.v1.SetProductSaleRequest
-	0, // 7: proxycontrol.v1.ProductService.ListProducts:output_type -> proxycontrol.v1.Products
-	2, // 8: proxycontrol.v1.ProductService.ListTrafficPackages:output_type -> proxycontrol.v1.TrafficPackages
-	3, // 9: proxycontrol.v1.ProductService.UpdateTrafficPackage:output_type -> proxycontrol.v1.TrafficPackage
-	1, // 10: proxycontrol.v1.ProductService.SetProductSale:output_type -> proxycontrol.v1.Product
-	7, // [7:11] is the sub-list for method output_type
-	3, // [3:7] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	1,  // 0: proxycontrol.v1.Products.products:type_name -> proxycontrol.v1.Product
+	6,  // 1: proxycontrol.v1.Product.packages:type_name -> proxycontrol.v1.TrafficPackage
+	6,  // 2: proxycontrol.v1.TrafficPackages.packages:type_name -> proxycontrol.v1.TrafficPackage
+	4,  // 3: proxycontrol.v1.ProductChanges.changes:type_name -> proxycontrol.v1.ProductChange
+	9,  // 4: proxycontrol.v1.ProductChange.created_at:type_name -> google.protobuf.Timestamp
+	5,  // 5: proxycontrol.v1.ProductChange.before:type_name -> proxycontrol.v1.ProductChangeValue
+	5,  // 6: proxycontrol.v1.ProductChange.after:type_name -> proxycontrol.v1.ProductChangeValue
+	10, // 7: proxycontrol.v1.ProductService.ListProducts:input_type -> proxycontrol.v1.BaseRequest
+	10, // 8: proxycontrol.v1.ProductService.ListTrafficPackages:input_type -> proxycontrol.v1.BaseRequest
+	7,  // 9: proxycontrol.v1.ProductService.UpdateTrafficPackage:input_type -> proxycontrol.v1.UpdateTrafficPackageRequest
+	10, // 10: proxycontrol.v1.ProductService.ListProductChanges:input_type -> proxycontrol.v1.BaseRequest
+	8,  // 11: proxycontrol.v1.ProductService.SetProductSale:input_type -> proxycontrol.v1.SetProductSaleRequest
+	0,  // 12: proxycontrol.v1.ProductService.ListProducts:output_type -> proxycontrol.v1.Products
+	2,  // 13: proxycontrol.v1.ProductService.ListTrafficPackages:output_type -> proxycontrol.v1.TrafficPackages
+	6,  // 14: proxycontrol.v1.ProductService.UpdateTrafficPackage:output_type -> proxycontrol.v1.TrafficPackage
+	3,  // 15: proxycontrol.v1.ProductService.ListProductChanges:output_type -> proxycontrol.v1.ProductChanges
+	1,  // 16: proxycontrol.v1.ProductService.SetProductSale:output_type -> proxycontrol.v1.Product
+	12, // [12:17] is the sub-list for method output_type
+	7,  // [7:12] is the sub-list for method input_type
+	7,  // [7:7] is the sub-list for extension type_name
+	7,  // [7:7] is the sub-list for extension extendee
+	0,  // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_proxycontrol_v1_product_proto_init() }
@@ -527,15 +762,15 @@ func file_proxycontrol_v1_product_proto_init() {
 		return
 	}
 	file_proxycontrol_v1_common_proto_init()
-	file_proxycontrol_v1_product_proto_msgTypes[4].OneofWrappers = []any{}
-	file_proxycontrol_v1_product_proto_msgTypes[5].OneofWrappers = []any{}
+	file_proxycontrol_v1_product_proto_msgTypes[7].OneofWrappers = []any{}
+	file_proxycontrol_v1_product_proto_msgTypes[8].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proxycontrol_v1_product_proto_rawDesc), len(file_proxycontrol_v1_product_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

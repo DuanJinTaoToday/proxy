@@ -4,6 +4,7 @@ import (
 	"context"
 	"math/big"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/access"
@@ -102,9 +103,27 @@ type PublicPackage struct {
 	DiscountPercent int32
 }
 
+type Change struct {
+	ID               int64
+	TargetKind       string
+	TargetID         string
+	OperatorUsername string
+	CreatedAt        time.Time
+	Before           ChangeValue
+	After            ChangeValue
+}
+
+type ChangeValue struct {
+	Open          bool  `json:"open"`
+	CapacityBytes int64 `json:"capacity_bytes"`
+	PriceMinor    int64 `json:"price_minor"`
+	Listed        bool  `json:"listed"`
+}
+
 type Repository interface {
 	Catalog(context.Context) ([]Sale, []Package, error)
 	Packages(context.Context) ([]Package, error)
+	Changes(context.Context) ([]Change, error)
 	UpdatePackage(context.Context, string, Package) (Package, error)
 	SetSale(context.Context, string, Sale) (Sale, []Package, error)
 }
@@ -154,10 +173,17 @@ func present(sale Sale, packages []Package) Product {
 }
 
 func (s *Service) Packages(ctx context.Context, token string) ([]Package, error) {
-	if _, err := s.access.AuthorizeOperator(ctx, token, access.ManageBilling); err != nil {
+	if _, err := s.access.AuthorizeOperator(ctx, token, access.ReadOperations, access.ManageBilling); err != nil {
 		return nil, err
 	}
 	return s.store.Packages(ctx)
+}
+
+func (s *Service) Changes(ctx context.Context, token string) ([]Change, error) {
+	if _, err := s.access.AuthorizeOperator(ctx, token, access.ReadOperations, access.ManageBilling); err != nil {
+		return nil, err
+	}
+	return s.store.Changes(ctx)
 }
 
 func (s *Service) UpdatePackage(ctx context.Context, token string, pkg Package, listed *bool) (Package, error) {
