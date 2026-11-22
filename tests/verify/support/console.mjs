@@ -22,6 +22,6 @@ export async function signInOperator(page, route = '/ops', account = 'operator',
 
 export async function screenshot(page, info, name) {
   const path = info.outputPath(name + '.png')
-  await page.screenshot({ path, fullPage: true })
+  await page.screenshot({ path, fullPage: true, animations: 'disabled' })
   await info.attach(name, { path, contentType: 'image/png' })
 }

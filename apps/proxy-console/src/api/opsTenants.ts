@@ -35,6 +35,10 @@ export async function getOpsTenant(id: string, signal: AbortSignal) {
   return mapTenant(await request<OpsTenantWire>(opsTenantPath(id), { signal }))
 }
 
+export async function resetOpsTenantPassword({ tenantId, password }: { tenantId: string, password: string }) {
+  await request<unknown>(opsTenantPath(tenantId) + ':reset-password', { body: { password } })
+}
+
 export async function quoteWalletRecharge(tenant: string, { key, reason, amountMinor }: { key: string, reason: string, amountMinor: bigint }) {
   const quote = await request<{
     tenant: OpsTenantWire

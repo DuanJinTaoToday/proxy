@@ -7,6 +7,7 @@ import { ArrowLeft } from '@element-plus/icons-vue'
 import { getOpsTenant, listOpsTenantOrders, type OpsTenant } from '@/api/opsTenants'
 import { hasOperatorPermission } from '@/features/auth'
 import { OrderDrawer, readOrderId } from '@/features/orders'
+import { OpsResetPasswordDialog } from '@/features/users'
 import { OpsRechargeDialog } from '@/features/wallet'
 import { shanghaiDateTime } from '@/shared/lib/businessDates'
 import { formatYuan } from '@/shared/lib/money'
@@ -46,6 +47,7 @@ const errorMessage = useErrorMessage()
 type Detail = { kind: 'loading' } | { kind: 'error', error: unknown } | { kind: 'ready', tenant: OpsTenant }
 const detail = shallowRef<Detail>({ kind: 'loading' })
 const rechargeOpen = ref(false)
+const resetOpen = ref(false)
 const retry = ref(0)
 
 watch([() => route.params.tenantId, retry], async ([id], _previous, onCleanup) => {
@@ -54,6 +56,7 @@ watch([() => route.params.tenantId, retry], async ([id], _previous, onCleanup) =
   onCleanup(() => controller.abort())
   rechargeOpen.value = false
   pendingCount.value = 0
+  resetOpen.value = false
   detail.value = { kind: 'loading' }
   try {
     const tenant = await getOpsTenant(id, controller.signal)
@@ -97,6 +100,9 @@ function trafficBalance(bytes: bigint) {
       </div>
       <div class="tenant-head__actions">
         <slot name="actions" :tenant="detail.tenant" />
+        <ElTooltip :disabled="hasOperatorPermission('manage_tenant_accounts')" :content="t('users.reset.permission')" placement="bottom-end">
+          <span><ElButton :disabled="!hasOperatorPermission('manage_tenant_accounts')" @click="resetOpen = true">{{ t('users.reset.title') }}</ElButton></span>
+        </ElTooltip>
         <ElTooltip :disabled="hasOperatorPermission('manage_billing')" :content="t('wallet.opsBillingOnly')" placement="bottom-end">
           <span><ElButton type="primary" :disabled="!hasOperatorPermission('manage_billing')" @click="rechargeOpen = true">{{ t('wallet.opsRecharge') }}</ElButton></span>
         </ElTooltip>
@@ -132,6 +138,7 @@ function trafficBalance(bytes: bigint) {
       </ElTabPane>
     </ElTabs>
     <OrderDrawer :key="detail.tenant.id" :tenant-id="detail.tenant.id" :order-id="orderId" @close="closeOrder" />
+    <OpsResetPasswordDialog v-if="hasOperatorPermission('manage_tenant_accounts')" :key="detail.tenant.id" v-model="resetOpen" :tenant="detail.tenant" />
     <OpsRechargeDialog :key="detail.tenant.id" v-model="rechargeOpen" :tenant="detail.tenant" @recharged="updateBalance" />
   </template>
 </template>
