@@ -68,8 +68,11 @@ async function copy(password: string) {
 </script>
 
 <template>
-  <ElDialog v-model="open" :title="t('users.reset.title')" width="min(var(--ops-dialog-width), calc(100vw - var(--space-6)))" align-center
+  <ElDialog v-model="open" :title="t('users.reset.title')" width="min(var(--ops-dialog-width), calc(100vw - var(--space-6)))" align-center class="reset-dialog"
     :close-on-click-modal="!pending" :close-on-press-escape="!pending" :show-close="!pending">
+    <template #header="{ titleId }">
+      <h2 :id="titleId" class="reset-title">{{ t('users.reset.title') }}</h2>
+    </template>
     <template v-if="!receipt">
       <ElAlert type="warning" :closable="false" show-icon :title="t('users.reset.verifyTitle')"
         :description="t('users.reset.verifyDescription')" class="reset-alert" />
@@ -109,6 +112,13 @@ async function copy(password: string) {
 </template>
 
 <style scoped>
+.reset-dialog {
+  --el-dialog-padding-primary: var(--space-5);
+  --el-dialog-border-radius: var(--ops-card-radius);
+  --el-border-radius-base: var(--ops-control-radius);
+  --el-text-color-regular: var(--color-text);
+}
+.reset-title { margin: 0; font-size: var(--font-size-brand); font-weight: var(--font-weight-bold); }
 .reset-alert { margin-block-end: var(--space-4); }
 .reset-target { display: grid; gap: var(--space-1); margin: 0 0 var(--space-4); }
 .reset-target div { display: grid; grid-template-columns: minmax(max-content, 1fr) 2fr; gap: var(--space-3); }

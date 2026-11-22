@@ -33,7 +33,7 @@
         "license": "营业执照与联系人核实"
       },
       "confirm": "确认重置",
-      "resultHint": "临时密码只显示这一次，请通过已核实的渠道发给客户，并提醒客户登录后修改。",
+      "resultHint": "临时密码只显示这一次，请通过已核实的渠道发给客户。",
       "resultOperator": "操作人 {operator} · 核实方式 {method}",
       "copy": "复制",
       "copied": "已复制临时密码",

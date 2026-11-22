@@ -33,7 +33,7 @@
         "license": "Verify the business licence and contact"
       },
       "confirm": "Confirm reset",
-      "resultHint": "The temporary password is shown once. Send it to the customer through the verified channel and ask them to change it after signing in.",
+      "resultHint": "The temporary password is shown once. Send it to the customer through the verified channel.",
       "resultOperator": "Operator {operator} · Verification method {method}",
       "copy": "Copy",
       "copied": "Temporary password copied",
