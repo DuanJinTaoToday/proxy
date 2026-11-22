@@ -423,6 +423,11 @@ paths:
                   description: 交付状态。空值表示全部。
                   schema:
                     type: string
+                - name: orderQuery
+                  in: query
+                  description: 按订单号的数字片段筛选，空值表示全部。
+                  schema:
+                    type: string
             responses:
                 "200":
                     description: OK
@@ -536,6 +541,21 @@ paths:
                 - name: beforeId
                   in: query
                   description: 查询此编号之前的流水。默认从最新开始。
+                  schema:
+                    type: string
+                - name: kind
+                  in: query
+                  description: 流水类型。debit 包含预扣，refund 包含预扣释放。
+                  schema:
+                    type: string
+                - name: startDate
+                  in: query
+                  description: 上海业务日起点（YYYY-MM-DD），包含当天。
+                  schema:
+                    type: string
+                - name: endDate
+                  in: query
+                  description: 上海业务日终点（YYYY-MM-DD），包含当天。
                   schema:
                     type: string
             responses:

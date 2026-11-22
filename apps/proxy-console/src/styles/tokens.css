@@ -88,6 +88,8 @@
   --notification-panel-width: 360px;
   --recharge-panel-width: 280px;
   --ops-dialog-width: 480px;
+  --ops-history-search-width: 220px;
+  --ops-history-dates-width: 280px;
   --ops-history-kind-width: 170px;
   --ops-history-status-width: 140px;
   --ops-history-header-height: 42px;

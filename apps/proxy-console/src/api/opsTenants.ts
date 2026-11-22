@@ -1,6 +1,6 @@
 import { request } from './client'
 import { mapOrderDetail, mapOrders, type OrderDetailWire, type OrderKind, type OrderStatus, type OrdersWire } from './orders'
-import { mapWalletEntries, mapWalletEntry, type WalletEntriesWire, type WalletEntryWire } from './wallet'
+import { mapWalletEntries, mapWalletEntry, type WalletEntriesWire, type WalletEntryWire, type WalletFilterKind } from './wallet'
 
 interface OpsTenantWire {
   tenant_id: string
@@ -68,11 +68,11 @@ export async function rechargeWallet(tenant: string, { key, token }: { key: stri
 
 export async function listOpsTenantOrders(
   tenantId: string,
-  filters: { kind?: OrderKind, status?: OrderStatus, beforeId?: string },
+  filters: { kind?: OrderKind, status?: OrderStatus, orderQuery?: string, beforeId?: string },
   signal: AbortSignal,
 ) {
   const wire = await request<OrdersWire>(opsTenantPath(tenantId) + '/orders', {
-    query: { kind: filters.kind, status: filters.status, before_id: filters.beforeId },
+    query: { kind: filters.kind, status: filters.status, order_query: filters.orderQuery, before_id: filters.beforeId },
     signal,
   })
   return mapOrders(wire)
@@ -83,9 +83,13 @@ export async function getOpsTenantOrder(tenantId: string, orderId: string, signa
   return mapOrderDetail(wire)
 }
 
-export async function listOpsTenantWalletEntries(tenantId: string, beforeId: string | undefined, signal: AbortSignal) {
+export async function listOpsTenantWalletEntries(
+  tenantId: string,
+  filters: { beforeId?: string, kind?: WalletFilterKind, start?: string, end?: string },
+  signal: AbortSignal,
+) {
   const wire = await request<WalletEntriesWire>(opsTenantPath(tenantId) + '/wallet/ledger', {
-    query: { before_id: beforeId },
+    query: { before_id: filters.beforeId, kind: filters.kind, start_date: filters.start, end_date: filters.end },
     signal,
   })
   return mapWalletEntries(wire)
