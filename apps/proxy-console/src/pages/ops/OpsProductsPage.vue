@@ -284,7 +284,7 @@ if (canRead.value) void load()
       :show-close="!busy" :close-on-click-modal="!busy" :close-on-press-escape="!busy" @update:model-value="editing = undefined">
       <ElForm v-if="editing" label-position="top" @submit.prevent="savePrice">
         <ElFormItem :label="t('catalog.yuanPrice')" :error="price && !newPrice ? t('catalog.invalidPrice') : undefined">
-          <ElInput v-model="price" inputmode="decimal" :disabled="busy" maxlength="20" />
+          <ElInput v-model="price" inputmode="decimal" :disabled="busy" maxlength="20" :input-style="{ textAlign: 'center' }" />
         </ElFormItem>
         <dl class="summary-total">
           <div><dt>{{ t('catalog.currentPrice') }}</dt><dd>{{ priceLabel(editing.priceMinor) }}</dd></div>

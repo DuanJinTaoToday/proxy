@@ -63,6 +63,7 @@ test('计费运营独立开售、调价和下架，公开报价及成交快照�
     await five.getByRole('button', { name: '调价' }).click()
     const dialog = page.getByRole('dialog', { name: '调整 5 GB 流量包售价' })
     await expect(dialog).toBeVisible()
+    await expect(dialog.getByText('¥4.00', { exact: true })).toBeVisible()
     await viewportEvidence(page, info, '10-price-dialog')
     await dialog.getByRole('textbox', { name: '售价（元）' }).fill('22.50')
     await dialog.getByRole('button', { name: '保存' }).click()
@@ -108,7 +109,7 @@ test('计费运营独立开售、调价和下架，公开报价及成交快照�
       const open = page.getByRole('dialog', { name: '开售动态住宅代理-GB？' })
       await expect(open.getByRole('button', { name: '开售' })).toBeDisabled()
       await open.getByRole('textbox', { name: '验收记录或链接' }).fill('verify #90 / dynamic')
-      await open.getByRole('checkbox', { name: '已确认报价就绪' }).check()
+      await open.getByText('已确认报价就绪', { exact: true }).click()
       await open.getByRole('button', { name: '开售' }).click()
       await expect(dynamicSwitch).toBeChecked()
 
