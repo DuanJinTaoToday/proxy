@@ -278,7 +278,6 @@ func TestWalletSettlementAndTenantIsolation(t *testing.T) {
 			if summary.GetItemCount() != 1 || summary.GetSummaryItem().GetPosition() != 1 {
 				t.Fatalf("missing locked summary for %s: %s", filter, summary)
 			}
-
 		}
 		if !proto.Equal(&customerOrders, &operatorOrders) {
 			t.Fatalf("unexpected results for %s: %s / %s", filter, &customerOrders, &operatorOrders)

@@ -10,7 +10,8 @@ import LinkButton from '@/shared/ui/LinkButton.vue'
 
 type PublicCatalog = Awaited<ReturnType<typeof getPublicCatalog>>
 type CatalogueState =
-  | { kind: 'loading' | 'failed' }
+  | { kind: 'loading' }
+  | { kind: 'failed' }
   | { kind: 'ready', catalog: PublicCatalog, staticOffer?: StaticPurchaseOffer }
 
 const { t, locale } = useI18n()
