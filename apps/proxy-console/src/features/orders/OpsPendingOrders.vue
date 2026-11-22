@@ -71,8 +71,8 @@ function waited({ order }: OpsPendingOrder) {
       <ElButton @click="load = { ...load }">{{ t('orders.retry') }}</ElButton>
     </ElAlert>
     <ElTable v-loading="loading" :data="purchases" row-key="order.id" class="pending-table"
-      :header-cell-style="{ height: 'var(--ops-queue-header-height)', fontSize: 'var(--font-size-xs)', fontWeight: 'var(--font-weight-semibold)' }"
-      :cell-style="{ height: 'var(--ops-queue-row-height)' }">
+      :header-cell-style="{ height: 'var(--ops-history-header-height)', fontSize: 'var(--font-size-xs)', fontWeight: 'var(--font-weight-semibold)' }"
+      :cell-style="{ height: 'var(--ops-history-row-height)' }">
       <!-- @vue-generic {OpsPendingOrder} -->
       <ElTableColumn :label="t('orders.ops.stage')" width="130">
         <template #default="{ row }">

@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { ElButton, ElEmpty, ElOption, ElSelect, ElTable, ElTableColumn, ElTag } from 'element-plus'
+import { Search } from '@element-plus/icons-vue'
+import { ElButton, ElEmpty, ElInput, ElOption, ElSelect, ElTable, ElTableColumn, ElTag } from 'element-plus'
 import { listOpsTenantOrders } from '@/api/opsTenants'
 import { orderKinds, orderStatuses, type OrderSummary } from '@/api/orders'
 import { shanghaiDateTime } from '@/shared/lib/businessDates'
-import { useOrderFormatting } from '@/features/orders'
+import { readOrderSearch, useOrderFormatting } from '@/features/orders'
 import OpsHistoryTable from './OpsHistoryTable.vue'
 import { useOpsHistoryPage } from './useOpsHistoryPage'
 
@@ -18,23 +19,34 @@ const { t, locale } = useI18n()
 const { itemDescription, money, statusTypes } = useOrderFormatting()
 const kind = computed(() => orderKinds.find(value => value === route.query.kind))
 const status = computed(() => orderStatuses.find(value => value === route.query.status))
+const orderQuery = computed(() => readOrderSearch(route.query.orderQuery))
+const orderSearch = ref('')
+watch(orderQuery, value => {
+  orderSearch.value = value ?? ''
+}, { immediate: true })
 const history = useOpsHistoryPage(async (beforeId, signal) => {
-  const result = await listOpsTenantOrders(props.tenantId, { kind: kind.value, status: status.value, beforeId }, signal)
+  const result = await listOpsTenantOrders(props.tenantId, { kind: kind.value, status: status.value, orderQuery: orderQuery.value, beforeId }, signal)
   if (!signal.aborted) emit('pendingCount', result.pendingCount)
   return { rows: result.orders, nextBeforeId: result.nextBeforeId }
 })
 const { state } = history
-watch([kind, status], history.reset, { immediate: true })
+watch([kind, status, orderQuery], history.reset, { immediate: true })
 
 function openOrder(row: OrderSummary) {
   void router.push({ query: { ...route.query, order: row.id } })
 }
 
-function filter(nextKind?: unknown, nextStatus?: unknown) {
+function search() {
+  const orderQuery = readOrderSearch(orderSearch.value)
+  return router.push({ query: { ...route.query, orderQuery } })
+}
+
+function filter(nextKind?: unknown, nextStatus?: unknown, nextQuery = orderQuery.value) {
   return router.push({ query: {
     ...route.query,
     kind: orderKinds.find(value => value === nextKind),
     status: orderStatuses.find(value => value === nextStatus),
+    orderQuery: nextQuery || undefined,
   } })
 }
 </script>
@@ -43,6 +55,10 @@ function filter(nextKind?: unknown, nextStatus?: unknown) {
   <OpsHistoryTable :label="t('users.opsOrders')" :state="state" :page="history.page.value"
     @retry="history.load" @previous="history.previous" @next="history.next">
     <template #filters>
+      <form class="ops-order-search" @submit.prevent="search">
+        <ElInput v-model="orderSearch" :prefix-icon="Search" clearable maxlength="20" inputmode="numeric"
+          :aria-label="t('orders.orderSearch')" :placeholder="t('orders.orderSearch')" @change="search" />
+      </form>
       <ElSelect class="ops-order-kind" :model-value="kind ?? 'all'" :aria-label="t('orders.kindFilter')"
         @update:model-value="filter($event, status)">
         <ElOption value="all" :label="t('orders.allKinds')" />
@@ -97,7 +113,7 @@ function filter(nextKind?: unknown, nextStatus?: unknown) {
       </ElTableColumn>
       <template #empty>
         <ElEmpty :description="t('orders.noneMatching')" :image-size="72">
-          <ElButton v-if="kind || status" @click="filter()">{{ t('orders.clearFilters') }}</ElButton>
+          <ElButton v-if="kind || status || orderQuery" @click="filter(undefined, undefined, '')">{{ t('orders.clearFilters') }}</ElButton>
         </ElEmpty>
       </template>
     </ElTable>
@@ -105,6 +121,7 @@ function filter(nextKind?: unknown, nextStatus?: unknown) {
 </template>
 
 <style scoped>
+.ops-order-search { width: min(100%, var(--ops-history-search-width)); }
 .ops-order-kind { width: var(--ops-history-kind-width); }
 .ops-order-status { width: var(--ops-history-status-width); }
 .ops-orders { cursor: pointer; }

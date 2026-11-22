@@ -2103,6 +2103,47 @@ func (m *OperatorWalletEntriesRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	if _, ok := _OperatorWalletEntriesRequest_Kind_InLookup[m.GetKind()]; !ok {
+		err := OperatorWalletEntriesRequestValidationError{
+			field:  "Kind",
+			reason: "value must be in list [ recharge debit hold release refund]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetStartDate() != "" {
+
+		if !_OperatorWalletEntriesRequest_StartDate_Pattern.MatchString(m.GetStartDate()) {
+			err := OperatorWalletEntriesRequestValidationError{
+				field:  "StartDate",
+				reason: "value does not match regex pattern \"^[0-9]{4}-[0-9]{2}-[0-9]{2}$\"",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if m.GetEndDate() != "" {
+
+		if !_OperatorWalletEntriesRequest_EndDate_Pattern.MatchString(m.GetEndDate()) {
+			err := OperatorWalletEntriesRequestValidationError{
+				field:  "EndDate",
+				reason: "value does not match regex pattern \"^[0-9]{4}-[0-9]{2}-[0-9]{2}$\"",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
 	if len(errors) > 0 {
 		return OperatorWalletEntriesRequestMultiError(errors)
 	}
@@ -2183,6 +2224,19 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = OperatorWalletEntriesRequestValidationError{}
+
+var _OperatorWalletEntriesRequest_Kind_InLookup = map[string]struct{}{
+	"":         {},
+	"recharge": {},
+	"debit":    {},
+	"hold":     {},
+	"release":  {},
+	"refund":   {},
+}
+
+var _OperatorWalletEntriesRequest_StartDate_Pattern = regexp.MustCompile("^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
+
+var _OperatorWalletEntriesRequest_EndDate_Pattern = regexp.MustCompile("^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
 
 // Validate checks the field values on CustomerPurchaseOrdersRequest with the
 // rules defined in the proto definition for this message. If any rules are
@@ -2480,6 +2534,21 @@ func (m *OperatorPurchaseOrdersRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	if m.GetOrderQuery() != "" {
+
+		if !_OperatorPurchaseOrdersRequest_OrderQuery_Pattern.MatchString(m.GetOrderQuery()) {
+			err := OperatorPurchaseOrdersRequestValidationError{
+				field:  "OrderQuery",
+				reason: "value does not match regex pattern \"^[0-9]{1,19}$\"",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
 	if len(errors) > 0 {
 		return OperatorPurchaseOrdersRequestMultiError(errors)
 	}
@@ -2575,6 +2644,8 @@ var _OperatorPurchaseOrdersRequest_Status_InLookup = map[string]struct{}{
 	"partial":   {},
 	"failed":    {},
 }
+
+var _OperatorPurchaseOrdersRequest_OrderQuery_Pattern = regexp.MustCompile("^[0-9]{1,19}$")
 
 // Validate checks the field values on CustomerPurchaseOrderRequest with the
 // rules defined in the proto definition for this message. If any rules are

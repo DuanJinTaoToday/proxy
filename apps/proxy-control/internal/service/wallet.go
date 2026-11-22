@@ -61,7 +61,9 @@ func (s *Wallet) RechargeWallet(ctx context.Context, req *v1.RechargeWalletReque
 }
 
 func (s *Wallet) ListOperatorWalletEntries(ctx context.Context, req *v1.OperatorWalletEntriesRequest) (*v1.WalletEntries, error) {
-	return s.entries(ctx, req.GetTenantId(), true, wallet.Filter{BeforeID: req.GetBeforeId()})
+	return s.entries(ctx, req.GetTenantId(), true, wallet.Filter{
+		BeforeID: req.GetBeforeId(), Kind: req.GetKind(), StartDate: req.GetStartDate(), EndDate: req.GetEndDate(),
+	})
 }
 
 func (s *Wallet) ListCustomerWalletEntries(ctx context.Context, req *v1.CustomerWalletEntriesRequest) (*v1.WalletEntries, error) {
@@ -88,7 +90,9 @@ func (s *Wallet) entries(ctx context.Context, id string, operations bool, filter
 }
 
 func (s *Wallet) ListOperatorPurchaseOrders(ctx context.Context, req *v1.OperatorPurchaseOrdersRequest) (*v1.PurchaseOrders, error) {
-	return s.orders(ctx, req.GetTenantId(), true, wallet.Filter{BeforeID: req.GetBeforeId(), Kind: req.GetKind(), Status: req.GetStatus()})
+	return s.orders(ctx, req.GetTenantId(), true, wallet.Filter{
+		BeforeID: req.GetBeforeId(), OrderQuery: req.GetOrderQuery(), Kind: req.GetKind(), Status: req.GetStatus(),
+	})
 }
 
 func (s *Wallet) ListCustomerPurchaseOrders(ctx context.Context, req *v1.CustomerPurchaseOrdersRequest) (*v1.PurchaseOrders, error) {
