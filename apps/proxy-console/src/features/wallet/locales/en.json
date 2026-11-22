@@ -1,5 +1,8 @@
 {
   "wallet": {
+    "opsEntryTime": "Entry ID / time",
+    "opsOperator": "Operator",
+    "opsBalanceChange": "Before → after",
     "available": "Available balance",
     "balanceHint": "Traffic packages, static IPs, and renewals are paid from your wallet.",
     "totalRecharge": "Total recharged",

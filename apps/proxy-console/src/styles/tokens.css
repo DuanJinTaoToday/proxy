@@ -88,6 +88,12 @@
   --notification-panel-width: 360px;
   --recharge-panel-width: 280px;
   --ops-dialog-width: 480px;
+  --ops-history-kind-width: 170px;
+  --ops-history-status-width: 140px;
+  --ops-history-header-height: 42px;
+  --ops-history-row-height: 58px;
+  --ops-history-header-padding: calc((var(--ops-history-header-height) - var(--space-5)) / 2);
+  --ops-history-row-padding: calc((var(--ops-history-row-height) - var(--space-5)) / 2);
   --ops-dialog-footer-padding: 20px;
   --ops-card-radius: 14px;
   --ops-card-title-line-height: 26px;

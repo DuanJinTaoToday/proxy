@@ -1,5 +1,6 @@
 import { request } from './client'
-import { mapWalletEntry, type WalletEntryWire } from './wallet'
+import { mapOrderDetail, mapOrders, type OrderDetailWire, type OrderKind, type OrderStatus, type OrdersWire } from './orders'
+import { mapWalletEntries, mapWalletEntry, type WalletEntriesWire, type WalletEntryWire } from './wallet'
 
 interface OpsTenantWire {
   tenant_id: string
@@ -63,4 +64,29 @@ export async function rechargeWallet(tenant: string, { key, token }: { key: stri
     body: { request_key: key, confirmation_token: token },
   })
   return { ...mapWalletEntry(wire), operatorName: wire.operator_name }
+}
+
+export async function listOpsTenantOrders(
+  tenantId: string,
+  filters: { kind?: OrderKind, status?: OrderStatus, beforeId?: string },
+  signal: AbortSignal,
+) {
+  const wire = await request<OrdersWire>(opsTenantPath(tenantId) + '/orders', {
+    query: { kind: filters.kind, status: filters.status, before_id: filters.beforeId },
+    signal,
+  })
+  return mapOrders(wire)
+}
+
+export async function getOpsTenantOrder(tenantId: string, orderId: string, signal: AbortSignal) {
+  const wire = await request<OrderDetailWire>(opsTenantPath(tenantId) + '/orders/' + encodeURIComponent(orderId), { signal })
+  return mapOrderDetail(wire)
+}
+
+export async function listOpsTenantWalletEntries(tenantId: string, beforeId: string | undefined, signal: AbortSignal) {
+  const wire = await request<WalletEntriesWire>(opsTenantPath(tenantId) + '/wallet/ledger', {
+    query: { before_id: beforeId },
+    signal,
+  })
+  return mapWalletEntries(wire)
 }

@@ -142,7 +142,7 @@ func (s *Service) Orders(ctx context.Context, token, tenantID string, operations
 		return OrderPage{}, ErrInvalid
 	}
 	filter.Limit = PageSize + 1
-	return s.store.Orders(ctx, id, filter, !operations)
+	return s.store.Orders(ctx, id, filter)
 }
 
 func (s *Service) Order(ctx context.Context, token, tenantID string, operations bool, orderID int64) (Order, error) {
@@ -153,10 +153,7 @@ func (s *Service) Order(ctx context.Context, token, tenantID string, operations 
 	if orderID <= 0 {
 		return Order{}, ErrInvalid
 	}
-	if operations {
-		return s.store.Order(ctx, id, orderID)
-	}
-	return s.store.CustomerOrder(ctx, id, orderID)
+	return s.store.OrderDetail(ctx, id, orderID)
 }
 
 func (s *Service) scope(ctx context.Context, token, tenantID string, operations bool) (string, error) {
