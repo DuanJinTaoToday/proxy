@@ -317,6 +317,19 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/proxycontrol.v1.PendingStaticPurchases'
+    /v1/operations/product-changes:
+        get:
+            tags:
+                - ProductService
+            summary: 读取最近 50 条商品开售及套餐配置修改记录
+            operationId: ProductService_ListProductChanges
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.ProductChanges'
     /v1/operations/product-sales/{kind}:
         put:
             tags:
@@ -1729,6 +1742,43 @@ components:
                     items:
                         $ref: '#/components/schemas/proxycontrol.v1.TrafficPackage'
                     description: 仅动态商品开售后包含已定价的上架套餐。
+        proxycontrol.v1.ProductChange:
+            type: object
+            properties:
+                id:
+                    type: string
+                targetKind:
+                    type: string
+                    description: sale 或 package。
+                targetId:
+                    type: string
+                operatorUsername:
+                    type: string
+                createdAt:
+                    type: string
+                    format: date-time
+                before:
+                    $ref: '#/components/schemas/proxycontrol.v1.ProductChangeValue'
+                after:
+                    $ref: '#/components/schemas/proxycontrol.v1.ProductChangeValue'
+        proxycontrol.v1.ProductChangeValue:
+            type: object
+            properties:
+                open:
+                    type: boolean
+                capacityBytes:
+                    type: string
+                priceMinor:
+                    type: string
+                listed:
+                    type: boolean
+        proxycontrol.v1.ProductChanges:
+            type: object
+            properties:
+                changes:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/proxycontrol.v1.ProductChange'
         proxycontrol.v1.Products:
             type: object
             properties:
