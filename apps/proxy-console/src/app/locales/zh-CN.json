@@ -24,6 +24,7 @@
     "account": "我的账户",
     "opsTenants": "租户",
     "opsProducts": "商品与定价",
+    "opsUsage": "用量异常",
     "opsOrders": "订单处理",
     "opsCustomers": "客户",
     "opsOperations": "运营"

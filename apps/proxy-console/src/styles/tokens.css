@@ -95,6 +95,12 @@
   --ops-history-dates-width: 280px;
   --ops-history-kind-width: 170px;
   --ops-history-status-width: 140px;
+  --ops-usage-count-size: 18px;
+  --ops-usage-count-gap: 6px;
+  --ops-usage-count-font: 11px;
+  --ops-usage-tabs-gap: 5px;
+  --ops-usage-footer-padding: 14px;
+  --ops-usage-footer-line-height: 1.45;
   --ops-history-header-height: 42px;
   --ops-history-row-height: 58px;
   --ops-history-header-padding: calc((var(--ops-history-header-height) - var(--space-5)) / 2);

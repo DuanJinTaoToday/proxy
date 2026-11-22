@@ -30,30 +30,4 @@ const errorMessage = useErrorMessage()
   </ElCard>
 </template>
 
-<style>
-.ops-history {
-  --el-card-padding: 0;
-  --el-card-border-radius: var(--ops-card-radius);
-  min-inline-size: 0;
-}
-.ops-history-toolbar,
-.ops-history-footer {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-4);
-}
-.ops-history-toolbar { border-block-end: var(--border-width) solid var(--color-border); }
-.ops-history .ops-history-table {
-  --el-table-header-bg-color: var(--color-surface-muted);
-  --el-table-header-text-color: var(--color-text-secondary);
-  --el-table-row-hover-bg-color: var(--color-canvas);
-  font-size: var(--font-size-sm);
-}
-.ops-history .ops-history-cell { padding-block: var(--ops-history-row-padding); }
-.ops-history .ops-history-heading { padding-block: var(--ops-history-header-padding); font-size: var(--font-size-xs); }
-.ops-history-placeholder { padding: var(--space-4); }
-.ops-history-note { display: block; color: var(--color-text-secondary); font-size: var(--font-size-xs); }
-.ops-history-footer { justify-content: space-between; color: var(--color-text-secondary); font-size: var(--font-size-sm); }
-</style>
+<style src="./opsHistory.css"></style>

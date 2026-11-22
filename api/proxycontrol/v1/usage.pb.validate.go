@@ -763,6 +763,8 @@ func (m *ListRecordAnomaliesRequest) validate(all bool) error {
 
 	// no validation rules for PageToken
 
+	// no validation rules for Resolution
+
 	if len(errors) > 0 {
 		return ListRecordAnomaliesRequestMultiError(errors)
 	}
@@ -937,6 +939,8 @@ func (m *RecordAnomaly) validate(all bool) error {
 		}
 	}
 
+	// no validation rules for TenantName
+
 	if len(errors) > 0 {
 		return RecordAnomalyMultiError(errors)
 	}
@@ -1073,6 +1077,8 @@ func (m *ListRecordAnomaliesResponse) validate(all bool) error {
 
 	// no validation rules for NextPageToken
 
+	// no validation rules for OpenCount
+
 	if len(errors) > 0 {
 		return ListRecordAnomaliesResponseMultiError(errors)
 	}
@@ -1198,6 +1204,8 @@ func (m *ListUsageGapsRequest) validate(all bool) error {
 	// no validation rules for PageToken
 
 	// no validation rules for Status
+
+	// no validation rules for Resolution
 
 	if len(errors) > 0 {
 		return ListUsageGapsRequestMultiError(errors)
@@ -1431,6 +1439,8 @@ func (m *UsageGap) validate(all bool) error {
 		}
 	}
 
+	// no validation rules for TenantName
+
 	if len(errors) > 0 {
 		return UsageGapMultiError(errors)
 	}
@@ -1565,6 +1575,8 @@ func (m *ListUsageGapsResponse) validate(all bool) error {
 	}
 
 	// no validation rules for NextPageToken
+
+	// no validation rules for OpenCount
 
 	if len(errors) > 0 {
 		return ListUsageGapsResponseMultiError(errors)

@@ -13,6 +13,8 @@ type Repository interface {
 	SetTrafficAlert(ctx context.Context, tenant string, threshold *int64) (TrafficAlert, error)
 	ListRecordAnomalies(ctx context.Context, filter FindingFilter, after *FindingKey, limit int) ([]RecordAnomaly, error)
 	ListUsageGaps(ctx context.Context, filter FindingFilter, after *FindingKey, limit int) ([]UsageGap, error)
+	CountOpenRecordAnomalies(ctx context.Context, filter FindingFilter) (int64, error)
+	CountOpenUsageGaps(ctx context.Context, filter FindingFilter) (int64, error)
 }
 
 // Transaction keeps the locks, usage writes and cursor updates in the same commit.
