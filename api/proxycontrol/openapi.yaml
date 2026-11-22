@@ -241,6 +241,11 @@ paths:
                   description: 上一页返回的游标。查询条件应与上一页一致，首屏留空。
                   schema:
                     type: string
+                - name: resolution
+                  in: query
+                  description: 处理状态：open 为未解决，resolved 为已解决，省略或 all 为全部。
+                  schema:
+                    type: string
             responses:
                 "200":
                     description: OK
@@ -289,6 +294,11 @@ paths:
                 - name: status
                   in: query
                   description: 缺口状态筛选条件，支持 pending_replay 或 possible_gap。
+                  schema:
+                    type: string
+                - name: resolution
+                  in: query
+                  description: 处理状态：open 为未解决，resolved 为已解决，省略或 all 为全部。
                   schema:
                     type: string
             responses:
@@ -1578,6 +1588,9 @@ components:
                 nextPageToken:
                     type: string
                     description: 下一页的游标。为空表示没有更多记录。
+                openCount:
+                    type: string
+                    description: 首屏查询范围内的未解决总数，不受处理状态筛选影响。
         proxycontrol.v1.ListUsageGapsResponse:
             type: object
             properties:
@@ -1589,6 +1602,9 @@ components:
                 nextPageToken:
                     type: string
                     description: 下一页的游标。为空表示没有更多记录。
+                openCount:
+                    type: string
+                    description: 首屏查询范围内的未解决总数，不受缺口状态或处理状态筛选影响。
         proxycontrol.v1.LoadAuthStateRequest:
             type: object
             properties:
@@ -2010,6 +2026,9 @@ components:
                     type: string
                     description: 问题解决的时间。
                     format: date-time
+                tenantName:
+                    type: string
+                    description: 有归属时的租户名称。
         proxycontrol.v1.RecorderLine:
             type: object
             properties:
@@ -2724,6 +2743,9 @@ components:
                     type: string
                     description: 网关退出时间。
                     format: date-time
+                tenantName:
+                    type: string
+                    description: 有归属时的租户名称。
         proxycontrol.v1.WalletEntries:
             type: object
             properties:

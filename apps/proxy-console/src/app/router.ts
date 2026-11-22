@@ -96,6 +96,7 @@ export const routes: RouteRecordRaw[] = [
         ],
       },
       { path: 'products', alias: ['products/dynamic', 'products/static'], name: 'ops-products', component: () => import('@/pages/ops/OpsProductsPage.vue'), meta: { titleKey: 'nav.opsProducts' } },
+      { path: 'usage', name: 'ops-usage', component: () => import('@/pages/ops/OpsUsagePage.vue'), meta: { titleKey: 'nav.opsUsage' } },
       page('orders', 'ops-orders', 'nav.opsOrders'),
     ],
   },
