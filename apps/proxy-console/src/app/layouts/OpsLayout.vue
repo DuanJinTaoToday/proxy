@@ -18,6 +18,14 @@ const { t } = useI18n()
 .density-compact {
   --el-border-radius-base: var(--ops-control-radius);
 }
+.ops-page-tabs {
+  --el-tabs-header-height: var(--tabs-height);
+  --el-border-color-light: transparent;
+  background-image: linear-gradient(var(--color-border), var(--color-border));
+  background-position: 0 calc(var(--el-tabs-header-height) - var(--border-width));
+  background-repeat: no-repeat;
+  background-size: 100% var(--border-width);
+}
 .ops-page-title {
   margin-block-end: var(--ops-page-heading-gap);
   font-size: var(--ops-display-size);

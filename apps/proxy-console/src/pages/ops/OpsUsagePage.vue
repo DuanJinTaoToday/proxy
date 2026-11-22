@@ -72,7 +72,7 @@ function tagType(row: Finding) {
 <template>
   <h1 class="ops-page-title">{{ t('nav.opsUsage') }}</h1>
 
-  <ElTabs :model-value="tab" class="ops-usage-tabs" @update:model-value="query({ tab: $event === 'anomalies' ? 'anomalies' : undefined })">
+  <ElTabs :model-value="tab" class="ops-page-tabs ops-usage-tabs" @update:model-value="query({ tab: $event === 'anomalies' ? 'anomalies' : undefined })">
     <ElTabPane v-for="item in tabs" :key="item" :name="item">
       <template #label>
         <span :class="{ 'ops-usage-tab-active': tab === item }">{{ t('opsUsage.' + item) }}</span>
