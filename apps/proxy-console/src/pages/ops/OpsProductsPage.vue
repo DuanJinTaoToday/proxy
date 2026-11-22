@@ -18,7 +18,7 @@ const { t, te, locale } = useI18n()
 const genericError = useErrorMessage()
 const canBill = computed(() => hasOperatorPermission('manage_billing'))
 const canRead = computed(() => canBill.value || hasOperatorPermission('read_operations'))
-const catalog = shallowRef<Catalog>()
+const opsCatalog = shallowRef<Catalog>()
 const loadError = shallowRef<unknown>()
 const mutationError = shallowRef<unknown>()
 const busy = ref(false)
@@ -45,7 +45,7 @@ const dateTime = computed(() => new Intl.DateTimeFormat(locale.value, {
 }))
 
 function packageComparison(priceMinor: bigint, capacityBytes: bigint) {
-  const baseline = catalog.value?.packages.find(pkg => pkg.id === '5gb')
+  const baseline = opsCatalog.value?.packages.find(pkg => pkg.id === '5gb')
   if (!baseline?.priceMinor || !priceMinor) return '—'
   const base = baseline.priceMinor * capacityBytes
   const difference = base - priceMinor * baseline.capacityBytes
@@ -54,7 +54,7 @@ function packageComparison(priceMinor: bigint, capacityBytes: bigint) {
   return t(difference < 0n ? 'catalog.higher' : 'catalog.lower', { percent: percent.toString() })
 }
 
-const audit = computed(() => (catalog.value?.changes ?? []).flatMap(change => {
+const audit = computed(() => (opsCatalog.value?.changes ?? []).flatMap(change => {
   const { before, after } = change
   const row = (field: string, target: string, oldValue: string, newValue: string) => ({
     id: change.id + '-' + field, at: change.at, operator: change.operator, target, before: oldValue, after: newValue,
@@ -81,7 +81,7 @@ async function load() {
   loadError.value = undefined
   loading.value = true
   try {
-    catalog.value = await getOpsCatalog(controller.signal)
+    opsCatalog.value = await getOpsCatalog(controller.signal)
   } catch (error) {
     if (!controller.signal.aborted) loadError.value = error
   } finally {
@@ -115,7 +115,7 @@ async function save(write: () => Promise<unknown>, complete: () => void) {
 async function toggleSale(kind: ProductKind) {
   if (locked.value) return
   mutationError.value = undefined
-  if (!catalog.value?.sales[kind]) {
+  if (!opsCatalog.value?.sales[kind]) {
     opening.value = kind
     acceptanceEvidence.value = ''
     quoteReady.value = false
@@ -143,11 +143,11 @@ function openSale() {
 }
 
 async function toggleListed(id: string) {
-  const tier = catalog.value?.packages.find(pkg => pkg.id === id)
+  const tier = opsCatalog.value?.packages.find(pkg => pkg.id === id)
   if (!tier) return
   if (locked.value || (!tier.listed && !tier.priceMinor)) return
   const listed = !tier.listed
-  const purchasable = catalog.value?.packages.filter(pkg => pkg.listed && pkg.priceMinor > 0n)
+  const purchasable = opsCatalog.value?.packages.filter(pkg => pkg.listed && pkg.priceMinor > 0n)
   if (!listed && tier.priceMinor > 0n && purchasable?.length === 1) {
     const confirmed = await ElMessageBox.confirm(t('catalog.lastPackageHint'), t('catalog.lastPackageTitle'), {
       confirmButtonText: t('catalog.unlistAnyway'), cancelButtonText: t('catalog.cancel'), type: 'warning',
@@ -161,7 +161,7 @@ async function toggleListed(id: string) {
 }
 
 function edit(id: string) {
-  const tier = catalog.value?.packages.find(pkg => pkg.id === id)
+  const tier = opsCatalog.value?.packages.find(pkg => pkg.id === id)
   if (!tier) return
   editing.value = tier
   mutationError.value = undefined
@@ -204,9 +204,9 @@ if (canRead.value) void load()
       <ElButton @click="load">{{ t('catalog.retry') }}</ElButton>
     </ElAlert>
     <ElAlert v-if="mutationError && !editing && !opening" type="error" :closable="false" show-icon class="page-alert" :title="errorMessage(mutationError)" />
-    <p v-if="loading && !catalog" role="status">{{ t('catalog.loading') }}</p>
+    <p v-if="loading && !opsCatalog" role="status">{{ t('catalog.loading') }}</p>
 
-    <template v-if="catalog">
+    <template v-if="opsCatalog">
       <div class="sale-grid">
         <section v-for="kind in saleProducts" :key="kind" class="catalog-card sale-card">
           <div>
@@ -214,9 +214,9 @@ if (canRead.value) void load()
             <p class="card-desc">{{ t('catalog.' + kind + 'Hint') }}</p>
           </div>
           <div class="sale-switch">
-            <ElTag :type="catalog.sales[kind] ? 'success' : 'info'" disable-transitions>{{ t(catalog.sales[kind] ? 'catalog.onSale' : 'catalog.closed') }}</ElTag>
+            <ElTag :type="opsCatalog.sales[kind] ? 'success' : 'info'" disable-transitions>{{ t(opsCatalog.sales[kind] ? 'catalog.onSale' : 'catalog.closed') }}</ElTag>
             <ElTooltip :disabled="canBill" :content="t('catalog.billingOnly')" placement="top">
-              <span><ElSwitch :model-value="catalog.sales[kind]" :disabled="locked" :aria-label="t('catalog.switchLabel', { name: productName(kind) })" @change="toggleSale(kind)" /></span>
+              <span><ElSwitch :model-value="opsCatalog.sales[kind]" :disabled="locked" :aria-label="t('catalog.switchLabel', { name: productName(kind) })" @change="toggleSale(kind)" /></span>
             </ElTooltip>
           </div>
         </section>
@@ -227,7 +227,7 @@ if (canRead.value) void load()
           <h2 id="package-title">{{ t('catalog.packageTitle') }}</h2>
           <p class="card-desc">{{ t('catalog.packageHint') }}</p>
         </div>
-        <ElTable :data="catalog.packages" row-key="id" class="catalog-table" :empty-text="t('catalog.noPackages')"
+        <ElTable :data="opsCatalog.packages" row-key="id" class="catalog-table" :empty-text="t('catalog.noPackages')"
           :header-cell-style="{ height: 'var(--catalog-table-header-height)' }" :cell-style="{ height: 'var(--catalog-table-row-height)' }">
           <ElTableColumn :label="t('catalog.capacity')" min-width="100">
             <template #default="{ row }"><strong>{{ capacityLabel(row.capacityBytes) }} GB</strong></template>

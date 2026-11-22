@@ -6,6 +6,8 @@ import { authenticatedApi, json, purchasePath, recharge, setSale, setTier } from
 const tiersPath = '/v1/operations/traffic-packages'
 const staticSalePath = '/v1/operations/product-sales/static'
 const publicProductsPath = '/v1/public/products'
+const staticPurchasePath = '/v1/tenant/static-orders'
+const staticQuotePath = '/v1/tenant/static-purchase-quotes'
 
 async function openProducts(page, username) {
   await signInOperator(page, '/ops', username)
@@ -17,6 +19,12 @@ async function openProducts(page, username) {
 async function reason(response, status, code) {
   expect(response.status()).toBe(status)
   expect(await response.json()).toMatchObject({ reason: code })
+}
+
+async function viewportEvidence(page, info, name) {
+  const path = info.outputPath(name + '.png')
+  await page.screenshot({ path, animations: 'disabled' })
+  await info.attach(name, { path, contentType: 'image/png' })
 }
 
 test('计费运营独立开售、调价和下架，公开报价及成交快照同步验证', async ({ page, request, playwright, baseURL }, info) => {
@@ -40,7 +48,9 @@ test('计费运营独立开售、调价和下架，公开报价及成交快照�
     await expect(five).toContainText('¥20.00')
     await expect(dynamicSwitch).toBeChecked()
     await expect(staticSwitch).toBeChecked()
-    await screenshot(page, info, '09-products')
+    await viewportEvidence(page, info, '09-products')
+    const auditResponse = await json(await operator.get('/v1/operations/product-changes'))
+    await info.attach('visual-fixture-audit', { body: JSON.stringify(auditResponse, null, 2), contentType: 'application/json' })
 
     const { packages } = await json(await operator.get(tiersPath))
     const original = packages.find(tier => tier.id === '5gb')
@@ -53,7 +63,7 @@ test('计费运营独立开售、调价和下架，公开报价及成交快照�
     await five.getByRole('button', { name: '调价' }).click()
     const dialog = page.getByRole('dialog', { name: '调整 5 GB 流量包售价' })
     await expect(dialog).toBeVisible()
-    await screenshot(page, info, '10-price-dialog')
+    await viewportEvidence(page, info, '10-price-dialog')
     await dialog.getByRole('textbox', { name: '售价（元）' }).fill('22.50')
     await dialog.getByRole('button', { name: '保存' }).click()
     await expect(five).toContainText('¥22.50')
@@ -84,6 +94,7 @@ test('计费运营独立开售、调价和下架，公开报价及成交快照�
       await reason(await place(original.version), 409, 'PACKAGE_UNAVAILABLE')
       const { orders } = await json(await tenant.get('/v1/tenant/orders?kind=traffic_package'))
       expect(orders.find(row => row.id === order.id)).toMatchObject({ debited_minor: '2000', delivered_bytes: '5000000000' })
+      await screenshot(page, info, 'price-listing-audit')
 
       await dynamicSwitch.click()
       await page.getByRole('dialog').getByRole('button', { name: '暂停销售' }).click()
@@ -101,14 +112,17 @@ test('计费运营独立开售、调价和下架，公开报价及成交快照�
       await open.getByRole('button', { name: '开售' }).click()
       await expect(dynamicSwitch).toBeChecked()
 
+      const selection = { node_id: '101', term: 'yp1', quantity: 1 }
+      const staticQuote = await json(await tenant.post(staticQuotePath, { data: selection }))
       await staticSwitch.click()
       await page.getByRole('dialog').getByRole('button', { name: '暂停销售' }).click()
       await expect(staticSwitch).not.toBeChecked()
       await expect(dynamicSwitch).toBeChecked()
       await customer.goto('/console/static/pricing')
       await expect(customer.getByText('静态住宅代理暂未开放购买', { exact: true })).toBeVisible()
-      await reason(await tenant.post('/v1/tenant/static-purchase-quotes', { data: {
-        node_id: '101', term: 'yp1', quantity: 1,
+      await reason(await tenant.post(staticQuotePath, { data: selection }), 409, 'PRODUCT_SALE_CLOSED')
+      await reason(await tenant.post(staticPurchasePath, { data: {
+        ...selection, unit_minor: staticQuote.offer.unit_minor, confirmation_token: staticQuote.confirmation_token, request_key: randomUUID(),
       } }), 409, 'PRODUCT_SALE_CLOSED')
       ;({ products } = await publicProducts())
       expect(products.find(product => product.kind === 'dynamic').open).toBe(true)
@@ -122,7 +136,7 @@ test('计费运营独立开售、调价和下架，公开报价及成交快照�
   }
 })
 
-test('只读运营可查看目录与记录，服务端拒绝改动', async ({ page }) => {
+test('只读运营可查看目录与记录，服务端拒绝改动', async ({ page }, info) => {
   await openProducts(page, 'operator-readonly')
   const five = page.getByRole('row', { name: /^5 GB/ })
   await expect(five).toBeVisible()
@@ -130,6 +144,7 @@ test('只读运营可查看目录与记录，服务端拒绝改动', async ({ pa
   await expect(five.getByRole('button', { name: '调价' })).toBeDisabled()
   await expect(five.getByRole('button', { name: /^(下架|上架)$/ })).toBeDisabled()
   for (const control of await page.getByRole('switch').all()) await expect(control).toBeDisabled()
+  await screenshot(page, info, 'readonly')
 
   const login = await json(await page.request.post('/v1/operations/access/login', {
     data: { username: 'operator-readonly', password: 'proxy-local-test' },
