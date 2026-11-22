@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, shallowRef, watch } from 'vue'
+import { ref, shallowRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElAlert, ElButton, ElCard, ElLoading, ElTable, ElTableColumn, ElTag } from 'element-plus'
 import { CircleCheck } from '@element-plus/icons-vue'
@@ -7,6 +7,7 @@ import { listOpsPendingOrders, type OpsPendingOrder } from '@/api/opsOrders'
 import { hasOperatorPermission } from '@/features/auth'
 import { useErrorMessage } from '@/shared/lib/useErrorMessage'
 import { useOrderFormatting } from './format'
+import OpsRenewalResolutionDialog from './OpsRenewalResolutionDialog.vue'
 import OpsStaticPurchaseDialog from './OpsStaticPurchaseDialog.vue'
 
 const vLoading = ElLoading.directive
@@ -20,7 +21,6 @@ const open = ref(false)
 const loading = ref(false)
 const nextAfterId = ref<string>()
 const load = ref<{ afterId?: string }>({})
-const purchases = computed(() => records.value.filter(({ order }) => order.kind === 'static_purchase'))
 
 watch(load, async ({ afterId }, _previous, onCleanup) => {
   if (!hasOperatorPermission('read_operations')) return
@@ -31,7 +31,9 @@ watch(load, async ({ afterId }, _previous, onCleanup) => {
   try {
     const page = await listOpsPendingOrders(afterId, controller.signal)
     if (controller.signal.aborted) return
-    const pending = page.records.filter(({ order }) => order.status === 'pending')
+    const pending = page.records.filter(({ order }) =>
+      order.status === 'pending' && (order.kind === 'static_purchase' || order.kind === 'static_renewal'),
+    )
     records.value = afterId ? [...records.value, ...pending] : pending
     nextAfterId.value = page.nextAfterId
   } catch (error) {
@@ -70,7 +72,7 @@ function waited({ order }: OpsPendingOrder) {
     <ElAlert v-if="failure" type="error" :title="errorMessage(failure)" :closable="false" show-icon>
       <ElButton @click="load = { ...load }">{{ t('orders.retry') }}</ElButton>
     </ElAlert>
-    <ElTable v-loading="loading" :data="purchases" row-key="order.id" class="pending-table"
+    <ElTable v-loading="loading" :data="records" row-key="order.id" class="pending-table"
       :header-cell-style="{ height: 'var(--ops-history-header-height)', fontSize: 'var(--font-size-xs)', fontWeight: 'var(--font-weight-semibold)' }"
       :cell-style="{ height: 'var(--ops-history-row-height)' }">
       <!-- @vue-generic {OpsPendingOrder} -->
@@ -116,11 +118,14 @@ function waited({ order }: OpsPendingOrder) {
       </template>
     </ElTable>
     <div class="pending-footer">
-      <span>{{ t('orders.ops.total', purchases.length) }}</span>
+      <span>{{ t('orders.ops.total', records.length) }}</span>
       <ElButton v-if="nextAfterId" link type="primary" :disabled="loading" @click="load = { afterId: nextAfterId }">{{ t('orders.ops.more') }}</ElButton>
     </div>
   </ElCard>
-  <OpsStaticPurchaseDialog v-if="active" :key="active.order.id" v-model="open" :record="active" :waited="waited(active)" @changed="changed" />
+  <OpsRenewalResolutionDialog v-if="active?.order.kind === 'static_renewal'" :key="active.order.id" v-model="open"
+    :record="active" :waited="waited(active)" @changed="changed" />
+  <OpsStaticPurchaseDialog v-else-if="active?.order.kind === 'static_purchase'" :key="active.order.id" v-model="open"
+    :record="active" :waited="waited(active)" @changed="changed" />
 </template>
 
 <style scoped>
