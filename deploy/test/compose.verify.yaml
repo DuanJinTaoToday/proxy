@@ -32,6 +32,24 @@ services:
       timeout: 2s
       retries: 20
 
+  ipcrown-socks5:
+    build:
+      context: ../..
+      dockerfile: deploy/test/Dockerfile
+      target: wukong-mock
+    platform: linux/amd64
+    command:
+      - "-L=socks5://fixture-user:fixture-pass@:1081"
+      - "-L=socks5://fixture-user:fixture-pass@:1082"
+    ports:
+      - "127.0.0.1::1081"
+      - "127.0.0.1::1082"
+    healthcheck:
+      test: ["CMD-SHELL", "awk '$$4 == \"0A\" && $$2 ~ /:0439$$/ { first=1 } $$4 == \"0A\" && $$2 ~ /:043A$$/ { second=1 } END { exit !(first && second) }' /proc/net/tcp /proc/net/tcp6"]
+      interval: 2s
+      timeout: 2s
+      retries: 20
+
 configs:
   verify_control_init:
     content: |

@@ -16,6 +16,7 @@ let usPrice = 10
 let usStock = 6
 let detailAvailable = true
 let nextOrderId = 7500
+let nextPartialProxyPorts = []
 
 function price(term, amount) {
   return { price_type: term, buytime: Math.floor(termDays.get(term) / 30), price: amount }
@@ -42,7 +43,7 @@ function supplierTime(ms) {
   return new Date(ms + 8 * 60 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ')
 }
 
-function allocate(node, days, position) {
+function allocate(node, days, position, proxyPort) {
   const sequence = (sequenceByNode.get(node.id) ?? 0) + 1
   sequenceByNode.set(node.id, sequence)
   const id = node.id * 100 + sequence
@@ -50,7 +51,7 @@ function allocate(node, days, position) {
   const prefix = node.id === 301 ? '203.0.113' : node.id === 201 ? '198.51.100' : '192.0.2'
   const suffix = node.id === 301 ? sequence : node.id + sequence - 1
   const item = {
-    id, nid: node.id, ip: `${prefix}.${suffix}`, port: 43000,
+    id, nid: node.id, ip: proxyPort ? '127.0.0.1' : `${prefix}.${suffix}`, port: proxyPort ?? 43000,
     p_user: 'fixture-user', p_pass: 'fixture-pass', stoptime: supplierTime(expiresAt), status: 1,
   }
   allocations.set(id, item)
@@ -68,8 +69,11 @@ function place({ cid, pid, time, list }) {
         number > node.max || !node.prices.some(price => price.price_type === time)) return unavailable
     selections.set(node, node.id === 101 && number === 3 ? 2 : number)
   }
+  const isPartial = list.some(({ nid, number }) => nid === 101 && number === 3)
+  const proxyPorts = isPartial ? nextPartialProxyPorts.splice(0) : []
   const items = [...selections].flatMap(([node, count]) =>
-    Array.from({ length: count }, (_, position) => allocate(node, termDays.get(time), position)))
+    Array.from({ length: count }, (_, position) =>
+      allocate(node, termDays.get(time), position, node.id === 101 ? proxyPorts[position] : undefined)))
   const orderId = nextOrderId++
   orders.set(String(orderId), items)
   return { code: 0, data: { order_id: orderId, list: items } }
@@ -123,6 +127,15 @@ async function handle(request, response) {
   for await (const chunk of request) chunks.push(chunk)
   const body = JSON.parse(Buffer.concat(chunks).toString() || '{}')
 
+  if (path === '/fixture/partial-proxy-ports') {
+    const { ports } = body
+    if (!Array.isArray(ports) || ![0, 2].includes(ports.length) || new Set(ports).size !== ports.length ||
+        ports.some(port => !Number.isInteger(port) || port < 1 || port > 65535)) {
+      return json(response, 400, { error: 'Expected zero or two distinct valid SOCKS5 ports' })
+    }
+    nextPartialProxyPorts = ports
+    return json(response, 200, { ok: true })
+  }
   if (path === '/fixture/catalog') {
     if (!Number.isFinite(body.price) || body.price <= 0 || !Number.isSafeInteger(body.stock) || body.stock < 0) {
       return json(response, 400, { error: 'Expected a positive price and nonnegative stock' })

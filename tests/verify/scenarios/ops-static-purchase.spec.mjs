@@ -49,14 +49,19 @@ test('运营在 24 小时后核实静态采购，72 小时后关闭剩余并只�
   await json(await request.put(salePath, {
     headers: ops, data: { open: true, quote_ready: true, acceptance_evidence: 'Issue #91 controlled supplier' },
   }))
+  const portsPath = new URL('/fixture/partial-proxy-ports', process.env.VERIFY_IPCROWN_URL).href
+  const proxyPorts = JSON.parse(process.env.VERIFY_IPCROWN_SOCKS5_PORTS)
+  const setProxyPorts = ports => request.post(portsPath, { data: { ports } }).then(json)
   let order
   try {
     const selection = { node_id: '101', term: 'yp1', quantity: 3 }
     const quote = await json(await request.post('/v1/tenant/static-purchase-quotes', { headers: tenant, data: selection }))
+    await setProxyPorts(proxyPorts)
     order = await json(await request.post(orderPath, { headers: tenant, data: {
       ...selection, unit_minor: quote.offer.unit_minor, confirmation_token: quote.confirmation_token, request_key: randomUUID(),
     } }))
   } finally {
+    await setProxyPorts([])
     await json(await request.put(salePath, { headers: ops, data: { open: false } }))
   }
   expect(order).toMatchObject({ status: 'pending', delivered_count: '2', locked_minor: '3000' })
@@ -159,9 +164,28 @@ test('运营在 24 小时后核实静态采购，72 小时后关闭剩余并只�
   const allocations = await json(await request.get('/v1/tenant/static-ips', { headers: tenant }))
   const delivered = allocations.allocations.filter(ip => ip.order_id === order.id)
   expect(delivered).toHaveLength(2)
+  expect(delivered.map(ip => ip.port)).toEqual(expect.arrayContaining(proxyPorts))
+  const probes = []
   for (const ip of delivered) {
     expect(Date.parse(ip.expires_at)).toBeGreaterThan(Date.now())
     const config = await json(await request.get('/v1/tenant/static-ips/' + ip.supplier_item_id + '/proxy-config', { headers: tenant }))
-    expect(config).toMatchObject({ ip: ip.ip, username: 'fixture-user', password: 'fixture-pass' })
+    expect(config).toMatchObject({ ip: '127.0.0.1', port: ip.port, username: 'fixture-user', password: 'fixture-pass' })
+    const response = execFileSync('curl', [
+      '--fail', '--silent', '--show-error', '--max-time', '10', '--noproxy', '',
+      '--socks5-hostname', `${config.ip}:${config.port}`, '--proxy-user', `${config.username}:${config.password}`,
+      '--write-out', '\n%{http_code}', 'http://ipcrown:8080/healthz',
+    ], { encoding: 'utf8' })
+    const [body, status] = response.trim().split(/\r?\n/)
+    expect(JSON.parse(body)).toEqual({ ok: true })
+    expect(status).toBe('200')
+    probes.push({ supplier_item_id: ip.supplier_item_id, http_status: Number(status) })
   }
+  const probeEvidence = info.outputPath('post-refund-socks5.json')
+  await writeFile(probeEvidence, JSON.stringify({
+    order_id: order.id, status: settled.status, delivered_count: settled.delivered_count,
+    settled_minor: settled.settled_minor, refunded_minor: settled.refunded_minor,
+    wallet_before_refund_minor: releases[0].before_minor, wallet_after_refund_minor: releases[0].after_minor,
+    supplier: 'controlled IPCrown fixture with authenticated GOST SOCKS5', probes,
+  }, null, 2) + '\n')
+  await info.attach('post-refund-socks5', { path: probeEvidence, contentType: 'application/json' })
 })
