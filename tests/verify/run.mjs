@@ -37,7 +37,7 @@ try {
   run.commit = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim()
   run.workingTree = execFileSync('git', ['status', '--porcelain'], { cwd: root, encoding: 'utf8' }).trimEnd()
   run.stage = 'build'
-  compose(['build', 'console', 'control', 'migrate'])
+  compose(['build', 'console', 'control', 'migrate', 'ipcrown-socks5'])
   run.stage = 'deploy'
   compose(['up', '-d', '--wait', '--wait-timeout', '90', 'db'])
   compose(['run', '--rm', 'migrate'])
@@ -53,16 +53,20 @@ try {
   if (!config.includes(trustedProxies)) throw new Error('Expected empty trusted proxy config in test-server.yaml')
   writeFileSync(controlConfig, config.replace(trustedProxies, 'trusted_proxy_cidrs: ["' + proxyIP + '/32"]'))
   run.trustedProxyCIDR = proxyIP + '/32'
-  compose(['up', '-d', '--wait', '--wait-timeout', '120', 'console'])
+  compose(['up', '-d', '--wait', '--wait-timeout', '120', 'console', 'ipcrown-socks5'])
   run.images = compose(['images'], true).trim()
   run.baseURL = 'https://localhost:' + hostPort('console', 443)
   const supplierURL = 'http://127.0.0.1:' + hostPort('ipcrown', 8080)
+  const supplierSOCKS5Ports = [1081, 1082].map(port => Number(hostPort('ipcrown-socks5', port)))
   run.stage = 'browser'
   execFileSync(process.execPath, [
     fileURLToPath(import.meta.resolve('@playwright/test/cli')), 'test', ...process.argv.slice(2),
   ], {
     cwd: suite, stdio: 'inherit',
-    env: { ...process.env, VERIFY_URL: run.baseURL, VERIFY_OUTPUT: evidence, VERIFY_ID: runId, VERIFY_IPCROWN_URL: supplierURL },
+    env: {
+      ...process.env, VERIFY_URL: run.baseURL, VERIFY_OUTPUT: evidence, VERIFY_ID: runId,
+      VERIFY_IPCROWN_URL: supplierURL, VERIFY_IPCROWN_SOCKS5_PORTS: JSON.stringify(supplierSOCKS5Ports),
+    },
   })
   run.result = 'passed'
 } catch (error) {
