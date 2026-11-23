@@ -4,11 +4,19 @@
 
 ## 视觉与技术方案
 
-采用现代极简 SaaS 风格。官网用清晰的标题、商品卡和购买单位表达品牌。用户控制台采用深绿侧栏、浅灰画布和白色内容面，突出余额、到期时间、接入配置和购买确认。运营控制台沿用同一主题，使用更紧凑的筛选和表格。主操作用实心深绿按钮，薄荷绿作强调，次级操作用描边或文字按钮。卡片按任务分区，保留适度留白和明确的状态文字。
+用户控制台采用深绿侧栏、浅灰画布和白色内容面，突出余额、到期时间、接入配置和购买确认。运营控制台沿用同一主题，使用更紧凑的筛选和表格。主操作用实心深绿按钮，薄荷绿作强调，次级操作用描边或文字按钮。卡片按任务分区，保留适度留白和明确的状态文字。
 
 参考 711Proxy 的任务分组、资源数量与相邻操作、接入配置与结果并排，以及静态 IP 的筛选和批量操作。Proxy 的仪表板围绕两类商品与钱包组织，视觉基线采用独立的浅色主题。 [711Proxy 仪表板](https://dashboard.711proxy.com/zh-CN) · [动态代理接入](https://dashboard.711proxy.com/zh-CN/residential-regular-gb) · [静态 IP 列表](https://dashboard.711proxy.com/zh-CN/static-residential-proxies)
 
 使用 Vue 3、TypeScript、Vite、Vue Router、Element Plus 和 Vue I18n。按路由懒加载。一套 `dist` 同域部署，HTTPS 入口支持前端深链回退并将业务 API 转发给 `proxy-control`。用集中封装的 `fetch` 接口层对接控制面。需要共享服务端缓存的切片引入 TanStack Vue Query。使用组件库的基础控件和主题变量，业务组件按模块封装。
+
+## 官网首页 D 版定稿
+
+中英文官网首页采用 D 版设计。首屏使用深色点阵地图和轮换标题，主按钮为「免费注册」。下方依次展示两类商品、SOCKS5 接入示例、用量与子账号管理示例、常见问题和注册入口。
+
+正式首页通过公开商品目录和静态报价接口展示价格与开售状态。SOCKS5 命令、出口响应和用量图表标记为示例。登录、注册和购买入口沿用正式路由。独立产品页、报价页和教程页另行交付。[首页工单 #96](https://github.com/DuanJinTaoToday/proxy/issues/96) · [实现与验收 PR #97](https://github.com/DuanJinTaoToday/proxy/pull/97)
+
+在定稿提交 `d6349bf` 的工作区按原型预览说明启动服务，再打开 `/home.html?variant=D`。追加 `&hero=globe` 可查看备选地球动效，正式首页默认使用地图。[定稿原型](https://github.com/DuanJinTaoToday/proxy/tree/d6349bff0726cd82923e516c6c3234315ce5715c/prototypes/console/static-residential-ip) · [原型预览说明](https://github.com/DuanJinTaoToday/proxy/blob/d6349bff0726cd82923e516c6c3234315ce5715c/prototypes/console/README.md)
 
 ## 导航与语言路由
 
