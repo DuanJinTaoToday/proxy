@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { ElAlert, ElButton, ElCard, ElForm, ElFormItem, ElInput } from 'element-plus'
 import { safeOperatorRedirect, signInOperator } from '@/features/auth'
 import { useErrorMessage } from '@/shared/lib/useErrorMessage'
+import BrandMark from '@/shared/ui/BrandMark.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -33,6 +34,10 @@ async function submit() {
 <template>
   <main class="operator-login">
     <ElCard shadow="never" class="operator-login__card">
+      <div class="operator-login__brand">
+        <BrandMark />
+        <span class="operator-login__badge">{{ t('app.opsBadge') }}</span>
+      </div>
       <h1>{{ t('auth.opsLoginTitle') }}</h1>
       <ElForm label-position="top" @submit.prevent="submit">
         <ElAlert v-if="error" type="error" :title="errorMessage(error)" :closable="false" show-icon class="operator-login__error" />
@@ -56,6 +61,24 @@ async function submit() {
   padding: var(--space-7) var(--space-4);
 }
 .operator-login__card { width: min(100%, var(--auth-card-width)); }
+.operator-login__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ops-brand-gap);
+  margin-block-end: var(--space-4);
+  font-size: var(--ops-brand-size);
+  font-weight: var(--font-weight-heavy);
+}
+.operator-login__badge {
+  padding: var(--ops-badge-offset) var(--space-2);
+  border-radius: var(--radius-control);
+  background: var(--color-shell);
+  color: var(--color-accent);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--ops-badge-line-height);
+  white-space: nowrap;
+}
 .operator-login h1 { margin-block-end: var(--space-5); }
 .operator-login__error { margin-block-end: var(--space-4); }
 .operator-login .el-button { width: 100%; }

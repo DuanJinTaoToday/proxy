@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "Proxy",
+    "name": "RocProxy",
     "consoleTitle": "用户控制台",
     "opsTitle": "运营控制台",
     "opsBadge": "运营后台"

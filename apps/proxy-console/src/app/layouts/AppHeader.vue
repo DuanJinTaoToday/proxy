@@ -3,7 +3,8 @@ import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ElButton, ElDropdown, ElDropdownItem, ElDropdownMenu } from 'element-plus'
-import { ArrowDown, Check, DataLine, Menu, Switch } from '@element-plus/icons-vue'
+import { ArrowDown, Check, DataLine, Menu } from '@element-plus/icons-vue'
+import BrandMark from '@/shared/ui/BrandMark.vue'
 import LinkButton from '@/shared/ui/LinkButton.vue'
 import { AccountMenu, hasSession, OperatorMenu, sessionPhone } from '@/features/auth'
 import { NotificationBell } from '@/features/notifications'
@@ -33,9 +34,8 @@ function switchLocale(next: Locale) {
   <header class="app-header" :class="{ 'app-header--ops': ops, 'app-header--tenant': tenant, 'app-header--marketing': marketing }">
     <div class="app-header__start">
       <ElButton v-if="menuButton" class="app-header__menu" text :icon="Menu" :aria-label="t('nav.openMenu')" @click="$emit('openMenu')" />
-      <RouterLink :to="ops ? '/ops' : homePath" class="app-header__brand">
-        <span class="app-header__mark" aria-hidden="true"><Switch /></span>
-        <span class="app-header__brand-text">{{ t('app.name') }}</span>
+      <RouterLink :to="ops ? '/ops' : homePath" class="app-header__brand" :aria-label="t('app.name')">
+        <BrandMark :surface="marketing ? 'dark' : 'light'" wordmark-class="app-header__brand-text" />
       </RouterLink>
       <slot name="brand-extra" />
     </div>
@@ -99,22 +99,11 @@ function switchLocale(next: Locale) {
   text-decoration: none;
   white-space: nowrap;
 }
-.app-header__mark {
-  display: inline-grid;
-  place-items: center;
-  width: var(--brand-mark-size);
-  height: var(--brand-mark-size);
-  border-radius: var(--radius-control);
-  background: var(--color-accent);
-  color: var(--color-shell);
-}
 .app-header__chevron { margin-left: var(--space-1); width: 1em; }
 .app-header__globe { width: var(--icon-size); height: var(--icon-size); margin-right: var(--space-1); }
 .app-header__check { display: inline-flex; width: var(--space-4); margin-right: var(--space-2); color: var(--color-primary); }
 .app-header__menu { display: none; }
 .app-header--ops .app-header__brand { gap: var(--ops-brand-gap); font-size: var(--ops-brand-size); font-weight: var(--font-weight-heavy); }
-.app-header--ops .app-header__mark { border-radius: var(--ops-brand-mark-radius); }
-.app-header--ops .app-header__mark svg { width: 1em; height: 1em; }
 .app-header--ops .app-header__start { gap: var(--ops-brand-gap); }
 .app-header--ops .app-header__language {
   height: var(--ops-top-control-height);
@@ -144,13 +133,11 @@ function switchLocale(next: Locale) {
   --tenant-header-item-gap: var(--space-2);
 }
 .app-header--tenant .app-header__brand {
-  column-gap: 10px;
-  font-size: 21px;
-  font-weight: 750;
+  gap: var(--ops-brand-gap);
+  font-size: var(--ops-brand-size);
+  font-weight: var(--font-weight-heavy);
   line-height: normal;
 }
-.app-header--tenant .app-header__mark { border-radius: 9px; }
-.app-header--tenant .app-header__mark svg { width: 1em; height: 1em; }
 .app-header--tenant .app-header__language {
   height: var(--tenant-header-item-height);
   padding-inline: var(--tenant-header-item-padding);
@@ -170,20 +157,21 @@ function switchLocale(next: Locale) {
   .app-header--ops .app-header__globe { display: inline-block; margin-inline-end: 0; }
   .app-header--ops .app-header__language { border-color: transparent; }
   .app-header__tools { gap: 0; }
-  .app-header__customer-link, .app-header__brand-text, .app-header__locale-name, .app-header__chevron { display: none; }
+  .app-header__customer-link, :deep(.app-header__brand-text), .app-header__locale-name, .app-header__chevron { display: none; }
 
   .app-header--tenant {
     --tenant-header-item-padding: 7px;
     --tenant-header-item-gap: var(--space-1);
     gap: var(--space-1);
-    padding-inline: var(--space-4);
+    padding-inline: var(--space-3);
   }
+  .app-header--tenant .app-header__brand { gap: var(--space-2); font-size: var(--font-size-xl); }
   .app-header--tenant .app-header__menu { order: 1; width: var(--space-5); padding-inline: 0; }
   .app-header--tenant .app-header__tools { gap: var(--space-1); }
 }
 
 @media (390px <= width <= 767px) {
-  .app-header--tenant .app-header__brand-text,
+  .app-header--tenant :deep(.app-header__brand-text),
   .app-header--tenant .app-header__locale-name,
   .app-header--tenant .app-header__chevron { display: inline-block; }
 }

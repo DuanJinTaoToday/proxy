@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { ElButton, ElCollapse, ElCollapseItem, ElMessage } from 'element-plus'
 import { Bell, CopyDocument, Download } from '@element-plus/icons-vue'
 import { hasSession } from '@/features/auth'
+import BrandMark from '@/shared/ui/BrandMark.vue'
 import LinkButton from '@/shared/ui/LinkButton.vue'
 import { codeTabs, dailyUsage, exits, faqTopics, sample, snippets, subAccounts, type CodeTab } from './demo'
 
@@ -183,7 +184,7 @@ async function copyCode() {
 
   <footer class="home-footer">
     <div class="wrap footer-grid">
-      <div class="footer-brand"><strong>{{ t('app.name') }}</strong><p>{{ t('marketing.brandDesc') }}</p></div>
+      <div class="footer-brand"><BrandMark surface="dark" class="footer-brand__mark" /><p>{{ t('marketing.brandDesc') }}</p></div>
       <div><h3>{{ t('marketing.products') }}</h3><a href="#dynamic-product">{{ t('marketing.dynamic') }}</a><a href="#static-product">{{ t('marketing.static') }}</a></div>
       <div><h3>{{ t('marketing.resources') }}</h3><a href="#integration">{{ t('marketing.guide') }}</a><a href="#faq">{{ t('marketing.faq') }}</a></div>
       <div>

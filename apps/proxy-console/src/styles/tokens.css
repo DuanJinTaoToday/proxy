@@ -8,6 +8,8 @@
   --color-primary-border: #74ae9e;
   --color-on-primary: #ffffff;
   --color-accent: #b3f0d7;
+  --color-brand-accent: #086950;
+  --color-brand-accent-dark: #6ee7b7;
   --color-canvas: #f4f6f5;
   --color-surface: #ffffff;
   --color-surface-muted: #f7faf8;
@@ -69,6 +71,7 @@
   --font-size-title: 24px;
   --font-size-display: 36px;
   --font-size-brand: 20px;
+  --brand-wordmark-tracking: -0.03em;
   --font-size-usage-axis: 11px;
   --font-size-dashboard-display: 30px;
   --font-weight-regular: 400;

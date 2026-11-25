@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "Proxy",
+    "name": "RocProxy",
     "consoleTitle": "Console",
     "opsTitle": "Operations Console",
     "opsBadge": "Operations"
