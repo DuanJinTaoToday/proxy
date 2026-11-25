@@ -35,6 +35,20 @@ biz:
     api_secret:
     # 皇冠 IP 密码使用独立的加密密钥。
     password_key:
+  # 启用邮箱注册、找回密码和运营邮件恢复时，取消本段注释并填写实际值。
+  # email_auth:
+  #   # 客户打开邮件链接使用的 HTTPS origin，不含路径。
+  #   console_origin: https://console.example.com
+  #   # 保存并在所有控制面实例间共享 32 随机字节，无填充 base64url 编码。
+  #   code_key:
+  #   # SMTP relay 必须支持 STARTTLS。填写 relay 的 host:port 和发件邮箱。
+  #   smtp_address: smtp.example.com:587
+  #   from_address: accounts@example.com
+  #   # relay 需要认证时同时填写两项。将凭据存到受保护的配置源。
+  #   smtp_username:
+  #   smtp_password:
+  #   # 仅隔离测试环境可启用明文 SMTP。
+  #   allow_plaintext: false
   usage:
     max_batch_records:
     max_batch_body_bytes:

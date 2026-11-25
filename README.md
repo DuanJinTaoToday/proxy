@@ -2,7 +2,9 @@
 
 多租户代理服务。首版商业交付包含悟空动态住宅 GB 和皇冠静态住宅 IP。客户自助开户，由运营为租户钱包充值，客户从钱包购买商品。动态住宅通过 SOCKS5 隧道接入，静态住宅 IP 按实际交付数量结算并支持到期前手动保号续费。两类商品独立验收和开售。 [首版商业交付 Spec #36](https://github.com/DuanJinTaoToday/proxy/issues/36)
 
-当前工作区保留手机号开户、GOST 转发和 Recorder 基础链路。动态接入等待首版子账号认证与计量接入。规划时的实现差距见[差异审计](docs/product/proxy-first-release-gap-audit.md)。
+客户使用邮箱验证码开户，再用邮箱和密码登录。客户可通过原邮箱找回密码，也可请运营核实账户归属并协助换绑邮箱。 [控制面邮箱认证配置](apps/proxy-control/configs/file/README.md)
+
+仓库包含 GOST 转发和 Recorder 基础链路。规划时的实现差距见[差异审计](docs/product/proxy-first-release-gap-audit.md)。
 
 ## 本地 Docker 测试环境
 
