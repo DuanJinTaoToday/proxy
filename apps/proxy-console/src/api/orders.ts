@@ -16,7 +16,7 @@ interface OrderItemWire {
   unit_minor?: string
   quantity?: number
   delivered_count?: number
-  supplier_item_id?: string
+  allocation_id?: string
   outcome?: string
 }
 
@@ -65,7 +65,7 @@ function mapItem(wire: OrderItemWire) {
     unitMinor: BigInt(wire.unit_minor ?? 0),
     quantity: wire.quantity ?? 0,
     deliveredCount: wire.delivered_count ?? 0,
-    supplierItemId: wire.supplier_item_id,
+    allocationId: wire.allocation_id,
     outcome: wire.outcome,
   }
 }

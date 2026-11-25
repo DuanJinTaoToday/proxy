@@ -173,7 +173,7 @@ func orderMessage(order wallet.Order) *v1.PurchaseOrder {
 	for _, item := range order.Items {
 		line := orderItemMessage(item)
 		if order.Kind == wallet.StaticRenewal {
-			line.SupplierItemId = item.Reference
+			line.AllocationId = item.Reference
 			line.Outcome = item.Outcome
 		}
 		message.Items = append(message.Items, line)

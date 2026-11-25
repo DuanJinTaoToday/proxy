@@ -243,7 +243,28 @@ staticSalesTest('IP 筛选、复制与导出，批量续费逐项结算并从列
   })
   expect(shared).toMatchObject({ status: 'succeeded', delivered_count: '1' })
   const allocations = (await json(await request.get('/v1/tenant/static-ips', { headers: tenant }))).allocations
+  const allocationByIP = new Map(allocations.map(ip => [ip.ip, ip.allocation_id]))
   const usIP = allocations.find(ip => ip.order_id === us.id).ip
+  const jpIDs = jp.map(ip => allocationByIP.get(ip))
+  expect(new Set(jpIDs).size).toBe(3)
+  for (const allocation of allocations) {
+    expect(allocation.allocation_id).toMatch(/^sa_[\da-f-]{36}$/)
+    expect(allocation).not.toHaveProperty('supplier_item_id')
+  }
+
+  const other = await registerStaticTenant(request, '13900007502')
+  const wrongTenant = await request.get('/v1/tenant/static-ips/' + jpIDs[0] + '/proxy-config', { headers: other.headers })
+  expect(wrongTenant.status()).toBe(404)
+  const wrongBatch = await request.post('/v1/tenant/static-renewal-quotes', {
+    headers: other.headers, data: { allocation_ids: jpIDs, term: 'yp1' },
+  })
+  expect(wrongBatch.status()).toBe(404)
+  const legacyConfig = await request.get('/v1/tenant/static-ips/20101/proxy-config', { headers: tenant })
+  expect(legacyConfig.status()).toBe(404)
+  const legacyExport = await request.post('/v1/tenant/static-ips:export', {
+    headers: tenant, data: { supplier_item_ids: ['20101'] },
+  })
+  expect(legacyExport.status()).toBe(400)
   const sharedIP = allocations.find(ip => ip.order_id === shared.id).ip
 
   await signInTenant(page, phone)
@@ -271,7 +292,7 @@ staticSalesTest('IP 筛选、复制与导出，批量续费逐项结算并从列
   await expect(rowFor(page, jp[1])).toBeVisible()
   await expect(rowFor(page, jp[0])).toHaveCount(0)
   await context.grantPermissions(['clipboard-read', 'clipboard-write'])
-  const config = page.waitForResponse(response => response.url().endsWith('/20102/proxy-config') && response.ok())
+  const config = page.waitForResponse(response => response.url().endsWith('/' + jpIDs[1] + '/proxy-config') && response.ok())
   await rowFor(page, jp[1]).getByRole('button', { name: /^复制/ }).click()
   await config
   await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe(`${jp[1]}:43000:fixture-user:fixture-pass`)
@@ -279,7 +300,9 @@ staticSalesTest('IP 筛选、复制与导出，批量续费逐项结算并从列
 
   for (const ip of jp) await selectIp(page, ip)
   const downloaded = page.waitForEvent('download')
+  const exported = page.waitForRequest(request => new URL(request.url()).pathname.endsWith('/v1/tenant/static-ips:export'))
   await page.getByRole('button', { name: '导出 TXT' }).click()
+  expect((await exported).postDataJSON().allocation_ids.sort()).toEqual([...jpIDs].sort())
   const file = await (await downloaded).path()
   const txt = await readFile(file, 'utf8')
   expect(txt.trimEnd().split(/\r?\n/).sort()).toEqual(jp.map(ip => `${ip}:43000:fixture-user:fixture-pass`))
@@ -298,13 +321,15 @@ staticSalesTest('IP 筛选、复制与导出，批量续费逐项结算并从列
 
   const submitted = page.waitForResponse(response => response.url().endsWith('/v1/tenant/static-renewal-orders') && response.ok())
   await renewDialog.getByRole('button', { name: '确认续费' }).click()
-  const order = await (await submitted).json()
-  const outcomes = order => Object.fromEntries(order.items.map(item => [item.supplier_item_id, item.outcome]))
-  expect(outcomes(order)).toMatchObject({ 20101: 'succeeded', 20102: 'pending', 20103: 'pending' })
+  const batch = await submitted
+  expect(batch.request().postDataJSON().allocation_ids).toEqual(expect.arrayContaining(jpIDs))
+  const order = await batch.json()
+  const outcomes = order => Object.fromEntries(order.items.map(item => [item.allocation_id, item.outcome]))
+  expect(outcomes(order)).toMatchObject({ [jpIDs[0]]: 'succeeded', [jpIDs[1]]: 'pending', [jpIDs[2]]: 'pending' })
 
   await json(await request.post(`${account.opsPath}/orders/${order.id}/renewal-resolution`, {
     headers: ops,
-    data: { supplier_item_id: '20102', confirmed_failure: true, evidence: 'Fixture confirmed renewal failed' },
+    data: { allocation_id: jpIDs[1], confirmed_failure: true, evidence: 'Fixture confirmed renewal failed' },
   }))
   await renewDialog.getByRole('button', { name: '重查结果' }).click()
   await expect(rowFor(renewDialog, jp[0])).toContainText('成功')
@@ -346,7 +371,10 @@ staticSalesTest('IP 筛选、复制与导出，批量续费逐项结算并从列
   await renewDialog.getByRole('button', { name: '确认续费' }).click()
   await expect(renewDialog.getByText('暂未取得续费结果。请重试原提交以获取结果。')).toBeVisible()
   expect(singleOrder).toMatchObject({ status: 'failed', refunded_minor: '1500' })
-  expect(singleBody.supplier_item_ids).toEqual(['20102'])
+  expect(singleBody.allocation_ids).toEqual([jpIDs[1]])
+  const savedRenewalKey = await page.evaluate(() =>
+    Object.keys(sessionStorage).find(key => key.startsWith('proxy-console.static-renewal.')))
+  expect(savedRenewalKey).toBeTruthy()
 
   await page.reload()
   await rowFor(page, jp[0]).getByRole('button', { name: '续费', exact: true }).click()
@@ -364,4 +392,11 @@ staticSalesTest('IP 筛选、复制与导出，批量续费逐项结算并从列
   expect(await replayed.json()).toMatchObject({ id: singleOrder.id, status: 'failed' })
   await expect(rowFor(renewDialog, jp[1])).toContainText('失败')
   await screenshot(page, info, 'single-renewal-original-request-replayed')
+
+  await page.evaluate(key => sessionStorage.setItem(key, JSON.stringify({
+    supplier_item_ids: ['20102'], term: 'yp1', request_key: 'legacy', confirmation_token: 'legacy',
+  })), savedRenewalKey)
+  await page.reload()
+  await expect(rowFor(page, jp[1])).toBeVisible()
+  await expect(page.getByRole('button', { name: '重试原提交', exact: true })).toHaveCount(0)
 })

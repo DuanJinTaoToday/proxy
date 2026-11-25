@@ -25,7 +25,7 @@ func (r *WalletRepository) saveStaticRenewalOutcomes(ctx context.Context, tenant
 			return err
 		}
 		for _, row := range rows {
-			outcome, ok := results[row.SupplierItemID]
+			outcome, ok := results[row.AllocationID]
 			if !ok {
 				continue
 			}
@@ -39,8 +39,8 @@ func (r *WalletRepository) saveStaticRenewalOutcomes(ctx context.Context, tenant
 			}
 			if outcome == wallet.Succeeded {
 				result := tx.Exec(`UPDATE static_ip_allocations SET expires_at=?
-                    WHERE tenant_id=? AND supplier_item_id=? AND ip=? AND expires_at=?`,
-					row.ExpectedExpiry, tenant, row.SupplierItemID, row.OriginalIP, row.OriginalExpiry)
+                    WHERE tenant_id=? AND allocation_id=? AND ip=? AND expires_at=?`,
+					row.ExpectedExpiry, tenant, row.AllocationID, row.OriginalIP, row.OriginalExpiry)
 				if result.Error != nil {
 					return result.Error
 				}
@@ -48,7 +48,7 @@ func (r *WalletRepository) saveStaticRenewalOutcomes(ctx context.Context, tenant
 					return wallet.ErrState
 				}
 			}
-			if actor != "" && row.SupplierItemID == resolution.ItemID {
+			if actor != "" && row.AllocationID == resolution.ItemID {
 				if err := tx.Exec(`INSERT INTO static_renewal_resolutions (tenant_id, order_id, position, operator_id, evidence)
                     VALUES (?, ?, ?, ?, ?)`, tenant, id, row.Position, actor, resolution.Evidence).Error; err != nil {
 					return err

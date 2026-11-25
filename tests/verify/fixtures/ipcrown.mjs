@@ -149,8 +149,10 @@ async function handle(request, response) {
     detailAvailable = body.available
     return json(response, 200, { available: detailAvailable })
   }
+  const findAllocation = ip => [...allocations.values()].find(item => item.ip === ip)
+
   if (path === '/fixture/renewals/confirm') {
-    const ids = body.id === undefined ? [...pendingRenewals.keys()] : [body.id]
+    const ids = body.ip === undefined ? [...pendingRenewals.keys()] : [findAllocation(body.ip)?.id]
     for (const id of ids) {
       if (!pendingRenewals.has(id)) continue
       allocations.get(id).stoptime = pendingRenewals.get(id)
@@ -160,8 +162,9 @@ async function handle(request, response) {
     return json(response, 200, { ok: true })
   }
   if (path === '/fixture/renewals/delay') {
-    if (!allocations.has(body.id)) return json(response, 400, { error: 'Expected an allocated fixture item ID' })
-    delayedRenewalIDs.add(body.id)
+    const allocation = findAllocation(body.ip)
+    if (!allocation) return json(response, 400, { error: 'Expected an allocated fixture IP' })
+    delayedRenewalIDs.add(allocation.id)
     return json(response, 200, { ok: true })
   }
 

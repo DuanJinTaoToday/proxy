@@ -95,14 +95,14 @@ func (s *Wallet) ListStaticIPs(ctx context.Context, _ *v1.BaseRequest) (*v1.Stat
 }
 
 func staticIPMessage(ip wallet.StaticAllocation) *v1.StaticIP {
-	return &v1.StaticIP{SupplierItemId: ip.SupplierItemID, OrderId: ip.OrderID, Ip: ip.IP, Port: ip.Port,
+	return &v1.StaticIP{AllocationId: ip.AllocationID, OrderId: ip.OrderID, Ip: ip.IP, Port: ip.Port,
 		Username: ip.Username, Password: ip.Password, ExpiresAt: timestamppb.New(ip.ExpiresAt),
 		Region: ip.Region, IpType: ip.IPType, PendingRenewalOrderId: ip.PendingRenewalOrderID}
 }
 
 func (s *Wallet) GetStaticIPConfig(ctx context.Context, req *v1.StaticIPConfigRequest) (*v1.StaticIP, error) {
 	noStore(ctx)
-	ips, err := s.biz.StaticCredentials(ctx, bearerToken(ctx), []string{req.GetSupplierItemId()}, true)
+	ips, err := s.biz.StaticCredentials(ctx, bearerToken(ctx), []string{req.GetAllocationId()}, true)
 	if err != nil {
 		return nil, wallet.PublicError(err)
 	}
@@ -111,7 +111,7 @@ func (s *Wallet) GetStaticIPConfig(ctx context.Context, req *v1.StaticIPConfigRe
 
 func (s *Wallet) ExportStaticIPs(ctx context.Context, req *v1.StaticIPExportRequest) ([]byte, error) {
 	noStore(ctx)
-	ips, err := s.biz.StaticCredentials(ctx, bearerToken(ctx), req.GetSupplierItemIds(), true)
+	ips, err := s.biz.StaticCredentials(ctx, bearerToken(ctx), req.GetAllocationIds(), true)
 	if err != nil {
 		return nil, wallet.PublicError(err)
 	}

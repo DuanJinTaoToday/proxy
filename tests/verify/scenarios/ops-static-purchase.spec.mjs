@@ -168,7 +168,7 @@ test('运营在 24 小时后核实静态采购，72 小时后关闭剩余并只�
   const probes = []
   for (const ip of delivered) {
     expect(Date.parse(ip.expires_at)).toBeGreaterThan(Date.now())
-    const config = await json(await request.get('/v1/tenant/static-ips/' + ip.supplier_item_id + '/proxy-config', { headers: tenant }))
+    const config = await json(await request.get('/v1/tenant/static-ips/' + ip.allocation_id + '/proxy-config', { headers: tenant }))
     expect(config).toMatchObject({ ip: '127.0.0.1', port: ip.port, username: 'fixture-user', password: 'fixture-pass' })
     const response = execFileSync('curl', [
       '--fail', '--silent', '--show-error', '--max-time', '10', '--noproxy', '',
@@ -178,7 +178,7 @@ test('运营在 24 小时后核实静态采购，72 小时后关闭剩余并只�
     const [body, status] = response.trim().split(/\r?\n/)
     expect(JSON.parse(body)).toEqual({ ok: true })
     expect(status).toBe('200')
-    probes.push({ supplier_item_id: ip.supplier_item_id, http_status: Number(status) })
+    probes.push({ allocation_id: ip.allocation_id, http_status: Number(status) })
   }
   const probeEvidence = info.outputPath('post-refund-socks5.json')
   await writeFile(probeEvidence, JSON.stringify({

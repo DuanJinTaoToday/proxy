@@ -29,10 +29,10 @@ const needsConfirmation = computed(() => closing.value && !props.record.canClose
 const encoder = new TextEncoder()
 
 function isPending(item: OrderItem) {
-  return item.outcome === 'pending' && item.supplierItemId !== undefined && props.record.pendingRenewalItems.includes(item.supplierItemId)
+  return item.outcome === 'pending' && item.allocationId !== undefined && props.record.pendingRenewalItems.includes(item.allocationId)
 }
 
-const selected = computed(() => props.record.order.items.find(item => item.supplierItemId === selectedId.value && isPending(item)))
+const selected = computed(() => props.record.order.items.find(item => item.allocationId === selectedId.value && isPending(item)))
 
 watch(open, value => {
   if (!value) return
@@ -61,14 +61,14 @@ function resolutionError(error: unknown) {
 }
 
 async function submit() {
-  const supplierItemId = selected.value?.supplierItemId
-  if (!supplierItemId || pending.value || validation.value) return
+  const allocationId = selected.value?.allocationId
+  if (!allocationId || pending.value || validation.value) return
   pending.value = true
   failure.value = undefined
   const action = !closing.value ? 'sync' : needsConfirmation.value ? 'confirm_failure' : 'close_unknown'
   try {
-    const result = await resolveOpsStaticRenewal(props.record, { supplierItemId, action, evidence: evidence.value.trim() })
-    const outcome = result.items.find(item => item.supplierItemId === supplierItemId)?.outcome
+    const result = await resolveOpsStaticRenewal(props.record, { allocationId, action, evidence: evidence.value.trim() })
+    const outcome = result.items.find(item => item.allocationId === allocationId)?.outcome
     if (outcome === 'succeeded') ElMessage.success(t('orders.renewalOps.succeeded'))
     else if (outcome === 'failed') ElMessage.success(t('orders.renewalOps.refunded'))
     else ElMessage.info(t('orders.renewalOps.stillPending'))
@@ -100,10 +100,10 @@ async function submit() {
               <tr v-for="item in record.order.items" :key="item.position">
                 <td>
                   <span class="mono">{{ itemDescription(item) }}</span>
-                  <span class="resolve-hint">{{ t('orders.renewalOps.itemDetails', { id: item.supplierItemId, amount: money(item.unitMinor) }) }}</span>
+                  <span class="resolve-hint">{{ t('orders.renewalOps.itemDetails', { id: item.allocationId, amount: money(item.unitMinor) }) }}</span>
                 </td>
                 <td class="renewal-status">
-                  <ElRadio v-if="isPending(item)" class="renewal-choice" :value="item.supplierItemId" :aria-label="itemDescription(item)">{{ t('orders.status.pending') }}</ElRadio>
+                  <ElRadio v-if="isPending(item)" class="renewal-choice" :value="item.allocationId" :aria-label="itemDescription(item)">{{ t('orders.status.pending') }}</ElRadio>
                   <ElTag v-else size="small" disable-transitions :type="item.outcome === 'succeeded' ? 'success' : item.outcome === 'failed' ? 'danger' : 'info'">
                     {{ t(item.outcome === 'succeeded' ? 'orders.renewalOps.successStatus' : item.outcome === 'failed' ? 'orders.renewalOps.refundedStatus' : 'orders.status.pending') }}
                   </ElTag>

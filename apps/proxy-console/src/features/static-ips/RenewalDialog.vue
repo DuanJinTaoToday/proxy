@@ -94,7 +94,7 @@ function submit() {
   if (!submission.value && !quote.value) return
   return perform('submitting', async () => {
     const payload = submission.value ?? {
-      supplier_item_ids: ids,
+      allocation_ids: ids,
       term: term.value,
       request_key: crypto.randomUUID(),
       confirmation_token: quote.value?.token ?? '',
