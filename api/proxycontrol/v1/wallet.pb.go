@@ -959,8 +959,8 @@ type PurchaseOrderItem struct {
 	Quantity int32 `protobuf:"varint,6,opt,name=quantity,proto3" json:"quantity,omitempty"`
 	// 实际到账的套餐数量，或实际交付、续费的 IP 数量。
 	DeliveredCount int32 `protobuf:"varint,7,opt,name=delivered_count,json=deliveredCount,proto3" json:"delivered_count,omitempty"`
-	// 静态续费的皇冠明细 ID。其他订单省略。
-	SupplierItemId string `protobuf:"bytes,8,opt,name=supplier_item_id,json=supplierItemId,proto3" json:"supplier_item_id,omitempty"`
+	// 静态续费的平台分配 ID。其他订单省略。
+	AllocationId string `protobuf:"bytes,10,opt,name=allocation_id,json=allocationId,proto3" json:"allocation_id,omitempty"`
 	// 静态续费的逐项结果 pending、succeeded 或 failed。其他订单省略。
 	Outcome       string `protobuf:"bytes,9,opt,name=outcome,proto3" json:"outcome,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -1046,9 +1046,9 @@ func (x *PurchaseOrderItem) GetDeliveredCount() int32 {
 	return 0
 }
 
-func (x *PurchaseOrderItem) GetSupplierItemId() string {
+func (x *PurchaseOrderItem) GetAllocationId() string {
 	if x != nil {
-		return x.SupplierItemId
+		return x.AllocationId
 	}
 	return ""
 }
@@ -2205,8 +2205,8 @@ func (x *PurchaseStaticIPRequest) GetLines() []*StaticPurchaseLine {
 
 type StaticIP struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// 当前分配的皇冠明细 ID。
-	SupplierItemId string `protobuf:"bytes,1,opt,name=supplier_item_id,json=supplierItemId,proto3" json:"supplier_item_id,omitempty"`
+	// 稳定的平台分配 ID。
+	AllocationId string `protobuf:"bytes,11,opt,name=allocation_id,json=allocationId,proto3" json:"allocation_id,omitempty"`
 	// 对应平台购买订单号。
 	OrderId int64 `protobuf:"varint,2,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
 	// 代理 IP。
@@ -2259,9 +2259,9 @@ func (*StaticIP) Descriptor() ([]byte, []int) {
 	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{27}
 }
 
-func (x *StaticIP) GetSupplierItemId() string {
+func (x *StaticIP) GetAllocationId() string {
 	if x != nil {
-		return x.SupplierItemId
+		return x.AllocationId
 	}
 	return ""
 }
@@ -2377,9 +2377,9 @@ func (x *StaticIPs) GetAllocations() []*StaticIP {
 type StaticIPConfigRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 需要查看接入信息的分配 ID。
-	SupplierItemId string `protobuf:"bytes,1,opt,name=supplier_item_id,json=supplierItemId,proto3" json:"supplier_item_id,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	AllocationId  string `protobuf:"bytes,2,opt,name=allocation_id,json=allocationId,proto3" json:"allocation_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *StaticIPConfigRequest) Reset() {
@@ -2412,9 +2412,9 @@ func (*StaticIPConfigRequest) Descriptor() ([]byte, []int) {
 	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{29}
 }
 
-func (x *StaticIPConfigRequest) GetSupplierItemId() string {
+func (x *StaticIPConfigRequest) GetAllocationId() string {
 	if x != nil {
-		return x.SupplierItemId
+		return x.AllocationId
 	}
 	return ""
 }
@@ -2422,9 +2422,9 @@ func (x *StaticIPConfigRequest) GetSupplierItemId() string {
 type StaticIPExportRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 选中且仍可用的分配 ID。一次最多 1000 项。
-	SupplierItemIds []string `protobuf:"bytes,1,rep,name=supplier_item_ids,json=supplierItemIds,proto3" json:"supplier_item_ids,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	AllocationIds []string `protobuf:"bytes,2,rep,name=allocation_ids,json=allocationIds,proto3" json:"allocation_ids,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *StaticIPExportRequest) Reset() {
@@ -2457,9 +2457,9 @@ func (*StaticIPExportRequest) Descriptor() ([]byte, []int) {
 	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{30}
 }
 
-func (x *StaticIPExportRequest) GetSupplierItemIds() []string {
+func (x *StaticIPExportRequest) GetAllocationIds() []string {
 	if x != nil {
-		return x.SupplierItemIds
+		return x.AllocationIds
 	}
 	return nil
 }
@@ -2613,7 +2613,7 @@ type PendingStaticPurchase struct {
 	DeliveredCount int64 `protobuf:"varint,5,opt,name=delivered_count,json=deliveredCount,proto3" json:"delivered_count,omitempty"`
 	// 超过 72 小时且可释放未知结果的剩余预扣。
 	CanClose bool `protobuf:"varint,6,opt,name=can_close,json=canClose,proto3" json:"can_close,omitempty"`
-	// 续费订单返回仍待核实的皇冠明细 ID。购买订单为空。
+	// 续费订单返回仍待核实的平台分配 ID。购买订单为空。
 	PendingRenewalItems []string `protobuf:"bytes,7,rep,name=pending_renewal_items,json=pendingRenewalItems,proto3" json:"pending_renewal_items,omitempty"`
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache
@@ -2799,10 +2799,10 @@ func (x *StaticIPExpiryNotices) GetCount() int32 {
 
 type StaticRenewalTermsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// 属于当前租户且可续费的皇冠明细 ID，单个为长度 1。
-	SupplierItemIds []string `protobuf:"bytes,1,rep,name=supplier_item_ids,json=supplierItemIds,proto3" json:"supplier_item_ids,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// 属于当前租户且可续费的平台分配 ID，单个为长度 1。
+	AllocationIds []string `protobuf:"bytes,2,rep,name=allocation_ids,json=allocationIds,proto3" json:"allocation_ids,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *StaticRenewalTermsRequest) Reset() {
@@ -2835,9 +2835,9 @@ func (*StaticRenewalTermsRequest) Descriptor() ([]byte, []int) {
 	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{36}
 }
 
-func (x *StaticRenewalTermsRequest) GetSupplierItemIds() []string {
+func (x *StaticRenewalTermsRequest) GetAllocationIds() []string {
 	if x != nil {
-		return x.SupplierItemIds
+		return x.AllocationIds
 	}
 	return nil
 }
@@ -2943,8 +2943,8 @@ func (x *StaticRenewalTerms) GetTerms() []*StaticRenewalTerm {
 
 type StaticRenewalQuoteRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// 属于当前租户且未到期的皇冠明细 ID，单个为长度 1。
-	SupplierItemIds []string `protobuf:"bytes,1,rep,name=supplier_item_ids,json=supplierItemIds,proto3" json:"supplier_item_ids,omitempty"`
+	// 属于当前租户且未到期的平台分配 ID，单个为长度 1。
+	AllocationIds []string `protobuf:"bytes,3,rep,name=allocation_ids,json=allocationIds,proto3" json:"allocation_ids,omitempty"`
 	// 统一的皇冠租期代码。
 	Term          string `protobuf:"bytes,2,opt,name=term,proto3" json:"term,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -2981,9 +2981,9 @@ func (*StaticRenewalQuoteRequest) Descriptor() ([]byte, []int) {
 	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{39}
 }
 
-func (x *StaticRenewalQuoteRequest) GetSupplierItemIds() []string {
+func (x *StaticRenewalQuoteRequest) GetAllocationIds() []string {
 	if x != nil {
-		return x.SupplierItemIds
+		return x.AllocationIds
 	}
 	return nil
 }
@@ -2997,8 +2997,8 @@ func (x *StaticRenewalQuoteRequest) GetTerm() string {
 
 type StaticRenewalQuoteLine struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// 报价对应的皇冠明细 ID。
-	SupplierItemId string `protobuf:"bytes,1,opt,name=supplier_item_id,json=supplierItemId,proto3" json:"supplier_item_id,omitempty"`
+	// 报价对应的平台分配 ID。
+	AllocationId string `protobuf:"bytes,6,opt,name=allocation_id,json=allocationId,proto3" json:"allocation_id,omitempty"`
 	// 保留的原 IP。
 	Ip string `protobuf:"bytes,2,opt,name=ip,proto3" json:"ip,omitempty"`
 	// 该 IP 的续费价，人民币分。
@@ -3041,9 +3041,9 @@ func (*StaticRenewalQuoteLine) Descriptor() ([]byte, []int) {
 	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{40}
 }
 
-func (x *StaticRenewalQuoteLine) GetSupplierItemId() string {
+func (x *StaticRenewalQuoteLine) GetAllocationId() string {
 	if x != nil {
-		return x.SupplierItemId
+		return x.AllocationId
 	}
 	return ""
 }
@@ -3142,7 +3142,7 @@ func (x *StaticRenewalQuote) GetExpiresAt() *timestamppb.Timestamp {
 type StaticRenewalRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 已确认的全部分配 ID。
-	SupplierItemIds []string `protobuf:"bytes,1,rep,name=supplier_item_ids,json=supplierItemIds,proto3" json:"supplier_item_ids,omitempty"`
+	AllocationIds []string `protobuf:"bytes,5,rep,name=allocation_ids,json=allocationIds,proto3" json:"allocation_ids,omitempty"`
 	// 已确认的统一租期代码。
 	Term string `protobuf:"bytes,2,opt,name=term,proto3" json:"term,omitempty"`
 	// 单次续费的幂等键。结果未知时沿用原值。
@@ -3183,9 +3183,9 @@ func (*StaticRenewalRequest) Descriptor() ([]byte, []int) {
 	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{42}
 }
 
-func (x *StaticRenewalRequest) GetSupplierItemIds() []string {
+func (x *StaticRenewalRequest) GetAllocationIds() []string {
 	if x != nil {
-		return x.SupplierItemIds
+		return x.AllocationIds
 	}
 	return nil
 }
@@ -3217,8 +3217,8 @@ type StaticRenewalResolutionRequest struct {
 	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
 	// 平台续费订单 ID。
 	OrderId int64 `protobuf:"varint,2,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
-	// 需要核实的皇冠明细 ID。
-	SupplierItemId string `protobuf:"bytes,3,opt,name=supplier_item_id,json=supplierItemId,proto3" json:"supplier_item_id,omitempty"`
+	// 需要核实的平台分配 ID。
+	AllocationId string `protobuf:"bytes,7,opt,name=allocation_id,json=allocationId,proto3" json:"allocation_id,omitempty"`
 	// 运营核实依据。
 	Evidence string `protobuf:"bytes,4,opt,name=evidence,proto3" json:"evidence,omitempty"`
 	// 满 72 小时后关闭结果未知的明细，默认仅查单。
@@ -3273,9 +3273,9 @@ func (x *StaticRenewalResolutionRequest) GetOrderId() int64 {
 	return 0
 }
 
-func (x *StaticRenewalResolutionRequest) GetSupplierItemId() string {
+func (x *StaticRenewalResolutionRequest) GetAllocationId() string {
 	if x != nil {
-		return x.SupplierItemId
+		return x.AllocationId
 	}
 	return ""
 }
@@ -3392,7 +3392,7 @@ const file_proxycontrol_v1_wallet_proto_rawDesc = "" +
 	"\x0ewallet_entries\x18\x0f \x03(\v2\x1c.proxycontrol.v1.WalletEntryR\rwalletEntries\x12E\n" +
 	"\fsummary_item\x18\x10 \x01(\v2\".proxycontrol.v1.PurchaseOrderItemR\vsummaryItem\x12\x1d\n" +
 	"\n" +
-	"item_count\x18\x11 \x01(\x03R\titemCount\"\xc1\x02\n" +
+	"item_count\x18\x11 \x01(\x03R\titemCount\"\xd4\x02\n" +
 	"\x11PurchaseOrderItem\x12\x1a\n" +
 	"\bposition\x18\x01 \x01(\x05R\bposition\x12$\n" +
 	"\rspecification\x18\x02 \x01(\tR\rspecification\x12%\n" +
@@ -3401,9 +3401,10 @@ const file_proxycontrol_v1_wallet_proto_rawDesc = "" +
 	"\n" +
 	"unit_minor\x18\x05 \x01(\x03R\tunitMinor\x12\x1a\n" +
 	"\bquantity\x18\x06 \x01(\x05R\bquantity\x12'\n" +
-	"\x0fdelivered_count\x18\a \x01(\x05R\x0edeliveredCount\x12(\n" +
-	"\x10supplier_item_id\x18\b \x01(\tR\x0esupplierItemId\x12\x18\n" +
-	"\aoutcome\x18\t \x01(\tR\aoutcome\"\x93\x02\n" +
+	"\x0fdelivered_count\x18\a \x01(\x05R\x0edeliveredCount\x12#\n" +
+	"\rallocation_id\x18\n" +
+	" \x01(\tR\fallocationId\x12\x18\n" +
+	"\aoutcome\x18\t \x01(\tR\aoutcomeJ\x04\b\b\x10\tR\x10supplier_item_id\"\x93\x02\n" +
 	"\x1cCustomerWalletEntriesRequest\x12$\n" +
 	"\tbefore_id\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02(\x00R\bbeforeId\x12C\n" +
 	"\x04kind\x18\x02 \x01(\tB/\xfaB,r*R\x00R\brechargeR\x05debitR\x04holdR\areleaseR\x06refundR\x04kind\x12E\n" +
@@ -3512,9 +3513,9 @@ const file_proxycontrol_v1_wallet_proto_rawDesc = "" +
 	"purpose_id\x18\b \x01(\x05B\r\xfaB\n" +
 	"\x1a\b0\x000\b0\t0\n" +
 	"R\tpurposeId\x12C\n" +
-	"\x05lines\x18\t \x03(\v2#.proxycontrol.v1.StaticPurchaseLineB\b\xfaB\x05\x92\x01\x02\x10\x19R\x05lines\"\xd0\x02\n" +
-	"\bStaticIP\x12(\n" +
-	"\x10supplier_item_id\x18\x01 \x01(\tR\x0esupplierItemId\x12\x19\n" +
+	"\x05lines\x18\t \x03(\v2#.proxycontrol.v1.StaticPurchaseLineB\b\xfaB\x05\x92\x01\x02\x10\x19R\x05lines\"\xe3\x02\n" +
+	"\bStaticIP\x12#\n" +
+	"\rallocation_id\x18\v \x01(\tR\fallocationId\x12\x19\n" +
 	"\border_id\x18\x02 \x01(\x03R\aorderId\x12\x0e\n" +
 	"\x02ip\x18\x03 \x01(\tR\x02ip\x12\x12\n" +
 	"\x04port\x18\x04 \x01(\x05R\x04port\x12\x1a\n" +
@@ -3525,14 +3526,14 @@ const file_proxycontrol_v1_wallet_proto_rawDesc = "" +
 	"\x06region\x18\b \x01(\tR\x06region\x12\x17\n" +
 	"\aip_type\x18\t \x01(\tR\x06ipType\x127\n" +
 	"\x18pending_renewal_order_id\x18\n" +
-	" \x01(\x03R\x15pendingRenewalOrderId\"H\n" +
+	" \x01(\x03R\x15pendingRenewalOrderIdJ\x04\b\x01\x10\x02R\x10supplier_item_id\"H\n" +
 	"\tStaticIPs\x12;\n" +
-	"\vallocations\x18\x01 \x03(\v2\x19.proxycontrol.v1.StaticIPR\vallocations\"M\n" +
-	"\x15StaticIPConfigRequest\x124\n" +
-	"\x10supplier_item_id\x18\x01 \x01(\tB\n" +
-	"\xfaB\ar\x05\x10\x01(\x80\x01R\x0esupplierItemId\"[\n" +
-	"\x15StaticIPExportRequest\x12B\n" +
-	"\x11supplier_item_ids\x18\x01 \x03(\tB\x16\xfaB\x13\x92\x01\x10\b\x01\x10\xe8\a\x18\x01\"\ar\x05\x10\x01(\x80\x01R\x0fsupplierItemIds\"\xaa\x02\n" +
+	"\vallocations\x18\x01 \x03(\v2\x19.proxycontrol.v1.StaticIPR\vallocations\"`\n" +
+	"\x15StaticIPConfigRequest\x12/\n" +
+	"\rallocation_id\x18\x02 \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\x01(\x80\x01R\fallocationIdJ\x04\b\x01\x10\x02R\x10supplier_item_id\"o\n" +
+	"\x15StaticIPExportRequest\x12=\n" +
+	"\x0eallocation_ids\x18\x02 \x03(\tB\x16\xfaB\x13\x92\x01\x10\b\x01\x10\xe8\a\x18\x01\"\ar\x05\x10\x01(\x80\x01R\rallocationIdsJ\x04\b\x01\x10\x02R\x11supplier_item_ids\"\xaa\x02\n" +
 	"\x1cResolveStaticPurchaseRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01(@R\btenantId\x12\"\n" +
 	"\border_id\x18\x02 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\aorderId\x124\n" +
@@ -3556,45 +3557,45 @@ const file_proxycontrol_v1_wallet_proto_rawDesc = "" +
 	"\tpurchases\x18\x01 \x03(\v2&.proxycontrol.v1.PendingStaticPurchaseR\tpurchases\x12\"\n" +
 	"\rnext_after_id\x18\x02 \x01(\x03R\vnextAfterId\"-\n" +
 	"\x15StaticIPExpiryNotices\x12\x14\n" +
-	"\x05count\x18\x01 \x01(\x05R\x05count\"^\n" +
-	"\x19StaticRenewalTermsRequest\x12A\n" +
-	"\x11supplier_item_ids\x18\x01 \x03(\tB\x15\xfaB\x12\x92\x01\x0f\b\x01\x10\x19\x18\x01\"\ar\x05\x10\x01(\x80\x01R\x0fsupplierItemIds\"D\n" +
+	"\x05count\x18\x01 \x01(\x05R\x05count\"r\n" +
+	"\x19StaticRenewalTermsRequest\x12<\n" +
+	"\x0eallocation_ids\x18\x02 \x03(\tB\x15\xfaB\x12\x92\x01\x0f\b\x01\x10\x19\x18\x01\"\ar\x05\x10\x01(\x80\x01R\rallocationIdsJ\x04\b\x01\x10\x02R\x11supplier_item_ids\"D\n" +
 	"\x11StaticRenewalTerm\x12\x12\n" +
 	"\x04term\x18\x01 \x01(\tR\x04term\x12\x1b\n" +
 	"\tterm_days\x18\x02 \x01(\x05R\btermDays\"N\n" +
 	"\x12StaticRenewalTerms\x128\n" +
-	"\x05terms\x18\x01 \x03(\v2\".proxycontrol.v1.StaticRenewalTermR\x05terms\"}\n" +
-	"\x19StaticRenewalQuoteRequest\x12A\n" +
-	"\x11supplier_item_ids\x18\x01 \x03(\tB\x15\xfaB\x12\x92\x01\x0f\b\x01\x10\x19\x18\x01\"\ar\x05\x10\x01(\x80\x01R\x0fsupplierItemIds\x12\x1d\n" +
-	"\x04term\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01(\x10R\x04term\"\xd3\x01\n" +
-	"\x16StaticRenewalQuoteLine\x12(\n" +
-	"\x10supplier_item_id\x18\x01 \x01(\tR\x0esupplierItemId\x12\x0e\n" +
+	"\x05terms\x18\x01 \x03(\v2\".proxycontrol.v1.StaticRenewalTermR\x05terms\"\x91\x01\n" +
+	"\x19StaticRenewalQuoteRequest\x12<\n" +
+	"\x0eallocation_ids\x18\x03 \x03(\tB\x15\xfaB\x12\x92\x01\x0f\b\x01\x10\x19\x18\x01\"\ar\x05\x10\x01(\x80\x01R\rallocationIds\x12\x1d\n" +
+	"\x04term\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01(\x10R\x04termJ\x04\b\x01\x10\x02R\x11supplier_item_ids\"\xe6\x01\n" +
+	"\x16StaticRenewalQuoteLine\x12#\n" +
+	"\rallocation_id\x18\x06 \x01(\tR\fallocationId\x12\x0e\n" +
 	"\x02ip\x18\x02 \x01(\tR\x02ip\x12\x1d\n" +
 	"\n" +
 	"unit_minor\x18\x03 \x01(\x03R\tunitMinor\x12\x1b\n" +
 	"\tterm_days\x18\x04 \x01(\x05R\btermDays\x12C\n" +
-	"\x0foriginal_expiry\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\x0eoriginalExpiry\"\xbd\x01\n" +
+	"\x0foriginal_expiry\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\x0eoriginalExpiryJ\x04\b\x01\x10\x02R\x10supplier_item_id\"\xbd\x01\n" +
 	"\x12StaticRenewalQuote\x12=\n" +
 	"\x05lines\x18\x01 \x03(\v2'.proxycontrol.v1.StaticRenewalQuoteLineR\x05lines\x12-\n" +
 	"\x12confirmation_token\x18\x02 \x01(\tR\x11confirmationToken\x129\n" +
 	"\n" +
-	"expires_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\"\xe1\x01\n" +
-	"\x14StaticRenewalRequest\x12A\n" +
-	"\x11supplier_item_ids\x18\x01 \x03(\tB\x15\xfaB\x12\x92\x01\x0f\b\x01\x10\x19\x18\x01\"\ar\x05\x10\x01(\x80\x01R\x0fsupplierItemIds\x12\x1d\n" +
+	"expires_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\"\xf5\x01\n" +
+	"\x14StaticRenewalRequest\x12<\n" +
+	"\x0eallocation_ids\x18\x05 \x03(\tB\x15\xfaB\x12\x92\x01\x0f\b\x01\x10\x19\x18\x01\"\ar\x05\x10\x01(\x80\x01R\rallocationIds\x12\x1d\n" +
 	"\x04term\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01(\x10R\x04term\x12+\n" +
 	"\vrequest_key\x18\x03 \x01(\tB\n" +
 	"\xfaB\ar\x05\x10\x01(\x80\x01R\n" +
 	"requestKey\x12:\n" +
-	"\x12confirmation_token\x18\x04 \x01(\tB\v\xfaB\br\x06\x10\x01(\x80\x80\x01R\x11confirmationToken\"\x9c\x02\n" +
+	"\x12confirmation_token\x18\x04 \x01(\tB\v\xfaB\br\x06\x10\x01(\x80\x80\x01R\x11confirmationTokenJ\x04\b\x01\x10\x02R\x11supplier_item_ids\"\xaf\x02\n" +
 	"\x1eStaticRenewalResolutionRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01(@R\btenantId\x12\"\n" +
-	"\border_id\x18\x02 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\aorderId\x124\n" +
-	"\x10supplier_item_id\x18\x03 \x01(\tB\n" +
-	"\xfaB\ar\x05\x10\x01(\x80\x01R\x0esupplierItemId\x12&\n" +
+	"\border_id\x18\x02 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\aorderId\x12/\n" +
+	"\rallocation_id\x18\a \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\x01(\x80\x01R\fallocationId\x12&\n" +
 	"\bevidence\x18\x04 \x01(\tB\n" +
 	"\xfaB\ar\x05\x10\x01(\xf4\x03R\bevidence\x12#\n" +
 	"\rclose_unknown\x18\x05 \x01(\bR\fcloseUnknown\x12+\n" +
-	"\x11confirmed_failure\x18\x06 \x01(\bR\x10confirmedFailure2\xba%\n" +
+	"\x11confirmed_failure\x18\x06 \x01(\bR\x10confirmedFailureJ\x04\b\x03\x10\x04R\x10supplier_item_id2\xb7%\n" +
 	"\rWalletService\x12\xcb\x01\n" +
 	"\x16ListStaticRenewalTerms\x12*.proxycontrol.v1.StaticRenewalTermsRequest\x1a#.proxycontrol.v1.StaticRenewalTerms\"`\xbaG3\x121查询所选静态 IP 共同支持的续费租期\x82\xd3\xe4\x93\x02$:\x01*\"\x1f/v1/tenant/static-renewal-terms\x12\xbf\x01\n" +
 	"\x12QuoteStaticRenewal\x12*.proxycontrol.v1.StaticRenewalQuoteRequest\x1a#.proxycontrol.v1.StaticRenewalQuote\"X\xbaG*\x12(逐项确认静态 IP 保号续费报价\x82\xd3\xe4\x93\x02%:\x01*\" /v1/tenant/static-renewal-quotes\x12\xa7\x01\n" +
@@ -3605,8 +3606,8 @@ const file_proxycontrol_v1_wallet_proto_rawDesc = "" +
 	"\x13QuoteStaticPurchase\x12+.proxycontrol.v1.StaticPurchaseQuoteRequest\x1a$.proxycontrol.v1.StaticPurchaseQuote\"b\xbaG3\x121生成当前租户的静态 IP 报价确认凭证\x82\xd3\xe4\x93\x02&:\x01*\"!/v1/tenant/static-purchase-quotes\x12\xa4\x01\n" +
 	"\x10PurchaseStaticIP\x12(.proxycontrol.v1.PurchaseStaticIPRequest\x1a\x1e.proxycontrol.v1.PurchaseOrder\"F\xbaG \x12\x1e按确认报价购买静态 IP\x82\xd3\xe4\x93\x02\x1d:\x01*\"\x18/v1/tenant/static-orders\x12\xa1\x01\n" +
 	"\rListStaticIPs\x12\x1c.proxycontrol.v1.BaseRequest\x1a\x1a.proxycontrol.v1.StaticIPs\"V\xbaG6\x124查看当前租户的静态 IP 分配及到期记录\x82\xd3\xe4\x93\x02\x17\x12\x15/v1/tenant/static-ips\x12\xce\x01\n" +
-	"\x1aClaimStaticIPExpiryNotices\x12\x1c.proxycontrol.v1.BaseRequest\x1a&.proxycontrol.v1.StaticIPExpiryNotices\"j\xbaG9\x127领取当前租户尚未提示的静态 IP 到期提醒\x82\xd3\xe4\x93\x02(:\x01*\"#/v1/tenant/static-ip-expiry-notices\x12\xcb\x01\n" +
-	"\x11GetStaticIPConfig\x12&.proxycontrol.v1.StaticIPConfigRequest\x1a\x19.proxycontrol.v1.StaticIP\"s\xbaG3\x121查看当前租户的单个静态 IP 接入信息\x82\xd3\xe4\x93\x027\x125/v1/tenant/static-ips/{supplier_item_id}/proxy-config\x12\xdc\x01\n" +
+	"\x1aClaimStaticIPExpiryNotices\x12\x1c.proxycontrol.v1.BaseRequest\x1a&.proxycontrol.v1.StaticIPExpiryNotices\"j\xbaG9\x127领取当前租户尚未提示的静态 IP 到期提醒\x82\xd3\xe4\x93\x02(:\x01*\"#/v1/tenant/static-ip-expiry-notices\x12\xc8\x01\n" +
+	"\x11GetStaticIPConfig\x12&.proxycontrol.v1.StaticIPConfigRequest\x1a\x19.proxycontrol.v1.StaticIP\"p\xbaG3\x121查看当前租户的单个静态 IP 接入信息\x82\xd3\xe4\x93\x024\x122/v1/tenant/static-ips/{allocation_id}/proxy-config\x12\xdc\x01\n" +
 	"\x1aListPendingStaticPurchases\x12..proxycontrol.v1.PendingStaticPurchasesRequest\x1a'.proxycontrol.v1.PendingStaticPurchases\"e\xbaG6\x124查看超过 24 小时未确认的静态采购订单\x82\xd3\xe4\x93\x02&\x12$/v1/operations/orders/static-pending\x12\xe9\x01\n" +
 	"\x15ResolveStaticPurchase\x12-.proxycontrol.v1.ResolveStaticPurchaseRequest\x1a\x1e.proxycontrol.v1.PurchaseOrder\"\x80\x01\xbaG,\x12*核实并处理静态采购的剩余交付\x82\xd3\xe4\x93\x02K:\x01*\"F/v1/operations/tenants/{tenant_id}/orders/{order_id}/static-resolution\x12\xa2\x01\n" +
 	"\vFindTenants\x12(.proxycontrol.v1.FindWalletTenantRequest\x1a\x1d.proxycontrol.v1.WalletTenant\"J\xbaG)\x12'按主账号名或手机号查找租户\x82\xd3\xe4\x93\x02\x18\x12\x16/v1/operations/tenants\x12\x99\x01\n" +
@@ -3620,17 +3621,17 @@ const file_proxycontrol_v1_wallet_proto_rawDesc = "" +
 	"\x1aListOperatorPurchaseOrders\x12..proxycontrol.v1.OperatorPurchaseOrdersRequest\x1a\x1f.proxycontrol.v1.PurchaseOrders\"H\xbaG\x14\x12\x12筛选租户订单\x82\xd3\xe4\x93\x02+\x12)/v1/operations/tenants/{tenant_id}/orders\x12\xa5\x01\n" +
 	"\x1aListCustomerPurchaseOrders\x12..proxycontrol.v1.CustomerPurchaseOrdersRequest\x1a\x1f.proxycontrol.v1.PurchaseOrders\"6\xbaG\x1a\x12\x18筛选当前租户订单\x82\xd3\xe4\x93\x02\x13\x12\x11/v1/tenant/orders\x12\xc4\x01\n" +
 	"\x18GetOperatorPurchaseOrder\x12-.proxycontrol.v1.OperatorPurchaseOrderRequest\x1a\x1e.proxycontrol.v1.PurchaseOrder\"Y\xbaG\x1a\x12\x18查看租户订单详情\x82\xd3\xe4\x93\x026\x124/v1/operations/tenants/{tenant_id}/orders/{order_id}\x12\xb2\x01\n" +
-	"\x18GetCustomerPurchaseOrder\x12-.proxycontrol.v1.CustomerPurchaseOrderRequest\x1a\x1e.proxycontrol.v1.PurchaseOrder\"G\xbaG \x12\x1e查看当前租户订单详情\x82\xd3\xe4\x93\x02\x1e\x12\x1c/v1/tenant/orders/{order_id}B\x9b\x03\xbaG\xd2\x02\"\xcf\x02\n" +
-	"\xcc\x02\n" +
-	"\x1c/v1/tenant/static-ips:export\x12\xab\x022\xa8\x02\n" +
-	"\rWalletService\x12#导出所选可用静态 IP 的 TXT*\x1dWalletService_ExportStaticIPs:{\n" +
-	"y\x12u\n" +
-	"s\n" +
-	"\x10application/json\x12_\n" +
-	"]\n" +
-	"[\xba\x01\x11supplier_item_ids\xca\x01\x06object\xfa\x01;\n" +
-	"9\n" +
-	"\x11supplier_item_ids\x12$\n" +
+	"\x18GetCustomerPurchaseOrder\x12-.proxycontrol.v1.CustomerPurchaseOrderRequest\x1a\x1e.proxycontrol.v1.PurchaseOrder\"G\xbaG \x12\x1e查看当前租户订单详情\x82\xd3\xe4\x93\x02\x1e\x12\x1c/v1/tenant/orders/{order_id}B\x95\x03\xbaG\xcc\x02\"\xc9\x02\n" +
+	"\xc6\x02\n" +
+	"\x1c/v1/tenant/static-ips:export\x12\xa5\x022\xa2\x02\n" +
+	"\rWalletService\x12#导出所选可用静态 IP 的 TXT*\x1dWalletService_ExportStaticIPs:u\n" +
+	"s\x12o\n" +
+	"m\n" +
+	"\x10application/json\x12Y\n" +
+	"W\n" +
+	"U\xba\x01\x0eallocation_ids\xca\x01\x06object\xfa\x018\n" +
+	"6\n" +
+	"\x0eallocation_ids\x12$\n" +
 	"\"\x90\x01\xe8\a\x98\x01\x01\xa0\x01\x01\xca\x01\x05array\xf2\x01\r\n" +
 	"\v\n" +
 	"\t\xca\x01\x06string\x18\x01BV\x12T\n" +

@@ -168,8 +168,8 @@ test('仪表板展示余额、上海业务日用量和待处理事项，通知�
     route.fulfill({ json: { terms: [{ term: 'yp1', term_days: 30 }] } }));
   await page.route('**/v1/tenant/static-renewal-quotes', route =>
     route.fulfill({
-      json: { lines: route.request().postDataJSON().supplier_item_ids.map(id => ({
-        supplier_item_id: id, ip: '192.0.2.1', term_days: 30, unit_minor: '10000', original_expiry: expiry,
+      json: { lines: route.request().postDataJSON().allocation_ids.map(id => ({
+        allocation_id: id, ip: '192.0.2.1', term_days: 30, unit_minor: '10000', original_expiry: expiry,
       })) },
     }));
   await page.goto('/console')

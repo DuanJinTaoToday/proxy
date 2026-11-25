@@ -54,6 +54,7 @@ type StaticQuote struct {
 
 type StaticAllocation struct {
 	NodeID                int64
+	AllocationID          string
 	SupplierItemID        string
 	OrderID               int64
 	IP                    string

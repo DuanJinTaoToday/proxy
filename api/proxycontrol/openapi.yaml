@@ -1143,14 +1143,14 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/proxycontrol.v1.StaticIPs'
-    /v1/tenant/static-ips/{supplierItemId}/proxy-config:
+    /v1/tenant/static-ips/{allocationId}/proxy-config:
         get:
             tags:
                 - WalletService
             summary: 查看当前租户的单个静态 IP 接入信息
             operationId: WalletService_GetStaticIPConfig
             parameters:
-                - name: supplierItemId
+                - name: allocationId
                   in: path
                   description: 需要查看接入信息的分配 ID。
                   required: true
@@ -1174,10 +1174,10 @@ paths:
                     application/json:
                         schema:
                             required:
-                                - supplier_item_ids
+                                - allocation_ids
                             type: object
                             properties:
-                                supplier_item_ids:
+                                allocation_ids:
                                     maxItems: 1000
                                     minItems: 1
                                     uniqueItems: true
@@ -1838,7 +1838,7 @@ components:
                     type: array
                     items:
                         type: string
-                    description: 续费订单返回仍待核实的皇冠明细 ID。购买订单为空。
+                    description: 续费订单返回仍待核实的平台分配 ID。购买订单为空。
         proxycontrol.v1.PendingStaticPurchases:
             type: object
             properties:
@@ -2015,9 +2015,9 @@ components:
                     type: integer
                     description: 实际到账的套餐数量，或实际交付、续费的 IP 数量。
                     format: int32
-                supplierItemId:
+                allocationId:
                     type: string
-                    description: 静态续费的皇冠明细 ID。其他订单省略。
+                    description: 静态续费的平台分配 ID。其他订单省略。
                 outcome:
                     type: string
                     description: 静态续费的逐项结果 pending、succeeded 或 failed。其他订单省略。
@@ -2293,9 +2293,9 @@ components:
         proxycontrol.v1.StaticIP:
             type: object
             properties:
-                supplierItemId:
+                allocationId:
                     type: string
-                    description: 当前分配的皇冠明细 ID。
+                    description: 稳定的平台分配 ID。
                 orderId:
                     type: string
                     description: 对应平台购买订单号。
@@ -2494,9 +2494,9 @@ components:
         proxycontrol.v1.StaticRenewalQuoteLine:
             type: object
             properties:
-                supplierItemId:
+                allocationId:
                     type: string
-                    description: 报价对应的皇冠明细 ID。
+                    description: 报价对应的平台分配 ID。
                 ip:
                     type: string
                     description: 保留的原 IP。
@@ -2514,18 +2514,18 @@ components:
         proxycontrol.v1.StaticRenewalQuoteRequest:
             type: object
             properties:
-                supplierItemIds:
+                allocationIds:
                     type: array
                     items:
                         type: string
-                    description: 属于当前租户且未到期的皇冠明细 ID，单个为长度 1。
+                    description: 属于当前租户且未到期的平台分配 ID，单个为长度 1。
                 term:
                     type: string
                     description: 统一的皇冠租期代码。
         proxycontrol.v1.StaticRenewalRequest:
             type: object
             properties:
-                supplierItemIds:
+                allocationIds:
                     type: array
                     items:
                         type: string
@@ -2548,9 +2548,9 @@ components:
                 orderId:
                     type: string
                     description: 平台续费订单 ID。
-                supplierItemId:
+                allocationId:
                     type: string
-                    description: 需要核实的皇冠明细 ID。
+                    description: 需要核实的平台分配 ID。
                 evidence:
                     type: string
                     description: 运营核实依据。
@@ -2581,11 +2581,11 @@ components:
         proxycontrol.v1.StaticRenewalTermsRequest:
             type: object
             properties:
-                supplierItemIds:
+                allocationIds:
                     type: array
                     items:
                         type: string
-                    description: 属于当前租户且可续费的皇冠明细 ID，单个为长度 1。
+                    description: 属于当前租户且可续费的平台分配 ID，单个为长度 1。
         proxycontrol.v1.StickySession:
             type: object
             properties:

@@ -46,7 +46,7 @@ async function comparePrototype(browser, info, order, confirmedItemId, closeEvid
           label: item.specification,
           quantity: 1,
           unitCents: Number(item.unit_minor),
-          delivered: item.supplier_item_id === confirmedItemId ? delivered : 0,
+          delivered: item.allocation_id === confirmedItemId ? delivered : 0,
         })),
       }
       await reference.evaluate(order => {
@@ -108,9 +108,9 @@ test('续费满 24 小时转运营，按 IP 确认与退款，迟到和重复通
     expect(allocated).toHaveLength(2)
     confirmed = allocated[0]
     refunded = allocated[1]
-    await fixture('/fixture/renewals/delay', { id: Number(confirmed.supplier_item_id) })
-    await fixture('/fixture/renewals/delay', { id: Number(refunded.supplier_item_id) })
-    const renewal = { supplier_item_ids: [confirmed.supplier_item_id, refunded.supplier_item_id], term: 'yp1' }
+    await fixture('/fixture/renewals/delay', { ip: confirmed.ip })
+    await fixture('/fixture/renewals/delay', { ip: refunded.ip })
+    const renewal = { allocation_ids: [confirmed.allocation_id, refunded.allocation_id], term: 'yp1' }
     const quote = await json(await request.post('/v1/tenant/static-renewal-quotes', { headers: customer, data: renewal }))
     order = await json(await request.post('/v1/tenant/static-renewal-orders', {
       headers: customer, data: { ...renewal, confirmation_token: quote.confirmation_token, request_key: randomUUID() },
@@ -123,7 +123,7 @@ test('续费满 24 小时转运营，按 IP 确认与退款，迟到和重复通
 
   const resolution = `${tenantPath}/orders/${order.id}/renewal-resolution`
   const pendingOrders = async () => (await json(await request.get('/v1/operations/orders/static-pending', { headers: staff }))).purchases ?? []
-  const close = { supplier_item_id: refunded.supplier_item_id, close_unknown: true, evidence: '受控供应商晚到结果' }
+  const close = { allocation_id: refunded.allocation_id, close_unknown: true, evidence: '受控供应商晚到结果' }
   const targetInQueue = queue => queue.getByRole('row').filter({ has: queue.getByText(order.id, { exact: true }) })
   const dialog = page.getByRole('dialog', { name: '核实静态订单' })
 
@@ -135,7 +135,7 @@ test('续费满 24 小时转运营，按 IP 确认与退款，迟到和重复通
 
   setOrderAge(order.id, 24 * 3600)
   expect((await pendingOrders()).find(item => item.order_id === order.id)?.pending_renewal_items)
-    .toEqual(expect.arrayContaining([confirmed.supplier_item_id, refunded.supplier_item_id]))
+    .toEqual(expect.arrayContaining([confirmed.allocation_id, refunded.allocation_id]))
   await page.reload()
   await expect(targetInQueue(page)).toContainText('待运营核实')
   await targetInQueue(page).getByRole('button', { name: '核实' }).click()
@@ -154,7 +154,7 @@ test('续费满 24 小时转运营，按 IP 确认与退款，迟到和重复通
   await page.getByRole('button', { name: /^Language/ }).click()
   await page.getByRole('menuitem', { name: '简体中文', exact: true }).click()
   await targetInQueue(page).getByRole('button', { name: '核实' }).click()
-  await fixture('/fixture/renewals/confirm', { id: Number(confirmed.supplier_item_id) })
+  await fixture('/fixture/renewals/confirm', { ip: confirmed.ip })
   await dialog.getByRole('row').filter({ hasText: confirmed.ip }).getByRole('radio').press('Space')
   await dialog.getByRole('textbox', { name: /核实依据/ }).fill('核对皇冠明细的顺延时间')
   await dialog.getByRole('button', { name: '保存', exact: true }).click()
@@ -191,7 +191,7 @@ test('续费满 24 小时转运营，按 IP 确认与退款，迟到和重复通
 
   setOrderAge(order.id, 72 * 3600)
   expect((await pendingOrders()).find(item => item.order_id === order.id)).toMatchObject({
-    can_close: true, pending_renewal_items: [refunded.supplier_item_id],
+    can_close: true, pending_renewal_items: [refunded.allocation_id],
   })
   await page.reload()
   await expect(targetInQueue(page)).toContainText('可关闭')
@@ -209,15 +209,15 @@ test('续费满 24 小时转运营，按 IP 确认与退款，迟到和重复通
   await screenshot(page, info, '12b-renewal-queue-after-refund')
 
   await json(await request.post(resolution, { headers: staff, data: close }))
-  await fixture('/fixture/renewals/confirm', { id: Number(refunded.supplier_item_id) })
+  await fixture('/fixture/renewals/confirm', { ip: refunded.ip })
   await json(await request.post(`/v1/tenant/static-renewal-orders/${order.id}/recheck`, { headers: customer, data: {} }))
-  await json(await request.post(resolution, { headers: staff, data: { supplier_item_id: refunded.supplier_item_id, evidence: '退款后收到供应商确认' } }))
+  await json(await request.post(resolution, { headers: staff, data: { allocation_id: refunded.allocation_id, evidence: '退款后收到供应商确认' } }))
 
   const final = await json(await request.get(`/v1/tenant/orders/${order.id}`, { headers: customer }))
   expect(final).toMatchObject({ status: 'partial', delivered_count: '1', settled_minor: '900', refunded_minor: '900' })
   expect(final.items).toEqual(expect.arrayContaining([
-    expect.objectContaining({ supplier_item_id: confirmed.supplier_item_id, outcome: 'succeeded' }),
-    expect.objectContaining({ supplier_item_id: refunded.supplier_item_id, outcome: 'failed' }),
+    expect.objectContaining({ allocation_id: confirmed.allocation_id, outcome: 'succeeded' }),
+    expect.objectContaining({ allocation_id: refunded.allocation_id, outcome: 'failed' }),
   ]))
   expect(final.wallet_entries).toHaveLength(2)
   expect(final.wallet_entries).toEqual(expect.arrayContaining([
@@ -225,16 +225,16 @@ test('续费满 24 小时转运营，按 IP 确认与退款，迟到和重复通
     expect.objectContaining({ kind: 'release', before_minor: '6400', after_minor: '7300' }),
   ]))
   const currentIPs = await ips()
-  const renewed = currentIPs.find(ip => ip.supplier_item_id === confirmed.supplier_item_id)
+  const renewed = currentIPs.find(ip => ip.allocation_id === confirmed.allocation_id)
   expect(renewed.ip).toBe(confirmed.ip)
   expect(Date.parse(renewed.expires_at)).toBe(Date.parse(confirmed.expires_at) + 30 * 86_400_000)
-  expect(currentIPs.find(ip => ip.supplier_item_id === refunded.supplier_item_id)).toMatchObject({
+  expect(currentIPs.find(ip => ip.allocation_id === refunded.allocation_id)).toMatchObject({
     ip: refunded.ip, expires_at: refunded.expires_at,
   })
   expect(await balance()).toBe('7300')
   await info.attach('renewal-settlement', {
-    body: JSON.stringify({ order: final, ips: currentIPs.map(({ supplier_item_id, ip, expires_at }) => ({ supplier_item_id, ip, expires_at })) }, null, 2),
+    body: JSON.stringify({ order: final, ips: currentIPs.map(({ allocation_id, ip, expires_at }) => ({ allocation_id, ip, expires_at })) }, null, 2),
     contentType: 'application/json',
   })
-  await comparePrototype(browser, info, order, confirmed.supplier_item_id, close.evidence)
+  await comparePrototype(browser, info, order, confirmed.allocation_id, close.evidence)
 })

@@ -24,9 +24,9 @@ option (openapi.v3.document) = {
           name: "application/json"
           value: { schema: { schema: {
             type: "object"
-            required: "supplier_item_ids"
+            required: "allocation_ids"
             properties: { additional_properties: {
-              name: "supplier_item_ids"
+              name: "allocation_ids"
               value: { schema: { type: "array" min_items: 1 max_items: 1000 unique_items: true items: { schema_or_reference: { schema: { type: "string" } } } } }
             } }
           } } }
@@ -94,7 +94,7 @@ service WalletService {
   }
 
   rpc GetStaticIPConfig(StaticIPConfigRequest) returns (StaticIP) {
-    option (google.api.http) = {get: "/v1/tenant/static-ips/{supplier_item_id}/proxy-config"};
+    option (google.api.http) = {get: "/v1/tenant/static-ips/{allocation_id}/proxy-config"};
     option (openapi.v3.operation) = {summary: "查看当前租户的单个静态 IP 接入信息"};
   }
 
@@ -321,6 +321,8 @@ message PurchaseOrder {
 }
 
 message PurchaseOrderItem {
+  reserved 8;
+  reserved "supplier_item_id";
   // 订单内的明细序号，从 1 开始。
   int32 position = 1;
   // 下单时锁定的商品规格描述。
@@ -335,8 +337,8 @@ message PurchaseOrderItem {
   int32 quantity = 6;
   // 实际到账的套餐数量，或实际交付、续费的 IP 数量。
   int32 delivered_count = 7;
-  // 静态续费的皇冠明细 ID。其他订单省略。
-  string supplier_item_id = 8;
+  // 静态续费的平台分配 ID。其他订单省略。
+  string allocation_id = 10;
   // 静态续费的逐项结果 pending、succeeded 或 failed。其他订单省略。
   string outcome = 9;
 }
@@ -521,8 +523,10 @@ message PurchaseStaticIPRequest {
 }
 
 message StaticIP {
-  // 当前分配的皇冠明细 ID。
-  string supplier_item_id = 1;
+  reserved 1;
+  reserved "supplier_item_id";
+  // 稳定的平台分配 ID。
+  string allocation_id = 11;
   // 对应平台购买订单号。
   int64 order_id = 2;
   // 代理 IP。
@@ -549,13 +553,17 @@ message StaticIPs {
 }
 
 message StaticIPConfigRequest {
+  reserved 1;
+  reserved "supplier_item_id";
   // 需要查看接入信息的分配 ID。
-  string supplier_item_id = 1 [(validate.rules).string = {min_len: 1, max_bytes: 128}];
+  string allocation_id = 2 [(validate.rules).string = {min_len: 1, max_bytes: 128}];
 }
 
 message StaticIPExportRequest {
+  reserved 1;
+  reserved "supplier_item_ids";
   // 选中且仍可用的分配 ID。一次最多 1000 项。
-  repeated string supplier_item_ids = 1 [(validate.rules).repeated = {min_items: 1, max_items: 1000, unique: true, items: {string: {min_len: 1, max_bytes: 128}}}];
+  repeated string allocation_ids = 2 [(validate.rules).repeated = {min_items: 1, max_items: 1000, unique: true, items: {string: {min_len: 1, max_bytes: 128}}}];
 }
 
 message ResolveStaticPurchaseRequest {
@@ -591,7 +599,7 @@ message PendingStaticPurchase {
   int64 delivered_count = 5;
   // 超过 72 小时且可释放未知结果的剩余预扣。
   bool can_close = 6;
-  // 续费订单返回仍待核实的皇冠明细 ID。购买订单为空。
+  // 续费订单返回仍待核实的平台分配 ID。购买订单为空。
   repeated string pending_renewal_items = 7;
 }
 
@@ -608,8 +616,10 @@ message StaticIPExpiryNotices {
 }
 
 message StaticRenewalTermsRequest {
-  // 属于当前租户且可续费的皇冠明细 ID，单个为长度 1。
-  repeated string supplier_item_ids = 1 [(validate.rules).repeated = {min_items: 1, max_items: 25, unique: true, items: {string: {min_len: 1, max_bytes: 128}}}];
+  reserved 1;
+  reserved "supplier_item_ids";
+  // 属于当前租户且可续费的平台分配 ID，单个为长度 1。
+  repeated string allocation_ids = 2 [(validate.rules).repeated = {min_items: 1, max_items: 25, unique: true, items: {string: {min_len: 1, max_bytes: 128}}}];
 }
 
 message StaticRenewalTerm {
@@ -625,15 +635,19 @@ message StaticRenewalTerms {
 }
 
 message StaticRenewalQuoteRequest {
-  // 属于当前租户且未到期的皇冠明细 ID，单个为长度 1。
-  repeated string supplier_item_ids = 1 [(validate.rules).repeated = {min_items: 1, max_items: 25, unique: true, items: {string: {min_len: 1, max_bytes: 128}}}];
+  reserved 1;
+  reserved "supplier_item_ids";
+  // 属于当前租户且未到期的平台分配 ID，单个为长度 1。
+  repeated string allocation_ids = 3 [(validate.rules).repeated = {min_items: 1, max_items: 25, unique: true, items: {string: {min_len: 1, max_bytes: 128}}}];
   // 统一的皇冠租期代码。
   string term = 2 [(validate.rules).string = {min_len: 1, max_bytes: 16}];
 }
 
 message StaticRenewalQuoteLine {
-  // 报价对应的皇冠明细 ID。
-  string supplier_item_id = 1;
+  reserved 1;
+  reserved "supplier_item_id";
+  // 报价对应的平台分配 ID。
+  string allocation_id = 6;
   // 保留的原 IP。
   string ip = 2;
   // 该 IP 的续费价，人民币分。
@@ -654,8 +668,10 @@ message StaticRenewalQuote {
 }
 
 message StaticRenewalRequest {
+  reserved 1;
+  reserved "supplier_item_ids";
   // 已确认的全部分配 ID。
-  repeated string supplier_item_ids = 1 [(validate.rules).repeated = {min_items: 1, max_items: 25, unique: true, items: {string: {min_len: 1, max_bytes: 128}}}];
+  repeated string allocation_ids = 5 [(validate.rules).repeated = {min_items: 1, max_items: 25, unique: true, items: {string: {min_len: 1, max_bytes: 128}}}];
   // 已确认的统一租期代码。
   string term = 2 [(validate.rules).string = {min_len: 1, max_bytes: 16}];
   // 单次续费的幂等键。结果未知时沿用原值。
@@ -665,12 +681,14 @@ message StaticRenewalRequest {
 }
 
 message StaticRenewalResolutionRequest {
+  reserved 3;
+  reserved "supplier_item_id";
   // 待核实订单所属租户。
   string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_bytes: 64}];
   // 平台续费订单 ID。
   int64 order_id = 2 [(validate.rules).int64.gt = 0];
-  // 需要核实的皇冠明细 ID。
-  string supplier_item_id = 3 [(validate.rules).string = {min_len: 1, max_bytes: 128}];
+  // 需要核实的平台分配 ID。
+  string allocation_id = 7 [(validate.rules).string = {min_len: 1, max_bytes: 128}];
   // 运营核实依据。
   string evidence = 4 [(validate.rules).string = {min_len: 1, max_bytes: 500}];
   // 满 72 小时后关闭结果未知的明细，默认仅查单。

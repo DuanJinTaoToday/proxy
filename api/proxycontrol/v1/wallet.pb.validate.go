@@ -1796,7 +1796,7 @@ func (m *PurchaseOrderItem) validate(all bool) error {
 
 	// no validation rules for DeliveredCount
 
-	// no validation rules for SupplierItemId
+	// no validation rules for AllocationId
 
 	// no validation rules for Outcome
 
@@ -4438,7 +4438,7 @@ func (m *StaticIP) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for SupplierItemId
+	// no validation rules for AllocationId
 
 	// no validation rules for OrderId
 
@@ -4717,9 +4717,9 @@ func (m *StaticIPConfigRequest) validate(all bool) error {
 
 	var errors []error
 
-	if utf8.RuneCountInString(m.GetSupplierItemId()) < 1 {
+	if utf8.RuneCountInString(m.GetAllocationId()) < 1 {
 		err := StaticIPConfigRequestValidationError{
-			field:  "SupplierItemId",
+			field:  "AllocationId",
 			reason: "value length must be at least 1 runes",
 		}
 		if !all {
@@ -4728,9 +4728,9 @@ func (m *StaticIPConfigRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if len(m.GetSupplierItemId()) > 128 {
+	if len(m.GetAllocationId()) > 128 {
 		err := StaticIPConfigRequestValidationError{
-			field:  "SupplierItemId",
+			field:  "AllocationId",
 			reason: "value length must be at most 128 bytes",
 		}
 		if !all {
@@ -4841,9 +4841,9 @@ func (m *StaticIPExportRequest) validate(all bool) error {
 
 	var errors []error
 
-	if l := len(m.GetSupplierItemIds()); l < 1 || l > 1000 {
+	if l := len(m.GetAllocationIds()); l < 1 || l > 1000 {
 		err := StaticIPExportRequestValidationError{
-			field:  "SupplierItemIds",
+			field:  "AllocationIds",
 			reason: "value must contain between 1 and 1000 items, inclusive",
 		}
 		if !all {
@@ -4852,14 +4852,14 @@ func (m *StaticIPExportRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	_StaticIPExportRequest_SupplierItemIds_Unique := make(map[string]struct{}, len(m.GetSupplierItemIds()))
+	_StaticIPExportRequest_AllocationIds_Unique := make(map[string]struct{}, len(m.GetAllocationIds()))
 
-	for idx, item := range m.GetSupplierItemIds() {
+	for idx, item := range m.GetAllocationIds() {
 		_, _ = idx, item
 
-		if _, exists := _StaticIPExportRequest_SupplierItemIds_Unique[item]; exists {
+		if _, exists := _StaticIPExportRequest_AllocationIds_Unique[item]; exists {
 			err := StaticIPExportRequestValidationError{
-				field:  fmt.Sprintf("SupplierItemIds[%v]", idx),
+				field:  fmt.Sprintf("AllocationIds[%v]", idx),
 				reason: "repeated value must contain unique items",
 			}
 			if !all {
@@ -4867,12 +4867,12 @@ func (m *StaticIPExportRequest) validate(all bool) error {
 			}
 			errors = append(errors, err)
 		} else {
-			_StaticIPExportRequest_SupplierItemIds_Unique[item] = struct{}{}
+			_StaticIPExportRequest_AllocationIds_Unique[item] = struct{}{}
 		}
 
 		if utf8.RuneCountInString(item) < 1 {
 			err := StaticIPExportRequestValidationError{
-				field:  fmt.Sprintf("SupplierItemIds[%v]", idx),
+				field:  fmt.Sprintf("AllocationIds[%v]", idx),
 				reason: "value length must be at least 1 runes",
 			}
 			if !all {
@@ -4883,7 +4883,7 @@ func (m *StaticIPExportRequest) validate(all bool) error {
 
 		if len(item) > 128 {
 			err := StaticIPExportRequestValidationError{
-				field:  fmt.Sprintf("SupplierItemIds[%v]", idx),
+				field:  fmt.Sprintf("AllocationIds[%v]", idx),
 				reason: "value length must be at most 128 bytes",
 			}
 			if !all {
@@ -5666,9 +5666,9 @@ func (m *StaticRenewalTermsRequest) validate(all bool) error {
 
 	var errors []error
 
-	if l := len(m.GetSupplierItemIds()); l < 1 || l > 25 {
+	if l := len(m.GetAllocationIds()); l < 1 || l > 25 {
 		err := StaticRenewalTermsRequestValidationError{
-			field:  "SupplierItemIds",
+			field:  "AllocationIds",
 			reason: "value must contain between 1 and 25 items, inclusive",
 		}
 		if !all {
@@ -5677,14 +5677,14 @@ func (m *StaticRenewalTermsRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	_StaticRenewalTermsRequest_SupplierItemIds_Unique := make(map[string]struct{}, len(m.GetSupplierItemIds()))
+	_StaticRenewalTermsRequest_AllocationIds_Unique := make(map[string]struct{}, len(m.GetAllocationIds()))
 
-	for idx, item := range m.GetSupplierItemIds() {
+	for idx, item := range m.GetAllocationIds() {
 		_, _ = idx, item
 
-		if _, exists := _StaticRenewalTermsRequest_SupplierItemIds_Unique[item]; exists {
+		if _, exists := _StaticRenewalTermsRequest_AllocationIds_Unique[item]; exists {
 			err := StaticRenewalTermsRequestValidationError{
-				field:  fmt.Sprintf("SupplierItemIds[%v]", idx),
+				field:  fmt.Sprintf("AllocationIds[%v]", idx),
 				reason: "repeated value must contain unique items",
 			}
 			if !all {
@@ -5692,12 +5692,12 @@ func (m *StaticRenewalTermsRequest) validate(all bool) error {
 			}
 			errors = append(errors, err)
 		} else {
-			_StaticRenewalTermsRequest_SupplierItemIds_Unique[item] = struct{}{}
+			_StaticRenewalTermsRequest_AllocationIds_Unique[item] = struct{}{}
 		}
 
 		if utf8.RuneCountInString(item) < 1 {
 			err := StaticRenewalTermsRequestValidationError{
-				field:  fmt.Sprintf("SupplierItemIds[%v]", idx),
+				field:  fmt.Sprintf("AllocationIds[%v]", idx),
 				reason: "value length must be at least 1 runes",
 			}
 			if !all {
@@ -5708,7 +5708,7 @@ func (m *StaticRenewalTermsRequest) validate(all bool) error {
 
 		if len(item) > 128 {
 			err := StaticRenewalTermsRequestValidationError{
-				field:  fmt.Sprintf("SupplierItemIds[%v]", idx),
+				field:  fmt.Sprintf("AllocationIds[%v]", idx),
 				reason: "value length must be at most 128 bytes",
 			}
 			if !all {
@@ -6063,9 +6063,9 @@ func (m *StaticRenewalQuoteRequest) validate(all bool) error {
 
 	var errors []error
 
-	if l := len(m.GetSupplierItemIds()); l < 1 || l > 25 {
+	if l := len(m.GetAllocationIds()); l < 1 || l > 25 {
 		err := StaticRenewalQuoteRequestValidationError{
-			field:  "SupplierItemIds",
+			field:  "AllocationIds",
 			reason: "value must contain between 1 and 25 items, inclusive",
 		}
 		if !all {
@@ -6074,14 +6074,14 @@ func (m *StaticRenewalQuoteRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	_StaticRenewalQuoteRequest_SupplierItemIds_Unique := make(map[string]struct{}, len(m.GetSupplierItemIds()))
+	_StaticRenewalQuoteRequest_AllocationIds_Unique := make(map[string]struct{}, len(m.GetAllocationIds()))
 
-	for idx, item := range m.GetSupplierItemIds() {
+	for idx, item := range m.GetAllocationIds() {
 		_, _ = idx, item
 
-		if _, exists := _StaticRenewalQuoteRequest_SupplierItemIds_Unique[item]; exists {
+		if _, exists := _StaticRenewalQuoteRequest_AllocationIds_Unique[item]; exists {
 			err := StaticRenewalQuoteRequestValidationError{
-				field:  fmt.Sprintf("SupplierItemIds[%v]", idx),
+				field:  fmt.Sprintf("AllocationIds[%v]", idx),
 				reason: "repeated value must contain unique items",
 			}
 			if !all {
@@ -6089,12 +6089,12 @@ func (m *StaticRenewalQuoteRequest) validate(all bool) error {
 			}
 			errors = append(errors, err)
 		} else {
-			_StaticRenewalQuoteRequest_SupplierItemIds_Unique[item] = struct{}{}
+			_StaticRenewalQuoteRequest_AllocationIds_Unique[item] = struct{}{}
 		}
 
 		if utf8.RuneCountInString(item) < 1 {
 			err := StaticRenewalQuoteRequestValidationError{
-				field:  fmt.Sprintf("SupplierItemIds[%v]", idx),
+				field:  fmt.Sprintf("AllocationIds[%v]", idx),
 				reason: "value length must be at least 1 runes",
 			}
 			if !all {
@@ -6105,7 +6105,7 @@ func (m *StaticRenewalQuoteRequest) validate(all bool) error {
 
 		if len(item) > 128 {
 			err := StaticRenewalQuoteRequestValidationError{
-				field:  fmt.Sprintf("SupplierItemIds[%v]", idx),
+				field:  fmt.Sprintf("AllocationIds[%v]", idx),
 				reason: "value length must be at most 128 bytes",
 			}
 			if !all {
@@ -6240,7 +6240,7 @@ func (m *StaticRenewalQuoteLine) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for SupplierItemId
+	// no validation rules for AllocationId
 
 	// no validation rules for Ip
 
@@ -6546,9 +6546,9 @@ func (m *StaticRenewalRequest) validate(all bool) error {
 
 	var errors []error
 
-	if l := len(m.GetSupplierItemIds()); l < 1 || l > 25 {
+	if l := len(m.GetAllocationIds()); l < 1 || l > 25 {
 		err := StaticRenewalRequestValidationError{
-			field:  "SupplierItemIds",
+			field:  "AllocationIds",
 			reason: "value must contain between 1 and 25 items, inclusive",
 		}
 		if !all {
@@ -6557,14 +6557,14 @@ func (m *StaticRenewalRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	_StaticRenewalRequest_SupplierItemIds_Unique := make(map[string]struct{}, len(m.GetSupplierItemIds()))
+	_StaticRenewalRequest_AllocationIds_Unique := make(map[string]struct{}, len(m.GetAllocationIds()))
 
-	for idx, item := range m.GetSupplierItemIds() {
+	for idx, item := range m.GetAllocationIds() {
 		_, _ = idx, item
 
-		if _, exists := _StaticRenewalRequest_SupplierItemIds_Unique[item]; exists {
+		if _, exists := _StaticRenewalRequest_AllocationIds_Unique[item]; exists {
 			err := StaticRenewalRequestValidationError{
-				field:  fmt.Sprintf("SupplierItemIds[%v]", idx),
+				field:  fmt.Sprintf("AllocationIds[%v]", idx),
 				reason: "repeated value must contain unique items",
 			}
 			if !all {
@@ -6572,12 +6572,12 @@ func (m *StaticRenewalRequest) validate(all bool) error {
 			}
 			errors = append(errors, err)
 		} else {
-			_StaticRenewalRequest_SupplierItemIds_Unique[item] = struct{}{}
+			_StaticRenewalRequest_AllocationIds_Unique[item] = struct{}{}
 		}
 
 		if utf8.RuneCountInString(item) < 1 {
 			err := StaticRenewalRequestValidationError{
-				field:  fmt.Sprintf("SupplierItemIds[%v]", idx),
+				field:  fmt.Sprintf("AllocationIds[%v]", idx),
 				reason: "value length must be at least 1 runes",
 			}
 			if !all {
@@ -6588,7 +6588,7 @@ func (m *StaticRenewalRequest) validate(all bool) error {
 
 		if len(item) > 128 {
 			err := StaticRenewalRequestValidationError{
-				field:  fmt.Sprintf("SupplierItemIds[%v]", idx),
+				field:  fmt.Sprintf("AllocationIds[%v]", idx),
 				reason: "value length must be at most 128 bytes",
 			}
 			if !all {
@@ -6800,9 +6800,9 @@ func (m *StaticRenewalResolutionRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if utf8.RuneCountInString(m.GetSupplierItemId()) < 1 {
+	if utf8.RuneCountInString(m.GetAllocationId()) < 1 {
 		err := StaticRenewalResolutionRequestValidationError{
-			field:  "SupplierItemId",
+			field:  "AllocationId",
 			reason: "value length must be at least 1 runes",
 		}
 		if !all {
@@ -6811,9 +6811,9 @@ func (m *StaticRenewalResolutionRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if len(m.GetSupplierItemId()) > 128 {
+	if len(m.GetAllocationId()) > 128 {
 		err := StaticRenewalResolutionRequestValidationError{
-			field:  "SupplierItemId",
+			field:  "AllocationId",
 			reason: "value length must be at most 128 bytes",
 		}
 		if !all {
