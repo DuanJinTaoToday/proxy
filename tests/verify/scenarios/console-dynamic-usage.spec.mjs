@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
 import { expect, test } from '@playwright/test'
 import { field, screenshot } from '../support/console.mjs'
+import { receivedCode } from '../support/mail.mjs'
 
 const dailyUsagePath = '/v1/tenant/usage/daily'
 const trafficAlertPath = '/v1/tenant/traffic-alert'
@@ -19,9 +20,11 @@ function sql(statement) {
   ], { cwd: new URL('../../../', import.meta.url) })
 }
 
-async function register(page, phone) {
+async function register(page, email) {
   await page.goto('/zh-CN/register')
-  await field(page, '手机号').fill(phone)
+  await field(page, '邮箱').fill(email)
+  await page.getByRole('button', { name: '发送验证码', exact: true }).click()
+  await field(page, '验证码').fill(await receivedCode(email))
   await field(page, '密码').fill('verify-usage-password')
   await page.getByRole('button', { name: '注册并登录', exact: true }).click()
   await expect(page).toHaveURL(/\/console$/)
@@ -36,8 +39,8 @@ const todo = page => page.getByRole('region', { name: '待处理', exact: true }
 test('数据统计使用上海业务日，可查询禁用账号历史并导出相同筛选的 CSV', async ({ page }, info) => {
   // Shanghai has already started May 16 while UTC is still on May 15.
   await page.clock.setFixedTime(new Date('2025-05-16T01:15:00+08:00'))
-  const phone = '13900000073'
-  await register(page, phone)
+  const email = 'tenant-13900000073@example.test'
+  await register(page, email)
   const activeId = randomUUID()
   const disabledId = randomUUID()
   const oldUpdate = '2025-05-15T15:10:12Z'
@@ -45,7 +48,7 @@ test('数据统计使用上海业务日，可查询禁用账号历史并导出�
   const customUpdate = '2025-05-15T16:00:00Z'
   // Prepare known metered totals for this tenant only. All list and export responses come from the live API.
   sql(`
-    CREATE TEMP TABLE usage_tenant AS SELECT tenant_id FROM tenant_admins WHERE phone_e164 = '+86${phone}';
+    CREATE TEMP TABLE usage_tenant AS SELECT tenant_id FROM tenant_admins WHERE email = '${email}';
     INSERT INTO gateways (id, name) VALUES ('usage-verify', 'Usage verification');
     INSERT INTO proxy_subaccounts (client_id, tenant_id, name, password_ciphertext, active)
       SELECT client_id, tenant_id, name, '', active FROM usage_tenant CROSS JOIN
@@ -175,10 +178,10 @@ test('数据统计使用上海业务日，可查询禁用账号历史并导出�
 })
 
 test('低余额阈值写入、修改和停用后，仪表板和通知按当前阈值展示', async ({ page }, info) => {
-  const phone = '13900000074'
-  await register(page, phone)
+  const email = 'tenant-13900000074@example.test'
+  await register(page, email)
   sql(`UPDATE tenant_balances SET available_bytes = 750000000
-    WHERE tenant_id = (SELECT tenant_id FROM tenant_admins WHERE phone_e164 = '+86${phone}')`)
+    WHERE tenant_id = (SELECT tenant_id FROM tenant_admins WHERE email = '${email}')`)
   await page.getByRole('menuitem', { name: '动态住宅代理-GB', exact: true }).click()
   await expect(page).toHaveURL(new RegExp(setupPagePath + '$'))
   await expect(page.getByRole('heading', { name: '低余额提醒', exact: true })).toBeVisible()

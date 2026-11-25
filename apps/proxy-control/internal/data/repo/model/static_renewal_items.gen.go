@@ -15,12 +15,12 @@ type StaticRenewalItem struct {
 	TenantID        string    `gorm:"column:tenant_id;type:text;primaryKey" json:"tenant_id"`
 	OrderID         int64     `gorm:"column:order_id;type:bigint;primaryKey" json:"order_id"`
 	Position        int32     `gorm:"column:position;type:integer;primaryKey" json:"position"`
-	SupplierItemID  string    `gorm:"column:supplier_item_id;type:text;not null" json:"supplier_item_id"`
 	SupplierOrderID string    `gorm:"column:supplier_order_id;type:text;not null" json:"supplier_order_id"`
 	OriginalIP      string    `gorm:"column:original_ip;type:text;not null" json:"original_ip"`
 	OriginalExpiry  time.Time `gorm:"column:original_expiry;type:timestamp with time zone;not null" json:"original_expiry"`
 	ExpectedExpiry  time.Time `gorm:"column:expected_expiry;type:timestamp with time zone;not null" json:"expected_expiry"`
 	Outcome         *string   `gorm:"column:outcome;type:text;not null;default:pending" json:"outcome"`
+	AllocationID    string    `gorm:"column:allocation_id;type:text;not null" json:"allocation_id"`
 }
 
 // TableName StaticRenewalItem's table name

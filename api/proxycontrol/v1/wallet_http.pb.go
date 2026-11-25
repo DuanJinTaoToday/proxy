@@ -83,7 +83,7 @@ func RegisterWalletServiceHTTPServer(s *http.Server, srv WalletServiceHTTPServer
 	r.Handle("POST", "/v1/tenant/static-orders", _WalletService_PurchaseStaticIP0_HTTP_Handler(srv))
 	r.Handle("GET", "/v1/tenant/static-ips", _WalletService_ListStaticIPs0_HTTP_Handler(srv))
 	r.Handle("POST", "/v1/tenant/static-ip-expiry-notices", _WalletService_ClaimStaticIPExpiryNotices0_HTTP_Handler(srv))
-	r.Handle("GET", "/v1/tenant/static-ips/{supplier_item_id}/proxy-config", _WalletService_GetStaticIPConfig0_HTTP_Handler(srv))
+	r.Handle("GET", "/v1/tenant/static-ips/{allocation_id}/proxy-config", _WalletService_GetStaticIPConfig0_HTTP_Handler(srv))
 	r.Handle("GET", "/v1/operations/orders/static-pending", _WalletService_ListPendingStaticPurchases0_HTTP_Handler(srv))
 	r.Handle("POST", "/v1/operations/tenants/{tenant_id}/orders/{order_id}/static-resolution", _WalletService_ResolveStaticPurchase0_HTTP_Handler(srv))
 	r.Handle("GET", "/v1/operations/tenants", _WalletService_FindTenants0_HTTP_Handler(srv))
@@ -727,7 +727,7 @@ func (c *WalletServiceHTTPClientImpl) GetOperatorPurchaseOrder(ctx context.Conte
 
 func (c *WalletServiceHTTPClientImpl) GetStaticIPConfig(ctx context.Context, in *StaticIPConfigRequest, opts ...http.CallOption) (*StaticIP, error) {
 	var out StaticIP
-	pattern := "/v1/tenant/static-ips/{supplier_item_id}/proxy-config"
+	pattern := "/v1/tenant/static-ips/{allocation_id}/proxy-config"
 	path := http.BuildPath(pattern, in, http.WithQueryParams())
 	opts = append([]http.CallOption{
 		http.Accept("application/protojson"),

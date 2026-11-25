@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { sessionPhone } from '@/features/auth'
+import { sessionEmail } from '@/features/auth'
 import { DynamicUsage } from '@/features/dynamic-proxy'
 </script>
 
 <template>
-  <DynamicUsage :key="sessionPhone" />
+  <DynamicUsage :key="sessionEmail" />
 </template>

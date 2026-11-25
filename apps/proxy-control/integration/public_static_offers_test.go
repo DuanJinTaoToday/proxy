@@ -55,6 +55,15 @@ func TestPublicStaticOfferPeakPreservesLiveCheckoutAndRenewal(t *testing.T) {
 			}
 			_, _ = fmt.Fprintf(w, `{"code":0,"data":{"order_id":32,"proxy_list":[{"id":33,"nid":3,"ip":"192.0.2.1","port":43000,"p_user":"customer","p_pass":"fixture","stoptime":%q}]}}`, expiry)
 		case "/open/api/order/renew":
+			var body struct {
+				IDs  []int64
+				Time string
+			}
+			if err := json.NewDecoder(req.Body).Decode(&body); err != nil || len(body.IDs) != 1 || body.IDs[0] != 33 || body.Time != "yp1" {
+				t.Errorf("unexpected supplier renewal request: %+v, %v", body, err)
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
 			renewed.Store(true)
 			_, _ = io.WriteString(w, `{"code":0,"data":[{"id":33,"stoptime":"2099-01-31 12:00:00"}]}`)
 		default:
@@ -128,9 +137,9 @@ func TestPublicStaticOfferPeakPreservesLiveCheckoutAndRenewal(t *testing.T) {
 		t.Fatal("budget exhaustion reached supplier via another specification")
 	}
 
-	const credentials = `{"phone":"13800004908","password":"catalog-test-password"}`
+	const credentials = `{"email":"tenant-13800004908@example.test","password":"catalog-test-password"}`
 	var tenant v1.TenantAccess
-	readProto(t, req("POST", "/v1/access/register", credentials, ""), &tenant)
+	readProto(t, registerWithEmail(t, f, credentials), &tenant)
 	var session v1.LoginResponse
 	readProto(t, req("POST", "/v1/access/login", credentials, ""), &session)
 	fundCatalogWallet(t, f.db, tenant.GetTenantId())
@@ -148,13 +157,20 @@ func TestPublicStaticOfferPeakPreservesLiveCheckoutAndRenewal(t *testing.T) {
 	if order.GetStatus() != "succeeded" || order.GetSettledMinor() != 1200 {
 		t.Fatalf("purchase under public peak did not settle at live prices: %v", &order)
 	}
+	var resources v1.StaticIPs
+	readProto(t, req("GET", "/v1/tenant/static-ips", "", token), &resources)
+	allocations := resources.GetAllocations()
+	if len(allocations) != 1 || allocations[0].GetOrderId() != order.GetId() || allocations[0].GetAllocationId() == "" {
+		t.Fatalf("purchase did not return a platform allocation: %v", &resources)
+	}
+	allocationID := allocations[0].GetAllocationId()
 	price.Store(14)
 	var renew v1.StaticRenewalQuote
 	const renewalQuote = "/v1/tenant/static-renewal-quotes"
 	const renewalOrder = "/v1/tenant/static-renewal-orders"
-	const renewalSpec = `{"supplier_item_ids":["33"],"term":"yp1"}`
+	renewalSpec := fmt.Sprintf(`{"allocation_ids":[%q],"term":"yp1"}`, allocationID)
 	renewalRequest := func(confirmation string) string {
-		return fmt.Sprintf(`{"supplier_item_ids":["33"],"term":"yp1","request_key":"verify-catalog-renew","confirmation_token":%q}`, confirmation)
+		return fmt.Sprintf(`{"allocation_ids":[%q],"term":"yp1","request_key":"verify-catalog-renew","confirmation_token":%q}`, allocationID, confirmation)
 	}
 	readProto(t, req("POST", renewalQuote, renewalSpec, token), &renew)
 	if len(renew.GetLines()) != 1 || renew.GetLines()[0].GetUnitMinor() != 1400 || exclusiveCalls.Load() != 4 {

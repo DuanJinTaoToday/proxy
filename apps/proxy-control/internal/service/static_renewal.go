@@ -10,7 +10,7 @@ import (
 
 func (s *Wallet) ListStaticRenewalTerms(ctx context.Context, req *v1.StaticRenewalTermsRequest) (*v1.StaticRenewalTerms, error) {
 	noStore(ctx)
-	terms, err := s.biz.ListStaticRenewalTerms(ctx, bearerToken(ctx), req.GetSupplierItemIds())
+	terms, err := s.biz.ListStaticRenewalTerms(ctx, bearerToken(ctx), req.GetAllocationIds())
 	if err != nil {
 		return nil, wallet.PublicError(err)
 	}
@@ -23,13 +23,13 @@ func (s *Wallet) ListStaticRenewalTerms(ctx context.Context, req *v1.StaticRenew
 
 func (s *Wallet) QuoteStaticRenewal(ctx context.Context, req *v1.StaticRenewalQuoteRequest) (*v1.StaticRenewalQuote, error) {
 	noStore(ctx)
-	quote, err := s.biz.QuoteStaticRenewal(ctx, bearerToken(ctx), wallet.StaticRenewalRequest{IDs: req.GetSupplierItemIds(), Term: req.GetTerm()})
+	quote, err := s.biz.QuoteStaticRenewal(ctx, bearerToken(ctx), wallet.StaticRenewalRequest{IDs: req.GetAllocationIds(), Term: req.GetTerm()})
 	if err != nil {
 		return nil, wallet.PublicError(err)
 	}
 	result := &v1.StaticRenewalQuote{ConfirmationToken: quote.ConfirmationToken, ExpiresAt: timestamppb.New(quote.ExpiresAt)}
 	for _, line := range quote.Lines {
-		result.Lines = append(result.Lines, &v1.StaticRenewalQuoteLine{SupplierItemId: line.ID, Ip: line.IP,
+		result.Lines = append(result.Lines, &v1.StaticRenewalQuoteLine{AllocationId: line.ID, Ip: line.IP,
 			UnitMinor: line.UnitMinor, TermDays: line.TermDays, OriginalExpiry: timestamppb.New(line.OriginalExpiry)})
 	}
 	return result, nil
@@ -38,7 +38,7 @@ func (s *Wallet) QuoteStaticRenewal(ctx context.Context, req *v1.StaticRenewalQu
 func (s *Wallet) RenewStatic(ctx context.Context, req *v1.StaticRenewalRequest) (*v1.PurchaseOrder, error) {
 	noStore(ctx)
 	order, err := s.biz.RenewStatic(ctx, bearerToken(ctx), wallet.StaticRenewalRequest{
-		IDs: req.GetSupplierItemIds(), Term: req.GetTerm(), Key: req.GetRequestKey(), ConfirmationToken: req.GetConfirmationToken(),
+		IDs: req.GetAllocationIds(), Term: req.GetTerm(), Key: req.GetRequestKey(), ConfirmationToken: req.GetConfirmationToken(),
 	})
 	return orderMessage(order), wallet.PublicError(err)
 }
@@ -52,7 +52,7 @@ func (s *Wallet) RecheckStaticRenewal(ctx context.Context, req *v1.CustomerPurch
 func (s *Wallet) ResolveStaticRenewal(ctx context.Context, req *v1.StaticRenewalResolutionRequest) (*v1.PurchaseOrder, error) {
 	noStore(ctx)
 	order, err := s.biz.ResolveStaticRenewal(ctx, bearerToken(ctx), wallet.StaticRenewalResolution{
-		TenantID: req.GetTenantId(), OrderID: req.GetOrderId(), ItemID: req.GetSupplierItemId(), Evidence: req.GetEvidence(),
+		TenantID: req.GetTenantId(), OrderID: req.GetOrderId(), ItemID: req.GetAllocationId(), Evidence: req.GetEvidence(),
 		CloseUnknown: req.GetCloseUnknown(), ConfirmedFailure: req.GetConfirmedFailure(),
 	})
 	return orderMessage(order), wallet.PublicError(err)

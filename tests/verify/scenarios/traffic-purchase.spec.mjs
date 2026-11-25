@@ -3,13 +3,13 @@ import { screenshot, signInTenant } from '../support/console.mjs'
 import { authenticatedApi, expectSettled, purchasePath, recharge, setSale, setTier, trafficRecords } from '../support/traffic.mjs'
 
 test('动态套餐开售、余额不足、报价变化与成交对账', async ({ page, playwright, baseURL }, info) => {
-  const phone = '13800000002'
+  const email = 'beta@example.test'
   const operator = await authenticatedApi(playwright, baseURL)
-  const tenant = await authenticatedApi(playwright, baseURL, { phone })
+  const tenant = await authenticatedApi(playwright, baseURL, { email })
 
   try {
     await setSale(operator, false)
-    await signInTenant(page, phone)
+    await signInTenant(page, email)
     await page.getByRole('menuitem', { name: '动态住宅代理-GB' }).click()
     await page.getByRole('tab', { name: '价格', exact: true }).click()
     await expect(page.getByText('暂未开放购买', { exact: true })).toBeVisible()

@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { expect, test } from '@playwright/test'
 import { screenshot, signInOperator, signInTenant } from '../support/console.mjs'
 import { authenticatedApi, json, purchasePath, recharge, setSale, setTier } from '../support/traffic.mjs'
+import { registerEmail } from '../support/mail.mjs'
 
 const tiersPath = '/v1/operations/traffic-packages'
 const staticSalePath = '/v1/operations/product-sales/static'
@@ -30,10 +31,10 @@ async function viewportEvidence(page, info, name) {
 }
 
 test('计费运营独立开售、调价和下架，公开报价及成交快照同步验证', async ({ page, request, playwright, baseURL }, info) => {
-  const phone = '139' + Date.now().toString().slice(-8)
-  await json(await request.post('/v1/access/register', { data: { phone, password: 'proxy-local-test' } }))
+  const email = 'catalog-' + Date.now() + '@example.test'
+  await json(await registerEmail(request, { email, password: 'proxy-local-test' }))
   const operator = await authenticatedApi(playwright, baseURL)
-  const tenant = await authenticatedApi(playwright, baseURL, { phone })
+  const tenant = await authenticatedApi(playwright, baseURL, { email })
   try {
     await setTier(operator, '5gb', '2000')
     await setTier(operator, '50gb', '18000')
@@ -89,7 +90,7 @@ test('计费运营独立开售、调价和下架，公开报价及成交快照�
     const visitorContext = await page.context().browser().newContext({ baseURL, ignoreHTTPSErrors: true })
     try {
       const customer = await customerContext.newPage()
-      await signInTenant(customer, phone)
+      await signInTenant(customer, email)
       await customer.goto('/console/dynamic/pricing')
       await expect(customer.getByRole('radio', { name: '5 GB 流量包' })).toBeVisible()
       const visitor = await visitorContext.newPage()

@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto'
 import { writeFile } from 'node:fs/promises'
 import { expect, test } from '@playwright/test'
 import { field, screenshot, signInOperator } from '../support/console.mjs'
+import { registerEmail } from '../support/mail.mjs'
 
 const pendingPath = '/v1/operations/orders/static-pending'
 const orderPath = '/v1/tenant/static-orders'
@@ -29,13 +30,11 @@ function setAge(order, seconds) {
 }
 
 test('运营在 24 小时后核实静态采购，72 小时后关闭剩余并只退一次', async ({ page, browser, request }, info) => {
-  const phone = '13900009101'
-  const { tenant_id } = await json(await request.post('/v1/access/register', {
-    data: { phone, password: 'proxy-local-test' },
-  }))
+  const email = 'tenant-13900009101@example.test'
+  const { tenant_id } = await json(await registerEmail(request, { email, password: 'proxy-local-test' }))
   const ops = await login(request, '/v1/operations/access/login', { username: 'operator' })
   const reader = await login(request, '/v1/operations/access/login', { username: 'operator-readonly' })
-  const tenant = await login(request, '/v1/access/login', { phone })
+  const tenant = await login(request, '/v1/access/login', { email })
   const tenantPath = '/v1/operations/tenants/' + tenant_id
 
   const request_key = randomUUID()
@@ -168,7 +167,7 @@ test('运营在 24 小时后核实静态采购，72 小时后关闭剩余并只�
   const probes = []
   for (const ip of delivered) {
     expect(Date.parse(ip.expires_at)).toBeGreaterThan(Date.now())
-    const config = await json(await request.get('/v1/tenant/static-ips/' + ip.supplier_item_id + '/proxy-config', { headers: tenant }))
+    const config = await json(await request.get('/v1/tenant/static-ips/' + ip.allocation_id + '/proxy-config', { headers: tenant }))
     expect(config).toMatchObject({ ip: '127.0.0.1', port: ip.port, username: 'fixture-user', password: 'fixture-pass' })
     const response = execFileSync('curl', [
       '--fail', '--silent', '--show-error', '--max-time', '10', '--noproxy', '',
@@ -178,7 +177,7 @@ test('运营在 24 小时后核实静态采购，72 小时后关闭剩余并只�
     const [body, status] = response.trim().split(/\r?\n/)
     expect(JSON.parse(body)).toEqual({ ok: true })
     expect(status).toBe('200')
-    probes.push({ supplier_item_id: ip.supplier_item_id, http_status: Number(status) })
+    probes.push({ allocation_id: ip.allocation_id, http_status: Number(status) })
   }
   const probeEvidence = info.outputPath('post-refund-socks5.json')
   await writeFile(probeEvidence, JSON.stringify({

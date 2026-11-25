@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -54,9 +55,9 @@ func TestStaticPurchaseAndIndependentSales(t *testing.T) {
 	execSQL(t, f.db, "INSERT INTO operators (id, username, password_hash) VALUES ('cashier','cashier',?)", testfixture.PasswordHash)
 	execSQL(t, f.db, "INSERT INTO operator_permissions (operator_id, permission) VALUES ('cashier','manage_billing')")
 	cashier := testfixture.Login(t, f.http, "cashier")
-	const credentials = `{"phone":"13800004801","password":"static-test-password"}`
+	const credentials = `{"email":"tenant-13800004801@example.test","password":"static-test-password"}`
 	var tenant v1.TenantAccess
-	readProto(t, testfixture.Request(f.http, "POST", "/v1/access/register", credentials, ""), &tenant)
+	readProto(t, registerWithEmail(t, f, credentials), &tenant)
 	var session v1.LoginResponse
 	readProto(t, testfixture.Request(f.http, "POST", "/v1/access/login", credentials, ""), &session)
 	fundCatalogWallet(t, f.db, tenant.GetTenantId())
@@ -190,22 +191,36 @@ func TestStaticPurchaseAndIndependentSales(t *testing.T) {
 		!strings.HasPrefix(ips.Allocations[0].GetExpiresAt().AsTime().String(), "2099-01-01 04:00:00") {
 		t.Fatalf("partial delivery was not immediately usable: %v", &ips)
 	}
+	var platform struct {
+		Allocations []struct {
+			ID string `json:"allocation_id"`
+		} `json:"allocations"`
+	}
+	if err := json.Unmarshal(req("GET", "/v1/tenant/static-ips", "", session.GetAccessToken()).Body.Bytes(), &platform); err != nil ||
+		len(platform.Allocations) != 1 || !strings.HasPrefix(platform.Allocations[0].ID, "sa_") {
+		t.Fatalf("list did not return a platform allocation ID: %v, %v", platform, err)
+	}
+	allocationID := platform.Allocations[0].ID
+	configPath := "/v1/tenant/static-ips/" + allocationID + "/proxy-config"
+	exportBody := fmt.Sprintf(`{"allocation_ids":[%q]}`, allocationID)
+	testfixture.AssertStatus(t, req("GET", "/v1/tenant/static-ips/23/proxy-config", "", session.GetAccessToken()), http.StatusNotFound, "WALLET_RECORD_NOT_FOUND")
+	testfixture.AssertStatus(t, req("POST", "/v1/tenant/static-ips:export", `{"supplier_item_ids":["23"]}`, session.GetAccessToken()), http.StatusBadRequest, "INVALID_STATIC_IP_EXPORT")
 	var config v1.StaticIP
-	readProto(t, req("GET", "/v1/tenant/static-ips/23/proxy-config", "", session.GetAccessToken()), &config)
+	readProto(t, req("GET", configPath, "", session.GetAccessToken()), &config)
 	if config.GetPassword() != "fixture" {
 		t.Fatal("authorized single-IP config did not return credentials")
 	}
-	export := req("POST", "/v1/tenant/static-ips:export", `{"supplier_item_ids":["23"]}`, session.GetAccessToken())
+	export := req("POST", "/v1/tenant/static-ips:export", exportBody, session.GetAccessToken())
 	if export.Code != http.StatusOK || export.Body.String() != "192.0.2.1:43000:customer:fixture\n" {
 		t.Fatalf("unexpected export: %d", export.Code)
 	}
-	const secondCredentials = `{"phone":"13800004802","password":"second-static-password"}`
+	const secondCredentials = `{"email":"tenant-13800004802@example.test","password":"second-static-password"}`
 	var otherTenant v1.TenantAccess
-	readProto(t, req("POST", "/v1/access/register", secondCredentials, ""), &otherTenant)
+	readProto(t, registerWithEmail(t, f, secondCredentials), &otherTenant)
 	var otherSession v1.LoginResponse
 	readProto(t, req("POST", "/v1/access/login", secondCredentials, ""), &otherSession)
-	testfixture.AssertStatus(t, req("GET", "/v1/tenant/static-ips/23/proxy-config", "", otherSession.GetAccessToken()), http.StatusNotFound, "WALLET_RECORD_NOT_FOUND")
-	testfixture.AssertStatus(t, req("POST", "/v1/tenant/static-ips:export", `{"supplier_item_ids":["23"]}`, otherSession.GetAccessToken()), http.StatusNotFound, "WALLET_RECORD_NOT_FOUND")
+	testfixture.AssertStatus(t, req("GET", configPath, "", otherSession.GetAccessToken()), http.StatusNotFound, "WALLET_RECORD_NOT_FOUND")
+	testfixture.AssertStatus(t, req("POST", "/v1/tenant/static-ips:export", exportBody, otherSession.GetAccessToken()), http.StatusNotFound, "WALLET_RECORD_NOT_FOUND")
 	testfixture.AssertStatus(t, req("POST", buy, request, otherSession.GetAccessToken()), http.StatusConflict, "PRODUCT_SALE_CLOSED")
 	execSQL(t, f.db, "UPDATE static_ip_allocations SET expires_at=now()+interval '3 days' WHERE supplier_item_id='23'")
 	readProto(t, req("GET", overviewPath, "", session.GetAccessToken()), &overview)
@@ -233,7 +248,7 @@ func TestStaticPurchaseAndIndependentSales(t *testing.T) {
 	if overview.GetActiveStaticIpCount() != 0 || len(overview.GetNotices()) != 0 {
 		t.Fatalf("overview included expired IP: %v", &overview)
 	}
-	testfixture.AssertStatus(t, req("POST", "/v1/tenant/static-ips:export", `{"supplier_item_ids":["23"]}`, session.GetAccessToken()), http.StatusNotFound, "WALLET_RECORD_NOT_FOUND")
+	testfixture.AssertStatus(t, req("POST", "/v1/tenant/static-ips:export", exportBody, session.GetAccessToken()), http.StatusNotFound, "WALLET_RECORD_NOT_FOUND")
 	resolve := fmt.Sprintf("/v1/operations/tenants/%s/orders/%d/static-resolution", tenant.GetTenantId(), order.GetId())
 	const closeOrder = `{"evidence":"supplier confirms the remaining IP is unknown","close_remaining":true}`
 	testfixture.AssertStatus(t, req("POST", resolve, closeOrder, cashier), http.StatusNotFound, "WALLET_RECORD_NOT_FOUND")

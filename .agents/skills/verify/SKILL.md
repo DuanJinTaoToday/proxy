@@ -27,7 +27,8 @@ npm --prefix tests/verify test
 | --- | --- | --- |
 | 租户管理代理子账号 | 从客户控制台创建子账号，核对账号名和密码校验、服务端重名提示、SOCKS5 用户名及创建时间。编辑备注、设置和调高上限、取消限制，修改并复制密码，确认启用和禁用后搜索、筛选、刷新核对。禁用账号计入 10 个名额。验证列表加载失败后重试和窄屏布局。 | [console-subaccounts.spec.mjs](../../../tests/verify/scenarios/console-subaccounts.spec.mjs) |
 | 前端骨架 → 路由、双语与版式 | 访问 `/` 进入中文首页，直接打开控制台和运营深链显示对应布局与菜单，页签可后退，未知路径显示未找到页。控制台切换语言保持 URL 并在刷新后保留，官网切换到对应语言路由。在 390 px 与 1280 px 下检查两种语言无横向溢出，窄屏抽屉导航可用。 | [console-skeleton.spec.mjs](../../../tests/verify/scenarios/console-skeleton.spec.mjs) |
-| 注册、登录与会话 | 未登录访问控制台跳到登录页并带回跳；账密错误有提示，登录后回到原页，刷新保持登录。账号菜单显示主账号名和脱敏手机号，退出需确认，退出后控制台再次要求登录。新号码注册后直接进入控制台，站外回跳被拒；同号码（带或不带 +86）重复注册被拒。伪造凭据被拒绝时清理会话并回到登录页。 | [console-auth.spec.mjs](../../../tests/verify/scenarios/console-auth.spec.mjs) |
+| 邮箱注册、登录与会话 | 从未登录的控制台进入登录页。核对账密错误、登录回跳、刷新和退出。用 Mailpit 收到的验证码注册，验证站外回跳和验证码重放被拒。核对账号菜单显示主账号名和邮箱，伪造会话被拒后回到登录页。 | [console-auth.spec.mjs](../../../tests/verify/scenarios/console-auth.spec.mjs) |
+| 邮件找回、运营恢复与密码兜底 | 通过 Mailpit 打开找回链接并重置密码，核对旧密码、会话和链接失效。授权运营按邮箱找到租户并发送恢复邮件，从新邮箱打开链接完成换绑，核对原租户和主账号。通过现有运营入口核对直接重置的权限和会话失效。 | [console-email-recovery.spec.mjs](../../../tests/verify/scenarios/console-email-recovery.spec.mjs)、[ops-password-reset.spec.mjs](../../../tests/verify/scenarios/ops-password-reset.spec.mjs) |
 | 运营登录、权限与充值到账 | 正常登录运营深链接，核对退出和过期回跳，分别检查只读、计费和账号权限。计费运营通过两种查询找到租户，核对金额和预计余额，提交后丢弃首次回执并重试同一请求。独立客户浏览器刷新两次核对余额增量和唯一流水。 | [ops-auth.spec.mjs](../../../tests/verify/scenarios/ops-auth.spec.mjs)、[wallet-recharge.spec.mjs](../../../tests/verify/scenarios/wallet-recharge.spec.mjs) |
 | 动态代理接入 | 从空状态进入子账号管理，创建并选择启用的账号。核对主机、端口、账密、连接串和 curl 命令的显示与复制。检查默认会话、SID 校验和中英文教程。 | [console-dynamic-setup.spec.mjs](../../../tests/verify/scenarios/console-dynamic-setup.spec.mjs) |
 | 动态套餐开售 → 充值后购买 | 通过运营 API 配置报价、开售并充值。从租户控制台核对已上架档位、5 GB 档下架后的折扣、余额不足拦截和过期报价拒绝。成交后用租户 API 核对流量、订单和钱包流水。 | [traffic-purchase.spec.mjs](../../../tests/verify/scenarios/traffic-purchase.spec.mjs) |

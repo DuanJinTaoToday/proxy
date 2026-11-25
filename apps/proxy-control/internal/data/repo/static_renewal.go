@@ -15,9 +15,9 @@ import (
 )
 
 type staticRenewalAllocation struct {
-	SupplierItemID, SupplierOrderID, IP, OriginalOffer string
-	ExpiresAt                                          time.Time
-	Pending                                            bool
+	AllocationID, SupplierItemID, SupplierOrderID, IP, OriginalOffer string
+	ExpiresAt                                                        time.Time
+	Pending                                                          bool
 }
 
 type staticRenewalProduct struct {
@@ -31,9 +31,9 @@ type staticRenewalNode struct {
 }
 
 type staticRenewalItem struct {
-	SupplierItemID, SupplierOrderID, OriginalIP, Outcome string
-	OriginalExpiry, ExpectedExpiry                       time.Time
-	Position                                             int32
+	AllocationID, SupplierItemID, SupplierOrderID, OriginalIP, Outcome string
+	OriginalExpiry, ExpectedExpiry                                     time.Time
+	Position                                                           int32
 }
 
 func (r *WalletRepository) QuoteStaticRenewal(ctx context.Context, tenant string, p wallet.StaticRenewalRequest) (wallet.StaticRenewalQuote, error) {
@@ -61,7 +61,7 @@ func (r *WalletRepository) renewalQuote(ctx context.Context, tenant string, p wa
 		if !found || (len(quote.Lines) > 0 && quote.Lines[0].TermDays != days.TermDays) {
 			return wallet.StaticRenewalQuote{}, nil, wallet.ErrStaticRenewalPrice
 		}
-		quote.Lines = append(quote.Lines, wallet.StaticRenewalLine{ID: a.SupplierItemID, IP: a.IP,
+		quote.Lines = append(quote.Lines, wallet.StaticRenewalLine{ID: a.AllocationID, IP: a.IP,
 			UnitMinor: days.UnitMinor, TermDays: days.TermDays, OriginalExpiry: a.ExpiresAt.UTC()})
 	}
 	return quote, allocations, nil
@@ -142,12 +142,12 @@ func (r *WalletRepository) renewalPrices(ctx context.Context, tenant string, ids
 }
 
 func renewalAllocations(tx *gorm.DB, tenant string, ids []string, lock bool) ([]staticRenewalAllocation, error) {
-	query := `SELECT a.supplier_item_id, p.supplier_order_id, a.ip, a.expires_at, i.reference AS original_offer,
-        EXISTS (SELECT 1 FROM static_renewal_items r WHERE r.supplier_item_id=a.supplier_item_id AND r.outcome='pending') AS pending
+	query := `SELECT a.allocation_id, a.supplier_item_id, p.supplier_order_id, a.ip, a.expires_at, i.reference AS original_offer,
+        EXISTS (SELECT 1 FROM static_renewal_items r WHERE r.tenant_id=a.tenant_id AND r.allocation_id=a.allocation_id AND r.outcome='pending') AS pending
         FROM static_ip_allocations a
         JOIN static_purchases p ON p.tenant_id=a.tenant_id AND p.order_id=a.order_id
         JOIN order_items i ON i.tenant_id=a.tenant_id AND i.order_id=a.order_id AND i.position=a.order_item_position
-        WHERE a.tenant_id=? AND a.supplier_item_id IN ? ORDER BY a.supplier_item_id`
+        WHERE a.tenant_id=? AND a.allocation_id IN ? ORDER BY a.allocation_id`
 	if lock {
 		query += " FOR UPDATE OF a"
 	}
@@ -250,9 +250,9 @@ func (r *WalletRepository) RenewStatic(ctx context.Context, tenant string, p wal
 	}, func(tx *gorm.DB, receipt wallet.Entry) error {
 		for i, allocation := range allocations {
 			expected := allocation.ExpiresAt.Add(time.Duration(quote.Lines[i].TermDays) * 24 * time.Hour)
-			if err := tx.Exec(`INSERT INTO static_renewal_items (tenant_id, order_id, position, supplier_item_id,
+			if err := tx.Exec(`INSERT INTO static_renewal_items (tenant_id, order_id, position, allocation_id,
                 supplier_order_id, original_ip, original_expiry, expected_expiry) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-				tenant, receipt.OrderID, i+1, allocation.SupplierItemID, allocation.SupplierOrderID, allocation.IP,
+				tenant, receipt.OrderID, i+1, allocation.AllocationID, allocation.SupplierOrderID, allocation.IP,
 				allocation.ExpiresAt, expected).Error; err != nil {
 				return err
 			}
@@ -278,6 +278,7 @@ func (r *WalletRepository) RenewStatic(ctx context.Context, tenant string, p wal
 	responses := make(map[string]wallet.SupplierRenewal, len(allocations))
 	for _, shareMode := range slices.Sorted(maps.Keys(groups)) {
 		ids := groups[shareMode]
+		slices.Sort(ids)
 		response, err := r.static.Renew(process, ids, p.Term, shareMode)
 		if err != nil {
 			slog.WarnContext(process, "static renewal response requires reconciliation", "order_id", accepted.ID)
@@ -339,14 +340,17 @@ func (r *WalletRepository) reconcileStaticRenewal(ctx context.Context, tenant st
 		return wallet.Order{}, wallet.ErrState
 	}
 	var rows []staticRenewalItem
-	if err := r.db.WithContext(ctx).Table("static_renewal_items").Where("tenant_id=? AND order_id=?", tenant, id).
-		Order("position").Scan(&rows).Error; err != nil {
+	if err := r.db.WithContext(ctx).Table("static_renewal_items AS r").
+		Select("r.*, a.supplier_item_id").
+		Joins("JOIN static_ip_allocations a ON a.tenant_id=r.tenant_id AND a.allocation_id=r.allocation_id").
+		Where("r.tenant_id=? AND r.order_id=?", tenant, id).
+		Order("r.position").Scan(&rows).Error; err != nil {
 		return wallet.Order{}, err
 	}
 	if len(rows) != len(existing.Items) || len(rows) == 0 {
 		return wallet.Order{}, wallet.ErrState
 	}
-	if actor != "" && !slices.ContainsFunc(rows, func(item staticRenewalItem) bool { return item.SupplierItemID == resolution.ItemID }) {
+	if actor != "" && !slices.ContainsFunc(rows, func(item staticRenewalItem) bool { return item.AllocationID == resolution.ItemID }) {
 		return wallet.Order{}, wallet.ErrMissing
 	}
 	results, detailUnavailable := r.renewalOutcomes(ctx, rows, responses)
@@ -376,7 +380,7 @@ func (r *WalletRepository) renewalOutcomes(ctx context.Context, rows []staticRen
 		}
 		response := responses[row.SupplierItemID]
 		if response.Rejected {
-			results[row.SupplierItemID] = wallet.Failed
+			results[row.AllocationID] = wallet.Failed
 			continue
 		}
 		if r.static == nil {
@@ -398,7 +402,7 @@ func (r *WalletRepository) renewalOutcomes(ctx context.Context, rows []staticRen
 		}
 		for _, a := range detail.Allocations {
 			if a.SupplierItemID == row.SupplierItemID && a.IP == row.OriginalIP && a.ExpiresAt.Equal(row.ExpectedExpiry) {
-				results[row.SupplierItemID] = wallet.Succeeded
+				results[row.AllocationID] = wallet.Succeeded
 			}
 		}
 	}

@@ -1,6 +1,7 @@
 import { execFileSync } from 'node:child_process'
 import { expect, test } from '@playwright/test'
 import { screenshot, signInTenant } from '../support/console.mjs'
+import { registerEmail } from '../support/mail.mjs'
 
 const businessDay = '2026-01-15'
 const walletPath = '/console/wallet'
@@ -14,10 +15,8 @@ function sql(statement) {
   ], { cwd: new URL('../../../', import.meta.url), encoding: 'utf8' }).trim()
 }
 
-async function registerTenant(request, phone) {
-  const response = await request.post('/v1/access/register', {
-    data: { phone, password: 'proxy-local-test' },
-  })
+async function registerTenant(request, email) {
+  const response = await registerEmail(request, { email, password: 'proxy-local-test' })
   await expect(response).toBeOK()
   const account = await response.json()
   expect(account.tenant_id).toMatch(/^[a-f0-9]{32}$/)
@@ -89,9 +88,9 @@ function seedHistory(tenantId) {
 }
 
 test('钱包到账、筛选、翻页和关联订单，订单详情与账户信息可从正常入口查看', async ({ page, request }, info) => {
-  const phone = '13900007601'
-  const { tenant_id: tenantId, primary_account_name: accountName } = await registerTenant(request, phone)
-  await signInTenant(page, phone)
+  const email = 'tenant-13900007601@example.test'
+  const { tenant_id: tenantId, primary_account_name: accountName } = await registerTenant(request, email)
+  await signInTenant(page, email)
   await page.getByRole('menuitem', { name: '钱包', exact: true }).click()
   await expect(balance(page)).toContainText('¥0.00')
 
@@ -170,7 +169,7 @@ test('钱包到账、筛选、翻页和关联订单，订单详情与账户信�
   await expect(badgeError).toBeHidden()
   const account = page.getByRole('region', { name: '账户', exact: true })
   await expect(account).toContainText(accountName)
-  await expect(account).toContainText('+86 139 **** 7601')
+  await expect(account).toContainText(email)
   await expect(page.getByRole('region', { name: '当前 IP 地址及归属地' })).toBeVisible()
   await expect(ordersTab.getByText('1', { exact: true })).toBeVisible()
   await screenshot(page, info, 'profile-and-pending-tab')
@@ -217,9 +216,9 @@ test('钱包到账、筛选、翻页和关联订单，订单详情与账户信�
 })
 
 test('钱包和订单详情请求失败后可重试，租户不能读取其他租户的订单', async ({ page, browser, baseURL, request }, info) => {
-  const phone = '13900007602'
-  const { tenant_id: tenantId } = await registerTenant(request, phone)
-  await signInTenant(page, phone)
+  const email = 'tenant-13900007602@example.test'
+  const { tenant_id: tenantId } = await registerTenant(request, email)
+  await signInTenant(page, email)
   await page.route('**/v1/tenant/wallet/ledger', route => route.fulfill({ status: 503 }), { times: 1 })
   await page.goto(walletPath)
   await expect(page.getByText('钱包流水读取失败')).toBeVisible()
@@ -241,7 +240,7 @@ test('钱包和订单详情请求失败后可重试，租户不能读取其他�
 
   const otherTenant = await browser.newPage({ baseURL, ignoreHTTPSErrors: true })
   try {
-    await signInTenant(otherTenant, '13800000001')
+    await signInTenant(otherTenant, 'alpha@example.test')
     const denied = otherTenant.waitForResponse(response => response.url().endsWith('/v1/tenant/orders/' + ownOrder))
     await otherTenant.goto(ordersPath + '?detail=' + ownOrder)
     expect((await denied).status()).toBe(404)
