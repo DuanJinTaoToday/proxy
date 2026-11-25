@@ -64,7 +64,17 @@ async function verifyHeaderBrand(page) {
 test('官网、客户控制台、运营台展示提案 A 和 RocProxy 字标，标题图标一致且导航可用', async ({ page }, info) => {
   const pageErrors = []
   const failedAssets = []
+  const unexpectedWrites = []
   page.on('pageerror', error => pageErrors.push(error.message))
+  page.on('request', request => {
+    const method = request.method()
+    const pathname = new URL(request.url()).pathname
+    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method) &&
+      pathname !== '/v1/access/login' &&
+      pathname !== '/v1/operations/auth/login') {
+      unexpectedWrites.push(`${method} ${pathname}`)
+    }
+  })
   page.on('response', response => {
     if (new URL(response.url()).pathname === '/favicon.svg' && response.status() >= 400) {
       failedAssets.push(`${response.status()} ${response.url()}`)
@@ -201,6 +211,7 @@ test('官网、客户控制台、运营台展示提案 A 和 RocProxy 字标，�
     contentType: 'application/json',
   })
 
+  expect(unexpectedWrites).toEqual([])
   expect(failedAssets).toEqual([])
   expect(pageErrors).toEqual([])
 })

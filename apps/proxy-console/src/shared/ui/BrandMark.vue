@@ -1,17 +1,9 @@
 <script setup lang="ts">
-const props = withDefaults(defineProps<{
-  surface?: 'light' | 'dark'
-  wordmarkClass?: string
-}>(), {
-  surface: 'light',
-  wordmarkClass: '',
-})
-
 const markSrc = `${import.meta.env.BASE_URL}favicon.svg`
 </script>
 
 <template>
-  <span class="brand-mark" :class="`brand-mark--${props.surface}`">
+  <span class="brand-mark">
     <img
       :src="markSrc"
       alt=""
@@ -21,7 +13,7 @@ const markSrc = `${import.meta.env.BASE_URL}favicon.svg`
       height="32"
       decoding="async"
     >
-    <span class="brand-mark__wordmark" :class="props.wordmarkClass">Roc<span class="brand-mark__accent">Proxy</span></span>
+    <span class="brand-mark__wordmark">Roc<span class="brand-mark__accent">Proxy</span></span>
   </span>
 </template>
 
@@ -40,16 +32,12 @@ const markSrc = `${import.meta.env.BASE_URL}favicon.svg`
   height: var(--brand-mark-size);
 }
 .brand-mark__wordmark {
+  display: var(--brand-wordmark-display, inline);
   letter-spacing: var(--brand-wordmark-tracking);
   line-height: 1;
 }
 .brand-mark__accent {
-  font-weight: var(--font-weight-semibold);
-}
-.brand-mark--light .brand-mark__accent {
   color: var(--color-brand-accent);
-}
-.brand-mark--dark .brand-mark__accent {
-  color: var(--color-brand-accent-dark);
+  font-weight: var(--font-weight-semibold);
 }
 </style>

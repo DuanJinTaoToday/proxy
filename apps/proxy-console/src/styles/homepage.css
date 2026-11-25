@@ -25,7 +25,7 @@ header.app-header.app-header--marketing {
   backdrop-filter: blur(var(--home-header-blur));
   color: var(--home-white);
 }
-header.app-header.app-header--marketing .app-header__brand-text { display: inline; }
+header.app-header.app-header--marketing .app-header__brand { --brand-wordmark-display: inline; }
 .app-header__marketing-menu { display: flex; align-items: center; gap: var(--space-6); }
 .app-header__marketing-menu a { font-weight: var(--font-weight-medium); }
 header.app-header.app-header--marketing .app-header__language,

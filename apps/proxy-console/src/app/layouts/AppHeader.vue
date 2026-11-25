@@ -35,7 +35,7 @@ function switchLocale(next: Locale) {
     <div class="app-header__start">
       <ElButton v-if="menuButton" class="app-header__menu" text :icon="Menu" :aria-label="t('nav.openMenu')" @click="$emit('openMenu')" />
       <RouterLink :to="ops ? '/ops' : homePath" class="app-header__brand" :aria-label="t('app.name')">
-        <BrandMark :surface="marketing ? 'dark' : 'light'" wordmark-class="app-header__brand-text" />
+        <BrandMark />
       </RouterLink>
       <slot name="brand-extra" />
     </div>
@@ -133,8 +133,8 @@ function switchLocale(next: Locale) {
   --tenant-header-item-gap: var(--space-2);
 }
 .app-header--tenant .app-header__brand {
-  gap: var(--ops-brand-gap);
-  font-size: var(--ops-brand-size);
+  gap: var(--workspace-brand-gap);
+  font-size: var(--workspace-brand-size);
   font-weight: var(--font-weight-heavy);
   line-height: normal;
 }
@@ -157,7 +157,8 @@ function switchLocale(next: Locale) {
   .app-header--ops .app-header__globe { display: inline-block; margin-inline-end: 0; }
   .app-header--ops .app-header__language { border-color: transparent; }
   .app-header__tools { gap: 0; }
-  .app-header__customer-link, :deep(.app-header__brand-text), .app-header__locale-name, .app-header__chevron { display: none; }
+  .app-header__brand { --brand-wordmark-display: none; }
+  .app-header__customer-link, .app-header__locale-name, .app-header__chevron { display: none; }
 
   .app-header--tenant {
     --tenant-header-item-padding: 7px;
@@ -171,7 +172,7 @@ function switchLocale(next: Locale) {
 }
 
 @media (390px <= width <= 767px) {
-  .app-header--tenant :deep(.app-header__brand-text),
+  .app-header--tenant .app-header__brand { --brand-wordmark-display: inline-block; }
   .app-header--tenant .app-header__locale-name,
   .app-header--tenant .app-header__chevron { display: inline-block; }
 }
