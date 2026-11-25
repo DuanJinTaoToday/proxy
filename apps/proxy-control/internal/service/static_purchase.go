@@ -15,15 +15,15 @@ import (
 
 func (s *Wallet) ListStaticOffers(ctx context.Context, req *v1.StaticOffersRequest) (*v1.StaticOffers, error) {
 	noStore(ctx)
-	offers, err := s.biz.StaticOffers(ctx, req.GetShareMode(), req.GetPurposeId())
+	snapshot, err := s.biz.StaticOffers(ctx, req.GetShareMode(), req.GetPurposeId())
 	if errors.Is(err, product.ErrSaleClosed) {
 		return &v1.StaticOffers{}, nil
 	}
 	if err != nil {
 		return nil, wallet.PublicError(err)
 	}
-	result := &v1.StaticOffers{Open: true, QuotedAt: timestamppb.Now()}
-	for _, offer := range offers {
+	result := &v1.StaticOffers{Open: true, QuotedAt: timestamppb.New(snapshot.QuotedAt)}
+	for _, offer := range snapshot.Offers {
 		result.Offers = append(result.Offers, staticOfferMessage(offer))
 	}
 	return result, nil

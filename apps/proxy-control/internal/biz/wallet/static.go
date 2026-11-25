@@ -27,6 +27,11 @@ type StaticOffer struct {
 	UnitMinor            int64
 }
 
+type StaticOfferSnapshot struct {
+	Offers   []StaticOffer
+	QuotedAt time.Time
+}
+
 type StaticPurchaseRequest struct {
 	NodeID, UnitMinor            int64
 	Term, Key, ConfirmationToken string
@@ -103,7 +108,7 @@ type StaticRepository interface {
 	ClaimStaticIPExpiryNotices(context.Context, string) (int32, error)
 	QuoteStatic(context.Context, string, StaticPurchaseRequest) (StaticQuote, error)
 	PendingStaticPurchases(context.Context, int64) ([]PendingStaticPurchase, error)
-	StaticOffers(context.Context, string, int32) ([]StaticOffer, error)
+	StaticOffers(context.Context, string, int32) (StaticOfferSnapshot, error)
 	PurchaseStatic(context.Context, string, StaticPurchaseRequest) (Order, error)
 	StaticAllocations(context.Context, string, []string, bool) ([]StaticAllocation, error)
 	ResolveStatic(context.Context, string, int64, string, string, string, bool, bool) (Order, error)
@@ -134,9 +139,9 @@ func (offer StaticOffer) catalogConflict(reason, message string) error {
 	})
 }
 
-func (s *Service) StaticOffers(ctx context.Context, shareMode string, purposeID int32) ([]StaticOffer, error) {
+func (s *Service) StaticOffers(ctx context.Context, shareMode string, purposeID int32) (StaticOfferSnapshot, error) {
 	if !validStaticCatalog(shareMode, purposeID) {
-		return nil, ErrInvalid
+		return StaticOfferSnapshot{}, ErrInvalid
 	}
 	return s.store.StaticOffers(ctx, shareMode, purposeID)
 }

@@ -16,9 +16,10 @@ import (
 )
 
 type WalletRepository struct {
-	db           *gorm.DB
-	static       wallet.StaticSupplier
-	staticCipher cipher.AEAD
+	db                 *gorm.DB
+	static             wallet.StaticSupplier
+	staticCipher       cipher.AEAD
+	publicStaticOffers publicStaticOfferCache
 }
 
 func ProvideWalletRepository(resources *data.Data, biz *conf.Biz) (*WalletRepository, error) {

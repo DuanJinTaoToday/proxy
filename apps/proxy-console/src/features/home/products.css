@@ -50,6 +50,8 @@
 .dynamic .stage-link:hover { color: var(--home-emerald); border-color: var(--home-emerald); }
 .static .stage-link:hover { color: var(--home-cyan); border-color: var(--home-cyan); }
 .footnote { margin-top: var(--space-5); font-size: var(--home-type-13); color: var(--home-faint); }
+.pricing-link { color: var(--home-white); font-weight: var(--font-weight-medium); white-space: nowrap; }
+.pricing-link:hover { color: var(--home-emerald); }
 
 .showcase-grid > article { min-width: 0; }
 .stage-title-row, .stage-footer { flex-wrap: wrap; }

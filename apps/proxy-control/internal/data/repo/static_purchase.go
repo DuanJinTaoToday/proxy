@@ -50,16 +50,24 @@ func staticPasswordScope(tenant, item string) []byte {
 	return []byte(tenant + ":" + item)
 }
 
-func (r *WalletRepository) StaticOffers(ctx context.Context, shareMode string, purposeID int32) ([]wallet.StaticOffer, error) {
+func (r *WalletRepository) requireStaticOfferSale(ctx context.Context) error {
 	if r.db == nil {
-		return nil, errWalletUnavailable
+		return errWalletUnavailable
 	}
 	if err := RequireProductSale(ctx, r.db, product.Static); err != nil {
-		return nil, err
+		return err
 	}
 	if r.static == nil {
-		return nil, wallet.ErrStaticUnavailable
+		return wallet.ErrStaticUnavailable
 	}
+	return nil
+}
+
+func (r *WalletRepository) liveStaticOffers(ctx context.Context, shareMode string, purposeID int32) ([]wallet.StaticOffer, error) {
+	if err := r.requireStaticOfferSale(ctx); err != nil {
+		return nil, err
+	}
+
 	offers, err := r.static.Offers(ctx, shareMode, purposeID)
 	if err != nil {
 		return nil, wallet.ErrStaticUnavailable
@@ -148,7 +156,7 @@ func (r *WalletRepository) confirmStaticQuote(tenant string, p wallet.StaticPurc
 }
 
 func (r *WalletRepository) currentStaticQuotes(ctx context.Context, p wallet.StaticPurchaseRequest) ([]wallet.StaticQuoteLine, error) {
-	offers, err := r.StaticOffers(ctx, p.ShareMode, p.PurposeID)
+	offers, err := r.liveStaticOffers(ctx, p.ShareMode, p.PurposeID)
 	if err != nil {
 		return nil, err
 	}
