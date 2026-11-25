@@ -4,7 +4,7 @@ import { ApiError } from '@/api/client'
 import { getOverview } from '@/api/dashboard'
 import { getTrafficCatalog, type TrafficPackage } from '@/api/products'
 import { purchaseTraffic, type TrafficPurchaseRequest } from '@/api/trafficPurchase'
-import { sessionPhone } from '@/features/auth'
+import { sessionEmail } from '@/features/auth'
 import { pendingTrafficPurchase } from './pendingTrafficPurchase'
 
 const rejectedReasons = new Set([
@@ -13,7 +13,7 @@ const rejectedReasons = new Set([
 ])
 
 export function useTrafficCheckout(initialPackageId: string | undefined) {
-  const phone = sessionPhone.value
+  const accountEmail = sessionEmail.value
   const selectedId = ref(initialPackageId)
   const data = ref<{
     catalog: Awaited<ReturnType<typeof getTrafficCatalog>>
@@ -79,7 +79,7 @@ export function useTrafficCheckout(initialPackageId: string | undefined) {
   }
 
   async function submit() {
-    if (loading.value || submitting.value || !storage || sessionPhone.value !== phone) return
+    if (loading.value || submitting.value || !storage || sessionEmail.value !== accountEmail) return
     const attemptStorage = storage
     let payload = pending.value
     if (!payload) {
@@ -108,7 +108,7 @@ export function useTrafficCheckout(initialPackageId: string | undefined) {
     rejection.value = undefined
     receipt.value = undefined
     try {
-      if (disposed || sessionPhone.value !== phone) return
+      if (disposed || sessionEmail.value !== accountEmail) return
       try {
         receipt.value = await purchaseTraffic(payload)
       } catch (error) {

@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -33,8 +34,9 @@ import (
 )
 
 type usageFixture struct {
-	db   *gorm.DB
-	http http.Handler
+	db      *gorm.DB
+	http    http.Handler
+	mailbox testMailbox
 }
 
 func setupUsage(t *testing.T, suppliers ...wallet.StaticSupplier) usageFixture {
@@ -43,6 +45,11 @@ func setupUsage(t *testing.T, suppliers ...wallet.StaticSupplier) usageFixture {
 }
 
 func setupUsageWithSubaccounts(t *testing.T, enableSubaccounts bool, suppliers ...wallet.StaticSupplier) usageFixture {
+	t.Helper()
+	return setupUsageWithLegacyAccounts(t, enableSubaccounts, nil, suppliers...)
+}
+
+func setupUsageWithLegacyAccounts(t *testing.T, enableSubaccounts bool, seedLegacyAccounts func(*gorm.DB), suppliers ...wallet.StaticSupplier) usageFixture {
 	t.Helper()
 	dsn := os.Getenv("PROXY_CONTROL_TEST_DSN")
 	if dsn == "" {
@@ -64,8 +71,11 @@ func setupUsageWithSubaccounts(t *testing.T, enableSubaccounts bool, suppliers .
 		"00001_proxy_auth.sql", "00002_usage.sql", "00003_gateway_lifecycle.sql", "00004_usage_gaps.sql",
 		"00007_tenant_accounts.sql", "00008_wallet_orders.sql", "00009_products.sql", "00010_proxy_subaccounts.sql",
 		"00011_traffic_metering.sql", "00012_traffic_alerts.sql", "00013_static_purchases.sql", "00014_static_renewals.sql",
-		"00015_subaccount_created_at.sql", "00016_static_purchase_allocation_positions.sql",
+		"00015_subaccount_created_at.sql", "00016_static_purchase_allocation_positions.sql", "00018_email_access.sql",
 	} {
+		if path == "00018_email_access.sql" && seedLegacyAccounts != nil {
+			seedLegacyAccounts(db)
+		}
 		migration, err := os.ReadFile("../migrations/" + path)
 		if err != nil {
 			t.Fatal(err)
@@ -81,12 +91,21 @@ func setupUsageWithSubaccounts(t *testing.T, enableSubaccounts bool, suppliers .
 
 	execSQL(t, db, "INSERT INTO operators (id, username, password_hash) VALUES ('operator', 'operator', ?)", testfixture.PasswordHash)
 	execSQL(t, db, "INSERT INTO operator_permissions (operator_id, permission) VALUES ('operator', 'read_operations')")
-	accessService, err := access.NewPersistent(repo.NewAccountRepository(db))
+	mailbox := make(testMailbox, 32)
+	authConfig := &conf.Biz{EmailAuth: &conf.EmailAuth{
+		ConsoleOrigin: "https://console.example.test",
+		CodeKey:       base64.RawURLEncoding.EncodeToString(make([]byte, 32)),
+	}}
+	accessService, err := access.NewPersistent(repo.NewAccountRepository(db), mailbox, authConfig, slog.Default())
 	if err != nil {
 		t.Fatal(err)
 	}
 	service := usage.New(repo.NewUsageRepository(db), accessService)
-	handler := server.NewHTTPServer("127.0.0.1:0", httpservice.NewAccess(accessService),
+	accessHTTP, err := httpservice.NewAccess(accessService, &conf.Server{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	handler := server.NewHTTPServer("127.0.0.1:0", accessHTTP,
 		kratoshttp.RequestDecoder(server.ReportingDecoder(0)), kratoshttp.ResponseEncoder(server.ControlResponseEncoder))
 	server.RegisterUsage(handler, httpservice.NewUsage(service))
 	walletStore := repo.NewWalletRepository(db)
@@ -112,7 +131,7 @@ func setupUsageWithSubaccounts(t *testing.T, enableSubaccounts bool, suppliers .
 	}
 	server.RegisterSubaccounts(handler, httpservice.NewSubaccounts(subs))
 	server.RegisterOverview(handler, httpservice.NewOverview(overview.New(walletService, service, productService, subs)))
-	return usageFixture{db: db, http: handler}
+	return usageFixture{db: db, http: handler, mailbox: mailbox}
 }
 
 func connect(t *testing.T, dsn string) *gorm.DB {

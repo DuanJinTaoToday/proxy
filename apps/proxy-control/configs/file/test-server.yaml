@@ -15,6 +15,12 @@ data:
       database_dsn: "postgres://proxy:proxy-local-test@db:5432/proxy?sslmode=disable"
 
 biz:
+  email_auth:
+    console_origin: https://localhost:8443
+    code_key: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+    smtp_address: mailpit:1025
+    from_address: account@rocproxy.example.test
+    allow_plaintext: true
   subaccounts:
     # Public fixture key for the local Docker environment only.
     password_key: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"

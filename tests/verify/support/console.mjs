@@ -1,6 +1,6 @@
 import { expect } from '@playwright/test'
 
-// 表单标签可能带必填星号，如「*手机号」。
+// 表单标签可能带必填星号，如「*邮箱」。
 export const field = (page, label) => page.getByRole('textbox', { name: new RegExp(`^\\*?${label}`) })
 
 export async function login(page, route, label, account, locale = 'zh-CN') {
@@ -11,8 +11,8 @@ export async function login(page, route, label, account, locale = 'zh-CN') {
 }
 
 // 用种子租户 alpha 从登录页登录，等到进入控制台。
-export async function signInTenant(page, phone = '13800000001') {
-  await login(page, '/zh-CN/login', '手机号', phone)
+export async function signInTenant(page, email = 'alpha@example.test') {
+  await login(page, '/zh-CN/login', '邮箱', email)
   await expect(page).toHaveURL(/\/console$/)
 }
 

@@ -10,9 +10,34 @@ import "validate/validate.proto";
 option go_package = "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1";
 
 service AccessService {
+  rpc SendRegistrationCode(EmailRequest) returns (BaseResp) {
+    option (google.api.http) = {post: "/v1/access/register-code", body: "*"};
+    option (openapi.v3.operation) = {summary: "请求邮箱注册验证码"};
+  }
+
+  rpc ForgotPassword(EmailRequest) returns (BaseResp) {
+    option (google.api.http) = {post: "/v1/access/forgot-password", body: "*"};
+    option (openapi.v3.operation) = {summary: "请求邮箱密码找回链接"};
+  }
+
+  rpc ResetCustomerPassword(EmailCredentialRequest) returns (BaseResp) {
+    option (google.api.http) = {post: "/v1/access:reset-password", body: "*"};
+    option (openapi.v3.operation) = {summary: "通过邮箱链接重置客户密码"};
+  }
+
+  rpc RecoverCustomerEmail(EmailCredentialRequest) returns (BaseResp) {
+    option (google.api.http) = {post: "/v1/access:recover-email", body: "*"};
+    option (openapi.v3.operation) = {summary: "验证新邮箱并设置密码"};
+  }
+
+  rpc StartEmailRecovery(StartEmailRecoveryRequest) returns (BaseResp) {
+    option (google.api.http) = {post: "/v1/operations/tenants/{tenant_id}:recover-email", body: "*"};
+    option (openapi.v3.operation) = {summary: "运营核实归属后向新邮箱发送恢复链接"};
+  }
+
   rpc Register(RegisterRequest) returns (TenantAccess) {
     option (google.api.http) = {post: "/v1/access/register", body: "*"};
-    option (openapi.v3.operation) = {summary: "使用手机号注册租户管理员"};
+    option (openapi.v3.operation) = {summary: "验证邮箱并注册租户管理员"};
   }
 
   rpc GetAccount(BaseRequest) returns (TenantAccess) {
@@ -57,20 +82,38 @@ message TenantAccess {
   string name = 2;
   // 平台分配的全局唯一主账号名。
   string primary_account_name = 3;
+  string email = 4;
 }
 
 message LoginRequest {
-  // 中国大陆手机号，接受带或不带 +86。
-  string phone = 1 [(validate.rules).string = {min_len: 1, max_bytes: 32}];
+  reserved 1;
+  reserved "phone";
+  string email = 3 [(validate.rules).string = {min_len: 1}];
   // 控制台登录密码。
   string password = 2 [(validate.rules).string = {min_len: 1, max_bytes: 1024}];
 }
 
 message RegisterRequest {
-  // 中国大陆手机号，接受带或不带 +86。
-  string phone = 1 [(validate.rules).string = {min_len: 1, max_bytes: 32}];
+  reserved 1;
+  reserved "phone";
+  string email = 3 [(validate.rules).string = {min_len: 1}];
   // 初始密码，至少 12 个字符。
   string password = 2 [(validate.rules).string = {min_len: 12, max_bytes: 1024}];
+  string verification_code = 4 [(validate.rules).string = {min_len: 1, max_bytes: 16}];
+}
+
+message EmailRequest {
+  string email = 1 [(validate.rules).string = {min_len: 1}];
+}
+
+message EmailCredentialRequest {
+  string token = 1 [(validate.rules).string = {len: 43}];
+  string password = 2 [(validate.rules).string = {min_len: 12, max_bytes: 1024}];
+}
+
+message StartEmailRecoveryRequest {
+  string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_bytes: 64}];
+  string email = 2 [(validate.rules).string = {min_len: 1}];
 }
 
 message LoginOperatorRequest {

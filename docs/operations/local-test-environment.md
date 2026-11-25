@@ -27,7 +27,7 @@ Compose 项目名为 `proxy-test`。项目服务的镜像使用 `proxy-<组件>:
 
 ## 访问和联调
 
-- 产品首页访问 `https://localhost:8443/`，租户控制台访问 `https://localhost:8443/console`。租户管理员测试手机号为 `13800000001`（Alpha）和 `13800000002`（Beta）。运营在 `https://localhost:8443/operations` 使用账号 `operator` 登录，可以查找上述测试租户并核对充值。初始密码均为 `proxy-local-test`。也可以在租户控制台用其他测试手机号注册。
+- 产品首页访问 `https://localhost:8443/`，租户控制台访问 `https://localhost:8443/console`。租户管理员测试邮箱为 `alpha@example.test`（Alpha）和 `beta@example.test`（Beta）。运营在 `https://localhost:8443/operations` 使用账号 `operator` 登录，可以查找上述测试租户并核对充值。初始密码均为 `proxy-local-test`。注册其他测试邮箱时，用 `docker compose -f deploy/test/compose.yaml port mailpit 8025` 查询 Mailpit Web 端口并读取验证码。找回密码和运营恢复邮件也投递到该本地邮箱。
 - SOCKS5 监听为 `127.0.0.1:1080`。新版子账号与计量完成前，完整认证转发联调暂停。
 - HTTPS 使用 Caddy 测试 CA。浏览器需要信任时，从 Docker Desktop 的 `console-1` 容器导出 `/data/caddy/pki/authorities/local/root.crt`，导入当前用户的受信任根证书。网关通过挂载的 CA 校验 `https://console`。
 

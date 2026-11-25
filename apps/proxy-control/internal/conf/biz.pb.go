@@ -26,6 +26,7 @@ type Biz struct {
 	Usage         *Usage                 `protobuf:"bytes,2,opt,name=usage,proto3" json:"usage,omitempty"`
 	Subaccounts   *Subaccounts           `protobuf:"bytes,3,opt,name=subaccounts,proto3" json:"subaccounts,omitempty"`
 	Ipcrown       *IPCrown               `protobuf:"bytes,4,opt,name=ipcrown,proto3" json:"ipcrown,omitempty"`
+	EmailAuth     *EmailAuth             `protobuf:"bytes,5,opt,name=email_auth,json=emailAuth,proto3" json:"email_auth,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -77,6 +78,13 @@ func (x *Biz) GetSubaccounts() *Subaccounts {
 func (x *Biz) GetIpcrown() *IPCrown {
 	if x != nil {
 		return x.Ipcrown
+	}
+	return nil
+}
+
+func (x *Biz) GetEmailAuth() *EmailAuth {
+	if x != nil {
+		return x.EmailAuth
 	}
 	return nil
 }
@@ -269,15 +277,109 @@ func (x *IPCrown) GetPasswordKey() string {
 	return ""
 }
 
+type EmailAuth struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	ConsoleOrigin  string                 `protobuf:"bytes,1,opt,name=console_origin,json=consoleOrigin,proto3" json:"console_origin,omitempty"`
+	CodeKey        string                 `protobuf:"bytes,2,opt,name=code_key,json=codeKey,proto3" json:"code_key,omitempty"`
+	SmtpAddress    string                 `protobuf:"bytes,3,opt,name=smtp_address,json=smtpAddress,proto3" json:"smtp_address,omitempty"`
+	SmtpUsername   string                 `protobuf:"bytes,4,opt,name=smtp_username,json=smtpUsername,proto3" json:"smtp_username,omitempty"`
+	SmtpPassword   string                 `protobuf:"bytes,5,opt,name=smtp_password,json=smtpPassword,proto3" json:"smtp_password,omitempty"`
+	FromAddress    string                 `protobuf:"bytes,6,opt,name=from_address,json=fromAddress,proto3" json:"from_address,omitempty"`
+	AllowPlaintext bool                   `protobuf:"varint,7,opt,name=allow_plaintext,json=allowPlaintext,proto3" json:"allow_plaintext,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *EmailAuth) Reset() {
+	*x = EmailAuth{}
+	mi := &file_biz_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EmailAuth) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EmailAuth) ProtoMessage() {}
+
+func (x *EmailAuth) ProtoReflect() protoreflect.Message {
+	mi := &file_biz_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EmailAuth.ProtoReflect.Descriptor instead.
+func (*EmailAuth) Descriptor() ([]byte, []int) {
+	return file_biz_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *EmailAuth) GetConsoleOrigin() string {
+	if x != nil {
+		return x.ConsoleOrigin
+	}
+	return ""
+}
+
+func (x *EmailAuth) GetCodeKey() string {
+	if x != nil {
+		return x.CodeKey
+	}
+	return ""
+}
+
+func (x *EmailAuth) GetSmtpAddress() string {
+	if x != nil {
+		return x.SmtpAddress
+	}
+	return ""
+}
+
+func (x *EmailAuth) GetSmtpUsername() string {
+	if x != nil {
+		return x.SmtpUsername
+	}
+	return ""
+}
+
+func (x *EmailAuth) GetSmtpPassword() string {
+	if x != nil {
+		return x.SmtpPassword
+	}
+	return ""
+}
+
+func (x *EmailAuth) GetFromAddress() string {
+	if x != nil {
+		return x.FromAddress
+	}
+	return ""
+}
+
+func (x *EmailAuth) GetAllowPlaintext() bool {
+	if x != nil {
+		return x.AllowPlaintext
+	}
+	return false
+}
+
 var File_biz_proto protoreflect.FileDescriptor
 
 const file_biz_proto_rawDesc = "" +
 	"\n" +
-	"\tbiz.proto\x12\x16proxycontrol.config.v1\"\xca\x01\n" +
+	"\tbiz.proto\x12\x16proxycontrol.config.v1\"\x8c\x02\n" +
 	"\x03Biz\x123\n" +
 	"\x05usage\x18\x02 \x01(\v2\x1d.proxycontrol.config.v1.UsageR\x05usage\x12E\n" +
 	"\vsubaccounts\x18\x03 \x01(\v2#.proxycontrol.config.v1.SubaccountsR\vsubaccounts\x129\n" +
-	"\aipcrown\x18\x04 \x01(\v2\x1f.proxycontrol.config.v1.IPCrownR\aipcrownJ\x04\b\x01\x10\x02R\x06access\"d\n" +
+	"\aipcrown\x18\x04 \x01(\v2\x1f.proxycontrol.config.v1.IPCrownR\aipcrown\x12@\n" +
+	"\n" +
+	"email_auth\x18\x05 \x01(\v2!.proxycontrol.config.v1.EmailAuthR\temailAuthJ\x04\b\x01\x10\x02R\x06access\"d\n" +
 	"\x05Usage\x12*\n" +
 	"\x11max_batch_records\x18\x01 \x01(\rR\x0fmaxBatchRecords\x12/\n" +
 	"\x14max_batch_body_bytes\x18\x02 \x01(\rR\x11maxBatchBodyBytes\"\xa1\x01\n" +
@@ -292,7 +394,15 @@ const file_biz_proto_rawDesc = "" +
 	"partner_id\x18\x02 \x01(\tR\tpartnerId\x12\x1d\n" +
 	"\n" +
 	"api_secret\x18\x03 \x01(\tR\tapiSecret\x12!\n" +
-	"\fpassword_key\x18\x04 \x01(\tR\vpasswordKeyBHZFgithub.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/conf;confb\x06proto3"
+	"\fpassword_key\x18\x04 \x01(\tR\vpasswordKey\"\x86\x02\n" +
+	"\tEmailAuth\x12%\n" +
+	"\x0econsole_origin\x18\x01 \x01(\tR\rconsoleOrigin\x12\x19\n" +
+	"\bcode_key\x18\x02 \x01(\tR\acodeKey\x12!\n" +
+	"\fsmtp_address\x18\x03 \x01(\tR\vsmtpAddress\x12#\n" +
+	"\rsmtp_username\x18\x04 \x01(\tR\fsmtpUsername\x12#\n" +
+	"\rsmtp_password\x18\x05 \x01(\tR\fsmtpPassword\x12!\n" +
+	"\ffrom_address\x18\x06 \x01(\tR\vfromAddress\x12'\n" +
+	"\x0fallow_plaintext\x18\a \x01(\bR\x0eallowPlaintextBHZFgithub.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/conf;confb\x06proto3"
 
 var (
 	file_biz_proto_rawDescOnce sync.Once
@@ -306,22 +416,24 @@ func file_biz_proto_rawDescGZIP() []byte {
 	return file_biz_proto_rawDescData
 }
 
-var file_biz_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_biz_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_biz_proto_goTypes = []any{
 	(*Biz)(nil),         // 0: proxycontrol.config.v1.Biz
 	(*Usage)(nil),       // 1: proxycontrol.config.v1.Usage
 	(*Subaccounts)(nil), // 2: proxycontrol.config.v1.Subaccounts
 	(*IPCrown)(nil),     // 3: proxycontrol.config.v1.IPCrown
+	(*EmailAuth)(nil),   // 4: proxycontrol.config.v1.EmailAuth
 }
 var file_biz_proto_depIdxs = []int32{
 	1, // 0: proxycontrol.config.v1.Biz.usage:type_name -> proxycontrol.config.v1.Usage
 	2, // 1: proxycontrol.config.v1.Biz.subaccounts:type_name -> proxycontrol.config.v1.Subaccounts
 	3, // 2: proxycontrol.config.v1.Biz.ipcrown:type_name -> proxycontrol.config.v1.IPCrown
-	3, // [3:3] is the sub-list for method output_type
-	3, // [3:3] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	4, // 3: proxycontrol.config.v1.Biz.email_auth:type_name -> proxycontrol.config.v1.EmailAuth
+	4, // [4:4] is the sub-list for method output_type
+	4, // [4:4] is the sub-list for method input_type
+	4, // [4:4] is the sub-list for extension type_name
+	4, // [4:4] is the sub-list for extension extendee
+	0, // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_biz_proto_init() }
@@ -335,7 +447,7 @@ func file_biz_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_biz_proto_rawDesc), len(file_biz_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

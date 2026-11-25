@@ -33,6 +33,10 @@ services:
         goose -dir /migrations postgres "$$PG_DSN" up
         psql "$$PG_DSN" -v ON_ERROR_STOP=1 -f /seed.sql
 
+  mailpit:
+    image: axllent/mailpit:v1.34.0
+    ports:
+      - "127.0.0.1::8025"
   control:
     image: proxy-control:0.0.1
     container_name: control-1
@@ -42,6 +46,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      mailpit:
+        condition: service_started
     healthcheck:
       test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8000/healthz"]
       interval: 2s

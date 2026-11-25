@@ -80,10 +80,10 @@ func TestStaticRenewalPriceRecheckAndMixedSettlement(t *testing.T) {
 	req := func(method, path, data, token string) *httptest.ResponseRecorder {
 		return testfixture.Request(f.http, method, path, data, token)
 	}
-	const creds = `{"phone":"13800004901","password":"static-renewal-test"}`
+	const creds = `{"email":"tenant-13800004901@example.test","password":"static-renewal-test"}`
 	var tenant v1.TenantAccess
 	var session v1.LoginResponse
-	readProto(t, req("POST", "/v1/access/register", creds, ""), &tenant)
+	readProto(t, registerWithEmail(t, f, creds), &tenant)
 	readProto(t, req("POST", "/v1/access/login", creds, ""), &session)
 	token := session.GetAccessToken()
 	fundCatalogWallet(t, f.db, tenant.GetTenantId())

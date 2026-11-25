@@ -1,16 +1,17 @@
 import { expect, test } from '@playwright/test'
 import { screenshot, signInTenant } from '../support/console.mjs'
 import { authenticatedApi, json } from '../support/traffic.mjs'
+import { registerEmail } from '../support/mail.mjs'
 
 test('租户从代理设置获取 SOCKS5 凭据并使用双语教程', async ({ page, context, playwright, request, baseURL }, info) => {
-  const phone = '13900007201'
-  const account = await json(await request.post('/v1/access/register', { data: { phone, password: 'proxy-local-test' } }))
+  const email = 'tenant-13900007201@example.test'
+  const account = await json(await registerEmail(request, { email, password: 'proxy-local-test' }))
   const username = account.primary_account_name + '.test72'
-  const tenant = await authenticatedApi(playwright, baseURL, { phone })
+  const tenant = await authenticatedApi(playwright, baseURL, { email })
   await context.grantPermissions(['clipboard-read', 'clipboard-write'])
   try {
     await json(await tenant.post('/v1/tenant/subaccounts', { data: { name: 'sleep72', password: 'Asleep72', active: false } }))
-    await signInTenant(page, phone)
+    await signInTenant(page, email)
     await page.getByRole('menuitem', { name: '动态住宅代理-GB' }).click()
     await expect(page.getByText('还没有启用的子账号')).toBeVisible()
     await expect(page.getByRole('region', { name: '低余额提醒' })).toBeVisible()

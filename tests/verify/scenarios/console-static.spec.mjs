@@ -1,3 +1,4 @@
+import { registerEmail } from '../support/mail.mjs'
 
 import { randomUUID } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
@@ -20,9 +21,9 @@ async function authenticated(request, path, credentials) {
   return { Authorization: `Bearer ${result.access_token}` }
 }
 
-async function registerStaticTenant(request, phone) {
-  const { tenant_id } = await json(await request.post('/v1/access/register', { data: { phone, password } }))
-  const headers = await authenticated(request, '/v1/access/login', { phone })
+async function registerStaticTenant(request, email) {
+  const { tenant_id } = await json(await registerEmail(request, { email, password }))
+  const headers = await authenticated(request, '/v1/access/login', { email })
   return { id: tenant_id, headers, opsPath: '/v1/operations/tenants/' + tenant_id }
 }
 
@@ -109,10 +110,10 @@ test('静态代理教程中英文可完整切换并返回 IP 列表', async ({ p
 })
 
 staticSalesTest('跨地区购物车一次下单，逐次复核价格和库存，部分交付退款', async ({ page, request, openSales }, info) => {
-  const phone = '13900007401'
-  const account = await registerStaticTenant(request, phone)
+  const email = 'tenant-13900007401@example.test'
+  const account = await registerStaticTenant(request, email)
   const tenant = account.headers
-  await signInTenant(page, phone)
+  await signInTenant(page, email)
   await page.goto('/console/static/pricing')
   await expect(page.getByText('静态住宅代理暂未开放购买')).toBeVisible()
   const ops = await openSales(account)
@@ -227,8 +228,8 @@ staticSalesTest('跨地区购物车一次下单，逐次复核价格和库存，
 })
 
 staticSalesTest('IP 筛选、复制与导出，批量续费逐项结算并从列表重查', async ({ page, request, context, openSales }, info) => {
-  const phone = '13900007402'
-  const account = await registerStaticTenant(request, phone)
+  const email = 'tenant-13900007402@example.test'
+  const account = await registerStaticTenant(request, email)
   const tenant = account.headers
   const ops = await openSales(account)
   const jp = ['198.51.100.201', '198.51.100.202', '198.51.100.203']
@@ -246,7 +247,7 @@ staticSalesTest('IP 筛选、复制与导出，批量续费逐项结算并从列
   const usIP = allocations.find(ip => ip.order_id === us.id).ip
   const sharedIP = allocations.find(ip => ip.order_id === shared.id).ip
 
-  await signInTenant(page, phone)
+  await signInTenant(page, email)
   await page.goto('/console/static/ips')
   await expect(rowFor(page, jp[0])).toContainText('即将到期')
   const expiringFilter = page.getByRole('button', { name: '即将到期 IP 数' })

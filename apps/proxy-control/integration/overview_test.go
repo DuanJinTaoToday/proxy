@@ -12,7 +12,7 @@ import (
 
 func TestOverviewWhenSubaccountsAreDisabled(t *testing.T) {
 	f := setupUsageWithSubaccounts(t, false)
-	_, token := usageTenant(t, f, "13800005003")
+	_, token := usageTenant(t, f, "tenant-13800005003@example.test")
 	var overview v1.Overview
 	readProto(t, testfixture.Request(f.http, "GET", "/v1/tenant/overview", "", token), &overview)
 	if overview.GetCanCreateSubaccount() || len(overview.GetProducts()) != 2 {
@@ -22,8 +22,8 @@ func TestOverviewWhenSubaccountsAreDisabled(t *testing.T) {
 
 func TestTenantOverview(t *testing.T) {
 	f := setupUsage(t)
-	tenantID, token := usageTenant(t, f, "13800005001")
-	_, other := usageTenant(t, f, "13800005002")
+	tenantID, token := usageTenant(t, f, "tenant-13800005001@example.test")
+	_, other := usageTenant(t, f, "tenant-13800005002@example.test")
 	const path = "/v1/tenant/overview"
 	if reply := testfixture.Request(f.http, "GET", path, "", ""); reply.Code != http.StatusUnauthorized {
 		t.Fatalf("anonymous overview: %d %s", reply.Code, reply.Body)

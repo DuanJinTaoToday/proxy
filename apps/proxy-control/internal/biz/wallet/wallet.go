@@ -42,7 +42,7 @@ var (
 )
 
 type Tenant struct {
-	ID, Name, PrimaryAccountName, Phone string
+	ID, Name, PrimaryAccountName, Email string
 	RegisteredAt                        time.Time
 	AvailableMinor                      int64
 	AvailableTrafficBytes               int64
