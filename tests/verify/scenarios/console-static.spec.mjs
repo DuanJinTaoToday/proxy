@@ -253,7 +253,7 @@ staticSalesTest('IP 筛选、复制与导出，批量续费逐项结算并从列
     expect(allocation).not.toHaveProperty('supplier_item_id')
   }
 
-  const other = await registerStaticTenant(request, '13900007502')
+  const other = await registerStaticTenant(request, 'tenant-13900007502@example.test')
   const wrongTenant = await request.get('/v1/tenant/static-ips/' + jpIDs[0] + '/proxy-config', { headers: other.headers })
   expect(wrongTenant.status()).toBe(404)
   const wrongBatch = await request.post('/v1/tenant/static-renewal-quotes', {
