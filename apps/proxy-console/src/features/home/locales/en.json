@@ -1,6 +1,8 @@
 {
   "marketing": {
     "products": "Proxy products",
+    "pricing": "Pricing",
+    "allPricing": "See all prices",
     "guide": "Guide",
     "faq": "Frequently asked questions",
     "manage": "Usage and management",

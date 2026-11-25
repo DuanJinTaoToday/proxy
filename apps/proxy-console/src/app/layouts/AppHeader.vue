@@ -42,6 +42,7 @@ function switchLocale(next: Locale) {
 
     <nav v-if="marketing" class="app-header__marketing-menu" :aria-label="t('marketing.resources')">
       <a href="#products">{{ t('marketing.products') }}</a>
+      <RouterLink :to="{ name: 'pricing', params: { locale } }">{{ t('marketing.pricing') }}</RouterLink>
       <a href="#integration">{{ t('marketing.guide') }}</a>
       <a href="#manage">{{ t('marketing.manage') }}</a>
       <a href="#faq">{{ t('marketing.faq') }}</a>

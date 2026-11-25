@@ -48,6 +48,7 @@ export const routes: RouteRecordRaw[] = [
     component: PublicLayout,
     children: [
       { path: '', name: 'home', component: () => import('@/pages/public/HomePage.vue'), meta: { titleKey: 'nav.home' } },
+      { path: 'pricing', name: 'pricing', component: () => import('@/pages/public/PricingPage.vue'), meta: { titleKey: 'publicPricing.title' } },
       { path: 'login', name: 'login', component: AuthPage, props: { mode: 'login' }, meta: { titleKey: 'auth.loginTitle', guestOnly: true } },
       { path: 'register', name: 'register', component: AuthPage, props: { mode: 'register' }, meta: { titleKey: 'auth.registerTitle', guestOnly: true } },
     ],

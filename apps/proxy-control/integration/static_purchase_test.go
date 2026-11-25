@@ -17,6 +17,7 @@ import (
 func TestStaticPurchaseAndIndependentSales(t *testing.T) {
 	const item = `{"id":23,"nid":3,"ip":"192.0.2.1","port":43000,"p_user":"customer","p_pass":"fixture","stoptime":"2099-01-01 12:00:00"}`
 	calls := make(chan string, 4)
+	var catalogCalls atomic.Int32
 	var supplierMode atomic.Int32
 	var quotePrice atomic.Int64
 	quotePrice.Store(10)
@@ -25,6 +26,7 @@ func TestStaticPurchaseAndIndependentSales(t *testing.T) {
 	supplier := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/open/api/nodes-and-continents":
+			catalogCalls.Add(1)
 			_, _ = fmt.Fprintf(w, `{"code":0,"data":{"nodes":[{"id":3,"title":"东京","isp":"独享","max":%d,"prices":[{"price_type":"yp1","buytime":1,"price":%d}]}]}}`, quoteStock.Load(), quotePrice.Load())
 		case "/open/api/order/place":
 			body, _ := io.ReadAll(r.Body)
@@ -122,6 +124,11 @@ func TestStaticPurchaseAndIndependentSales(t *testing.T) {
 	readProto(t, req("GET", catalog, "", ""), &offers)
 	if len(offers.GetOffers()) != 1 || offers.Offers[0].GetUnitMinor() != 1000 {
 		t.Fatalf("unexpected supplier offers: %v", &offers)
+	}
+	var snapshot v1.StaticOffers
+	readProto(t, req("GET", catalog+"?share_mode=exclusive", "", ""), &snapshot)
+	if catalogCalls.Load() != 1 || !snapshot.GetQuotedAt().AsTime().Equal(offers.GetQuotedAt().AsTime()) {
+		t.Fatalf("same public specification did not reuse upstream request and timestamp: calls=%d", catalogCalls.Load())
 	}
 	const quotePath = "/v1/tenant/static-purchase-quotes"
 	const quoteSpec = `{"node_id":"3","term":"yp1","quantity":2}`

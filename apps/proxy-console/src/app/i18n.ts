@@ -19,6 +19,7 @@ import { messages as staticGuideMessages } from '@/features/static-guide'
 import { messages as catalogMessages } from '@/features/catalog/messages'
 import { messages as opsUsageMessages } from '@/features/ops-usage/messages'
 import { messages as homeMessages } from '@/features/home/messages'
+import { messages as publicPricingMessages } from '@/features/public-pricing/messages'
 
 export const locales = ['zh-CN', 'en'] as const
 export type Locale = (typeof locales)[number]
@@ -37,7 +38,7 @@ type MessageSchema = typeof zhCN
 const moduleMessages: Record<Locale, Messages>[] = [
   authMessages, dynamicProxyMessages, dashboardMessages, notificationMessages,
   checkoutMessages, walletMessages, orderMessages, userMessages,
-  staticIpsMessages, staticPricingMessages, staticGuideMessages, catalogMessages, opsUsageMessages, homeMessages,
+  staticIpsMessages, staticPricingMessages, staticGuideMessages, catalogMessages, opsUsageMessages, homeMessages, publicPricingMessages,
 ]
 function messagesFor(locale: Locale, base: MessageSchema) {
   return moduleMessages.reduce<Messages>((all, module) => ({ ...all, ...module[locale] }), base) as MessageSchema

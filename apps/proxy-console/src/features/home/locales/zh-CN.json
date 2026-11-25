@@ -1,6 +1,8 @@
 {
   "marketing": {
     "products": "代理产品",
+    "pricing": "价格",
+    "allPricing": "查看全部价格",
     "guide": "使用教程",
     "faq": "常见问题",
     "manage": "用量与管理",
