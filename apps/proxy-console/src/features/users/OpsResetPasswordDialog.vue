@@ -8,13 +8,14 @@ import { ApiError } from '@/api/client'
 import { resetOpsTenantPassword, type OpsTenant } from '@/api/opsTenants'
 import { currentOperator, hasOperatorPermission } from '@/features/auth'
 import { useErrorMessage } from '@/shared/lib/useErrorMessage'
+import { verificationMethods } from './verification'
 
 const props = defineProps<{ tenant: Pick<OpsTenant, 'id' | 'name' | 'account'> }>()
 const open = defineModel<boolean>({ required: true })
 const { t } = useI18n()
 const errorMessage = useErrorMessage()
 
-const methods = ['phone', 'transfer', 'license']
+const methods = verificationMethods
 const verificationMethod = ref('')
 const verificationNote = ref('')
 const pending = ref(false)

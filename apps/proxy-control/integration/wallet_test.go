@@ -45,17 +45,17 @@ func TestWalletSettlementAndTenantIsolation(t *testing.T) {
 	handler := f.http
 	const customerPassword = "wallet-test-password"
 
-	register := func(phone string) (*v1.TenantAccess, string) {
+	register := func(email string) (*v1.TenantAccess, string) {
 		t.Helper()
-		body := fmt.Sprintf(`{"phone":%q,"password":%q}`, phone, customerPassword)
+		body := fmt.Sprintf(`{"email":%q,"password":%q}`, email, customerPassword)
 		var customer v1.TenantAccess
 		var login v1.LoginResponse
-		readProto(t, testfixture.Request(handler, "POST", "/v1/access/register", body, ""), &customer)
+		readProto(t, registerWithEmail(t, f, body), &customer)
 		readProto(t, testfixture.Request(handler, "POST", "/v1/access/login", body, ""), &login)
 		return &customer, login.AccessToken
 	}
-	customer, token := register("13800002001")
-	other, otherToken := register("13800002002")
+	customer, token := register("tenant-13800002001@example.test")
+	other, otherToken := register("tenant-13800002002@example.test")
 	execSQL(t, f.db, "INSERT INTO operators (id,username,password_hash) VALUES ('cashier','cashier',?)", testfixture.PasswordHash)
 	execSQL(t, f.db, "INSERT INTO operator_permissions (operator_id,permission) VALUES ('cashier','manage_billing')")
 	operator := testfixture.Login(t, handler, "cashier")
@@ -65,9 +65,9 @@ func TestWalletSettlementAndTenantIsolation(t *testing.T) {
 	}
 	const ops = "/v1/operations/tenants"
 	path := ops + "/" + customer.TenantId
-	testfixture.AssertStatus(t, request("GET", ops+"?query=13800002001", "", operator), http.StatusForbidden, "ACCESS_DENIED")
+	testfixture.AssertStatus(t, request("GET", ops+"?query=tenant-13800002001@example.test", "", operator), http.StatusForbidden, "ACCESS_DENIED")
 	execSQL(t, f.db, "INSERT INTO operator_permissions (operator_id,permission) VALUES ('cashier','read_operations')")
-	for _, query := range []string{customer.PrimaryAccountName, "13800002001", "+8613800002001"} {
+	for _, query := range []string{customer.PrimaryAccountName, "tenant-13800002001@example.test", "TENANT-13800002001@EXAMPLE.TEST"} {
 		var found v1.WalletTenant
 		readProto(t, request("GET", ops+"?query="+url.QueryEscape(query), "", operator), &found)
 		if found.TenantId != customer.TenantId || found.Name != customer.Name || found.AvailableMinor != 0 {

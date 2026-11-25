@@ -114,10 +114,10 @@ func TestStaticRenewalPriceRecheckAndMixedSettlement(t *testing.T) {
 	req := func(method, path, data, token string) *httptest.ResponseRecorder {
 		return testfixture.Request(f.http, method, path, data, token)
 	}
-	const creds = `{"phone":"13800004901","password":"static-renewal-test"}`
+	const creds = `{"email":"tenant-13800004901@example.test","password":"static-renewal-test"}`
 	var tenant v1.TenantAccess
 	var session v1.LoginResponse
-	readProto(t, req("POST", "/v1/access/register", creds, ""), &tenant)
+	readProto(t, registerWithEmail(t, f, creds), &tenant)
 	readProto(t, req("POST", "/v1/access/login", creds, ""), &session)
 	token := session.GetAccessToken()
 	fundCatalogWallet(t, f.db, tenant.GetTenantId())
@@ -133,10 +133,10 @@ func TestStaticRenewalPriceRecheckAndMixedSettlement(t *testing.T) {
 	if bought.GetStatus() != "succeeded" {
 		t.Fatalf("fixture purchase status %s", bought.GetStatus())
 	}
-	const otherCreds = `{"phone":"13800004902","password":"other-renewal-test"}`
+	const otherCreds = `{"email":"tenant-13800004902@example.test","password":"other-renewal-test"}`
 	var other v1.TenantAccess
 	var otherSession v1.LoginResponse
-	readProto(t, req("POST", "/v1/access/register", otherCreds, ""), &other)
+	readProto(t, registerWithEmail(t, f, otherCreds), &other)
 	readProto(t, req("POST", "/v1/access/login", otherCreds, ""), &otherSession)
 	otherToken := otherSession.GetAccessToken()
 	fundCatalogWallet(t, f.db, other.GetTenantId())
@@ -149,7 +149,7 @@ func TestStaticRenewalPriceRecheckAndMixedSettlement(t *testing.T) {
 		t.Fatalf("second fixture purchase status %s", otherBought.GetStatus())
 	}
 
-	migration, err := os.ReadFile("../migrations/00017_static_allocation_ids.sql")
+	migration, err := os.ReadFile("../migrations/00019_static_allocation_ids.sql")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -157,7 +157,7 @@ func TestStaticRenewalPriceRecheckAndMixedSettlement(t *testing.T) {
 	if !ok {
 		t.Fatal("cutover migration is missing its rollback")
 	}
-	// Drop the new schema after delivery to recreate the v16 data at the cutover.
+	// Drop the new schema after delivery to recreate the v18 data at the cutover.
 	execSQL(t, f.db, down)
 	execSQL(t, f.db, up)
 

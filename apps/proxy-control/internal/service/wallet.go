@@ -139,7 +139,7 @@ func tenantMessage(tenant wallet.Tenant, operations bool) *v1.WalletTenant {
 		AvailableMinor: tenant.AvailableMinor, AvailableTrafficBytes: tenant.AvailableTrafficBytes,
 		TotalRechargeMinor: tenant.TotalRechargeMinor, TotalSpendMinor: tenant.TotalSpendMinor}
 	if operations {
-		message.Phone = tenant.Phone
+		message.Email = tenant.Email
 		if !tenant.RegisteredAt.IsZero() {
 			message.RegisteredAt = timestamppb.New(tenant.RegisteredAt)
 		}

@@ -419,8 +419,8 @@ type WalletTenant struct {
 	TotalRechargeMinor string `protobuf:"bytes,6,opt,name=total_recharge_minor,json=totalRechargeMinor,proto3" json:"total_recharge_minor,omitempty"`
 	// 当前租户累计净实扣，人民币分，以十进制字符串返回。
 	TotalSpendMinor string `protobuf:"bytes,7,opt,name=total_spend_minor,json=totalSpendMinor,proto3" json:"total_spend_minor,omitempty"`
-	// 注册手机号（运营接口）。
-	Phone string `protobuf:"bytes,8,opt,name=phone,proto3" json:"phone,omitempty"`
+	// 注册邮箱（运营接口）。
+	Email string `protobuf:"bytes,10,opt,name=email,proto3" json:"email,omitempty"`
 	// 租户注册时间（运营接口）。
 	RegisteredAt  *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=registered_at,json=registeredAt,proto3" json:"registered_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -506,9 +506,9 @@ func (x *WalletTenant) GetTotalSpendMinor() string {
 	return ""
 }
 
-func (x *WalletTenant) GetPhone() string {
+func (x *WalletTenant) GetEmail() string {
 	if x != nil {
-		return x.Phone
+		return x.Email
 	}
 	return ""
 }
@@ -3340,7 +3340,7 @@ const file_proxycontrol_v1_wallet_proto_rawDesc = "" +
 	"\vrequest_key\x18\x02 \x01(\tB\n" +
 	"\xfaB\ar\x05\x10\x01(\x80\x01R\n" +
 	"requestKey\x127\n" +
-	"\x12confirmation_token\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x98\x01$R\x11confirmationToken\"\x87\x03\n" +
+	"\x12confirmation_token\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x98\x01$R\x11confirmationToken\"\x94\x03\n" +
 	"\fWalletTenant\x12\x1b\n" +
 	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x120\n" +
@@ -3349,8 +3349,9 @@ const file_proxycontrol_v1_wallet_proto_rawDesc = "" +
 	"\x17available_traffic_bytes\x18\x05 \x01(\x03R\x15availableTrafficBytes\x120\n" +
 	"\x14total_recharge_minor\x18\x06 \x01(\tR\x12totalRechargeMinor\x12*\n" +
 	"\x11total_spend_minor\x18\a \x01(\tR\x0ftotalSpendMinor\x12\x14\n" +
-	"\x05phone\x18\b \x01(\tR\x05phone\x12?\n" +
-	"\rregistered_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\fregisteredAt\"\xa9\x02\n" +
+	"\x05email\x18\n" +
+	" \x01(\tR\x05email\x12?\n" +
+	"\rregistered_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\fregisteredAtJ\x04\b\b\x10\tR\x05phone\"\xa9\x02\n" +
 	"\vWalletEntry\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x19\n" +
 	"\border_id\x18\x02 \x01(\x03R\aorderId\x12\x12\n" +

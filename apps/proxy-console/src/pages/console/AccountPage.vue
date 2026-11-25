@@ -4,7 +4,7 @@ import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ElAlert, ElButton } from 'element-plus'
 import { getPendingOrderCount } from '@/api/orders'
-import { sessionPhone } from '@/features/auth'
+import { sessionEmail } from '@/features/auth'
 import RouteTabs from '@/app/RouteTabs.vue'
 
 const route = useRoute()
@@ -17,10 +17,10 @@ function applyPendingCount(count: number) {
   pendingCount.value = count
 }
 
-watch([() => route.name, sessionPhone, retry], async ([name, phone], previous, onCleanup) => {
-  if (phone !== previous?.[1]) pendingCount.value = 0
+watch([() => route.name, sessionEmail, retry], async ([name, email], previous, onCleanup) => {
+  if (email !== previous?.[1]) pendingCount.value = 0
   countFailed.value = false
-  if (!phone || name !== 'console-account-profile') return
+  if (!email || name !== 'console-account-profile') return
   const request = new AbortController()
   onCleanup(() => request.abort())
   try {

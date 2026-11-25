@@ -38,6 +38,25 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/proxycontrol.v1.BaseResp'
+    /v1/access/forgot-password:
+        post:
+            tags:
+                - AccessService
+            summary: 请求邮箱密码找回链接
+            operationId: AccessService_ForgotPassword
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.EmailRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.BaseResp'
     /v1/access/login:
         post:
             tags:
@@ -61,7 +80,7 @@ paths:
         post:
             tags:
                 - AccessService
-            summary: 使用手机号注册租户管理员
+            summary: 验证邮箱并注册租户管理员
             operationId: AccessService_Register
             requestBody:
                 content:
@@ -76,6 +95,63 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/proxycontrol.v1.TenantAccess'
+    /v1/access/register-code:
+        post:
+            tags:
+                - AccessService
+            summary: 请求邮箱注册验证码
+            operationId: AccessService_SendRegistrationCode
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.EmailRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.BaseResp'
+    /v1/access:recover-email:
+        post:
+            tags:
+                - AccessService
+            summary: 验证新邮箱并设置密码
+            operationId: AccessService_RecoverCustomerEmail
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.EmailCredentialRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.BaseResp'
+    /v1/access:reset-password:
+        post:
+            tags:
+                - AccessService
+            summary: 通过邮箱链接重置客户密码
+            operationId: AccessService_ResetCustomerPassword
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.EmailCredentialRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.BaseResp'
     /v1/gateway/auth-state/load:
         post:
             tags:
@@ -627,6 +703,31 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/proxycontrol.v1.WalletEntry'
+    /v1/operations/tenants/{tenantId}:recover-email:
+        post:
+            tags:
+                - AccessService
+            summary: 运营核实归属后向新邮箱发送恢复链接
+            operationId: AccessService_StartEmailRecovery
+            parameters:
+                - name: tenantId
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.StartEmailRecoveryRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.BaseResp'
     /v1/operations/tenants/{tenantId}:reset-password:
         post:
             tags:
@@ -1577,6 +1678,18 @@ components:
                     items:
                         $ref: '#/components/schemas/proxycontrol.v1.DailyUsage'
                     description: 按日期升序返回有实扣量的天，查询区间无实扣时为空列表。
+        proxycontrol.v1.EmailCredentialRequest:
+            type: object
+            properties:
+                token:
+                    type: string
+                password:
+                    type: string
+        proxycontrol.v1.EmailRequest:
+            type: object
+            properties:
+                email:
+                    type: string
         proxycontrol.v1.ListRecordAnomaliesResponse:
             type: object
             properties:
@@ -1626,9 +1739,8 @@ components:
         proxycontrol.v1.LoginRequest:
             type: object
             properties:
-                phone:
+                email:
                     type: string
-                    description: 中国大陆手机号，接受带或不带 +86。
                 password:
                     type: string
                     description: 控制台登录密码。
@@ -2085,12 +2197,13 @@ components:
         proxycontrol.v1.RegisterRequest:
             type: object
             properties:
-                phone:
+                email:
                     type: string
-                    description: 中国大陆手机号，接受带或不带 +86。
                 password:
                     type: string
                     description: 初始密码，至少 12 个字符。
+                verificationCode:
+                    type: string
         proxycontrol.v1.ReportLifecycleRequest:
             type: object
             properties:
@@ -2170,6 +2283,13 @@ components:
                 acceptanceEvidence:
                     type: string
                     description: 开售时填写对应验收记录或链接。
+        proxycontrol.v1.StartEmailRecoveryRequest:
+            type: object
+            properties:
+                tenantId:
+                    type: string
+                email:
+                    type: string
         proxycontrol.v1.StaticIP:
             type: object
             properties:
@@ -2594,6 +2714,8 @@ components:
                 primaryAccountName:
                     type: string
                     description: 平台分配的全局唯一主账号名。
+                email:
+                    type: string
         proxycontrol.v1.TrafficAlert:
             type: object
             properties:
@@ -2848,9 +2970,9 @@ components:
                 totalSpendMinor:
                     type: string
                     description: 当前租户累计净实扣，人民币分，以十进制字符串返回。
-                phone:
+                email:
                     type: string
-                    description: 注册手机号（运营接口）。
+                    description: 注册邮箱（运营接口）。
                 registeredAt:
                     type: string
                     description: 租户注册时间（运营接口）。

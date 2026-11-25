@@ -4,11 +4,22 @@
 
 | HTTP 接口 | 用途 |
 | --- | --- |
-| `POST /v1/access/register` | 提交 `phone` 和 `password`，返回租户和主账号名。带或不带 +86 是同一账号，密码至少 12 位。 |
-| `POST /v1/access/login` | 提交 `phone` 和 `password`，获取租户管理员会话。 |
-| `GET /v1/tenant/account` | 通过会话读取所属租户。 |
+| `POST /v1/access/register-code` | 提交 `email` 申请验证码。公开回执不区分邮箱是否已开户。 |
+| `POST /v1/access/register` | 提交 `email`、`password` 和 `verification_code`。密码至少 12 位。 |
+| `POST /v1/access/login` | 提交 `email` 和 `password`，获取租户管理员会话。 |
+| `GET /v1/tenant/account` | 通过会话读取所属租户及已验证邮箱。 |
+| `POST /v1/access/forgot-password` | 提交 `email` 申请通过原邮箱找回密码，使用统一公开回执。 |
+| `POST /v1/access:reset-password` | 提交邮件 `token` 和新 `password`，完成后旧会话失效。 |
 | `POST /v1/operations/access/login` | 独立的运营账号登录，提交 `username` 和 `password`。 |
-| `POST /v1/operations/tenants/{tenant_id}:reset-password` | 运营核实租户归属后提交 `password`。需要 `manage_tenant_accounts`，重置后原有会话失效。 |
+| `POST /v1/operations/tenants/{tenant_id}:recover-email` | 运营核实租户归属后提交新的 `email`。需要 `manage_tenant_accounts`。 |
+| `POST /v1/access:recover-email` | 提交邮件 `token` 和新 `password`，验证新邮箱并撤销旧会话。 |
+| `POST /v1/operations/tenants/{tenant_id}:reset-password` | 原邮箱无法使用时保留的运营兜底方式。运营核实归属后可直接提交 `password`。需要 `manage_tenant_accounts`。 |
+
+邮箱键去掉首尾空白并转为小写，保留加号和点号。邮件发往实际验证的地址。注册验证码有效 10 分钟，连续输错 5 次即失效。重置和恢复链接有效 30 分钟，重新申请会使对应旧链接失效。两个公开发信入口合计每个邮箱每 15 分钟最多 5 次，每个来源 IPv4 地址或 IPv6 /64 每小时最多 60 次。走 HTTPS 入口时，按下文配置可信代理以识别来源。运营可按主账号名或注册邮箱搜索租户。
+
+在受保护的配置源设置 `biz.email_auth`。填入客户控制台的 HTTPS origin、所有控制面实例共享的 32 字节随机 `code_key`（无填充 base64url）、SMTP `smtp_address`（`host:port`）和发件邮箱 `from_address`。SMTP relay 需支持 STARTTLS，经授权时同时配置 `smtp_username` 和 `smtp_password`。隔离的本地测试使用 Mailpit，只有该类测试环境可设置 `allow_plaintext: true`。发信配置为空时，已有邮箱账户仍可登录。启用开户、找回和运营邮件恢复前应核对真实 SMTP 投递。命令 `docker compose -f deploy/test/compose.yaml port mailpit 8025` 可获取本地测试邮箱的 Web 入口。
+
+迁移 `00018_email_access.sql` 保留既有租户 ID、主账号名和全部账务与订单关系。已知的本地测试账户迁移为 `alpha@example.test`、`beta@example.test` 和 `chenxl-studio@example.test`。其余没有验证邮箱的旧租户可由运营按主账号名查找并协助验证新邮箱。新账户没有历史手机号，创建新账户后需执行前向修复而无法降回原有手机号必填模式。
 
 运营账号由受权部署方写入 `operators` 和 `operator_permissions`。给需要的账号分别授予 `read_operations`、`manage_billing` 或 `manage_tenant_accounts`。密码摘要格式为 `<16 字节随机盐的 hex>:<32 字节摘要的 hex>`，使用 PBKDF2-HMAC-SHA256，迭代 600000 次。测试初始化示例见 [本地 Docker 测试环境](../../../../docs/operations/local-test-environment.md)。
 

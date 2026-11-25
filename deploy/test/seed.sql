@@ -15,9 +15,9 @@ INSERT INTO tenants (id, name, primary_account_name)
 VALUES ('alpha', 'Alpha', 'localalpha'), ('beta', 'Beta', 'localbeta')
 ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO tenant_admins (tenant_id, phone_e164, password_hash)
-VALUES ('alpha', '+8613800000001', '2bd806c97f0e00af1a1fc3328fa763a9:38c0e51748906648e4e5318e2990cea0f17670ee335eafe9556e85bbb437a725'),
-       ('beta', '+8613800000002', '81b637d8fcd2c6da6359e6963113a117:3722a65d26a8a497f340de7d6380f3ae49f7e1e2be710439ddc6a374bf176a91')
+INSERT INTO tenant_admins (tenant_id, email, email_delivery_address, password_hash)
+VALUES ('alpha', 'alpha@example.test', 'alpha@example.test', '2bd806c97f0e00af1a1fc3328fa763a9:38c0e51748906648e4e5318e2990cea0f17670ee335eafe9556e85bbb437a725'),
+       ('beta', 'beta@example.test', 'beta@example.test', '81b637d8fcd2c6da6359e6963113a117:3722a65d26a8a497f340de7d6380f3ae49f7e1e2be710439ddc6a374bf176a91')
 ON CONFLICT (tenant_id) DO NOTHING;
 
 INSERT INTO wallets (tenant_id) VALUES ('alpha'), ('beta')
@@ -31,8 +31,8 @@ INSERT INTO tenants (id, name, primary_account_name, created_at)
 VALUES ('visual-recharge-tenant', '陈小岚工作室', 'chenxl-studio', '2026-10-31T13:14:00Z')
 ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO tenant_admins (tenant_id, phone_e164, password_hash)
-VALUES ('visual-recharge-tenant', '+8613800136021', '2bd806c97f0e00af1a1fc3328fa763a9:38c0e51748906648e4e5318e2990cea0f17670ee335eafe9556e85bbb437a725')
+INSERT INTO tenant_admins (tenant_id, email, email_delivery_address, password_hash)
+VALUES ('visual-recharge-tenant', 'chenxl-studio@example.test', 'chenxl-studio@example.test', '2bd806c97f0e00af1a1fc3328fa763a9:38c0e51748906648e4e5318e2990cea0f17670ee335eafe9556e85bbb437a725')
 ON CONFLICT (tenant_id) DO NOTHING;
 
 INSERT INTO wallets (tenant_id, available_minor)

@@ -53,9 +53,9 @@ func TestStaticPurchaseAndIndependentSales(t *testing.T) {
 	execSQL(t, f.db, "INSERT INTO operators (id, username, password_hash) VALUES ('cashier','cashier',?)", testfixture.PasswordHash)
 	execSQL(t, f.db, "INSERT INTO operator_permissions (operator_id, permission) VALUES ('cashier','manage_billing')")
 	cashier := testfixture.Login(t, f.http, "cashier")
-	const credentials = `{"phone":"13800004801","password":"static-test-password"}`
+	const credentials = `{"email":"tenant-13800004801@example.test","password":"static-test-password"}`
 	var tenant v1.TenantAccess
-	readProto(t, testfixture.Request(f.http, "POST", "/v1/access/register", credentials, ""), &tenant)
+	readProto(t, registerWithEmail(t, f, credentials), &tenant)
 	var session v1.LoginResponse
 	readProto(t, testfixture.Request(f.http, "POST", "/v1/access/login", credentials, ""), &session)
 	fundCatalogWallet(t, f.db, tenant.GetTenantId())
@@ -207,9 +207,9 @@ func TestStaticPurchaseAndIndependentSales(t *testing.T) {
 	if export.Code != http.StatusOK || export.Body.String() != "192.0.2.1:43000:customer:fixture\n" {
 		t.Fatalf("unexpected export: %d", export.Code)
 	}
-	const secondCredentials = `{"phone":"13800004802","password":"second-static-password"}`
+	const secondCredentials = `{"email":"tenant-13800004802@example.test","password":"second-static-password"}`
 	var otherTenant v1.TenantAccess
-	readProto(t, req("POST", "/v1/access/register", secondCredentials, ""), &otherTenant)
+	readProto(t, registerWithEmail(t, f, secondCredentials), &otherTenant)
 	var otherSession v1.LoginResponse
 	readProto(t, req("POST", "/v1/access/login", secondCredentials, ""), &otherSession)
 	testfixture.AssertStatus(t, req("GET", configPath, "", otherSession.GetAccessToken()), http.StatusNotFound, "WALLET_RECORD_NOT_FOUND")

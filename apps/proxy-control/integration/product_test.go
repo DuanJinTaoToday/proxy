@@ -69,9 +69,9 @@ func TestProductCatalogAndSales(t *testing.T) {
 		t.Fatalf("unexpected default tiers: %v", tiers)
 	}
 
-	const customerCredentials = `{"phone":"13800004301","password":"product-test-password"}`
+	const customerCredentials = `{"email":"tenant-13800004301@example.test","password":"product-test-password"}`
 	var customer v1.TenantAccess
-	readProto(t, testfixture.Request(f.http, "POST", "/v1/access/register", customerCredentials, ""), &customer)
+	readProto(t, registerWithEmail(t, f, customerCredentials), &customer)
 	var session v1.LoginResponse
 	readProto(t, testfixture.Request(f.http, "POST", "/v1/access/login", customerCredentials, ""), &session)
 	const checkout = "/v1/tenant/orders/traffic-packages"

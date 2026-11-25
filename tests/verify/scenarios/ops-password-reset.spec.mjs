@@ -1,19 +1,20 @@
 import { test, expect } from '@playwright/test'
 import { field, screenshot, signInOperator } from '../support/console.mjs'
+import { registerEmail } from '../support/mail.mjs'
 
 test.use({ locale: 'zh-CN', timezoneId: 'Asia/Shanghai', screenshot: 'off', trace: 'off', video: 'off' })
 
 test('账号运营核实目标后重置租户密码，原有会话与旧密码失效', async ({ page, browser, request }, info) => {
-  const phone = '137' + String(Date.now()).slice(-8)
+  const email = 'fallback-' + Date.now() + '@example.test'
   const oldPassword = 'proxy-local-test'
-  const registered = await request.post('/v1/access/register', { data: { phone, password: oldPassword } })
+  const registered = await registerEmail(request, { email, password: oldPassword })
   expect(registered.status()).toBe(200)
   const headersFor = async (loginPath, data) => {
     const result = await request.post(loginPath, { data: { ...data, password: oldPassword } })
     expect(result.status()).toBe(200)
     return { Authorization: 'Bearer ' + (await result.json()).access_token }
   }
-  const customerHeaders = await headersFor('/v1/access/login', { phone })
+  const customerHeaders = await headersFor('/v1/access/login', { email })
   const accountResponse = await request.get('/v1/tenant/account', { headers: customerHeaders })
   expect(accountResponse.status()).toBe(200)
   const account = await accountResponse.json()
@@ -59,7 +60,7 @@ test('账号运营核实目标后重置租户密码，原有会话与旧密码�
   const confirm = dialog.getByRole('button', { name: '确认重置' })
   await expect(confirm).toBeDisabled()
   await dialog.getByText('选择核实方式', { exact: true }).click()
-  await supportPage.getByRole('option', { name: '注册手机号回拨核实' }).click()
+  await supportPage.getByRole('option', { name: '回拨客户预留电话核实' }).click()
   await expect(confirm).toBeDisabled()
   await field(dialog, '核实记录').fill('回拨已完成，本人确认开户信息')
 
@@ -88,11 +89,11 @@ test('账号运营核实目标后重置租户密码，原有会话与旧密码�
 
   const stale = await request.get('/v1/tenant/account', { headers: customerHeaders })
   expect(stale.status()).toBe(401)
-  const old = await request.post('/v1/access/login', { data: { phone, password: oldPassword } })
+  const old = await request.post('/v1/access/login', { data: { email, password: oldPassword } })
   expect(old.status()).toBe(401)
   const customerPage = await browser.newPage({ ignoreHTTPSErrors: true })
   await customerPage.goto(new URL('/zh-CN/login', page.url()).href)
-  await field(customerPage, '手机号').fill(phone)
+  await field(customerPage, '邮箱').fill(email)
   await field(customerPage, '密码').fill(newPassword)
   await customerPage.getByRole('button', { name: '登录', exact: true }).click()
   await expect(customerPage).toHaveURL(/\/console$/)

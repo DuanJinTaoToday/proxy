@@ -12,12 +12,14 @@ const TableNameTenantAdmin = "tenant_admins"
 
 // TenantAdmin mapped from table <tenant_admins>
 type TenantAdmin struct {
-	TenantID        string     `gorm:"column:tenant_id;type:text;primaryKey" json:"tenant_id"`
-	PhoneE164       string     `gorm:"column:phone_e164;type:text;not null" json:"phone_e164"`
-	PasswordHash    string     `gorm:"column:password_hash;type:text;not null" json:"password_hash"`
-	SessionVersion  *int64     `gorm:"column:session_version;type:bigint;not null;default:1" json:"session_version"`
-	PasswordResetAt *time.Time `gorm:"column:password_reset_at;type:timestamp with time zone" json:"password_reset_at"`
-	PasswordResetBy *string    `gorm:"column:password_reset_by;type:text" json:"password_reset_by"`
+	TenantID             string     `gorm:"column:tenant_id;type:text;primaryKey" json:"tenant_id"`
+	PhoneE164            *string    `gorm:"column:phone_e164;type:text" json:"phone_e164"`
+	PasswordHash         string     `gorm:"column:password_hash;type:text;not null" json:"password_hash"`
+	SessionVersion       *int64     `gorm:"column:session_version;type:bigint;not null;default:1" json:"session_version"`
+	PasswordResetAt      *time.Time `gorm:"column:password_reset_at;type:timestamp with time zone" json:"password_reset_at"`
+	PasswordResetBy      *string    `gorm:"column:password_reset_by;type:text" json:"password_reset_by"`
+	Email                *string    `gorm:"column:email;type:text" json:"email"`
+	EmailDeliveryAddress *string    `gorm:"column:email_delivery_address;type:text" json:"email_delivery_address"`
 }
 
 // TableName TenantAdmin's table name

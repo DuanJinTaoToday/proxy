@@ -6,13 +6,14 @@ import (
 	"log"
 
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/conf"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/data/acl/accountmail"
 	"github.com/DuanJinTaoToday/proxy/pkg/client/db"
 	"github.com/google/wire"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
 
-var ProviderSet = wire.NewSet(NewData)
+var ProviderSet = wire.NewSet(NewData, accountmail.New)
 
 type Data struct {
 	repo repoClients

@@ -982,7 +982,7 @@ func (m *WalletTenant) validate(all bool) error {
 
 	// no validation rules for TotalSpendMinor
 
-	// no validation rules for Phone
+	// no validation rules for Email
 
 	if all {
 		switch v := interface{}(m.GetRegisteredAt()).(type) {

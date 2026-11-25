@@ -46,7 +46,7 @@ async function search() {
     <h2>{{ t('users.opsFindTenant') }}</h2>
     <p class="tenant-search__description">{{ t('users.opsSearchHint') }}</p>
     <form class="tenant-search__row" @submit.prevent="search">
-      <ElInput v-model="query" size="large" :prefix-icon="Search" clearable maxlength="128"
+      <ElInput v-model="query" size="large" :prefix-icon="Search" clearable maxlength="254"
         :aria-label="t('users.opsSearchLabel')" :placeholder="t('users.opsSearchPlaceholder')" @input="clear" />
       <ElButton class="tenant-search__button" type="primary" size="large" native-type="submit" :loading="state.kind === 'loading'">{{ t('users.opsSearch') }}</ElButton>
     </form>
@@ -54,7 +54,7 @@ async function search() {
     <RouterLink v-if="state.kind === 'found'" class="tenant-search__result" :to="{ name: 'ops-tenant', params: { tenantId: state.tenant.id } }">
       <div>
         <strong>{{ state.tenant.name }}</strong>
-        <span class="mono">{{ state.tenant.account }}</span><template v-if="state.tenant.phone"> · {{ state.tenant.phone }}</template>
+        <span class="mono">{{ state.tenant.account }}</span><template v-if="state.tenant.email"> · {{ state.tenant.email }}</template>
       </div>
       <span class="tabular">{{ t('users.opsSearchBalance', { amount: formatYuan(state.tenant.availableMinor, locale) }) }}</span>
     </RouterLink>

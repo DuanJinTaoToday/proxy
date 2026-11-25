@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 import { writeFile } from 'node:fs/promises'
 import { screenshot, signInOperator, signInTenant } from '../support/console.mjs'
 
-const searchInput = page => page.getByRole('textbox', { name: '主账号名或手机号' })
+const searchInput = page => page.getByRole('textbox', { name: '主账号名或邮箱' })
 const receiptField = (page, dialog, label) => dialog.locator('dl > div').filter({ has: page.getByText(label, { exact: true }) }).locator('dd')
 const rechargePath = '/v1/operations/tenants/visual-recharge-tenant/wallet/recharges'
 
@@ -22,12 +22,12 @@ test('运营充值 → 原提交重试 → 租户看到唯一一笔到账', asyn
 
   try {
     await test.step('租户登录并读取初始余额', async () => {
-      await signInTenant(tenant, '13800136021')
+      await signInTenant(tenant, 'chenxl-studio@example.test')
       await tenant.getByRole('menuitem', { name: '钱包', exact: true }).click()
       await expect(balance).toHaveText(before)
       await screenshot(tenant, info, 'customer-before')
     })
-    await test.step('运营通过手机号与主账号名查找同一租户并核对信息', async () => {
+    await test.step('运营通过邮箱与主账号名查找同一租户并核对信息', async () => {
       await signInOperator(operator, '/ops', 'operator-billing')
       await expect(operator).toHaveURL(new URL('/ops/tenants', baseURL).href)
       await expect(operator.getByRole('heading', { name: '查找租户' })).toBeVisible()
@@ -35,7 +35,7 @@ test('运营充值 → 原提交重试 → 租户看到唯一一笔到账', asyn
       await search(operator, 'unknown-account')
       await expect(operator.getByText(/没有找到租户/)).toBeVisible()
       await screenshot(operator, info, '01b-tenant-empty')
-      await search(operator, '+8613800136021')
+      await search(operator, ' CHENXL-STUDIO@EXAMPLE.TEST ')
       const match = operator.getByRole('link', { name: /陈小岚工作室.*chenxl-studio/ })
       const href = await match.getAttribute('href')
       expect(href).toBe('/ops/tenants/visual-recharge-tenant')
