@@ -47,3 +47,13 @@ header.app-header.app-header--marketing .home-header-register {
   .app-header__marketing-menu { display: none; }
   .homepage .wrap { padding-inline: var(--home-edge-mobile); }
 }
+@media (max-width: 767px) {
+  header.app-header.app-header--marketing {
+    padding-inline: var(--space-3);
+    gap: var(--space-2);
+  }
+  header.app-header.app-header--marketing .app-header__brand {
+    gap: var(--space-1);
+    font-size: var(--font-size-lg);
+  }
+}

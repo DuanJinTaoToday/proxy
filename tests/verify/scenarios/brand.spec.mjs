@@ -122,6 +122,16 @@ test('官网、客户控制台、运营台展示提案 A 和 RocProxy 字标，�
     logo: publicEnBrand.imageState,
   })
 
+  await page.setViewportSize({ width: 390, height: 844 })
+  const narrowHeaderOverflow = await page.evaluate(() => {
+    const header = document.querySelector('header')
+    return header ? header.scrollWidth - header.clientWidth : -1
+  })
+  expect(narrowHeaderOverflow).toBe(0)
+  const signUpBox = await page.getByRole('banner').getByRole('link', { name: 'Sign up', exact: true }).boundingBox()
+  expect(signUpBox.x + signUpBox.width).toBeLessThanOrEqual(390)
+  await page.setViewportSize({ width: 1440, height: 1000 })
+
   // 2. 客户控制台入口（直接打开 + 侧栏与品牌导航 + 双语标题）
   await signInTenant(page)
   await page.goto('/console')
