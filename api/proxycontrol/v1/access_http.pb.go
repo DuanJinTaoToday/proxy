@@ -18,25 +18,40 @@ var _ = new(context.Context)
 const _ = http.SupportPackageIsVersion3
 
 const OperationAccessServiceCheckPermission = "/proxycontrol.v1.AccessService/CheckPermission"
+const OperationAccessServiceForgotPassword = "/proxycontrol.v1.AccessService/ForgotPassword"
 const OperationAccessServiceGetAccount = "/proxycontrol.v1.AccessService/GetAccount"
 const OperationAccessServiceGetOperatorAccount = "/proxycontrol.v1.AccessService/GetOperatorAccount"
 const OperationAccessServiceLogin = "/proxycontrol.v1.AccessService/Login"
 const OperationAccessServiceLoginOperator = "/proxycontrol.v1.AccessService/LoginOperator"
+const OperationAccessServiceRecoverCustomerEmail = "/proxycontrol.v1.AccessService/RecoverCustomerEmail"
 const OperationAccessServiceRegister = "/proxycontrol.v1.AccessService/Register"
+const OperationAccessServiceResetCustomerPassword = "/proxycontrol.v1.AccessService/ResetCustomerPassword"
 const OperationAccessServiceResetTenantPassword = "/proxycontrol.v1.AccessService/ResetTenantPassword"
+const OperationAccessServiceSendRegistrationCode = "/proxycontrol.v1.AccessService/SendRegistrationCode"
+const OperationAccessServiceStartEmailRecovery = "/proxycontrol.v1.AccessService/StartEmailRecovery"
 
 type AccessServiceHTTPServer interface {
 	CheckPermission(context.Context, *CheckPermissionRequest) (*BaseResp, error)
+	ForgotPassword(context.Context, *EmailRequest) (*BaseResp, error)
 	GetAccount(context.Context, *BaseRequest) (*TenantAccess, error)
 	GetOperatorAccount(context.Context, *BaseRequest) (*OperatorAccount, error)
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
 	LoginOperator(context.Context, *LoginOperatorRequest) (*LoginResponse, error)
+	RecoverCustomerEmail(context.Context, *EmailCredentialRequest) (*BaseResp, error)
 	Register(context.Context, *RegisterRequest) (*TenantAccess, error)
+	ResetCustomerPassword(context.Context, *EmailCredentialRequest) (*BaseResp, error)
 	ResetTenantPassword(context.Context, *ResetTenantPasswordRequest) (*BaseResp, error)
+	SendRegistrationCode(context.Context, *EmailRequest) (*BaseResp, error)
+	StartEmailRecovery(context.Context, *StartEmailRecoveryRequest) (*BaseResp, error)
 }
 
 func RegisterAccessServiceHTTPServer(s *http.Server, srv AccessServiceHTTPServer) {
 	r := s.Route("/")
+	r.Handle("POST", "/v1/access/register-code", _AccessService_SendRegistrationCode0_HTTP_Handler(srv))
+	r.Handle("POST", "/v1/access/forgot-password", _AccessService_ForgotPassword0_HTTP_Handler(srv))
+	r.Handle("POST", "/v1/access:reset-password", _AccessService_ResetCustomerPassword0_HTTP_Handler(srv))
+	r.Handle("POST", "/v1/access:recover-email", _AccessService_RecoverCustomerEmail0_HTTP_Handler(srv))
+	r.Handle("POST", "/v1/operations/tenants/{tenant_id}:recover-email", _AccessService_StartEmailRecovery0_HTTP_Handler(srv))
 	r.Handle("POST", "/v1/access/register", _AccessService_Register0_HTTP_Handler(srv))
 	r.Handle("GET", "/v1/tenant/account", _AccessService_GetAccount0_HTTP_Handler(srv))
 	r.Handle("POST", "/v1/operations/access/login", _AccessService_LoginOperator0_HTTP_Handler(srv))
@@ -44,6 +59,104 @@ func RegisterAccessServiceHTTPServer(s *http.Server, srv AccessServiceHTTPServer
 	r.Handle("POST", "/v1/operations/tenants/{tenant_id}:reset-password", _AccessService_ResetTenantPassword0_HTTP_Handler(srv))
 	r.Handle("POST", "/v1/access/check", _AccessService_CheckPermission0_HTTP_Handler(srv))
 	r.Handle("POST", "/v1/access/login", _AccessService_Login0_HTTP_Handler(srv))
+}
+
+func _AccessService_SendRegistrationCode0_HTTP_Handler(srv AccessServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in EmailRequest
+		if err := ctx.Bind(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationAccessServiceSendRegistrationCode)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.SendRegistrationCode(ctx, req.(*EmailRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*BaseResp)
+		return ctx.Result(200, reply)
+	}
+}
+
+func _AccessService_ForgotPassword0_HTTP_Handler(srv AccessServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in EmailRequest
+		if err := ctx.Bind(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationAccessServiceForgotPassword)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.ForgotPassword(ctx, req.(*EmailRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*BaseResp)
+		return ctx.Result(200, reply)
+	}
+}
+
+func _AccessService_ResetCustomerPassword0_HTTP_Handler(srv AccessServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in EmailCredentialRequest
+		if err := ctx.Bind(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationAccessServiceResetCustomerPassword)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.ResetCustomerPassword(ctx, req.(*EmailCredentialRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*BaseResp)
+		return ctx.Result(200, reply)
+	}
+}
+
+func _AccessService_RecoverCustomerEmail0_HTTP_Handler(srv AccessServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in EmailCredentialRequest
+		if err := ctx.Bind(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationAccessServiceRecoverCustomerEmail)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.RecoverCustomerEmail(ctx, req.(*EmailCredentialRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*BaseResp)
+		return ctx.Result(200, reply)
+	}
+}
+
+func _AccessService_StartEmailRecovery0_HTTP_Handler(srv AccessServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in StartEmailRecoveryRequest
+		if err := ctx.Bind(&in); err != nil {
+			return err
+		}
+		if err := ctx.BindVars(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationAccessServiceStartEmailRecovery)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.StartEmailRecovery(ctx, req.(*StartEmailRecoveryRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*BaseResp)
+		return ctx.Result(200, reply)
+	}
 }
 
 func _AccessService_Register0_HTTP_Handler(srv AccessServiceHTTPServer) func(ctx http.Context) error {
@@ -184,12 +297,17 @@ func _AccessService_Login0_HTTP_Handler(srv AccessServiceHTTPServer) func(ctx ht
 
 type AccessServiceHTTPClient interface {
 	CheckPermission(ctx context.Context, req *CheckPermissionRequest, opts ...http.CallOption) (rsp *BaseResp, err error)
+	ForgotPassword(ctx context.Context, req *EmailRequest, opts ...http.CallOption) (rsp *BaseResp, err error)
 	GetAccount(ctx context.Context, req *BaseRequest, opts ...http.CallOption) (rsp *TenantAccess, err error)
 	GetOperatorAccount(ctx context.Context, req *BaseRequest, opts ...http.CallOption) (rsp *OperatorAccount, err error)
 	Login(ctx context.Context, req *LoginRequest, opts ...http.CallOption) (rsp *LoginResponse, err error)
 	LoginOperator(ctx context.Context, req *LoginOperatorRequest, opts ...http.CallOption) (rsp *LoginResponse, err error)
+	RecoverCustomerEmail(ctx context.Context, req *EmailCredentialRequest, opts ...http.CallOption) (rsp *BaseResp, err error)
 	Register(ctx context.Context, req *RegisterRequest, opts ...http.CallOption) (rsp *TenantAccess, err error)
+	ResetCustomerPassword(ctx context.Context, req *EmailCredentialRequest, opts ...http.CallOption) (rsp *BaseResp, err error)
 	ResetTenantPassword(ctx context.Context, req *ResetTenantPasswordRequest, opts ...http.CallOption) (rsp *BaseResp, err error)
+	SendRegistrationCode(ctx context.Context, req *EmailRequest, opts ...http.CallOption) (rsp *BaseResp, err error)
+	StartEmailRecovery(ctx context.Context, req *StartEmailRecoveryRequest, opts ...http.CallOption) (rsp *BaseResp, err error)
 }
 
 type AccessServiceHTTPClientImpl struct {
@@ -208,6 +326,23 @@ func (c *AccessServiceHTTPClientImpl) CheckPermission(ctx context.Context, in *C
 		http.Accept("application/protojson"),
 		http.ContentType("application/protojson"),
 		http.Operation(OperationAccessServiceCheckPermission),
+		http.PathTemplate(pattern),
+	}, opts...)
+	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (c *AccessServiceHTTPClientImpl) ForgotPassword(ctx context.Context, in *EmailRequest, opts ...http.CallOption) (*BaseResp, error) {
+	var out BaseResp
+	pattern := "/v1/access/forgot-password"
+	path := http.BuildPath(pattern, in)
+	opts = append([]http.CallOption{
+		http.Accept("application/protojson"),
+		http.ContentType("application/protojson"),
+		http.Operation(OperationAccessServiceForgotPassword),
 		http.PathTemplate(pattern),
 	}, opts...)
 	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
@@ -283,6 +418,23 @@ func (c *AccessServiceHTTPClientImpl) LoginOperator(ctx context.Context, in *Log
 	return &out, nil
 }
 
+func (c *AccessServiceHTTPClientImpl) RecoverCustomerEmail(ctx context.Context, in *EmailCredentialRequest, opts ...http.CallOption) (*BaseResp, error) {
+	var out BaseResp
+	pattern := "/v1/access:recover-email"
+	path := http.BuildPath(pattern, in)
+	opts = append([]http.CallOption{
+		http.Accept("application/protojson"),
+		http.ContentType("application/protojson"),
+		http.Operation(OperationAccessServiceRecoverCustomerEmail),
+		http.PathTemplate(pattern),
+	}, opts...)
+	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 func (c *AccessServiceHTTPClientImpl) Register(ctx context.Context, in *RegisterRequest, opts ...http.CallOption) (*TenantAccess, error) {
 	var out TenantAccess
 	pattern := "/v1/access/register"
@@ -300,6 +452,23 @@ func (c *AccessServiceHTTPClientImpl) Register(ctx context.Context, in *Register
 	return &out, nil
 }
 
+func (c *AccessServiceHTTPClientImpl) ResetCustomerPassword(ctx context.Context, in *EmailCredentialRequest, opts ...http.CallOption) (*BaseResp, error) {
+	var out BaseResp
+	pattern := "/v1/access:reset-password"
+	path := http.BuildPath(pattern, in)
+	opts = append([]http.CallOption{
+		http.Accept("application/protojson"),
+		http.ContentType("application/protojson"),
+		http.Operation(OperationAccessServiceResetCustomerPassword),
+		http.PathTemplate(pattern),
+	}, opts...)
+	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 func (c *AccessServiceHTTPClientImpl) ResetTenantPassword(ctx context.Context, in *ResetTenantPasswordRequest, opts ...http.CallOption) (*BaseResp, error) {
 	var out BaseResp
 	pattern := "/v1/operations/tenants/{tenant_id}:reset-password"
@@ -308,6 +477,40 @@ func (c *AccessServiceHTTPClientImpl) ResetTenantPassword(ctx context.Context, i
 		http.Accept("application/protojson"),
 		http.ContentType("application/protojson"),
 		http.Operation(OperationAccessServiceResetTenantPassword),
+		http.PathTemplate(pattern),
+	}, opts...)
+	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (c *AccessServiceHTTPClientImpl) SendRegistrationCode(ctx context.Context, in *EmailRequest, opts ...http.CallOption) (*BaseResp, error) {
+	var out BaseResp
+	pattern := "/v1/access/register-code"
+	path := http.BuildPath(pattern, in)
+	opts = append([]http.CallOption{
+		http.Accept("application/protojson"),
+		http.ContentType("application/protojson"),
+		http.Operation(OperationAccessServiceSendRegistrationCode),
+		http.PathTemplate(pattern),
+	}, opts...)
+	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (c *AccessServiceHTTPClientImpl) StartEmailRecovery(ctx context.Context, in *StartEmailRecoveryRequest, opts ...http.CallOption) (*BaseResp, error) {
+	var out BaseResp
+	pattern := "/v1/operations/tenants/{tenant_id}:recover-email"
+	path := http.BuildPath(pattern, in)
+	opts = append([]http.CallOption{
+		http.Accept("application/protojson"),
+		http.ContentType("application/protojson"),
+		http.Operation(OperationAccessServiceStartEmailRecovery),
 		http.PathTemplate(pattern),
 	}, opts...)
 	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)

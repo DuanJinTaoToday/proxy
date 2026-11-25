@@ -15,6 +15,7 @@ import (
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/wallet"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/conf"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/data"
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/data/acl/accountmail"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/data/repo"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/server"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/service"
@@ -31,12 +32,21 @@ func wireApp(confServer *conf.Server, confData *conf.Data, biz *conf.Biz, appCon
 		return nil, nil, err
 	}
 	repository := repo.ProvideAccounts(dataData)
-	accessService, err := access.NewPersistent(repository)
+	mailSender, err := accountmail.New(biz)
 	if err != nil {
 		cleanup()
 		return nil, nil, err
 	}
-	serviceAccess := service.NewAccess(accessService)
+	accessService, err := access.NewPersistent(repository, mailSender, biz, logger)
+	if err != nil {
+		cleanup()
+		return nil, nil, err
+	}
+	serviceAccess, err := service.NewAccess(accessService, confServer)
+	if err != nil {
+		cleanup()
+		return nil, nil, err
+	}
 	walletRepository, err := repo.ProvideWalletRepository(dataData, biz)
 	if err != nil {
 		cleanup()

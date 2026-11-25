@@ -40,7 +40,7 @@ test('运营权限分别来自控制面，禁止只读和账号运营充值', as
     expect(response.status()).toBe(200)
     return { Authorization: 'Bearer ' + (await response.json()).access_token }
   }
-  const clientHeaders = await loginApi('/v1/access/login', { phone: '13800000001' })
+  const clientHeaders = await loginApi('/v1/access/login', { email: 'alpha@example.test' })
   expect((await request.get('/v1/operations/access/account', { headers: clientHeaders })).status()).toBe(403)
   expect((await request.get('/v1/operations/tenants/alpha', { headers: clientHeaders })).status()).toBe(403)
 

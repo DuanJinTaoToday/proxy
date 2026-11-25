@@ -4,10 +4,9 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ElButton, ElDropdown, ElDropdownItem, ElDropdownMenu, ElMessageBox } from 'element-plus'
 import { ArrowDown, User } from '@element-plus/icons-vue'
-import { maskPhone } from './rules'
-import { accountLoadFailed, currentAccount, loadAccount, sessionPhone, signOut } from './session'
+import { accountEmail, accountLoadFailed, currentAccount, loadAccount, signOut } from './session'
 
-// 已登录时顶栏的用户入口：显示主账号名和手机号，提供账户信息、订单记录和退出登录。
+// 已登录时顶栏的用户入口：显示主账号名和登录邮箱，提供账户信息、订单记录和退出登录。
 defineProps<{ tenant?: boolean }>()
 const router = useRouter()
 const { t, locale } = useI18n()
@@ -37,7 +36,7 @@ async function confirmSignOut() {
     <template #dropdown>
       <div class="account-menu__head">
         <strong>{{ accountName }}</strong>
-        <span class="tabular">{{ maskPhone(sessionPhone) }}</span>
+        <span>{{ accountEmail }}</span>
         <ElButton v-if="accountLoadFailed" link type="primary" size="small" @click="loadAccount">{{ t('auth.retry') }}</ElButton>
       </div>
       <ElDropdownMenu>

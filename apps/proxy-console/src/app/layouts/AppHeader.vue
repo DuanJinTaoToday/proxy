@@ -5,7 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { ElButton, ElDropdown, ElDropdownItem, ElDropdownMenu } from 'element-plus'
 import { ArrowDown, Check, DataLine, Menu, Switch } from '@element-plus/icons-vue'
 import LinkButton from '@/shared/ui/LinkButton.vue'
-import { AccountMenu, hasSession, OperatorMenu, sessionPhone } from '@/features/auth'
+import { AccountMenu, hasSession, OperatorMenu, sessionEmail } from '@/features/auth'
 import { NotificationBell } from '@/features/notifications'
 import { applyLocale, isLocale, locales, rememberLocale, type Locale } from '../i18n'
 
@@ -50,7 +50,7 @@ function switchLocale(next: Locale) {
       <RouterLink v-if="ops" to="/console" target="_blank" rel="noopener" class="app-header__customer-link">
         <DataLine aria-hidden="true" /><span>{{ t('header.customerConsole') }}</span>
       </RouterLink>
-      <NotificationBell v-else :key="sessionPhone" :account-key="sessionPhone" />
+      <NotificationBell v-else :key="sessionEmail" :account-key="sessionEmail" />
 
       <ElDropdown trigger="click" placement="bottom-end" @command="switchLocale">
         <ElButton class="app-header__language" text :aria-label="t('header.language', { name: t(`locale.${locale}`) })">

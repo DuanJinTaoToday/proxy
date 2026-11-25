@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import { ElAlert, ElButton, ElCard, ElSkeleton } from 'element-plus'
-import { accountLoadFailed, currentAccount, loadAccount, maskPhone, sessionPhone } from '@/features/auth'
+import { accountEmail, accountLoadFailed, currentAccount, loadAccount } from '@/features/auth'
 import { AccessLocationCard } from '@/features/users'
 
 const { t } = useI18n()
@@ -17,8 +17,8 @@ const { t } = useI18n()
           <dd>{{ currentAccount.primaryAccountName }}</dd>
         </div>
         <div>
-          <dt>{{ t('users.phone') }}</dt>
-          <dd class="tabular">{{ maskPhone(sessionPhone) }}</dd>
+          <dt>{{ t('users.email') }}</dt>
+          <dd>{{ accountEmail }}</dd>
         </div>
       </dl>
       <div v-else-if="accountLoadFailed" class="account-error">

@@ -14,10 +14,10 @@ import (
 
 func TestMeteringCommitsDebitsAndArchivedBucketsWithWatermark(t *testing.T) {
 	f := setupUsage(t)
-	const loginBody = `{"phone":"13800000045","password":"tenant-password45"}`
+	const loginBody = `{"email":"tenant-13800000045@example.test","password":"tenant-password45"}`
 	var tenant v1.TenantAccess
 	var session v1.LoginResponse
-	readProto(t, testfixture.Request(f.http, "POST", "/v1/access/register", loginBody, ""), &tenant)
+	readProto(t, registerWithEmail(t, f, loginBody), &tenant)
 	readProto(t, testfixture.Request(f.http, "POST", "/v1/access/login", loginBody, ""), &session)
 	tenantID := tenant.GetTenantId()
 	create := func(name string) string {

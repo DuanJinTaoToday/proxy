@@ -21,13 +21,14 @@ const (
 )
 
 type Tenant struct {
-	ID, Name, PrimaryAccountName string
+	ID, Name, PrimaryAccountName, Email string
 }
 
 type Service struct {
 	repo        Repository
 	signingKey  [32]byte
 	verifySlots chan struct{}
+	delivery    *emailDelivery
 }
 
 func (s *Service) sign(payload []byte) string {

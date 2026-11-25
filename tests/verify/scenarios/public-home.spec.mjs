@@ -126,7 +126,7 @@ homepage('英文注册和登录入口、动态套餐登录回跳', async ({ page
   await page.getByRole('link', { name: /50 GB/ }).click()
   await expect(page).toHaveURL(/\/en\/login\?redirect=/)
   expect(new URL(page.url()).searchParams.get('redirect')).toBe('/console/dynamic/pricing?package=50gb')
-  await field(page, 'Phone').fill('13800000001')
+  await field(page, 'Email address').fill('alpha@example.test')
   await field(page, 'Password').fill('proxy-local-test')
   await page.getByRole('button', { name: 'Sign in', exact: true }).click()
   await expect(page).toHaveURL(/\/console\/dynamic\/pricing\?package=50gb$/)

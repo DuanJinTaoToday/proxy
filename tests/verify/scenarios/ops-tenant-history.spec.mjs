@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { expect, test } from '@playwright/test'
 import { screenshot, signInOperator } from '../support/console.mjs'
 import { authenticatedApi, json, purchasePath, setSale, setTier } from '../support/traffic.mjs'
+import { registerEmail } from '../support/mail.mjs'
 
 const rechargeReason = '对公转账到账，回单尾号 3381'
 
@@ -14,13 +15,13 @@ async function select(page, name, option) {
 
 test('运营按租户筛选和分页，核对订单交付、退款和钱包流水', async ({ page, request, playwright, baseURL }, info) => {
   const prototypeURL = process.env.VERIFY_OPERATOR_PROTOTYPE
-  const phone = prototypeURL ? '13800136021' : '13900008801'
+  const email = prototypeURL ? 'chenxl-studio@example.test' : 'tenant-13900008801@example.test'
   const { tenant_id: tenantId } = prototypeURL ? { tenant_id: 'visual-recharge-tenant' }
-    : await json(await request.post('/v1/access/register', { data: { phone, password: 'proxy-local-test' } }))
+    : await json(await registerEmail(request, { email, password: 'proxy-local-test' }))
   const tenantPage = '/ops/tenants/' + tenantId
   const opsPath = '/v1/operations/tenants/' + tenantId
   const ops = await authenticatedApi(playwright, baseURL)
-  const tenant = await authenticatedApi(playwright, baseURL, { phone })
+  const tenant = await authenticatedApi(playwright, baseURL, { email })
   async function buyTraffic(tier) {
     return json(await tenant.post(purchasePath, {
       data: { package_id: tier.id, package_version: tier.version, request_key: randomUUID() },
@@ -135,9 +136,7 @@ test('运营按租户筛选和分页，核对订单交付、退款和钱包流�
     await expect(page).toHaveURL(new RegExp(tenantPage + '/ledger$'))
     await expect(rechargeRow).toBeVisible()
 
-    const { tenant_id: emptyId } = await json(await request.post('/v1/access/register', {
-      data: { phone: '13900008802', password: 'proxy-local-test' },
-    }))
+    const { tenant_id: emptyId } = await json(await registerEmail(request, { email: 'tenant-13900008802@example.test', password: 'proxy-local-test' }))
     const emptyTenant = await json(await ops.get('/v1/operations/tenants/' + emptyId))
     await page.goto('/ops/tenants/' + emptyId + '?order=' + order.id)
     await expect(page.getByRole('heading', { name: emptyTenant.name, exact: true })).toBeVisible()

@@ -11,11 +11,11 @@ import { endpoint, useStaticIpPresentation } from './presentation'
 import { readRenewalSubmissions, type RenewalIntent } from './renewalIntent'
 import RenewalDialog from './RenewalDialog.vue'
 
-const props = defineProps<{ accountPhone: string }>()
+const props = defineProps<{ accountKey: string }>()
 const { t, locale } = useI18n()
 const { formatDate, errorMessage } = useStaticIpPresentation()
 const controller = new AbortController()
-const storageKey = `proxy-console.static-renewal.${props.accountPhone}`
+const storageKey = `proxy-console.static-renewal.${props.accountKey}`
 
 const statuses = ['active', 'expiring', 'pending', 'expired'] as const
 type Status = (typeof statuses)[number]

@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process'
 import { randomUUID } from 'node:crypto'
 import { expect, test } from '@playwright/test'
 import { screenshot, signInOperator } from '../support/console.mjs'
+import { registerEmail } from '../support/mail.mjs'
 
 const password = 'proxy-local-test'
 
@@ -77,9 +78,9 @@ test('续费满 24 小时转运营，按 IP 确认与退款，迟到和重复通
   test.setTimeout(90_000)
   const staff = await authenticate(request, '/v1/operations/access/login', { username: 'operator' })
   const readonly = await authenticate(request, '/v1/operations/access/login', { username: 'operator-readonly' })
-  const phone = '13800009201'
-  const { tenant_id } = await json(await request.post('/v1/access/register', { data: { phone, password } }))
-  const customer = await authenticate(request, '/v1/access/login', { phone })
+  const email = 'tenant-13800009201@example.test'
+  const { tenant_id } = await json(await registerEmail(request, { email, password }))
+  const customer = await authenticate(request, '/v1/access/login', { email })
   const tenantPath = `/v1/operations/tenants/${tenant_id}`
   const recharge = { tenant_id, request_key: randomUUID(), amount_minor: '10000', reason: 'Issue #92 verification' }
   const { confirmation_token } = await json(await request.post(`${tenantPath}/wallet/recharge-quotes`, { headers: staff, data: recharge }))

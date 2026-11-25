@@ -5,15 +5,15 @@ import { authenticatedApi, expectSettled, purchasePath, recharge, setSale, setTi
 const purchaseURL = url => url.pathname === purchasePath
 
 test('成交回执丢失，关闭标签页后重试原请求只扣款和到账一次', async ({ page, context, playwright, baseURL }, info) => {
-  const phone = '13800000001'
+  const email = 'alpha@example.test'
   const operator = await authenticatedApi(playwright, baseURL)
-  const tenant = await authenticatedApi(playwright, baseURL, { phone })
+  const tenant = await authenticatedApi(playwright, baseURL, { email })
 
   try {
     await setTier(operator, '5gb', '1500')
     await setSale(operator, true)
     await recharge(operator, tenant, '4000')
-    await signInTenant(page, phone)
+    await signInTenant(page, email)
     await page.goto('/console/dynamic/pricing?package=5gb')
     await expect(page.getByRole('radio', { name: '5 GB 流量包' })).toBeChecked()
     await page.getByRole('button', { name: '立即购买' }).click()

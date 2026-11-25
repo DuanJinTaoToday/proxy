@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto'
 import { writeFile } from 'node:fs/promises'
 import { expect, test } from '@playwright/test'
 import { field, screenshot, signInOperator } from '../support/console.mjs'
+import { registerEmail } from '../support/mail.mjs'
 
 const pendingPath = '/v1/operations/orders/static-pending'
 const orderPath = '/v1/tenant/static-orders'
@@ -29,13 +30,11 @@ function setAge(order, seconds) {
 }
 
 test('运营在 24 小时后核实静态采购，72 小时后关闭剩余并只退一次', async ({ page, browser, request }, info) => {
-  const phone = '13900009101'
-  const { tenant_id } = await json(await request.post('/v1/access/register', {
-    data: { phone, password: 'proxy-local-test' },
-  }))
+  const email = 'tenant-13900009101@example.test'
+  const { tenant_id } = await json(await registerEmail(request, { email, password: 'proxy-local-test' }))
   const ops = await login(request, '/v1/operations/access/login', { username: 'operator' })
   const reader = await login(request, '/v1/operations/access/login', { username: 'operator-readonly' })
-  const tenant = await login(request, '/v1/access/login', { phone })
+  const tenant = await login(request, '/v1/access/login', { email })
   const tenantPath = '/v1/operations/tenants/' + tenant_id
 
   const request_key = randomUUID()

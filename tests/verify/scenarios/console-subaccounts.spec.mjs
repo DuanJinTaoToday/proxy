@@ -140,7 +140,7 @@ test('租户维护子账号账密、备注、状态和用量上限，刷新后�
 })
 
 test('禁用账号继续占用名额，达到 10 个后禁用创建', async ({ page }, info) => {
-  await signInTenant(page, '13800000002')
+  await signInTenant(page, 'beta@example.test')
   await page.goto('/console/sub-accounts')
   await expect(page.getByText('0 / 10', { exact: true })).toBeVisible()
   for (let i = 1; i <= 10; i++) {

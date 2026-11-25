@@ -8,11 +8,11 @@ export async function json(response) {
   return response.json()
 }
 
-export async function authenticatedApi(playwright, baseURL, { phone } = {}) {
+export async function authenticatedApi(playwright, baseURL, { email } = {}) {
   const caller = await playwright.request.newContext({ baseURL, ignoreHTTPSErrors: true })
   try {
-    const login = await json(await caller.post(phone ? '/v1/access/login' : '/v1/operations/access/login', {
-      data: { ...(phone ? { phone } : { username: 'operator' }), password: 'proxy-local-test' },
+    const login = await json(await caller.post(email ? '/v1/access/login' : '/v1/operations/access/login', {
+      data: { ...(email ? { email } : { username: 'operator' }), password: 'proxy-local-test' },
     }))
     return await playwright.request.newContext({
       baseURL, ignoreHTTPSErrors: true, extraHTTPHeaders: { Authorization: 'Bearer ' + login.access_token },

@@ -9,25 +9,29 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
-	"regexp"
+	"log/slog"
 	"strconv"
 	"strings"
 	"time"
 	"unicode/utf8"
 
+	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/conf"
 	"github.com/go-kratos/kratos/v3/errors"
 )
 
 type Principal struct {
-	ID, Username, PasswordHash string
-	Version                    int64
-	Tenant                     Tenant
-	Permissions                map[Permission]bool
+	ID, Username, PasswordHash, EmailDeliveryAddress string
+	Version                                          int64
+	Tenant                                           Tenant
+	Permissions                                      map[Permission]bool
 }
 
 type Repository interface {
-	CreateTenant(context.Context, Tenant, string, string) (bool, error)
-	CustomerByPhone(context.Context, string) (Principal, error)
+	StoreCredential(context.Context, EmailCredential) error
+	AllowEmailRequest(context.Context, string, string) (bool, error)
+	CreateTenant(context.Context, Tenant, string, []byte) error
+	RedeemLink(context.Context, string, []byte, string) error
+	CustomerByEmail(context.Context, string) (Principal, error)
 	CustomerByTenant(context.Context, string) (Principal, error)
 	OperatorByName(context.Context, string) (Principal, error)
 	OperatorByID(context.Context, string) (Principal, error)
@@ -36,25 +40,16 @@ type Repository interface {
 
 const ManageTenantAccounts Permission = 6
 
-var phonePattern = regexp.MustCompile(`^1[3-9][0-9]{9}$`)
-
-func NewPersistent(repo Repository) (*Service, error) {
-	s := &Service{repo: repo, verifySlots: make(chan struct{}, 4)}
+func NewPersistent(repo Repository, sender MailSender, settings *conf.Biz, logger *slog.Logger) (*Service, error) {
+	delivery, err := newEmailDelivery(sender, settings.GetEmailAuth(), logger)
+	if err != nil {
+		return nil, err
+	}
+	s := &Service{repo: repo, verifySlots: make(chan struct{}, 4), delivery: delivery}
 	if _, err := rand.Read(s.signingKey[:]); err != nil {
 		return nil, fmt.Errorf("generate access signing key: %w", err)
 	}
 	return s, nil
-}
-
-func NormalizePhone(phone string) string {
-	if len(phone) > 32 {
-		return ""
-	}
-	number := strings.TrimPrefix(strings.TrimSpace(phone), "+86")
-	if !phonePattern.MatchString(number) {
-		return ""
-	}
-	return "+86" + number
 }
 
 func (s *Service) passwordDigest(password string) (string, error) {
@@ -82,47 +77,22 @@ func accessUnavailable() error {
 	return errors.ServiceUnavailable("ACCESS_UNAVAILABLE", "account service unavailable")
 }
 
-func (s *Service) Register(ctx context.Context, phone, password string) (Tenant, error) {
-	phone = NormalizePhone(phone)
-	if phone == "" {
-		return Tenant{}, errors.BadRequest("INVALID_PHONE", "valid mainland China mobile number required")
-	}
+func (s *Service) LoginCustomer(ctx context.Context, email, password string) (string, int32, error) {
 	if s.repo == nil {
-		return Tenant{}, accessUnavailable()
+		return "", 0, accessUnavailable()
 	}
-	digest, err := s.passwordDigest(password)
-	if err != nil {
-		return Tenant{}, err
-	}
-	var id [16]byte
-	if _, err := rand.Read(id[:]); err != nil {
-		return Tenant{}, accessUnavailable()
-	}
-	name := "p" + hex.EncodeToString(id[:])
-	tenant := Tenant{ID: hex.EncodeToString(id[:]), Name: name, PrimaryAccountName: name}
-	created, err := s.repo.CreateTenant(ctx, tenant, phone, digest)
-	if err != nil {
-		return Tenant{}, accessUnavailable()
-	}
-	if !created {
-		return Tenant{}, errors.Conflict("PHONE_ALREADY_REGISTERED", "phone is already registered")
-	}
-	return tenant, nil
-}
-
-func (s *Service) LoginCustomer(ctx context.Context, phone, password string) (string, int32, error) {
-	return s.loginPrincipal(ctx, "customer", NormalizePhone(phone), password, s.repoCustomer)
-}
-
-func (s *Service) repoCustomer(ctx context.Context, phone string) (Principal, error) {
-	return s.repo.CustomerByPhone(ctx, phone)
+	return s.loginPrincipal(ctx, "customer", NormalizeEmail(email), password, s.repo.CustomerByEmail)
 }
 
 func (s *Service) LoginOperator(ctx context.Context, username, password string) (string, int32, error) {
 	if s.repo == nil {
 		return "", 0, accessUnavailable()
 	}
-	return s.loginPrincipal(ctx, "operator", strings.TrimSpace(username), password, s.repo.OperatorByName)
+	username = strings.TrimSpace(username)
+	if len(username) > 128 {
+		username = ""
+	}
+	return s.loginPrincipal(ctx, "operator", username, password, s.repo.OperatorByName)
 }
 
 func (s *Service) loginPrincipal(ctx context.Context, kind, login, password string, lookup func(context.Context, string) (Principal, error)) (string, int32, error) {
@@ -130,7 +100,7 @@ func (s *Service) loginPrincipal(ctx context.Context, kind, login, password stri
 	if s.repo == nil {
 		return "", 0, accessUnavailable()
 	}
-	if login == "" || len(login) > 128 || password == "" || len(password) > 1024 {
+	if login == "" || len(login) > 254 || password == "" || len(password) > 1024 {
 		return "", 0, invalid
 	}
 	select {

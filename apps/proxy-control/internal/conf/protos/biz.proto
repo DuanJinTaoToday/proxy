@@ -10,6 +10,7 @@ message Biz {
   Usage usage = 2;
   Subaccounts subaccounts = 3;
   IPCrown ipcrown = 4;
+  EmailAuth email_auth = 5;
 }
 
 message Usage {
@@ -29,4 +30,14 @@ message IPCrown {
   string partner_id = 2;
   string api_secret = 3;
   string password_key = 4;
+}
+
+message EmailAuth {
+  string console_origin = 1;
+  string code_key = 2;
+  string smtp_address = 3;
+  string smtp_username = 4;
+  string smtp_password = 5;
+  string from_address = 6;
+  bool allow_plaintext = 7;
 }

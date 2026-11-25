@@ -1,6 +1,7 @@
 import { execFileSync } from 'node:child_process'
 import { expect, test } from '@playwright/test'
 import { field, screenshot } from '../support/console.mjs'
+import { receivedCode } from '../support/mail.mjs'
 
 test.use({ reducedMotion: 'reduce' })
 
@@ -16,9 +17,11 @@ function sql(statement) {
   ], { cwd: new URL('../../../', import.meta.url), encoding: 'utf8' }).trim()
 }
 
-async function register(page, phone) {
+async function register(page, email) {
   await page.goto('/zh-CN/register')
-  await field(page, '手机号').fill(phone)
+  await field(page, '邮箱').fill(email)
+  await page.getByRole('button', { name: '发送验证码', exact: true }).click()
+  await field(page, '验证码').fill(await receivedCode(email))
   await field(page, '密码').fill('verify-dashboard-pw')
   await page.getByRole('button', { name: '注册并登录', exact: true }).click()
   await expect(page).toHaveURL(/\/console$/)
@@ -29,7 +32,7 @@ test('仪表板展示余额、上海业务日用量和待处理事项，通知�
   const shanghaiEarlyMorning = new Date(today + 'T01:15:00+08:00')
   const firstDay = new Date(Date.parse(today + 'T00:00:00Z') - 6 * 86_400_000).toISOString().slice(0, 10)
   await page.clock.setFixedTime(shanghaiEarlyMorning)
-  await register(page, '13900000071')
+  await register(page, 'tenant-13900000071@example.test')
 
   await expect(page.getByRole('region', { name: '钱包余额' })).toContainText(/¥0\.00/)
   await expect(page.getByRole('region', { name: '动态代理可用流量' })).toContainText('0.00 GB')
@@ -44,7 +47,7 @@ test('仪表板展示余额、上海业务日用量和待处理事项，通知�
 
   // Seed only this test's newly registered tenant. All app reads and notification claims use the live control API.
   const expiry = sql(`
-    CREATE TEMP TABLE dashboard_tenant AS SELECT tenant_id FROM tenant_admins WHERE phone_e164 = '+8613900000071';
+    CREATE TEMP TABLE dashboard_tenant AS SELECT tenant_id FROM tenant_admins WHERE email = 'tenant-13900000071@example.test';
     UPDATE wallets SET available_minor = 12345 WHERE tenant_id IN (SELECT tenant_id FROM dashboard_tenant);
     UPDATE tenant_balances SET available_bytes = 750000000, low_balance_threshold_bytes = 1000000000, low_balance_cycle = 1
       WHERE tenant_id IN (SELECT tenant_id FROM dashboard_tenant);
@@ -178,7 +181,7 @@ test('仪表板展示余额、上海业务日用量和待处理事项，通知�
   await page.unroute('**/v1/tenant/access-location');
 
   sql(`UPDATE tenant_balances SET available_bytes = -450000000
-    WHERE tenant_id = (SELECT tenant_id FROM tenant_admins WHERE phone_e164 = '+8613900000071')`)
+    WHERE tenant_id = (SELECT tenant_id FROM tenant_admins WHERE email = 'tenant-13900000071@example.test')`)
   await page.goto('/console')
   await expect(traffic).toContainText('欠量 0.45 GB')
   await expect(todo(page)).toContainText('动态流量已欠量')
@@ -200,7 +203,7 @@ test('仪表板展示余额、上海业务日用量和待处理事项，通知�
 
 test('仪表板用量加载失败和通知加载失败均可重试', async ({ page }, info) => {
   await page.route('**/v1/tenant/usage/daily?*', route => route.abort(), { times: 1 })
-  await register(page, '13900000072')
+  await register(page, 'tenant-13900000072@example.test')
   await expect(page.getByRole('alert')).toContainText('暂时无法加载仪表板。')
   await page.getByRole('button', { name: '重试', exact: true }).click()
   await expect(page.getByText('最近 7 天暂无扣减记录')).toBeVisible()
