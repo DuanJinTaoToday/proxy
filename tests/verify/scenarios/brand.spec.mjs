@@ -71,7 +71,7 @@ test('官网、客户控制台、运营台展示提案 A 和 RocProxy 字标，�
     const pathname = new URL(request.url()).pathname
     if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method) &&
       pathname !== '/v1/access/login' &&
-      pathname !== '/v1/operations/auth/login') {
+      pathname !== '/v1/operations/access/login') {
       unexpectedWrites.push(`${method} ${pathname}`)
     }
   })
@@ -171,8 +171,10 @@ test('官网、客户控制台、运营台展示提案 A 和 RocProxy 字标，�
   await screenshot(page, info, 'brand-ops-login-zh-CN')
 
   await signInOperator(page, '/ops/tenants')
-  await expect(page).toHaveURL(/\/ops\/tenants$/)
+  await expect(page).toHaveURL(new URL('/ops/tenants', page.url()).href)
+  await expect(page.getByRole('navigation', { name: '运营导航' })).toBeVisible()
   await page.goto('/ops/tenants')
+  await expect(page).toHaveURL(new URL('/ops/tenants', page.url()).href)
   await expect(page).toHaveTitle('租户 · 运营控制台 · RocProxy')
   const opsFavicon = await verifyFavicon(page)
   const opsBrand = await verifyHeaderBrand(page)
@@ -204,7 +206,7 @@ test('官网、客户控制台、运营台展示提案 A 和 RocProxy 字标，�
   })
 
   await opsEnBrand.brandLink.click()
-  await expect(page).toHaveURL(/\/ops\/tenants$/)
+  await expect(page).toHaveURL(new URL('/ops/tenants', page.url()).href)
 
   await info.attach('brand-checks', {
     body: JSON.stringify(records, null, 2),
