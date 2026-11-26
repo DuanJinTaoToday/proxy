@@ -45,6 +45,26 @@ service AccessService {
     option (openapi.v3.operation) = {summary: "查看当前管理员所属租户"};
   }
 
+  rpc GetTenantInvite(BaseRequest) returns (TenantInvite) {
+    option (google.api.http) = {get: "/v1/tenant/invite"};
+    option (openapi.v3.operation) = {summary: "查看已验证租户的专属邀请链接和邀请码"};
+  }
+
+  rpc GetTenantPromotion(TenantPromotionRequest) returns (TenantPromotion) {
+    option (google.api.http) = {get: "/v1/operations/tenants/{tenant_id}/promotion"};
+    option (openapi.v3.operation) = {summary: "运营查询租户推广资格"};
+  }
+
+  rpc PauseTenantPromotion(TenantPromotionRequest) returns (TenantPromotion) {
+    option (google.api.http) = {post: "/v1/operations/tenants/{tenant_id}:pause-promotion"};
+    option (openapi.v3.operation) = {summary: "运营暂停租户推广资格"};
+  }
+
+  rpc ResumeTenantPromotion(TenantPromotionRequest) returns (TenantPromotion) {
+    option (google.api.http) = {post: "/v1/operations/tenants/{tenant_id}:resume-promotion"};
+    option (openapi.v3.operation) = {summary: "运营恢复租户推广资格"};
+  }
+
   rpc LoginOperator(LoginOperatorRequest) returns (LoginResponse) {
     option (google.api.http) = {post: "/v1/operations/access/login", body: "*"};
     option (openapi.v3.operation) = {summary: "登录运营控制台"};
@@ -85,6 +105,25 @@ message TenantAccess {
   string email = 4;
 }
 
+message TenantInvite {
+  // 租户固定邀请码，32 位十六进制字符。
+  string invite_code = 1;
+  // 控制台的 HTTPS 注册链接，使用 invite 查询参数携带邀请码。
+  string invite_url = 2;
+  // 推广资格为 active 或 paused。暂停时保留原邀请码和链接。
+  string promotion_status = 3;
+}
+
+message TenantPromotionRequest {
+  // 推广资格管理的目标租户 ID。
+  string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_bytes: 64}];
+}
+
+message TenantPromotion {
+  // 推广资格为 active 或 paused。已验证邮箱的租户默认可推广。
+  string promotion_status = 1;
+}
+
 message LoginRequest {
   reserved 1;
   reserved "phone";
@@ -100,6 +139,10 @@ message RegisterRequest {
   // 初始密码，至少 12 个字符。
   string password = 2 [(validate.rules).string = {min_len: 12, max_bytes: 1024}];
   string verification_code = 4 [(validate.rules).string = {min_len: 1, max_bytes: 16}];
+  // 省略时使用链接值。提供非空手填码时覆盖链接值，提供空字符串时清除邀请归属。
+  optional string invite_code = 5;
+  // 邀请链接的 invite 查询参数。省略或为空时没有链接邀请码。
+  string link_invite_code = 6;
 }
 
 message EmailRequest {

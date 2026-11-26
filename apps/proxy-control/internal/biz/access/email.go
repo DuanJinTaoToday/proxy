@@ -102,7 +102,7 @@ func (s *Service) codeHash(email, code string) []byte {
 	return mac.Sum(nil)
 }
 
-func (s *Service) Register(ctx context.Context, email, password, code string) (Tenant, error) {
+func (s *Service) Register(ctx context.Context, email, password, code string, invite RegistrationInvite) (Tenant, error) {
 	email = NormalizeEmail(email)
 	if email == "" {
 		return Tenant{}, invalidEmail()
@@ -120,7 +120,7 @@ func (s *Service) Register(ctx context.Context, email, password, code string) (T
 	}
 	name := "p" + hex.EncodeToString(id[:])
 	tenant := Tenant{ID: hex.EncodeToString(id[:]), Name: name, PrimaryAccountName: name, Email: email}
-	err = s.repo.CreateTenant(ctx, tenant, digest, s.codeHash(email, strings.TrimSpace(code)))
+	err = s.repo.CreateTenant(ctx, tenant, digest, s.codeHash(email, strings.TrimSpace(code)), invite)
 	switch {
 	case err == nil:
 		return tenant, nil
@@ -128,6 +128,10 @@ func (s *Service) Register(ctx context.Context, email, password, code string) (T
 		return Tenant{}, apierrors.BadRequest("INVALID_VERIFICATION_CODE", "verification code is invalid or expired")
 	case errors.Is(err, ErrEmailOccupied):
 		return Tenant{}, occupiedEmail()
+	case errors.Is(err, ErrInvalidInviteCode):
+		return Tenant{}, apierrors.BadRequest("INVALID_INVITE_CODE", "invite code is invalid")
+	case errors.Is(err, ErrPromotionPaused):
+		return Tenant{}, apierrors.BadRequest("PROMOTION_PAUSED", "promotion eligibility is paused")
 	default:
 		s.delivery.logger.Warn("register account failed")
 		return Tenant{}, accessUnavailable()

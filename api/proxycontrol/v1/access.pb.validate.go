@@ -142,6 +142,337 @@ var _ interface {
 	ErrorName() string
 } = TenantAccessValidationError{}
 
+// Validate checks the field values on TenantInvite with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *TenantInvite) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on TenantInvite with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in TenantInviteMultiError, or
+// nil if none found.
+func (m *TenantInvite) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *TenantInvite) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for InviteCode
+
+	// no validation rules for InviteUrl
+
+	// no validation rules for PromotionStatus
+
+	if len(errors) > 0 {
+		return TenantInviteMultiError(errors)
+	}
+
+	return nil
+}
+
+// TenantInviteMultiError is an error wrapping multiple validation errors
+// returned by TenantInvite.ValidateAll() if the designated constraints aren't met.
+type TenantInviteMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m TenantInviteMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m TenantInviteMultiError) AllErrors() []error { return m }
+
+// TenantInviteValidationError is the validation error returned by
+// TenantInvite.Validate if the designated constraints aren't met.
+type TenantInviteValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e TenantInviteValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e TenantInviteValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e TenantInviteValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e TenantInviteValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e TenantInviteValidationError) ErrorName() string { return "TenantInviteValidationError" }
+
+// Error satisfies the builtin error interface
+func (e TenantInviteValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sTenantInvite.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = TenantInviteValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = TenantInviteValidationError{}
+
+// Validate checks the field values on TenantPromotionRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *TenantPromotionRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on TenantPromotionRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// TenantPromotionRequestMultiError, or nil if none found.
+func (m *TenantPromotionRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *TenantPromotionRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if utf8.RuneCountInString(m.GetTenantId()) < 1 {
+		err := TenantPromotionRequestValidationError{
+			field:  "TenantId",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(m.GetTenantId()) > 64 {
+		err := TenantPromotionRequestValidationError{
+			field:  "TenantId",
+			reason: "value length must be at most 64 bytes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return TenantPromotionRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// TenantPromotionRequestMultiError is an error wrapping multiple validation
+// errors returned by TenantPromotionRequest.ValidateAll() if the designated
+// constraints aren't met.
+type TenantPromotionRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m TenantPromotionRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m TenantPromotionRequestMultiError) AllErrors() []error { return m }
+
+// TenantPromotionRequestValidationError is the validation error returned by
+// TenantPromotionRequest.Validate if the designated constraints aren't met.
+type TenantPromotionRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e TenantPromotionRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e TenantPromotionRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e TenantPromotionRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e TenantPromotionRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e TenantPromotionRequestValidationError) ErrorName() string {
+	return "TenantPromotionRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e TenantPromotionRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sTenantPromotionRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = TenantPromotionRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = TenantPromotionRequestValidationError{}
+
+// Validate checks the field values on TenantPromotion with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *TenantPromotion) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on TenantPromotion with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// TenantPromotionMultiError, or nil if none found.
+func (m *TenantPromotion) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *TenantPromotion) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for PromotionStatus
+
+	if len(errors) > 0 {
+		return TenantPromotionMultiError(errors)
+	}
+
+	return nil
+}
+
+// TenantPromotionMultiError is an error wrapping multiple validation errors
+// returned by TenantPromotion.ValidateAll() if the designated constraints
+// aren't met.
+type TenantPromotionMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m TenantPromotionMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m TenantPromotionMultiError) AllErrors() []error { return m }
+
+// TenantPromotionValidationError is the validation error returned by
+// TenantPromotion.Validate if the designated constraints aren't met.
+type TenantPromotionValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e TenantPromotionValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e TenantPromotionValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e TenantPromotionValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e TenantPromotionValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e TenantPromotionValidationError) ErrorName() string { return "TenantPromotionValidationError" }
+
+// Error satisfies the builtin error interface
+func (e TenantPromotionValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sTenantPromotion.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = TenantPromotionValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = TenantPromotionValidationError{}
+
 // Validate checks the field values on LoginRequest with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -349,6 +680,12 @@ func (m *RegisterRequest) validate(all bool) error {
 			return err
 		}
 		errors = append(errors, err)
+	}
+
+	// no validation rules for LinkInviteCode
+
+	if m.InviteCode != nil {
+		// no validation rules for InviteCode
 	}
 
 	if len(errors) > 0 {
