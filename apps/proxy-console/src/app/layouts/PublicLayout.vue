@@ -4,11 +4,12 @@ import { useRoute } from 'vue-router'
 import AppHeader from './AppHeader.vue'
 
 const route = useRoute()
-const marketing = computed(() => route.name === 'home')
+const marketing = computed(() => route.name === 'home' || route.name === 'pricing')
+const marketingLight = computed(() => route.name === 'pricing')
 </script>
 
 <template>
-  <AppHeader :marketing="marketing" />
+  <AppHeader :marketing="marketing" :marketing-light="marketingLight" />
   <main :class="{ 'public-main': !marketing }">
     <RouterView />
   </main>

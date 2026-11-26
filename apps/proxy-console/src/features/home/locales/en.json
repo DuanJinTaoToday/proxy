@@ -1,139 +1,173 @@
 {
   "marketing": {
-    "products": "Proxy products",
-    "pricing": "Pricing",
-    "allPricing": "See all prices",
-    "guide": "Guide",
-    "faq": "Frequently asked questions",
-    "manage": "Usage and management",
-    "account": "Account",
+    "brand": "RocProxy",
     "resources": "Resources",
-    "title": "Real residential IPs to",
-    "stores": "run global stores",
-    "social": "manage social accounts",
-    "data": "collect public data",
-    "ads": "verify global ads",
-    "markets": "research local markets",
-    "heroLead": "Pay by data for rotating proxies or rent individual static IPs.",
-    "heroLeadMore": "Use both with one account.",
-    "freeRegister": "Create a free account",
-    "learn": "Explore products",
-    "learnSetup": "See setup",
-    "exampleExits": "Sample exits",
-    "copyCommand": "Copy sample SOCKS5 command",
-    "copiedCommand": "Sample SOCKS5 command copied",
-    "copy": "Copy sample code",
-    "copied": "Sample code copied",
-    "copyFailed": "Could not copy. Check your browser’s clipboard permissions and try again.",
-    "dynamicChoice": "Choose rotating proxies for changing exits.",
-    "staticChoice": "Choose static IPs for a consistent identity.",
-    "dynamic": "Rotating residential proxies",
-    "static": "Static residential IPs",
-    "dynamicDesc": "Rotate exits for public data collection, ad verification, and local research. Pay by data with no expiry.",
-    "staticDesc": "Keep a fixed IP for stores and social accounts. Choose dedicated or shared IPs and renew before expiry to keep them.",
-    "rotationSample": "Sample exit rotation",
-    "gateway": "Residential gateway",
-    "renewalSample": "Sample IP renewal",
-    "expiresSoon": "Expiring soon",
-    "renewKeeps": "Dedicated residential IP · Keep the same IP on renewal",
-    "renew30": "Renew for 30 days",
-    "oldExpiry": "Expires {date}",
-    "staticPrice": "per dedicated IP / {days} days",
-    "buyTier": "Buy {capacity} GB of data",
-    "seeStatic": "View static prices",
-    "closed": "Not yet available",
-    "comingPrice": "Pricing available at launch",
-    "noStatic": "No dedicated IP offers available",
-    "staticFailed": "Could not load static offers",
-    "retry": "Retry",
-    "catalogFailed": "Could not load product pricing",
-    "loading": "Loading prices",
-    "footnote": "The purchase page shows current prices and stock. Both products share one account and wallet.",
-    "setupTitle": "One line of configuration to get started.",
-    "setupDesc": "Select a proxy subaccount in the console, then copy the gateway and credentials into a SOCKS5 browser, tool, or script.",
-    "codeChoice": "Code examples",
-    "demo": "Interactive demo",
-    "sampleAccount": "Sample account",
-    "username": "main-account.subaccount",
-    "autoRotate": "Default exit rotation",
-    "session": "-sid-session-id",
-    "sameExit": "Reuse the upstream entry for a session",
-    "sampleResponse": "Sample exit response",
-    "protocol": "SOCKS5 protocol",
-    "metered": "Metered by total bytes",
-    "currentExit": "Current exit",
-    "exitIp": "Exit IP",
-    "totalMetered": "Total metered",
-    "usageTitle": "See where every GB goes.",
-    "usageDesc": "Total bytes count 1:1 toward usage (1 GB = 10⁹ bytes). View usage by day, split it by subaccount, and export CSV from the console.",
-    "sampleUsage": "Sample console data",
-    "balance": "Available data",
-    "week": "Last 7 days",
-    "chart": "Data usage over the past 7 days",
-    "noExpiry": "Metered by byte · Data never expires",
-    "csv": "CSV export",
-    "splitSubs": "Subaccounts by workload",
-    "subLimit": "Up to 10",
-    "reminders": "Balance and expiry alerts",
-    "notifications": "Console notifications",
-    "low": "Low data alert",
-    "lowDesc": "The console alerts you when available data reaches or falls below your threshold.",
-    "expiryAlert": "Static IP reminder 5 days before expiry",
-    "expiryDesc": "Renew before expiry to keep the same IP. Renew individually or in bulk.",
-    "faqIntro": "Learn about billing, renewal, and setup.",
-    "closeFirst": "Create an account.",
-    "closeSecond": "Connect when ready.",
-    "stepRegister": "Create an account",
-    "stepRegisterBody": "Sign up with your email address to open the console.",
-    "stepTopUp": "Top up your wallet",
-    "stepTopUpBody": "Contact the operations team to fund your wallet.",
-    "stepConnect": "Buy and connect",
-    "stepConnectBody": "Choose a proxy and copy its configuration from the console.",
-    "brandDesc": "Real residential proxies for teams working across markets.",
-    "mainland": "Proxy products are unavailable on networks in mainland China.",
-    "cities": {
-      "losAngeles": "Los Angeles",
-      "london": "London",
-      "tokyo": "Tokyo",
-      "frankfurt": "Frankfurt",
-      "saoPaulo": "São Paulo"
-    },
-    "regions": {
-      "US": "US",
-      "JP": "Japan",
-      "KR": "South Korea",
-      "GB": "UK",
-      "DE": "Germany"
-    },
-    "faqs": {
-      "expiry": {
-        "q": "Does rotating proxy data expire?",
-        "a": "Purchased data is available until you use it. Existing connections continue to be metered after the balance runs out. Your next purchase covers that usage first."
+    "navPricing": "Pricing",
+    "navCoverage": "Coverage",
+    "navSolutions": "Solutions",
+    "navFaq": "FAQ",
+    "compliance": "For use outside mainland China only. Not available in mainland China.",
+    "hero": {
+      "title": "Use real residential IPs to",
+      "phrases": {
+        "stores": "run cross-border stores",
+        "social": "grow social media matrices",
+        "data": "collect public data",
+        "ads": "verify global ads",
+        "markets": "observe local markets"
       },
-      "metering": {
-        "q": "How do you measure data usage?",
-        "a": "We count total bytes on proxy connections. One GB equals 1,000,000,000 bytes. View daily usage, filter by subaccount, or export CSV."
-      },
-      "renewal": {
-        "q": "How do I keep my static IP?",
-        "a": "Renew manually before expiry to keep your IP. The new term starts at the original expiry. The console reminds you 5 days in advance."
-      },
-      "team": {
-        "q": "Can my team use separate proxy subaccounts?",
-        "a": "Create up to 10 subaccounts, each with its own password, notes, and usage limit. Subaccounts share the main data balance."
-      },
-      "topUp": {
-        "q": "How do I top up my wallet?",
-        "a": "Contact the operations team after registering. You can purchase products once the funds arrive in your wallet."
-      },
-      "protocol": {
-        "q": "Which proxy protocols are supported?",
-        "a": "Rotating residential proxies use SOCKS5. A session uses the same provider entry point, and reconnecting can change the exit IP. After a static IP is delivered, find its address, port, and credentials in the console."
-      },
-      "regions": {
-        "q": "Can I connect from mainland China?",
-        "a": "Proxy products are unavailable on networks in mainland China."
+      "lead": "Curated real residential and static IP resources across 190+ countries and regions with high purity and low latency. Supports country- and city-level targeting over standard SOCKS5 for seamless integration.",
+      "register": "Sign up free",
+      "pricing": "View pricing",
+      "exampleExits": "Example exits",
+      "cities": {
+        "losAngeles": "Los Angeles, US",
+        "london": "London, UK",
+        "tokyo": "Tokyo, JP",
+        "frankfurt": "Frankfurt, DE",
+        "saoPaulo": "São Paulo, BR",
+        "singapore": "Singapore, SG",
+        "newYork": "New York, US",
+        "paris": "Paris, FR",
+        "toronto": "Toronto, CA",
+        "sydney": "Sydney, AU"
       }
+    },
+    "pricing": {
+      "title": "Explore the right plan for your business",
+      "sub": "Flexible billing and IP models tailored to every cross-border workload",
+      "fromTag": "From",
+      "perGb": "/GB",
+      "perIp": "/IP",
+      "start": "Get started",
+      "cta": "See full pricing",
+      "advantage": {
+        "title": "Our core advantages",
+        "desc": "Stability, purity, and ease of use sit at the foundation of our network. Strict IP screening filters out noisy sources while unified account controls and high-availability routing help your teams integrate smoothly across every workflow."
+      },
+      "dynamic": {
+        "name": "Dynamic residential",
+        "desc": "Large residential IP pool supporting flexible rotation and sticky sessions, billed by traffic with no expiry for public data collection and market research.",
+        "features": {
+          "uptime": "99.99% uptime",
+          "extract": "Sub-account credentials",
+          "latency": "Avg. response <0.5s",
+          "session": "Rotating & sticky sessions"
+        }
+      },
+      "exclusive": {
+        "name": "Dedicated static residential",
+        "desc": "Fixed residential IPs reserved exclusively for you, supporting renewal and self-service same-region replacement for cross-border stores and multi-account teams."
+      },
+      "shared": {
+        "name": "Shared static residential",
+        "desc": "Cost-effective fixed residential IPs shared responsibly, configurable by use case for lightweight fixed-exit workflows."
+      }
+    },
+    "coverage": {
+      "title": "Global IP resources",
+      "sub": "Covering core hubs across North America, Europe, and Asia-Pacific with clean, dependable overseas residential exits.",
+      "countries": {
+        "us": "United States",
+        "gb": "United Kingdom",
+        "jp": "Japan",
+        "de": "Germany",
+        "fr": "France",
+        "ca": "Canada",
+        "it": "Italy",
+        "es": "Spain",
+        "sg": "Singapore",
+        "br": "Brazil",
+        "other": "More regions"
+      }
+    },
+    "solutions": {
+      "title": "Professional solutions from RocProxy",
+      "sub": "Combining genuine overseas residential networks with unified enterprise account management for cross-border operations, brand protection, and market research.",
+      "learnMore": "Learn more",
+      "commerce": {
+        "title": "Cross-border e-commerce",
+        "desc": "Provide clean, isolated residential environments for multi-store operations and public product monitoring while lowering account linkage risk.",
+        "points": {
+          "p1": "Keep multi-store operations stable",
+          "p2": "Renewable dedicated residential IPs",
+          "p3": "Accurate local marketplace insights"
+        }
+      },
+      "brand": {
+        "title": "Brand protection & ad verification",
+        "desc": "Inspect ad placements, localized landing pages, and brand infringement leads from genuine local network views across target markets.",
+        "points": {
+          "p1": "Verify ad delivery and ROAS",
+          "p2": "Spot counterfeit listings early",
+          "p3": "True local market vantage points"
+        }
+      },
+      "social": {
+        "title": "Social media matrices",
+        "desc": "Assign dedicated, consistent residential IPs to every overseas social account so environments remain clean with fewer unexpected checks.",
+        "points": {
+          "p1": "Clean per-account isolation",
+          "p2": "Steady sessions with fewer verifications",
+          "p3": "Flexible allocation by use case"
+        }
+      },
+      "research": {
+        "title": "Public data & market research",
+        "desc": "Gather public pricing, listings, and regional trends compliantly with pay-as-you-go traffic billing suited to recurring market research.",
+        "points": {
+          "p1": "Pay per GB with clear cost control",
+          "p2": "Reliable access to public web data",
+          "p3": "Fast integration via standard SOCKS5"
+        }
+      }
+    },
+    "faq": {
+      "title": "Frequently asked questions",
+      "items": {
+        "mainland": {
+          "q": "Can I use RocProxy in mainland China?",
+          "a": "No. RocProxy is for use outside mainland China only and is not available in mainland China."
+        },
+        "plans": {
+          "q": "Dynamic or static residential: which should I choose?",
+          "a": "Dynamic residential is billed per GB and fits public data collection and large-scale verification. Static residential is rented per IP, dedicated or shared, and fits account operations that need a fixed IP."
+        },
+        "protocol": {
+          "q": "Which protocols are supported?",
+          "a": "Standard SOCKS5 with username and password authentication. Create a proxy sub-account in the console and copy the access details."
+        },
+        "pricing": {
+          "q": "Where can I see full pricing?",
+          "a": "Visit the pricing page to filter by dynamic residential, dedicated static, or shared static for live specifications, regions, and rates."
+        },
+        "support": {
+          "q": "How do I reach support?",
+          "a": "Use the support dock on the right of the page or the contact bar in the footer to reach human support."
+        }
+      }
+    },
+    "support": {
+      "title": "Contact human support",
+      "chat": "Live chat",
+      "telegram": "Telegram",
+      "qq": "QQ",
+      "phone": "Phone",
+      "open": "Open",
+      "soon": "Coming soon",
+      "soonAll": "Support channels are coming soon.",
+      "copyHint": "Click to copy",
+      "copied": "{name} copied"
+    },
+    "footer": {
+      "ctaTitle": "Ready to connect to a global residential network?",
+      "ctaSub": "Sign up, pick a plan in the console and get your access details.",
+      "tagline": "A residential proxy platform for businesses, with one product, access, permission and billing model.",
+      "products": "Products",
+      "contact": "Contact"
+    },
+    "copy": {
+      "failed": "Copy failed. Please select the text manually."
     }
   }
 }
