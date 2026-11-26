@@ -11,7 +11,7 @@ import (
 const commissionRuleVersion = 1
 
 // Call only for a new settlement with the buyer's wallet locked. Lock ordering
-// is wallet, then commission account. A future transfer follows the same order.
+// is wallet, then commission account. Commission transfers follow the same order.
 func recordOrderSettlement(tx *gorm.DB, buyer string, order wallet.Order) error {
 	if order.Status == wallet.Pending {
 		return nil

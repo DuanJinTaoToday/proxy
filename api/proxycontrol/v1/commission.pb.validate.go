@@ -38,6 +38,141 @@ var (
 // define the regex for a UUID once up-front
 var _commission_uuidPattern = regexp.MustCompile("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
 
+// Validate checks the field values on TransferCommissionRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *TransferCommissionRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on TransferCommissionRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// TransferCommissionRequestMultiError, or nil if none found.
+func (m *TransferCommissionRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *TransferCommissionRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if utf8.RuneCountInString(m.GetRequestKey()) < 1 {
+		err := TransferCommissionRequestValidationError{
+			field:  "RequestKey",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(m.GetRequestKey()) > 128 {
+		err := TransferCommissionRequestValidationError{
+			field:  "RequestKey",
+			reason: "value length must be at most 128 bytes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetAmountMinor() <= 0 {
+		err := TransferCommissionRequestValidationError{
+			field:  "AmountMinor",
+			reason: "value must be greater than 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return TransferCommissionRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// TransferCommissionRequestMultiError is an error wrapping multiple validation
+// errors returned by TransferCommissionRequest.ValidateAll() if the
+// designated constraints aren't met.
+type TransferCommissionRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m TransferCommissionRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m TransferCommissionRequestMultiError) AllErrors() []error { return m }
+
+// TransferCommissionRequestValidationError is the validation error returned by
+// TransferCommissionRequest.Validate if the designated constraints aren't met.
+type TransferCommissionRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e TransferCommissionRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e TransferCommissionRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e TransferCommissionRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e TransferCommissionRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e TransferCommissionRequestValidationError) ErrorName() string {
+	return "TransferCommissionRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e TransferCommissionRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sTransferCommissionRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = TransferCommissionRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = TransferCommissionRequestValidationError{}
+
 // Validate checks the field values on SetCommissionRatesRequest with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.

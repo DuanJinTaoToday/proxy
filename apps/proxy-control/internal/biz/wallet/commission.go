@@ -12,6 +12,7 @@ import (
 const MaxCommissionRateBPS = 10000
 
 var ErrCommissionRates = errors.BadRequest("INVALID_COMMISSION_RATES", "both commission rates must be whole basis points from 0 to 10000")
+var ErrCommissionBalance = errors.Conflict("COMMISSION_BALANCE_INSUFFICIENT", "available commission is insufficient")
 
 type CommissionRates struct {
 	Version                             int64
@@ -74,6 +75,7 @@ type CommissionRepository interface {
 	CommissionRates(context.Context) (CommissionRates, error)
 	SetCommissionRates(context.Context, string, CommissionRates) (CommissionRates, error)
 	Commissions(context.Context, string, CommissionFilter) (CommissionPage, error)
+	TransferCommission(context.Context, Command) (Entry, error)
 }
 
 func (s *Service) CommissionRates(ctx context.Context, token string) (CommissionRates, error) {
@@ -112,4 +114,16 @@ func (s *Service) Commissions(ctx context.Context, token, tenantID string, opera
 	}
 	filter.Limit = PageSize + 1
 	return s.store.Commissions(ctx, id, filter)
+}
+
+func (s *Service) TransferCommission(ctx context.Context, token, key string, amount int64) (Entry, error) {
+	id, err := s.scope(ctx, token, "", false)
+	if err != nil {
+		return Entry{}, err
+	}
+	command := Command{TenantID: id, Key: key, Action: CommissionTransfer, Amount: amount}
+	if err := command.Validate(); err != nil {
+		return Entry{}, err
+	}
+	return s.store.TransferCommission(ctx, command)
 }

@@ -38,6 +38,15 @@ func (s *Wallet) ListOperationsCommissions(ctx context.Context, req *v1.Operatio
 	return s.listCommissions(ctx, req.GetTenantId(), true, wallet.CommissionFilter{BeforeID: req.GetBeforeId(), CustomerKey: req.GetCustomerKey()})
 }
 
+func (s *Wallet) TransferCommission(ctx context.Context, req *v1.TransferCommissionRequest) (*v1.WalletEntry, error) {
+	noStore(ctx)
+	entry, err := s.biz.TransferCommission(ctx, bearerToken(ctx), req.GetRequestKey(), req.GetAmountMinor())
+	if err != nil {
+		return nil, wallet.PublicError(err)
+	}
+	return entryMessage(entry, false), nil
+}
+
 func (s *Wallet) listCommissions(ctx context.Context, tenant string, operations bool, filter wallet.CommissionFilter) (*v1.CommissionPage, error) {
 	noStore(ctx)
 	page, err := s.biz.Commissions(ctx, bearerToken(ctx), tenant, operations, filter)

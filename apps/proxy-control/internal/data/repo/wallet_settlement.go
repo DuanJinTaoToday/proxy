@@ -23,6 +23,9 @@ func (r *WalletRepository) ApplyRecharge(ctx context.Context, command wallet.Com
 // committed retry returns the original receipt without running fulfill again.
 // Remote supplier calls belong outside this transaction.
 func (r *WalletRepository) Apply(ctx context.Context, command wallet.Command, fulfill func(*gorm.DB, wallet.Entry) error) (wallet.Entry, error) {
+	if command.Action == wallet.CommissionTransfer {
+		return wallet.Entry{}, wallet.ErrInvalid
+	}
 	if err := command.Validate(); err != nil {
 		return wallet.Entry{}, err
 	}
