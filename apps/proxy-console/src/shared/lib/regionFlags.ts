@@ -1,4 +1,6 @@
-import type { FlagCode } from '@/shared/ui/FlagIcon.vue'
+export type FlagCode =
+  | 'us' | 'gb' | 'jp' | 'de' | 'fr' | 'ca' | 'it' | 'es' | 'sg' | 'br'
+  | 'kr' | 'my' | 'th' | 'vn' | 'id' | 'au' | 'hk' | 'tw' | 'ae' | 'ph' | 'other'
 
 const regionMatchers: [RegExp, FlagCode][] = [
   [/美国|united states|\busa?\b|america/i, 'us'],

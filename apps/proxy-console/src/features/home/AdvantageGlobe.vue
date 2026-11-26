@@ -164,7 +164,7 @@ onBeforeUnmount(() => cleanup?.())
   width: 100%;
   height: var(--home-globe-height);
   pointer-events: none;
-  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 22%, #000 100%);
-  mask-image: linear-gradient(180deg, transparent 0%, #000 22%, #000 100%);
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, black 22%, black 100%);
+  mask-image: linear-gradient(180deg, transparent 0%, black 22%, black 100%);
 }
 </style>

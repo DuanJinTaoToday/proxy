@@ -60,12 +60,12 @@ const products = [
 
 <style scoped>
 .footer { padding: var(--home-section-y) 0 var(--space-5); border-top: var(--border-width) solid var(--home-line-dark); }
-.cta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-5); padding: clamp(24px, 4vw, 48px); border: var(--border-width) solid var(--home-line-dark-strong); border-radius: var(--home-radius-lg); background: radial-gradient(70% 140% at 100% 0, var(--home-glow-primary), transparent 70%), var(--home-surface-1); }
+.cta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-5); padding: var(--home-footer-cta-pad); border: var(--border-width) solid var(--home-line-dark-strong); border-radius: var(--home-radius-lg); background: radial-gradient(70% 140% at 100% 0, var(--home-glow-primary), transparent 70%), var(--home-surface-1); }
 .cta h2 { font-size: var(--home-fs-h2); line-height: 1.15; font-weight: var(--font-weight-bold); letter-spacing: -.025em; color: var(--home-on-dark); }
 .cta p { margin-top: var(--space-2); color: var(--home-on-dark-muted); }
 .footer__grid { display: grid; grid-template-columns: 1.4fr 1fr 1.2fr; gap: var(--space-6); margin-top: var(--home-block-gap); }
 .brand {
-  --brand-mark-size: 28px;
+  --brand-mark-size: var(--home-header-brand-size);
   --brand-wordmark-display: inline;
   display: inline-flex;
   align-items: center;

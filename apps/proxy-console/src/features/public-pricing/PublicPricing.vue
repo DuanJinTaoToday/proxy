@@ -122,7 +122,7 @@ const activeStaticState = computed(() => activeStatic.value.state.value)
 <style scoped>
 .pricing-page { background: var(--home-light-alt); }
 .pricing-hero {
-  padding: calc(var(--home-header-height) + clamp(40px, 6vw, 68px)) 0 clamp(32px, 4vw, 44px);
+  padding: calc(var(--home-header-height) + var(--home-pricing-hero-pad-top)) 0 var(--home-pricing-hero-pad-bottom);
   background: linear-gradient(180deg, var(--home-ice-start) 0%, var(--home-ice-mid) 56%, var(--home-ice-end) 100%);
 }
 .pricing-hero__inner {
@@ -176,7 +176,7 @@ h1 {
 }
 
 .pricing-body {
-  padding: var(--space-3) 0 clamp(64px, 8vw, 96px);
+  padding: var(--space-3) 0 var(--home-pricing-body-pad-bottom);
 }
 .pricing-footnote {
   margin-top: var(--space-5);

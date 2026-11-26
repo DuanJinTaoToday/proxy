@@ -254,6 +254,14 @@
   --home-sky-300: #93c5fd;
   --home-cyan: #38bdf8;
   --color-brand-accent: var(--home-sky-400);
+  --color-focus: var(--home-brand);
+  --el-color-primary: var(--home-brand);
+  --el-color-primary-light-3: var(--home-sky-400);
+  --el-color-primary-light-5: var(--home-sky-300);
+  --el-color-primary-light-7: var(--home-brand-soft-border);
+  --el-color-primary-light-8: var(--home-brand-soft);
+  --el-color-primary-light-9: var(--home-brand-soft);
+  --el-color-primary-dark-2: var(--home-brand-hover);
   --home-glow-primary: rgba(37, 99, 235, .30);
   --home-glow-secondary: rgba(56, 189, 248, .12);
   --home-brand-shadow: 0 12px 32px -12px rgba(37, 99, 235, .52);
@@ -370,6 +378,26 @@
   --home-pricing-skeleton-offer-height: 70px;
   --home-pricing-cta-height: 40px;
   --home-pricing-checkout-height: 44px;
+  --home-header-brand-size: 28px;
+  --home-header-brand-size-mobile: 24px;
+  --home-status-ring-size: 3px;
+  --home-footer-cta-pad: clamp(24px, 4vw, 48px);
+  --home-pricing-hero-pad-top: clamp(40px, 6vw, 68px);
+  --home-pricing-hero-pad-bottom: clamp(32px, 4vw, 44px);
+  --home-pricing-body-pad-bottom: clamp(64px, 8vw, 96px);
+  --home-faq-arrow: 9px;
+  --home-map-pill-offset: 10px;
+  --home-dock-item-gap: 2px;
+  --home-term-pill-min-w: 64px;
+  --home-cart-empty-height: 168px;
+  --home-cart-list-max-height: 280px;
+  --home-cart-stepper-btn: 22px;
+  --home-cart-stepper-glyph: 12px;
+  --home-cart-stepper-min-w: 18px;
+  --home-cart-qty-col: 84px;
+  --home-cart-qty-col-mobile: 76px;
+  --home-cart-qty-pad-y: 1px;
+  --home-cart-stepper-pad: 2px;
 
   /* 字号 */
   --home-font-sans: "PingFang SC", "Inter", "Hiragino Sans GB", "Microsoft YaHei", system-ui, -apple-system, sans-serif;

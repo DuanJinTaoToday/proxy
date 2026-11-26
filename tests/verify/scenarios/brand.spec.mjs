@@ -8,6 +8,7 @@ const CONCEPT_A_MARKERS = [
   'id="roc-a-bg"',
   'stop-color="#3b82f6"',
   'stop-color="#1e3a8a"',
+  'stroke="#93c5fd"',
   'M10 11H23.6C27.8 11 30.2 13.4 30.2 16.7',
   'M10 13.8L14.4 17.8V29H10V13.8Z',
   'M19.2 23.8H24.5L30.2 29H24.4L19.2 23.8Z',

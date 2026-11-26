@@ -54,10 +54,10 @@ summary::-webkit-details-marker { display: none; }
 summary::after {
   content: '';
   flex: none;
-  width: 9px;
-  height: 9px;
-  border-right: 2px solid var(--home-faint-light);
-  border-bottom: 2px solid var(--home-faint-light);
+  width: var(--home-faq-arrow);
+  height: var(--home-faq-arrow);
+  border-right: var(--home-accent-bar-radius) solid var(--home-faint-light);
+  border-bottom: var(--home-accent-bar-radius) solid var(--home-faint-light);
   transform: rotate(45deg);
   transition: transform .25s var(--home-ease), border-color .2s;
 }

@@ -10,8 +10,8 @@ const router = useRouter()
 const dynamicFeatures = ['uptime', 'extract', 'latency', 'session'] as const
 // 按 #100 / #113 决策：首页先采用固定起售价吸引点击跳转公开报价页，开售前由产品方按实际目录调整。
 const staticPlans = [
-  { id: 'exclusive' as const, price: '¥16', unitKey: 'perIp', pricingCategory: 'exclusive', consolePath: '/console/static/pricing' },
-  { id: 'shared' as const, price: '¥2', unitKey: 'perIp', pricingCategory: 'shared', consolePath: '/console/static/pricing' },
+  { id: 'exclusive' as const, price: '¥16', unitKey: 'perIp', pricingCategory: 'exclusive', consoleRoute: { name: 'console-static-pricing' } },
+  { id: 'shared' as const, price: '¥2', unitKey: 'perIp', pricingCategory: 'shared', consoleRoute: { name: 'console-static-pricing' } },
 ]
 
 function openPricing(category: string) {
@@ -59,10 +59,10 @@ function openPricing(category: string) {
             </ul>
 
             <div class="card__actions">
-              <RouterLink class="start-btn" to="/console/dynamic/pricing" @click.stop>
+              <RouterLink class="start-btn" :to="{ name: 'console-dynamic-pricing' }" @click.stop>
                 {{ t('marketing.pricing.start') }}
               </RouterLink>
-              <RouterLink class="arrow-btn" :to="{ path: `/${locale}/pricing`, query: { category: 'dynamic' } }" :aria-label="t('marketing.pricing.cta')" @click.stop>
+              <RouterLink class="arrow-btn" :to="{ path: `/${locale}/pricing`, query: { category: 'dynamic' } }" :aria-label="`${t('marketing.pricing.dynamic.name')} - ${t('marketing.pricing.cta')}`" @click.stop>
                 <Right aria-hidden="true" />
               </RouterLink>
             </div>
@@ -87,10 +87,10 @@ function openPricing(category: string) {
             </div>
 
             <div class="card__actions">
-              <RouterLink class="start-btn" :to="plan.consolePath" @click.stop>
+              <RouterLink class="start-btn" :to="plan.consoleRoute" @click.stop>
                 {{ t('marketing.pricing.start') }}
               </RouterLink>
-              <RouterLink class="arrow-btn" :to="{ path: `/${locale}/pricing`, query: { category: plan.pricingCategory } }" :aria-label="t('marketing.pricing.cta')" @click.stop>
+              <RouterLink class="arrow-btn" :to="{ path: `/${locale}/pricing`, query: { category: plan.pricingCategory } }" :aria-label="`${t(`marketing.pricing.${plan.id}.name`)} - ${t('marketing.pricing.cta')}`" @click.stop>
                 <Right aria-hidden="true" />
               </RouterLink>
             </div>

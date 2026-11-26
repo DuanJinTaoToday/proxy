@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { useId } from 'vue'
+import type { FlagCode } from '@/shared/lib/regionFlags'
 
-export type FlagCode =
-  | 'us' | 'gb' | 'jp' | 'de' | 'fr' | 'ca' | 'it' | 'es' | 'sg' | 'br'
-  | 'kr' | 'my' | 'th' | 'vn' | 'id' | 'au' | 'hk' | 'tw' | 'ae' | 'ph' | 'other'
+export type { FlagCode }
 
 withDefaults(defineProps<{ code: FlagCode, size?: number }>(), { size: 28 })
 const clipId = `flag-clip-${useId()}`

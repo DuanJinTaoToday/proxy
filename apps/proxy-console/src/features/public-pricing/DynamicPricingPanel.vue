@@ -301,6 +301,7 @@ h4 {
   justify-content: space-between;
   gap: var(--space-2);
   margin-top: var(--space-4);
+  margin-bottom: var(--space-4);
   padding-top: var(--space-3);
   border-top: var(--border-width) solid var(--home-border-subtle);
 }
@@ -328,6 +329,7 @@ h4 {
 }
 .tier-card__custom-desc {
   margin-top: var(--space-3);
+  margin-bottom: var(--space-4);
   font-size: var(--home-fs-small);
   line-height: 1.65;
   color: var(--home-muted-light);
@@ -340,7 +342,6 @@ h4 {
   width: 100%;
   min-height: var(--home-pricing-cta-height);
   margin-top: auto;
-  margin-block-start: var(--space-4);
   padding-inline: var(--space-3);
   border-radius: var(--home-radius-sm);
   background: var(--home-brand-soft);

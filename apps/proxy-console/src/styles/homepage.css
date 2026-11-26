@@ -1,11 +1,11 @@
 html:has(.homepage) { scroll-behavior: smooth; }
 .homepage { background: var(--home-light); color: var(--home-text-light); font-family: var(--home-font-sans); line-height: var(--home-lh-body); -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
 .homepage .wrap { width: 100%; max-width: calc(var(--home-wrap) + var(--home-gutter) * 2); margin-inline: auto; padding-inline: var(--home-gutter); }
-.homepage :where(section[id]) { scroll-margin-block-start: var(--home-header-height); }
+.homepage :where(section[id], [id="contact"]) { scroll-margin-block-start: var(--home-header-height); }
 
 /* 区块节奏：深色首屏 → 纯白套餐 → 浅灰全球网络 → 纯白方案 → 浅灰 FAQ → 深色页脚 */
 .homepage .sec { position: relative; padding-block: var(--home-section-y); }
-.homepage .sec-dark { background: var(--home-canvas); color: var(--home-on-dark); }
+.homepage .sec-dark { --color-focus: var(--home-sky-400); background: var(--home-canvas); color: var(--home-on-dark); }
 .homepage .sec-light { background: var(--home-light); color: var(--home-text-light); }
 .homepage .sec-light-alt { background: var(--home-light-alt); color: var(--home-text-light); }
 
@@ -14,8 +14,8 @@ html:has(.homepage) { scroll-behavior: smooth; }
 .homepage .sec-sub { margin-top: var(--space-3); font-size: var(--home-fs-lead); line-height: 1.65; color: var(--home-faint-light); }
 
 /* 状态灯：绿色仅表示真实在线 / 在售 / 200 OK，琥珀色表示停售与告警 */
-.homepage .status-dot { display: inline-block; flex: none; width: var(--space-2); height: var(--space-2); border-radius: var(--home-pill); background: var(--home-status-ok); box-shadow: 0 0 0 3px var(--home-status-ok-glow); }
-.homepage .status-dot--warn { background: var(--home-status-warn); box-shadow: 0 0 0 3px var(--home-status-warn-soft); }
+.homepage .status-dot { display: inline-block; flex: none; width: var(--space-2); height: var(--space-2); border-radius: var(--home-pill); background: var(--home-status-ok); box-shadow: 0 0 0 var(--home-status-ring-size) var(--home-status-ok-glow); }
+.homepage .status-dot--warn { background: var(--home-status-warn); box-shadow: 0 0 0 var(--home-status-ring-size) var(--home-status-warn-soft); }
 
 .homepage .home-btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); min-height: var(--home-control-height); padding: 0 var(--space-6); border: var(--border-width) solid transparent; border-radius: var(--home-pill); font-size: var(--home-fs-body); font-weight: var(--font-weight-semibold); white-space: nowrap; cursor: pointer; transition: background .2s, border-color .2s, color .2s, transform .2s var(--home-ease), box-shadow .2s; }
 .homepage .home-btn:hover { transform: translateY(-1px); }
@@ -25,12 +25,12 @@ html:has(.homepage) { scroll-behavior: smooth; }
 .homepage .home-btn--outline:hover { border-color: var(--home-sky-300); background: var(--home-outline-bg-hover); }
 .homepage .home-btn__icon { width: var(--icon-size); height: var(--icon-size); }
 
-/* 营销顶栏：首页默认深色磨砂，套餐页为浅色磨砂，不覆盖框架内部选择器 */
+/* 营销顶栏：首页默认深色磨砂，套餐页为浅色磨砂，仅通过语义类设置组件变量 */
 header.app-header.app-header--marketing {
   --notification-trigger-color: var(--home-on-dark);
   --notification-trigger-hover: var(--home-line-dark);
-  --brand-mark-size: 28px;
-  --brand-wordmark-display: inline;
+  --color-focus: var(--home-sky-400);
+  --brand-mark-size: var(--home-header-brand-size);
   position: fixed;
   inset: 0 0 auto;
   z-index: 30;
@@ -45,6 +45,7 @@ header.app-header.app-header--marketing-light {
   --notification-trigger-color: var(--home-text-light);
   --notification-trigger-hover: var(--home-brand-soft);
   --color-brand-accent: var(--home-brand);
+  --color-focus: var(--home-brand);
   border-bottom-color: var(--home-border-light);
   background: var(--home-header-light-bg);
   color: var(--home-text-light);
@@ -59,17 +60,23 @@ header.app-header.app-header--marketing-light .app-header__marketing-menu a.is-a
 
 header.app-header.app-header--marketing .app-header__language,
 header.app-header.app-header--marketing .app-header__marketing-menu-btn,
-header.app-header.app-header--marketing .home-header-login {
+header.app-header.app-header--marketing .home-header-login,
+header.app-header.app-header--marketing .account-menu__trigger {
   --el-button-text-color: var(--home-on-dark);
   --el-button-hover-text-color: var(--home-on-dark);
   --el-button-hover-bg-color: var(--home-line-dark);
+  --el-fill-color-light: var(--home-line-dark);
+  --el-fill-color: var(--home-outline-bg-hover);
 }
 header.app-header.app-header--marketing-light .app-header__language,
 header.app-header.app-header--marketing-light .app-header__marketing-menu-btn,
-header.app-header.app-header--marketing-light .home-header-login {
+header.app-header.app-header--marketing-light .home-header-login,
+header.app-header.app-header--marketing-light .account-menu__trigger {
   --el-button-text-color: var(--home-text-light);
   --el-button-hover-text-color: var(--home-brand);
   --el-button-hover-bg-color: var(--home-brand-soft);
+  --el-fill-color-light: var(--home-brand-soft);
+  --el-fill-color: var(--home-brand-soft-border);
 }
 header.app-header.app-header--marketing .home-header-register {
   --el-button-bg-color: var(--home-brand);
@@ -90,11 +97,10 @@ header.app-header.app-header--marketing .home-header-register {
   .homepage { padding-block-end: var(--home-mobile-dock-space); }
   .homepage .wrap { padding-inline: var(--home-gutter-mobile); }
   header.app-header.app-header--marketing {
-    --brand-mark-size: 24px;
+    --brand-mark-size: var(--home-header-brand-size-mobile);
     padding-inline: var(--space-3);
     gap: var(--space-2);
   }
-  header.app-header.app-header--marketing .app-header__brand { font-size: var(--font-size-lg); gap: var(--space-2); }
   header.app-header.app-header--marketing .app-header__tools { gap: var(--space-1); }
   header.app-header.app-header--marketing .app-header__marketing-menu-btn { padding-inline: var(--space-1); }
   header.app-header.app-header--marketing .home-header-login { padding-inline: var(--space-2); }

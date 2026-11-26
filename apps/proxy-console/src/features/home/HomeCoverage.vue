@@ -193,9 +193,9 @@ onBeforeUnmount(() => cleanup?.())
   font-weight: var(--font-weight-medium);
   color: var(--home-text-light);
   white-space: nowrap;
-  transform: translate(10px, -50%);
+  transform: translate(var(--home-map-pill-offset), -50%);
 }
-.map-pill--left { transform: translate(calc(-100% - 10px), -50%); }
+.map-pill--left { transform: translate(calc(-100% - var(--home-map-pill-offset)), -50%); }
 
 .country-grid {
   display: grid;
