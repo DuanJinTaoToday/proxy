@@ -102,7 +102,8 @@ func (s *Access) CheckPermission(ctx context.Context, req *v1.CheckPermissionReq
 
 func (s *Access) Register(ctx context.Context, req *v1.RegisterRequest) (*v1.TenantAccess, error) {
 	noStore(ctx)
-	tenant, err := s.biz.Register(ctx, req.GetEmail(), req.GetPassword(), req.GetVerificationCode())
+	invite := access.SelectRegistrationInvite(req.InviteCode, req.GetLinkInviteCode())
+	tenant, err := s.biz.Register(ctx, req.GetEmail(), req.GetPassword(), req.GetVerificationCode(), invite)
 	if err != nil {
 		return nil, err
 	}
@@ -116,6 +117,49 @@ func (s *Access) GetAccount(ctx context.Context, _ *v1.BaseRequest) (*v1.TenantA
 		return nil, err
 	}
 	return tenantAccess(tenant), nil
+}
+
+func (s *Access) GetTenantInvite(ctx context.Context, _ *v1.BaseRequest) (*v1.TenantInvite, error) {
+	noStore(ctx)
+	invite, err := s.biz.Invite(ctx, bearerToken(ctx))
+	if err != nil {
+		return nil, err
+	}
+	return &v1.TenantInvite{
+		InviteCode: invite.Code, InviteUrl: invite.URL, PromotionStatus: promotionStatus(invite.Paused),
+	}, nil
+}
+
+func (s *Access) GetTenantPromotion(ctx context.Context, req *v1.TenantPromotionRequest) (*v1.TenantPromotion, error) {
+	noStore(ctx)
+	paused, err := s.biz.PromotionPaused(ctx, bearerToken(ctx), req.GetTenantId())
+	if err != nil {
+		return nil, err
+	}
+	return &v1.TenantPromotion{PromotionStatus: promotionStatus(paused)}, nil
+}
+
+func (s *Access) PauseTenantPromotion(ctx context.Context, req *v1.TenantPromotionRequest) (*v1.TenantPromotion, error) {
+	return s.setTenantPromotion(ctx, req.GetTenantId(), true)
+}
+
+func (s *Access) ResumeTenantPromotion(ctx context.Context, req *v1.TenantPromotionRequest) (*v1.TenantPromotion, error) {
+	return s.setTenantPromotion(ctx, req.GetTenantId(), false)
+}
+
+func (s *Access) setTenantPromotion(ctx context.Context, tenantID string, paused bool) (*v1.TenantPromotion, error) {
+	noStore(ctx)
+	if err := s.biz.SetPromotionPaused(ctx, bearerToken(ctx), tenantID, paused); err != nil {
+		return nil, err
+	}
+	return &v1.TenantPromotion{PromotionStatus: promotionStatus(paused)}, nil
+}
+
+func promotionStatus(paused bool) string {
+	if paused {
+		return "paused"
+	}
+	return "active"
 }
 
 func (s *Access) LoginOperator(ctx context.Context, req *v1.LoginOperatorRequest) (*v1.LoginResponse, error) {

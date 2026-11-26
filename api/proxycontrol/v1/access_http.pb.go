@@ -21,12 +21,16 @@ const OperationAccessServiceCheckPermission = "/proxycontrol.v1.AccessService/Ch
 const OperationAccessServiceForgotPassword = "/proxycontrol.v1.AccessService/ForgotPassword"
 const OperationAccessServiceGetAccount = "/proxycontrol.v1.AccessService/GetAccount"
 const OperationAccessServiceGetOperatorAccount = "/proxycontrol.v1.AccessService/GetOperatorAccount"
+const OperationAccessServiceGetTenantInvite = "/proxycontrol.v1.AccessService/GetTenantInvite"
+const OperationAccessServiceGetTenantPromotion = "/proxycontrol.v1.AccessService/GetTenantPromotion"
 const OperationAccessServiceLogin = "/proxycontrol.v1.AccessService/Login"
 const OperationAccessServiceLoginOperator = "/proxycontrol.v1.AccessService/LoginOperator"
+const OperationAccessServicePauseTenantPromotion = "/proxycontrol.v1.AccessService/PauseTenantPromotion"
 const OperationAccessServiceRecoverCustomerEmail = "/proxycontrol.v1.AccessService/RecoverCustomerEmail"
 const OperationAccessServiceRegister = "/proxycontrol.v1.AccessService/Register"
 const OperationAccessServiceResetCustomerPassword = "/proxycontrol.v1.AccessService/ResetCustomerPassword"
 const OperationAccessServiceResetTenantPassword = "/proxycontrol.v1.AccessService/ResetTenantPassword"
+const OperationAccessServiceResumeTenantPromotion = "/proxycontrol.v1.AccessService/ResumeTenantPromotion"
 const OperationAccessServiceSendRegistrationCode = "/proxycontrol.v1.AccessService/SendRegistrationCode"
 const OperationAccessServiceStartEmailRecovery = "/proxycontrol.v1.AccessService/StartEmailRecovery"
 
@@ -35,12 +39,16 @@ type AccessServiceHTTPServer interface {
 	ForgotPassword(context.Context, *EmailRequest) (*BaseResp, error)
 	GetAccount(context.Context, *BaseRequest) (*TenantAccess, error)
 	GetOperatorAccount(context.Context, *BaseRequest) (*OperatorAccount, error)
+	GetTenantInvite(context.Context, *BaseRequest) (*TenantInvite, error)
+	GetTenantPromotion(context.Context, *TenantPromotionRequest) (*TenantPromotion, error)
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
 	LoginOperator(context.Context, *LoginOperatorRequest) (*LoginResponse, error)
+	PauseTenantPromotion(context.Context, *TenantPromotionRequest) (*TenantPromotion, error)
 	RecoverCustomerEmail(context.Context, *EmailCredentialRequest) (*BaseResp, error)
 	Register(context.Context, *RegisterRequest) (*TenantAccess, error)
 	ResetCustomerPassword(context.Context, *EmailCredentialRequest) (*BaseResp, error)
 	ResetTenantPassword(context.Context, *ResetTenantPasswordRequest) (*BaseResp, error)
+	ResumeTenantPromotion(context.Context, *TenantPromotionRequest) (*TenantPromotion, error)
 	SendRegistrationCode(context.Context, *EmailRequest) (*BaseResp, error)
 	StartEmailRecovery(context.Context, *StartEmailRecoveryRequest) (*BaseResp, error)
 }
@@ -54,6 +62,10 @@ func RegisterAccessServiceHTTPServer(s *http.Server, srv AccessServiceHTTPServer
 	r.Handle("POST", "/v1/operations/tenants/{tenant_id}:recover-email", _AccessService_StartEmailRecovery0_HTTP_Handler(srv))
 	r.Handle("POST", "/v1/access/register", _AccessService_Register0_HTTP_Handler(srv))
 	r.Handle("GET", "/v1/tenant/account", _AccessService_GetAccount0_HTTP_Handler(srv))
+	r.Handle("GET", "/v1/tenant/invite", _AccessService_GetTenantInvite0_HTTP_Handler(srv))
+	r.Handle("GET", "/v1/operations/tenants/{tenant_id}/promotion", _AccessService_GetTenantPromotion0_HTTP_Handler(srv))
+	r.Handle("POST", "/v1/operations/tenants/{tenant_id}:pause-promotion", _AccessService_PauseTenantPromotion0_HTTP_Handler(srv))
+	r.Handle("POST", "/v1/operations/tenants/{tenant_id}:resume-promotion", _AccessService_ResumeTenantPromotion0_HTTP_Handler(srv))
 	r.Handle("POST", "/v1/operations/access/login", _AccessService_LoginOperator0_HTTP_Handler(srv))
 	r.Handle("GET", "/v1/operations/access/account", _AccessService_GetOperatorAccount0_HTTP_Handler(srv))
 	r.Handle("POST", "/v1/operations/tenants/{tenant_id}:reset-password", _AccessService_ResetTenantPassword0_HTTP_Handler(srv))
@@ -197,6 +209,91 @@ func _AccessService_GetAccount0_HTTP_Handler(srv AccessServiceHTTPServer) func(c
 	}
 }
 
+func _AccessService_GetTenantInvite0_HTTP_Handler(srv AccessServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in BaseRequest
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationAccessServiceGetTenantInvite)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.GetTenantInvite(ctx, req.(*BaseRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*TenantInvite)
+		return ctx.Result(200, reply)
+	}
+}
+
+func _AccessService_GetTenantPromotion0_HTTP_Handler(srv AccessServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in TenantPromotionRequest
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		if err := ctx.BindVars(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationAccessServiceGetTenantPromotion)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.GetTenantPromotion(ctx, req.(*TenantPromotionRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*TenantPromotion)
+		return ctx.Result(200, reply)
+	}
+}
+
+func _AccessService_PauseTenantPromotion0_HTTP_Handler(srv AccessServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in TenantPromotionRequest
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		if err := ctx.BindVars(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationAccessServicePauseTenantPromotion)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.PauseTenantPromotion(ctx, req.(*TenantPromotionRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*TenantPromotion)
+		return ctx.Result(200, reply)
+	}
+}
+
+func _AccessService_ResumeTenantPromotion0_HTTP_Handler(srv AccessServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in TenantPromotionRequest
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		if err := ctx.BindVars(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationAccessServiceResumeTenantPromotion)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.ResumeTenantPromotion(ctx, req.(*TenantPromotionRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*TenantPromotion)
+		return ctx.Result(200, reply)
+	}
+}
+
 func _AccessService_LoginOperator0_HTTP_Handler(srv AccessServiceHTTPServer) func(ctx http.Context) error {
 	return func(ctx http.Context) error {
 		var in LoginOperatorRequest
@@ -300,12 +397,16 @@ type AccessServiceHTTPClient interface {
 	ForgotPassword(ctx context.Context, req *EmailRequest, opts ...http.CallOption) (rsp *BaseResp, err error)
 	GetAccount(ctx context.Context, req *BaseRequest, opts ...http.CallOption) (rsp *TenantAccess, err error)
 	GetOperatorAccount(ctx context.Context, req *BaseRequest, opts ...http.CallOption) (rsp *OperatorAccount, err error)
+	GetTenantInvite(ctx context.Context, req *BaseRequest, opts ...http.CallOption) (rsp *TenantInvite, err error)
+	GetTenantPromotion(ctx context.Context, req *TenantPromotionRequest, opts ...http.CallOption) (rsp *TenantPromotion, err error)
 	Login(ctx context.Context, req *LoginRequest, opts ...http.CallOption) (rsp *LoginResponse, err error)
 	LoginOperator(ctx context.Context, req *LoginOperatorRequest, opts ...http.CallOption) (rsp *LoginResponse, err error)
+	PauseTenantPromotion(ctx context.Context, req *TenantPromotionRequest, opts ...http.CallOption) (rsp *TenantPromotion, err error)
 	RecoverCustomerEmail(ctx context.Context, req *EmailCredentialRequest, opts ...http.CallOption) (rsp *BaseResp, err error)
 	Register(ctx context.Context, req *RegisterRequest, opts ...http.CallOption) (rsp *TenantAccess, err error)
 	ResetCustomerPassword(ctx context.Context, req *EmailCredentialRequest, opts ...http.CallOption) (rsp *BaseResp, err error)
 	ResetTenantPassword(ctx context.Context, req *ResetTenantPasswordRequest, opts ...http.CallOption) (rsp *BaseResp, err error)
+	ResumeTenantPromotion(ctx context.Context, req *TenantPromotionRequest, opts ...http.CallOption) (rsp *TenantPromotion, err error)
 	SendRegistrationCode(ctx context.Context, req *EmailRequest, opts ...http.CallOption) (rsp *BaseResp, err error)
 	StartEmailRecovery(ctx context.Context, req *StartEmailRecoveryRequest, opts ...http.CallOption) (rsp *BaseResp, err error)
 }
@@ -384,6 +485,38 @@ func (c *AccessServiceHTTPClientImpl) GetOperatorAccount(ctx context.Context, in
 	return &out, nil
 }
 
+func (c *AccessServiceHTTPClientImpl) GetTenantInvite(ctx context.Context, in *BaseRequest, opts ...http.CallOption) (*TenantInvite, error) {
+	var out TenantInvite
+	pattern := "/v1/tenant/invite"
+	path := http.BuildPath(pattern, in, http.WithQueryParams())
+	opts = append([]http.CallOption{
+		http.Accept("application/protojson"),
+		http.Operation(OperationAccessServiceGetTenantInvite),
+		http.PathTemplate(pattern),
+	}, opts...)
+	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (c *AccessServiceHTTPClientImpl) GetTenantPromotion(ctx context.Context, in *TenantPromotionRequest, opts ...http.CallOption) (*TenantPromotion, error) {
+	var out TenantPromotion
+	pattern := "/v1/operations/tenants/{tenant_id}/promotion"
+	path := http.BuildPath(pattern, in, http.WithQueryParams())
+	opts = append([]http.CallOption{
+		http.Accept("application/protojson"),
+		http.Operation(OperationAccessServiceGetTenantPromotion),
+		http.PathTemplate(pattern),
+	}, opts...)
+	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 func (c *AccessServiceHTTPClientImpl) Login(ctx context.Context, in *LoginRequest, opts ...http.CallOption) (*LoginResponse, error) {
 	var out LoginResponse
 	pattern := "/v1/access/login"
@@ -412,6 +545,22 @@ func (c *AccessServiceHTTPClientImpl) LoginOperator(ctx context.Context, in *Log
 		http.PathTemplate(pattern),
 	}, opts...)
 	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (c *AccessServiceHTTPClientImpl) PauseTenantPromotion(ctx context.Context, in *TenantPromotionRequest, opts ...http.CallOption) (*TenantPromotion, error) {
+	var out TenantPromotion
+	pattern := "/v1/operations/tenants/{tenant_id}:pause-promotion"
+	path := http.BuildPath(pattern, in, http.WithQueryParams())
+	opts = append([]http.CallOption{
+		http.Accept("application/protojson"),
+		http.Operation(OperationAccessServicePauseTenantPromotion),
+		http.PathTemplate(pattern),
+	}, opts...)
+	err := c.cc.Invoke(ctx, "POST", path, nil, &out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -480,6 +629,22 @@ func (c *AccessServiceHTTPClientImpl) ResetTenantPassword(ctx context.Context, i
 		http.PathTemplate(pattern),
 	}, opts...)
 	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (c *AccessServiceHTTPClientImpl) ResumeTenantPromotion(ctx context.Context, in *TenantPromotionRequest, opts ...http.CallOption) (*TenantPromotion, error) {
+	var out TenantPromotion
+	pattern := "/v1/operations/tenants/{tenant_id}:resume-promotion"
+	path := http.BuildPath(pattern, in, http.WithQueryParams())
+	opts = append([]http.CallOption{
+		http.Accept("application/protojson"),
+		http.Operation(OperationAccessServiceResumeTenantPromotion),
+		http.PathTemplate(pattern),
+	}, opts...)
+	err := c.cc.Invoke(ctx, "POST", path, nil, &out, opts...)
 	if err != nil {
 		return nil, err
 	}

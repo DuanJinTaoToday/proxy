@@ -16,6 +16,8 @@ type Tenant struct {
 	Name               string     `gorm:"column:name;type:text;not null" json:"name"`
 	PrimaryAccountName string     `gorm:"column:primary_account_name;type:text;not null" json:"primary_account_name"`
 	CreatedAt          *time.Time `gorm:"column:created_at;type:timestamp with time zone;not null;default:now()" json:"created_at"`
+	ReferrerTenantID   *string    `gorm:"column:referrer_tenant_id;type:text" json:"referrer_tenant_id"`
+	ReferralSource     *string    `gorm:"column:referral_source;type:text" json:"referral_source"`
 }
 
 // TableName Tenant's table name

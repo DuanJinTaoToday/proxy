@@ -29,7 +29,10 @@ type Principal struct {
 type Repository interface {
 	StoreCredential(context.Context, EmailCredential) error
 	AllowEmailRequest(context.Context, string, string) (bool, error)
-	CreateTenant(context.Context, Tenant, string, []byte) error
+	CreateTenant(context.Context, Tenant, string, []byte, RegistrationInvite) error
+	GetOrCreateInvite(context.Context, string) (string, bool, error)
+	PromotionPaused(context.Context, string) (bool, error)
+	SetPromotionPaused(context.Context, string, string, bool) error
 	RedeemLink(context.Context, string, []byte, string) error
 	CustomerByEmail(context.Context, string) (Principal, error)
 	CustomerByTenant(context.Context, string) (Principal, error)

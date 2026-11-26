@@ -100,7 +100,7 @@ func consumeCredential(tx *gorm.DB, purpose, subject string) error {
 	return tx.Exec("UPDATE email_access_credentials SET consumed_at = now() WHERE purpose = ? AND subject = ?", purpose, subject).Error
 }
 
-func (r *AccountRepository) CreateTenant(ctx context.Context, tenant access.Tenant, digest string, codeHash []byte) error {
+func (r *AccountRepository) CreateTenant(ctx context.Context, tenant access.Tenant, digest string, codeHash []byte, invite access.RegistrationInvite) error {
 	invalidCode := false
 	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var credential emailCredentialRow
@@ -120,11 +120,19 @@ func (r *AccountRepository) CreateTenant(ctx context.Context, tenant access.Tena
 			return tx.Exec(`UPDATE email_access_credentials SET attempts = attempts + 1
                 WHERE purpose = 'register' AND subject = ?`, tenant.Email).Error
 		}
-		if err := tx.Exec("INSERT INTO tenants (id, name, primary_account_name) VALUES (?, ?, ?)",
-			tenant.ID, tenant.Name, tenant.PrimaryAccountName).Error; err != nil {
+		var referrerID, source sql.NullString
+		if invite.Code != "" {
+			id, err := directReferrer(tx, tenant, invite)
+			if err != nil {
+				return err
+			}
+			referrerID = sql.NullString{String: id, Valid: true}
+			source = sql.NullString{String: invite.Source, Valid: true}
+		}
+		if err := tx.Exec(`INSERT INTO tenants (id, name, primary_account_name, referrer_tenant_id, referral_source)
+            VALUES (?, ?, ?, ?, ?)`, tenant.ID, tenant.Name, tenant.PrimaryAccountName, referrerID, source).Error; err != nil {
 			return err
 		}
-		// Invitation validation can join this transaction before the credential is consumed.
 		result = tx.Exec(`INSERT INTO tenant_admins (tenant_id, email, email_delivery_address, password_hash)
             VALUES (?, ?, ?, ?) ON CONFLICT (email) DO NOTHING`, tenant.ID, tenant.Email, credential.DeliveryAddress, digest)
 		if result.Error != nil {
