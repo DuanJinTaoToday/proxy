@@ -102,6 +102,7 @@ async function snapshot(page, info, f, evidence) {
 }
 
 test('运营调额保留预占，待核实满十五分钟入队后通过皇冠两条只读证据核销一次', async (args, info) => {
+  test.setTimeout(100000)
   const f = await setup(args, 'exchange-ops-proof@example.test')
   try {
     const allocation = await f.buy('101')
@@ -158,7 +159,30 @@ test('运营调额保留预占，待核实满十五分钟入队后通过皇冠�
     expect(audit[1]).toMatchObject({ kind: 'adjustment', actor_id: expect.any(String), request_key: adjustmentKey,
       before: { total: 10, reserved: 1, used: 0 }, after: { total: 1, reserved: 1, used: 0 } })
     expect(JSON.stringify(audit)).not.toContain('fixture-pass')
-    await snapshot(args.page, info, f, { quotaBefore, adjusted, queued, finalQuota, audit })
+    await f.adjustment(1).then(json)
+    const baselineMissing = await f.buy('201')
+    const secondSupplier = await f.fixture('exchanges', {
+      ip: baselineMissing.ip, outcome: 'unknown-tracked', history_after_write: 'hidden',
+    })
+    await f.fixture('exchange-records', { ip: baselineMissing.ip, mode: 'timeout' })
+    const unresolved = await f.submit(baselineMissing)
+    expect(unresolved.status).toBe('unknown')
+    clock(unresolved.idempotency_key, 'aged')
+    await f.fixture('exchange-records', { ip: baselineMissing.ip, mode: 'visible' })
+    await synchronizeLookup(f, baselineMissing.ip, unresolved.idempotency_key)
+    await expect.poll(() => f.audit().then(entries => entries.find(entry =>
+      entry.idempotency_key === unresolved.idempotency_key)?.kind)).toBe('observation')
+    expect(await f.lookup(unresolved.idempotency_key)).toMatchObject({ status: 'unknown' })
+    expect(await f.quota()).toEqual({ remaining: 0, reserved: 1, used: 1 })
+    const { address } = await f.fixture('exchanges', { id: secondSupplier.id })
+    const verified = await f.resolution(unresolved.idempotency_key, {
+      request_key: randomUUID(), outcome: 'executed', expected_ip: address, evidence: 'Crown fixture ticket 102 confirms application',
+    }).then(json)
+    expect(verified).toMatchObject({ resolution: 'executed' })
+    const noBaselineAudit = (await f.audit()).filter(entry => entry.idempotency_key === unresolved.idempotency_key)
+    expect(noBaselineAudit.map(entry => entry.kind)).toEqual(['manual', 'observation'])
+    expect(await f.quota()).toEqual({ remaining: 0, reserved: 0, used: 2 })
+    await snapshot(args.page, info, f, { quotaBefore, adjusted, queued, finalQuota, audit, noBaselineAudit })
   } finally {
     await f.close()
   }
@@ -178,6 +202,11 @@ test('人工结案与自动核对只结一次，迟到的历史结果更正次�
     const beforeRelease = await f.quota()
     expect(beforeRelease).toEqual({ remaining: 2, reserved: 1, used: 0 })
     const negative = { request_key: randomUUID(), outcome: 'not_executed', evidence: 'Crown fixture ticket 100 confirmed not executed' }
+    const tooSoon = await f.resolution(old.idempotency_key, negative)
+    expect(tooSoon.status()).toBe(409)
+    expect(await tooSoon.json()).toMatchObject({ reason: 'STATIC_EXCHANGE_NOT_IN_QUEUE' })
+    expect(await f.quota()).toEqual(beforeRelease)
+    clock(old.idempotency_key, 'aged')
     expect(await f.resolution(old.idempotency_key, negative).then(json)).toMatchObject({ exchange: { status: 'failed' } })
     expect(await f.resolution(old.idempotency_key, negative).then(json)).toMatchObject({ exchange: { status: 'failed' } })
     expect(await f.quota()).toEqual({ remaining: 3, reserved: 0, used: 0 })
@@ -191,6 +220,7 @@ test('人工结案与自动核对只结一次，迟到的历史结果更正次�
 
     const raceSupplier = await f.fixture('exchanges', { ip: concurrent.ip, outcome: 'unknown-tracked', history_after_write: 'hidden' })
     const racing = await f.submit(concurrent)
+    clock(racing.idempotency_key, 'aged')
     await f.fixture('exchange-records', { ip: concurrent.ip, mode: 'delay' })
     await synchronizeLookup(f, concurrent.ip, racing.idempotency_key)
     const { address: expectedIP } = await f.fixture('exchanges', { id: raceSupplier.id })

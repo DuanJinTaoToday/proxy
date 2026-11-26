@@ -27,7 +27,7 @@ func (r *WalletRepository) OperatorExchangeQuota(ctx context.Context, tenant str
 	if r.db == nil {
 		return quota, errWalletUnavailable
 	}
-	err := scanWalletRecord(r.db.WithContext(ctx).Raw(`SELECT COALESCE(q.quota,10) AS quota,
+	err := scanWalletRecord(r.db.WithContext(ctx).Raw(`SELECT COALESCE(q.quota,10) AS total,
 		COALESCE(q.reserved,0) AS reserved, COALESCE(q.used,0) AS used FROM tenants t
 		LEFT JOIN static_ip_exchange_quotas q ON q.tenant_id=t.id WHERE t.id=?`, tenant), &quota)
 	return quota, err
@@ -117,7 +117,7 @@ func (r *WalletRepository) AdjustExchangeQuota(ctx context.Context, actor string
 
 func lockedExchangeQuota(tx *gorm.DB, tenant string) (wallet.ExchangeOperationsQuota, error) {
 	var quota wallet.ExchangeOperationsQuota
-	err := scanWalletRecord(tx.Raw("SELECT quota, reserved, used FROM static_ip_exchange_quotas WHERE tenant_id=? FOR UPDATE", tenant), &quota)
+	err := scanWalletRecord(tx.Raw("SELECT quota AS total, reserved, used FROM static_ip_exchange_quotas WHERE tenant_id=? FOR UPDATE", tenant), &quota)
 	return quota, err
 }
 

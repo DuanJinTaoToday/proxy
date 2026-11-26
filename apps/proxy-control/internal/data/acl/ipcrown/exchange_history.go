@@ -44,16 +44,16 @@ func (c *Client) ExchangeHistory(ctx context.Context, oldIP string, around time.
 		id := string(row.ID)
 		numericID, idErr := strconv.ParseInt(id, 10, 64)
 		created, timeErr := parseSupplierExpiry(row.Created)
-		_, ipErr := netip.ParseAddr(row.IP)
-		_, oldIPErr := netip.ParseAddr(row.OldIP)
+		ip, ipErr := netip.ParseAddr(row.IP)
+		oldIP, oldIPErr := netip.ParseAddr(row.OldIP)
 		if idErr != nil || numericID <= 0 || seen[id] || timeErr != nil || ipErr != nil || oldIPErr != nil ||
-			row.OrderID == "" || row.ItemID == "" || row.OldNode <= 0 || row.Node <= 0 {
+			ip.Zone() != "" || oldIP.Zone() != "" || row.OrderID == "" || row.ItemID == "" || row.OldNode <= 0 || row.Node <= 0 {
 			return nil, wallet.ErrStaticUnavailable
 		}
 		seen[id] = true
 		history = append(history, wallet.StaticExchangeHistoryRecord{
 			ID: id, SupplierOrderID: string(row.OrderID), SupplierItemID: string(row.ItemID),
-			OldIP: row.OldIP, IP: row.IP, OldNodeID: row.OldNode, NodeID: row.Node, CreatedAt: created,
+			OldIP: oldIP.Unmap().String(), IP: ip.Unmap().String(), OldNodeID: row.OldNode, NodeID: row.Node, CreatedAt: created,
 		})
 	}
 	return history, nil

@@ -18,6 +18,7 @@ const (
 var (
 	ErrExchangeQuotaAdjustment = errors.Conflict("STATIC_EXCHANGE_QUOTA_ADJUSTMENT", "the adjustment would exceed the quota limits or take away reserved or used quota")
 	ErrExchangeEvidence        = errors.Conflict("STATIC_EXCHANGE_EVIDENCE_REQUIRED", "the evidence does not support the requested exchange outcome")
+	ErrExchangeNotQueued       = errors.Conflict("STATIC_EXCHANGE_NOT_IN_QUEUE", "the operation is not yet in the reconciliation queue")
 	ErrExchangeAlreadyResolved = errors.Conflict("STATIC_EXCHANGE_ALREADY_RESOLVED", "the operation already has a different result")
 )
 
@@ -33,7 +34,7 @@ type StaticExchangeHistorySupplier interface {
 }
 
 type ExchangeOperationsQuota struct {
-	Total          int32 `gorm:"column:quota"`
+	Total          int32
 	Reserved, Used int32
 }
 
@@ -142,12 +143,11 @@ func (s *Service) ResolveExchange(ctx context.Context, token string, resolution 
 		return ExchangeOperationsRecord{}, ErrInvalid
 	}
 	if resolution.Outcome == StaticExchangeExecuted {
-		if ip, err := netip.ParseAddr(resolution.ExpectedIP); err != nil || ip.Zone() != "" {
+		ip, err := netip.ParseAddr(resolution.ExpectedIP)
+		if err != nil || ip.Zone() != "" {
 			return ExchangeOperationsRecord{}, ErrInvalid
 		}
-	}
-	if strings.ContainsAny(resolution.ExpectedIP, "\r\n\x00") {
-		return ExchangeOperationsRecord{}, ErrInvalid
+		resolution.ExpectedIP = ip.Unmap().String()
 	}
 	return s.store.ResolveExchange(ctx, actor, resolution)
 }

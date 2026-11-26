@@ -27,7 +27,7 @@ CREATE TABLE static_ip_exchange_audit (
     idempotency_key text,
     request_key text,
     actor_id text REFERENCES operators(id),
-    kind text NOT NULL CHECK (kind IN ('adjustment', 'automatic', 'manual', 'duplicate', 'conflict', 'correction')),
+    kind text NOT NULL CHECK (kind IN ('adjustment', 'automatic', 'manual', 'duplicate', 'conflict', 'correction', 'observation')),
     evidence text,
     outcome text CHECK (outcome IN ('executed', 'not_executed')),
     supplier_record_id text,
@@ -45,8 +45,8 @@ CREATE TABLE static_ip_exchange_audit (
 CREATE INDEX static_ip_exchange_audit_tenant_history ON static_ip_exchange_audit (tenant_id, id DESC);
 CREATE UNIQUE INDEX static_ip_exchange_audit_request ON static_ip_exchange_audit (tenant_id, request_key)
     WHERE request_key IS NOT NULL;
-CREATE INDEX static_ip_exchange_audit_supplier_record ON static_ip_exchange_audit (supplier_record_id)
-    WHERE supplier_record_id IS NOT NULL;
+CREATE UNIQUE INDEX static_ip_exchange_audit_auto_receipt ON static_ip_exchange_audit (supplier_record_id)
+    WHERE kind = 'automatic' AND supplier_record_id IS NOT NULL;
 
 -- +goose Down
 DROP TABLE static_ip_exchange_audit;

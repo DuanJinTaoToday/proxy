@@ -75,7 +75,7 @@ func (r *WalletRepository) claimExchangeCheck(ctx context.Context) (exchangeChec
 	var check exchangeCheck
 	err := scanWalletRecord(r.db.WithContext(ctx).Raw(`WITH candidate AS (
 		SELECT tenant_id, idempotency_key FROM static_ip_exchanges
-		WHERE next_check_at <= statement_timestamp() AND history_snapshot IS NOT NULL AND dispatched_at IS NOT NULL
+		WHERE next_check_at <= statement_timestamp()
 		ORDER BY next_check_at, tenant_id, idempotency_key LIMIT 1 FOR UPDATE SKIP LOCKED
 	)
 	UPDATE static_ip_exchanges SET next_check_at=statement_timestamp() + (? * interval '1 second')
@@ -85,22 +85,26 @@ func (r *WalletRepository) claimExchangeCheck(ctx context.Context) (exchangeChec
 }
 
 func (r *WalletRepository) observeExchange(ctx context.Context, check exchangeCheck) exchangeObservation {
-	if check.DispatchedAt == nil || check.HistorySnapshot == nil {
-		return exchangeObservation{}
+	dispatched := check.CreatedAt
+	if check.DispatchedAt != nil {
+		dispatched = *check.DispatchedAt
 	}
 	supplier := r.static.(wallet.StaticExchangeHistorySupplier)
-	history, err := supplier.ExchangeHistory(ctx, check.OldIP, *check.DispatchedAt)
+	history, err := supplier.ExchangeHistory(ctx, check.OldIP, dispatched)
 	if err != nil {
 		return exchangeObservation{}
 	}
-	baseline := strings.Fields(*check.HistorySnapshot)
-	latest := minTime(time.Now().Add(exchangeClockSkew), check.DispatchedAt.Add(time.Minute+exchangeClockSkew))
+	var baseline []string
+	if check.HistorySnapshot != nil {
+		baseline = strings.Fields(*check.HistorySnapshot)
+	}
+	latest := minTime(time.Now().Add(exchangeClockSkew), dispatched.Add(time.Minute+exchangeClockSkew))
 	var observed exchangeObservation
 	for _, row := range history {
 		if row.SupplierOrderID != check.SupplierOrderID || row.SupplierItemID != check.SupplierItemID ||
 			row.OldNodeID != check.NodeID || row.NodeID != check.NodeID || !sameExchangeIP(row.OldIP, check.OldIP) ||
 			sameExchangeIP(row.IP, check.OldIP) || slices.Contains(baseline, row.ID) ||
-			row.CreatedAt.Before(check.DispatchedAt.Add(-exchangeClockSkew)) || row.CreatedAt.After(latest) {
+			row.CreatedAt.Before(dispatched.Add(-exchangeClockSkew)) || row.CreatedAt.After(latest) {
 			continue
 		}
 		if observed.SupplierRecordID != "" {
@@ -214,12 +218,18 @@ func (r *WalletRepository) applyExchangeReview(ctx context.Context, check exchan
 		if locked.Status != wallet.StaticExchangeUnknown && !review.Correction {
 			return recordClosedExchangeObservation(tx, locked, review, before)
 		}
+		if review.Actor != "" && !review.Correction && !locked.InQueue {
+			return wallet.ErrExchangeNotQueued
+		}
 		if review.Correction && (!locked.ResolutionConflict || locked.Corrected) {
 			return wallet.ErrExchangeAlreadyResolved
 		}
 		if review.Actor == "" {
 			if !confirmedExchangeDetail(locked, review.Observation.Allocation) {
 				return nil
+			}
+			if locked.DispatchedAt == nil || locked.HistorySnapshot == nil {
+				return recordUnverifiedExchangeObservation(tx, locked, review.Observation, before)
 			}
 			var recorded bool
 			if err := tx.Raw("SELECT EXISTS (SELECT 1 FROM static_ip_exchange_audit WHERE supplier_record_id=? AND kind='automatic')",
@@ -246,6 +256,20 @@ func confirmedExchangeDetail(check exchangeCheck, next wallet.StaticAllocation) 
 	}}, check.StaticExchangeRequest)
 }
 
+func recordUnverifiedExchangeObservation(tx *gorm.DB, check exchangeCheck, observation exchangeObservation, quota wallet.ExchangeOperationsQuota) error {
+	var recorded bool
+	if err := tx.Raw(`SELECT EXISTS (SELECT 1 FROM static_ip_exchange_audit
+		WHERE tenant_id=? AND idempotency_key=? AND supplier_record_id=? AND kind='observation')`,
+		check.TenantID, check.IdempotencyKey, observation.SupplierRecordID).Scan(&recorded).Error; err != nil || recorded {
+		return err
+	}
+	_, err := insertExchangeAudit(tx, check.TenantID, wallet.ExchangeOperationsAudit{
+		IdempotencyKey: check.IdempotencyKey, Kind: "observation", SupplierRecordID: observation.SupplierRecordID,
+		ObservedIP: observation.IP, Evidence: "No complete pre-dispatch Crown history snapshot",
+	}, quota, quota)
+	return err
+}
+
 func recordClosedExchangeObservation(tx *gorm.DB, check exchangeCheck, review exchangeReview, quota wallet.ExchangeOperationsQuota) error {
 	if check.Resolution == "" {
 		if review.Actor != "" {
@@ -258,6 +282,9 @@ func recordClosedExchangeObservation(tx *gorm.DB, check exchangeCheck, review ex
 	}
 	same := check.Resolution == review.Outcome &&
 		(review.Outcome == wallet.StaticExchangeNotExecuted || sameExchangeIP(check.NewIP, review.Observation.IP))
+	if review.Actor == "" && !same && check.HistorySnapshot == nil {
+		return recordUnverifiedExchangeObservation(tx, check, review.Observation, quota)
+	}
 	if review.Actor == "" && check.Resolution == review.Outcome && !same && review.Observation.Allocation.SupplierItemID == "" {
 		return nil
 	}
@@ -303,7 +330,7 @@ func (r *WalletRepository) finishExchangeReview(tx *gorm.DB, check exchangeCheck
 	if executed {
 		status = wallet.StaticExchangeReady
 		if !superseded {
-			if !confirmedExchangeReviewConfig(check, current, next, check.Resolution == wallet.StaticExchangeExecuted) {
+			if !confirmedExchangeReviewConfig(check, current, next, review.Correction) {
 				return quota, wallet.ErrExchangeEvidence
 			}
 			if err := r.storeExchangeReviewConfig(tx, check, next); err != nil {
@@ -336,7 +363,7 @@ func (r *WalletRepository) finishExchangeReview(tx *gorm.DB, check exchangeCheck
 	case executed != wasExecuted:
 		return quota, wallet.ErrState
 	}
-	keepChecking := review.Actor != "" && !review.Correction && check.HistorySnapshot != nil
+	keepChecking := review.Actor != "" && !review.Correction
 	if err := tx.Exec(`UPDATE static_ip_exchanges SET status=?, resolution=?, resolution_conflict=false, corrected=?,
 		updated_at=clock_timestamp(), new_proxy_id=NULLIF(?,''),
 		new_ip=NULLIF(?,''), probe_at=CASE WHEN ? THEN clock_timestamp() END,
@@ -360,10 +387,15 @@ func (r *WalletRepository) finishExchangeReview(tx *gorm.DB, check exchangeCheck
 	return after, err
 }
 
-func confirmedExchangeReviewConfig(check exchangeCheck, current, next wallet.StaticAllocation, wasExecuted bool) bool {
+func confirmedExchangeReviewConfig(check exchangeCheck, current, next wallet.StaticAllocation, correction bool) bool {
 	ip, proxy := check.OldIP, check.OriginalProxyID
-	if wasExecuted {
+	if check.Resolution == wallet.StaticExchangeExecuted {
 		ip, proxy = check.NewIP, check.NewProxyID
+	}
+	if correction {
+		// Renewal may have advanced the expiry after the previous resolution. Compare with the
+		// current allocation and preserve its expiry when updating the verified connection data.
+		check.OriginalExpiry = current.ExpiresAt
 	}
 	return sameExchangeIP(current.IP, ip) && current.ProxyID == proxy &&
 		current.ExpiresAt.Equal(check.OriginalExpiry) && confirmedExchangeDetail(check, next)
