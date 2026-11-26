@@ -40,7 +40,7 @@ func generateModels(db *gorm.DB) error {
 		"tenant_promotions", "tenant_promotion_audit", "operators", "operator_permissions",
 		"wallets", "wallet_entries", "purchase_orders", "wallet_recharge_quotes", "order_items",
 		"product_sales", "traffic_packages", "product_change_log",
-		"static_purchases", "static_ip_allocations", "static_purchase_resolutions", "static_renewal_items", "static_renewal_resolutions", "static_ip_exchange_quotas", "static_ip_exchanges",
+		"static_purchases", "static_ip_allocations", "static_purchase_resolutions", "static_renewal_items", "static_renewal_resolutions", "static_ip_exchange_quotas", "static_ip_exchanges", "static_ip_exchange_audit",
 		"gateways", "gateway_tokens", "gateway_boots", "ingest_cursors",
 		"tenant_balances", "tenant_notifications", "traffic_grants", "proxy_subaccounts", "gateway_auth_references", "sticky_sessions",
 		"usage_minutely", "usage_daily", "usage_archive_state", "record_anomalies", "usage_gaps",

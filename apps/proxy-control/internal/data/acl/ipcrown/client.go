@@ -215,6 +215,10 @@ func (c *Client) call(ctx context.Context, path string, params map[string]any, r
 }
 
 func (c *Client) callWithStatus(ctx context.Context, path string, params map[string]any, result any) (int, int, error) {
+	return c.callWithCount(ctx, path, params, result, nil)
+}
+
+func (c *Client) callWithCount(ctx context.Context, path string, params map[string]any, result any, count **int) (int, int, error) {
 	params["timestamp"] = time.Now().Unix()
 	params["nonce"] = strings.ReplaceAll(uuid.NewString(), "-", "")
 	keys := make([]string, 0, len(params))
@@ -256,8 +260,9 @@ func (c *Client) callWithStatus(ctx context.Context, path string, params map[str
 	}
 	defer func() { _ = response.Body.Close() }()
 	var envelope struct {
-		Code *int
-		Data json.RawMessage
+		Code  *int
+		Count *int
+		Data  json.RawMessage
 	}
 	const limit = 4 << 20
 	data, err := io.ReadAll(io.LimitReader(response.Body, limit+1))
@@ -269,6 +274,9 @@ func (c *Client) callWithStatus(ctx context.Context, path string, params map[str
 	}
 	if response.StatusCode != http.StatusOK || len(envelope.Data) == 0 || json.Unmarshal(envelope.Data, result) != nil {
 		return 0, 0, wallet.ErrStaticUnavailable
+	}
+	if count != nil {
+		*count = envelope.Count
 	}
 	return 0, response.StatusCode, nil
 }

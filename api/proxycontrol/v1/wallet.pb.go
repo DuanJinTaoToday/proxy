@@ -2672,6 +2672,703 @@ func (x *StaticIPExchangeQuota) GetUsed() int32 {
 	return 0
 }
 
+type OperatorStaticIPExchangeQuota struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Total         int32                  `protobuf:"varint,1,opt,name=total,proto3" json:"total,omitempty"`
+	Remaining     int32                  `protobuf:"varint,2,opt,name=remaining,proto3" json:"remaining,omitempty"`
+	Reserved      int32                  `protobuf:"varint,3,opt,name=reserved,proto3" json:"reserved,omitempty"`
+	Used          int32                  `protobuf:"varint,4,opt,name=used,proto3" json:"used,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *OperatorStaticIPExchangeQuota) Reset() {
+	*x = OperatorStaticIPExchangeQuota{}
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[33]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OperatorStaticIPExchangeQuota) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OperatorStaticIPExchangeQuota) ProtoMessage() {}
+
+func (x *OperatorStaticIPExchangeQuota) ProtoReflect() protoreflect.Message {
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[33]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OperatorStaticIPExchangeQuota.ProtoReflect.Descriptor instead.
+func (*OperatorStaticIPExchangeQuota) Descriptor() ([]byte, []int) {
+	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{33}
+}
+
+func (x *OperatorStaticIPExchangeQuota) GetTotal() int32 {
+	if x != nil {
+		return x.Total
+	}
+	return 0
+}
+
+func (x *OperatorStaticIPExchangeQuota) GetRemaining() int32 {
+	if x != nil {
+		return x.Remaining
+	}
+	return 0
+}
+
+func (x *OperatorStaticIPExchangeQuota) GetReserved() int32 {
+	if x != nil {
+		return x.Reserved
+	}
+	return 0
+}
+
+func (x *OperatorStaticIPExchangeQuota) GetUsed() int32 {
+	if x != nil {
+		return x.Used
+	}
+	return 0
+}
+
+type OperatorStaticIPExchangesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	Cursor        string                 `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *OperatorStaticIPExchangesRequest) Reset() {
+	*x = OperatorStaticIPExchangesRequest{}
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[34]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OperatorStaticIPExchangesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OperatorStaticIPExchangesRequest) ProtoMessage() {}
+
+func (x *OperatorStaticIPExchangesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[34]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OperatorStaticIPExchangesRequest.ProtoReflect.Descriptor instead.
+func (*OperatorStaticIPExchangesRequest) Descriptor() ([]byte, []int) {
+	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{34}
+}
+
+func (x *OperatorStaticIPExchangesRequest) GetTenantId() string {
+	if x != nil {
+		return x.TenantId
+	}
+	return ""
+}
+
+func (x *OperatorStaticIPExchangesRequest) GetCursor() string {
+	if x != nil {
+		return x.Cursor
+	}
+	return ""
+}
+
+type OperatorStaticIPExchanges struct {
+	state         protoimpl.MessageState      `protogen:"open.v1"`
+	Exchanges     []*OperatorStaticIPExchange `protobuf:"bytes,1,rep,name=exchanges,proto3" json:"exchanges,omitempty"`
+	NextCursor    string                      `protobuf:"bytes,2,opt,name=next_cursor,json=nextCursor,proto3" json:"next_cursor,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *OperatorStaticIPExchanges) Reset() {
+	*x = OperatorStaticIPExchanges{}
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[35]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OperatorStaticIPExchanges) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OperatorStaticIPExchanges) ProtoMessage() {}
+
+func (x *OperatorStaticIPExchanges) ProtoReflect() protoreflect.Message {
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[35]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OperatorStaticIPExchanges.ProtoReflect.Descriptor instead.
+func (*OperatorStaticIPExchanges) Descriptor() ([]byte, []int) {
+	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{35}
+}
+
+func (x *OperatorStaticIPExchanges) GetExchanges() []*OperatorStaticIPExchange {
+	if x != nil {
+		return x.Exchanges
+	}
+	return nil
+}
+
+func (x *OperatorStaticIPExchanges) GetNextCursor() string {
+	if x != nil {
+		return x.NextCursor
+	}
+	return ""
+}
+
+type OperatorStaticIPExchange struct {
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	Exchange           *StaticIPExchange      `protobuf:"bytes,1,opt,name=exchange,proto3" json:"exchange,omitempty"`
+	TenantId           string                 `protobuf:"bytes,2,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	SupplierOrderId    string                 `protobuf:"bytes,3,opt,name=supplier_order_id,json=supplierOrderId,proto3" json:"supplier_order_id,omitempty"`
+	SupplierItemId     string                 `protobuf:"bytes,4,opt,name=supplier_item_id,json=supplierItemId,proto3" json:"supplier_item_id,omitempty"`
+	OldIp              string                 `protobuf:"bytes,5,opt,name=old_ip,json=oldIp,proto3" json:"old_ip,omitempty"`
+	NewIp              string                 `protobuf:"bytes,6,opt,name=new_ip,json=newIp,proto3" json:"new_ip,omitempty"`
+	UnknownAt          *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=unknown_at,json=unknownAt,proto3" json:"unknown_at,omitempty"`
+	InQueue            bool                   `protobuf:"varint,8,opt,name=in_queue,json=inQueue,proto3" json:"in_queue,omitempty"`
+	Resolution         string                 `protobuf:"bytes,9,opt,name=resolution,proto3" json:"resolution,omitempty"`
+	ResolutionConflict bool                   `protobuf:"varint,10,opt,name=resolution_conflict,json=resolutionConflict,proto3" json:"resolution_conflict,omitempty"`
+	Corrected          bool                   `protobuf:"varint,11,opt,name=corrected,proto3" json:"corrected,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *OperatorStaticIPExchange) Reset() {
+	*x = OperatorStaticIPExchange{}
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[36]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OperatorStaticIPExchange) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OperatorStaticIPExchange) ProtoMessage() {}
+
+func (x *OperatorStaticIPExchange) ProtoReflect() protoreflect.Message {
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[36]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OperatorStaticIPExchange.ProtoReflect.Descriptor instead.
+func (*OperatorStaticIPExchange) Descriptor() ([]byte, []int) {
+	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{36}
+}
+
+func (x *OperatorStaticIPExchange) GetExchange() *StaticIPExchange {
+	if x != nil {
+		return x.Exchange
+	}
+	return nil
+}
+
+func (x *OperatorStaticIPExchange) GetTenantId() string {
+	if x != nil {
+		return x.TenantId
+	}
+	return ""
+}
+
+func (x *OperatorStaticIPExchange) GetSupplierOrderId() string {
+	if x != nil {
+		return x.SupplierOrderId
+	}
+	return ""
+}
+
+func (x *OperatorStaticIPExchange) GetSupplierItemId() string {
+	if x != nil {
+		return x.SupplierItemId
+	}
+	return ""
+}
+
+func (x *OperatorStaticIPExchange) GetOldIp() string {
+	if x != nil {
+		return x.OldIp
+	}
+	return ""
+}
+
+func (x *OperatorStaticIPExchange) GetNewIp() string {
+	if x != nil {
+		return x.NewIp
+	}
+	return ""
+}
+
+func (x *OperatorStaticIPExchange) GetUnknownAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.UnknownAt
+	}
+	return nil
+}
+
+func (x *OperatorStaticIPExchange) GetInQueue() bool {
+	if x != nil {
+		return x.InQueue
+	}
+	return false
+}
+
+func (x *OperatorStaticIPExchange) GetResolution() string {
+	if x != nil {
+		return x.Resolution
+	}
+	return ""
+}
+
+func (x *OperatorStaticIPExchange) GetResolutionConflict() bool {
+	if x != nil {
+		return x.ResolutionConflict
+	}
+	return false
+}
+
+func (x *OperatorStaticIPExchange) GetCorrected() bool {
+	if x != nil {
+		return x.Corrected
+	}
+	return false
+}
+
+type OperatorStaticIPExchangeAuditRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	BeforeId      int64                  `protobuf:"varint,2,opt,name=before_id,json=beforeId,proto3" json:"before_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *OperatorStaticIPExchangeAuditRequest) Reset() {
+	*x = OperatorStaticIPExchangeAuditRequest{}
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[37]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OperatorStaticIPExchangeAuditRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OperatorStaticIPExchangeAuditRequest) ProtoMessage() {}
+
+func (x *OperatorStaticIPExchangeAuditRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[37]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OperatorStaticIPExchangeAuditRequest.ProtoReflect.Descriptor instead.
+func (*OperatorStaticIPExchangeAuditRequest) Descriptor() ([]byte, []int) {
+	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{37}
+}
+
+func (x *OperatorStaticIPExchangeAuditRequest) GetTenantId() string {
+	if x != nil {
+		return x.TenantId
+	}
+	return ""
+}
+
+func (x *OperatorStaticIPExchangeAuditRequest) GetBeforeId() int64 {
+	if x != nil {
+		return x.BeforeId
+	}
+	return 0
+}
+
+type OperatorStaticIPExchangeAuditPage struct {
+	state         protoimpl.MessageState                `protogen:"open.v1"`
+	Entries       []*OperatorStaticIPExchangeAuditEntry `protobuf:"bytes,1,rep,name=entries,proto3" json:"entries,omitempty"`
+	NextBeforeId  int64                                 `protobuf:"varint,2,opt,name=next_before_id,json=nextBeforeId,proto3" json:"next_before_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *OperatorStaticIPExchangeAuditPage) Reset() {
+	*x = OperatorStaticIPExchangeAuditPage{}
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[38]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OperatorStaticIPExchangeAuditPage) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OperatorStaticIPExchangeAuditPage) ProtoMessage() {}
+
+func (x *OperatorStaticIPExchangeAuditPage) ProtoReflect() protoreflect.Message {
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[38]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OperatorStaticIPExchangeAuditPage.ProtoReflect.Descriptor instead.
+func (*OperatorStaticIPExchangeAuditPage) Descriptor() ([]byte, []int) {
+	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{38}
+}
+
+func (x *OperatorStaticIPExchangeAuditPage) GetEntries() []*OperatorStaticIPExchangeAuditEntry {
+	if x != nil {
+		return x.Entries
+	}
+	return nil
+}
+
+func (x *OperatorStaticIPExchangeAuditPage) GetNextBeforeId() int64 {
+	if x != nil {
+		return x.NextBeforeId
+	}
+	return 0
+}
+
+type OperatorStaticIPExchangeAuditEntry struct {
+	state            protoimpl.MessageState         `protogen:"open.v1"`
+	Id               int64                          `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Kind             string                         `protobuf:"bytes,2,opt,name=kind,proto3" json:"kind,omitempty"`
+	IdempotencyKey   string                         `protobuf:"bytes,3,opt,name=idempotency_key,json=idempotencyKey,proto3" json:"idempotency_key,omitempty"`
+	RequestKey       string                         `protobuf:"bytes,4,opt,name=request_key,json=requestKey,proto3" json:"request_key,omitempty"`
+	ActorId          string                         `protobuf:"bytes,5,opt,name=actor_id,json=actorId,proto3" json:"actor_id,omitempty"`
+	Evidence         string                         `protobuf:"bytes,6,opt,name=evidence,proto3" json:"evidence,omitempty"`
+	Outcome          string                         `protobuf:"bytes,7,opt,name=outcome,proto3" json:"outcome,omitempty"`
+	SupplierRecordId string                         `protobuf:"bytes,8,opt,name=supplier_record_id,json=supplierRecordId,proto3" json:"supplier_record_id,omitempty"`
+	ObservedIp       string                         `protobuf:"bytes,9,opt,name=observed_ip,json=observedIp,proto3" json:"observed_ip,omitempty"`
+	Before           *OperatorStaticIPExchangeQuota `protobuf:"bytes,10,opt,name=before,proto3" json:"before,omitempty"`
+	After            *OperatorStaticIPExchangeQuota `protobuf:"bytes,11,opt,name=after,proto3" json:"after,omitempty"`
+	CreatedAt        *timestamppb.Timestamp         `protobuf:"bytes,12,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *OperatorStaticIPExchangeAuditEntry) Reset() {
+	*x = OperatorStaticIPExchangeAuditEntry{}
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[39]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OperatorStaticIPExchangeAuditEntry) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OperatorStaticIPExchangeAuditEntry) ProtoMessage() {}
+
+func (x *OperatorStaticIPExchangeAuditEntry) ProtoReflect() protoreflect.Message {
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[39]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OperatorStaticIPExchangeAuditEntry.ProtoReflect.Descriptor instead.
+func (*OperatorStaticIPExchangeAuditEntry) Descriptor() ([]byte, []int) {
+	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{39}
+}
+
+func (x *OperatorStaticIPExchangeAuditEntry) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *OperatorStaticIPExchangeAuditEntry) GetKind() string {
+	if x != nil {
+		return x.Kind
+	}
+	return ""
+}
+
+func (x *OperatorStaticIPExchangeAuditEntry) GetIdempotencyKey() string {
+	if x != nil {
+		return x.IdempotencyKey
+	}
+	return ""
+}
+
+func (x *OperatorStaticIPExchangeAuditEntry) GetRequestKey() string {
+	if x != nil {
+		return x.RequestKey
+	}
+	return ""
+}
+
+func (x *OperatorStaticIPExchangeAuditEntry) GetActorId() string {
+	if x != nil {
+		return x.ActorId
+	}
+	return ""
+}
+
+func (x *OperatorStaticIPExchangeAuditEntry) GetEvidence() string {
+	if x != nil {
+		return x.Evidence
+	}
+	return ""
+}
+
+func (x *OperatorStaticIPExchangeAuditEntry) GetOutcome() string {
+	if x != nil {
+		return x.Outcome
+	}
+	return ""
+}
+
+func (x *OperatorStaticIPExchangeAuditEntry) GetSupplierRecordId() string {
+	if x != nil {
+		return x.SupplierRecordId
+	}
+	return ""
+}
+
+func (x *OperatorStaticIPExchangeAuditEntry) GetObservedIp() string {
+	if x != nil {
+		return x.ObservedIp
+	}
+	return ""
+}
+
+func (x *OperatorStaticIPExchangeAuditEntry) GetBefore() *OperatorStaticIPExchangeQuota {
+	if x != nil {
+		return x.Before
+	}
+	return nil
+}
+
+func (x *OperatorStaticIPExchangeAuditEntry) GetAfter() *OperatorStaticIPExchangeQuota {
+	if x != nil {
+		return x.After
+	}
+	return nil
+}
+
+func (x *OperatorStaticIPExchangeAuditEntry) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+type AdjustOperatorStaticIPExchangeQuotaRequest struct {
+	state      protoimpl.MessageState `protogen:"open.v1"`
+	TenantId   string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	RequestKey string                 `protobuf:"bytes,2,opt,name=request_key,json=requestKey,proto3" json:"request_key,omitempty"`
+	Delta      int32                  `protobuf:"varint,3,opt,name=delta,proto3" json:"delta,omitempty"`
+	// 操作依据。记录在审计中，不填写代理凭据。
+	Evidence      string `protobuf:"bytes,4,opt,name=evidence,proto3" json:"evidence,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AdjustOperatorStaticIPExchangeQuotaRequest) Reset() {
+	*x = AdjustOperatorStaticIPExchangeQuotaRequest{}
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[40]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AdjustOperatorStaticIPExchangeQuotaRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AdjustOperatorStaticIPExchangeQuotaRequest) ProtoMessage() {}
+
+func (x *AdjustOperatorStaticIPExchangeQuotaRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[40]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AdjustOperatorStaticIPExchangeQuotaRequest.ProtoReflect.Descriptor instead.
+func (*AdjustOperatorStaticIPExchangeQuotaRequest) Descriptor() ([]byte, []int) {
+	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{40}
+}
+
+func (x *AdjustOperatorStaticIPExchangeQuotaRequest) GetTenantId() string {
+	if x != nil {
+		return x.TenantId
+	}
+	return ""
+}
+
+func (x *AdjustOperatorStaticIPExchangeQuotaRequest) GetRequestKey() string {
+	if x != nil {
+		return x.RequestKey
+	}
+	return ""
+}
+
+func (x *AdjustOperatorStaticIPExchangeQuotaRequest) GetDelta() int32 {
+	if x != nil {
+		return x.Delta
+	}
+	return 0
+}
+
+func (x *AdjustOperatorStaticIPExchangeQuotaRequest) GetEvidence() string {
+	if x != nil {
+		return x.Evidence
+	}
+	return ""
+}
+
+type ResolveOperatorStaticIPExchangeRequest struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	TenantId       string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	IdempotencyKey string                 `protobuf:"bytes,2,opt,name=idempotency_key,json=idempotencyKey,proto3" json:"idempotency_key,omitempty"`
+	RequestKey     string                 `protobuf:"bytes,3,opt,name=request_key,json=requestKey,proto3" json:"request_key,omitempty"`
+	// executed 或 not_executed。
+	Outcome string `protobuf:"bytes,4,opt,name=outcome,proto3" json:"outcome,omitempty"`
+	// 皇冠工单或回执编号。查无记录和旧 IP 未变都不构成未执行凭据。
+	Evidence string `protobuf:"bytes,5,opt,name=evidence,proto3" json:"evidence,omitempty"`
+	// 确认执行时填写皇冠凭证上的新 IP。
+	ExpectedIp string `protobuf:"bytes,6,opt,name=expected_ip,json=expectedIp,proto3" json:"expected_ip,omitempty"`
+	// 处理已结案记录的迟到冲突时启用。
+	Correction    bool `protobuf:"varint,7,opt,name=correction,proto3" json:"correction,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ResolveOperatorStaticIPExchangeRequest) Reset() {
+	*x = ResolveOperatorStaticIPExchangeRequest{}
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[41]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResolveOperatorStaticIPExchangeRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResolveOperatorStaticIPExchangeRequest) ProtoMessage() {}
+
+func (x *ResolveOperatorStaticIPExchangeRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[41]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ResolveOperatorStaticIPExchangeRequest.ProtoReflect.Descriptor instead.
+func (*ResolveOperatorStaticIPExchangeRequest) Descriptor() ([]byte, []int) {
+	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{41}
+}
+
+func (x *ResolveOperatorStaticIPExchangeRequest) GetTenantId() string {
+	if x != nil {
+		return x.TenantId
+	}
+	return ""
+}
+
+func (x *ResolveOperatorStaticIPExchangeRequest) GetIdempotencyKey() string {
+	if x != nil {
+		return x.IdempotencyKey
+	}
+	return ""
+}
+
+func (x *ResolveOperatorStaticIPExchangeRequest) GetRequestKey() string {
+	if x != nil {
+		return x.RequestKey
+	}
+	return ""
+}
+
+func (x *ResolveOperatorStaticIPExchangeRequest) GetOutcome() string {
+	if x != nil {
+		return x.Outcome
+	}
+	return ""
+}
+
+func (x *ResolveOperatorStaticIPExchangeRequest) GetEvidence() string {
+	if x != nil {
+		return x.Evidence
+	}
+	return ""
+}
+
+func (x *ResolveOperatorStaticIPExchangeRequest) GetExpectedIp() string {
+	if x != nil {
+		return x.ExpectedIp
+	}
+	return ""
+}
+
+func (x *ResolveOperatorStaticIPExchangeRequest) GetCorrection() bool {
+	if x != nil {
+		return x.Correction
+	}
+	return false
+}
+
 type StaticIPConfigRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 需要查看接入信息的分配 ID。
@@ -2682,7 +3379,7 @@ type StaticIPConfigRequest struct {
 
 func (x *StaticIPConfigRequest) Reset() {
 	*x = StaticIPConfigRequest{}
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[33]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[42]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2694,7 +3391,7 @@ func (x *StaticIPConfigRequest) String() string {
 func (*StaticIPConfigRequest) ProtoMessage() {}
 
 func (x *StaticIPConfigRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[33]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[42]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2707,7 +3404,7 @@ func (x *StaticIPConfigRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StaticIPConfigRequest.ProtoReflect.Descriptor instead.
 func (*StaticIPConfigRequest) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{33}
+	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{42}
 }
 
 func (x *StaticIPConfigRequest) GetAllocationId() string {
@@ -2727,7 +3424,7 @@ type StaticIPExportRequest struct {
 
 func (x *StaticIPExportRequest) Reset() {
 	*x = StaticIPExportRequest{}
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[34]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[43]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2739,7 +3436,7 @@ func (x *StaticIPExportRequest) String() string {
 func (*StaticIPExportRequest) ProtoMessage() {}
 
 func (x *StaticIPExportRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[34]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[43]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2752,7 +3449,7 @@ func (x *StaticIPExportRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StaticIPExportRequest.ProtoReflect.Descriptor instead.
 func (*StaticIPExportRequest) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{34}
+	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{43}
 }
 
 func (x *StaticIPExportRequest) GetAllocationIds() []string {
@@ -2782,7 +3479,7 @@ type ResolveStaticPurchaseRequest struct {
 
 func (x *ResolveStaticPurchaseRequest) Reset() {
 	*x = ResolveStaticPurchaseRequest{}
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[35]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[44]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2794,7 +3491,7 @@ func (x *ResolveStaticPurchaseRequest) String() string {
 func (*ResolveStaticPurchaseRequest) ProtoMessage() {}
 
 func (x *ResolveStaticPurchaseRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[35]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[44]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2807,7 +3504,7 @@ func (x *ResolveStaticPurchaseRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResolveStaticPurchaseRequest.ProtoReflect.Descriptor instead.
 func (*ResolveStaticPurchaseRequest) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{35}
+	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{44}
 }
 
 func (x *ResolveStaticPurchaseRequest) GetTenantId() string {
@@ -2862,7 +3559,7 @@ type PendingStaticPurchasesRequest struct {
 
 func (x *PendingStaticPurchasesRequest) Reset() {
 	*x = PendingStaticPurchasesRequest{}
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[36]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[45]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2874,7 +3571,7 @@ func (x *PendingStaticPurchasesRequest) String() string {
 func (*PendingStaticPurchasesRequest) ProtoMessage() {}
 
 func (x *PendingStaticPurchasesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[36]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[45]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2887,7 +3584,7 @@ func (x *PendingStaticPurchasesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PendingStaticPurchasesRequest.ProtoReflect.Descriptor instead.
 func (*PendingStaticPurchasesRequest) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{36}
+	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{45}
 }
 
 func (x *PendingStaticPurchasesRequest) GetAfterId() int64 {
@@ -2919,7 +3616,7 @@ type PendingStaticPurchase struct {
 
 func (x *PendingStaticPurchase) Reset() {
 	*x = PendingStaticPurchase{}
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[37]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[46]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2931,7 +3628,7 @@ func (x *PendingStaticPurchase) String() string {
 func (*PendingStaticPurchase) ProtoMessage() {}
 
 func (x *PendingStaticPurchase) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[37]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[46]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2944,7 +3641,7 @@ func (x *PendingStaticPurchase) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PendingStaticPurchase.ProtoReflect.Descriptor instead.
 func (*PendingStaticPurchase) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{37}
+	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{46}
 }
 
 func (x *PendingStaticPurchase) GetOrderId() int64 {
@@ -3008,7 +3705,7 @@ type PendingStaticPurchases struct {
 
 func (x *PendingStaticPurchases) Reset() {
 	*x = PendingStaticPurchases{}
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[38]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[47]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3020,7 +3717,7 @@ func (x *PendingStaticPurchases) String() string {
 func (*PendingStaticPurchases) ProtoMessage() {}
 
 func (x *PendingStaticPurchases) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[38]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[47]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3033,7 +3730,7 @@ func (x *PendingStaticPurchases) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PendingStaticPurchases.ProtoReflect.Descriptor instead.
 func (*PendingStaticPurchases) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{38}
+	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{47}
 }
 
 func (x *PendingStaticPurchases) GetPurchases() []*PendingStaticPurchase {
@@ -3060,7 +3757,7 @@ type StaticIPExpiryNotices struct {
 
 func (x *StaticIPExpiryNotices) Reset() {
 	*x = StaticIPExpiryNotices{}
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[39]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[48]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3072,7 +3769,7 @@ func (x *StaticIPExpiryNotices) String() string {
 func (*StaticIPExpiryNotices) ProtoMessage() {}
 
 func (x *StaticIPExpiryNotices) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[39]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[48]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3085,7 +3782,7 @@ func (x *StaticIPExpiryNotices) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StaticIPExpiryNotices.ProtoReflect.Descriptor instead.
 func (*StaticIPExpiryNotices) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{39}
+	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{48}
 }
 
 func (x *StaticIPExpiryNotices) GetCount() int32 {
@@ -3105,7 +3802,7 @@ type StaticRenewalTermsRequest struct {
 
 func (x *StaticRenewalTermsRequest) Reset() {
 	*x = StaticRenewalTermsRequest{}
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[40]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[49]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3117,7 +3814,7 @@ func (x *StaticRenewalTermsRequest) String() string {
 func (*StaticRenewalTermsRequest) ProtoMessage() {}
 
 func (x *StaticRenewalTermsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[40]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[49]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3130,7 +3827,7 @@ func (x *StaticRenewalTermsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StaticRenewalTermsRequest.ProtoReflect.Descriptor instead.
 func (*StaticRenewalTermsRequest) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{40}
+	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{49}
 }
 
 func (x *StaticRenewalTermsRequest) GetAllocationIds() []string {
@@ -3152,7 +3849,7 @@ type StaticRenewalTerm struct {
 
 func (x *StaticRenewalTerm) Reset() {
 	*x = StaticRenewalTerm{}
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[41]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[50]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3164,7 +3861,7 @@ func (x *StaticRenewalTerm) String() string {
 func (*StaticRenewalTerm) ProtoMessage() {}
 
 func (x *StaticRenewalTerm) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[41]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[50]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3177,7 +3874,7 @@ func (x *StaticRenewalTerm) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StaticRenewalTerm.ProtoReflect.Descriptor instead.
 func (*StaticRenewalTerm) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{41}
+	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{50}
 }
 
 func (x *StaticRenewalTerm) GetTerm() string {
@@ -3204,7 +3901,7 @@ type StaticRenewalTerms struct {
 
 func (x *StaticRenewalTerms) Reset() {
 	*x = StaticRenewalTerms{}
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[42]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[51]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3216,7 +3913,7 @@ func (x *StaticRenewalTerms) String() string {
 func (*StaticRenewalTerms) ProtoMessage() {}
 
 func (x *StaticRenewalTerms) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[42]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[51]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3229,7 +3926,7 @@ func (x *StaticRenewalTerms) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StaticRenewalTerms.ProtoReflect.Descriptor instead.
 func (*StaticRenewalTerms) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{42}
+	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{51}
 }
 
 func (x *StaticRenewalTerms) GetTerms() []*StaticRenewalTerm {
@@ -3251,7 +3948,7 @@ type StaticRenewalQuoteRequest struct {
 
 func (x *StaticRenewalQuoteRequest) Reset() {
 	*x = StaticRenewalQuoteRequest{}
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[43]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[52]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3263,7 +3960,7 @@ func (x *StaticRenewalQuoteRequest) String() string {
 func (*StaticRenewalQuoteRequest) ProtoMessage() {}
 
 func (x *StaticRenewalQuoteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[43]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[52]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3276,7 +3973,7 @@ func (x *StaticRenewalQuoteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StaticRenewalQuoteRequest.ProtoReflect.Descriptor instead.
 func (*StaticRenewalQuoteRequest) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{43}
+	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{52}
 }
 
 func (x *StaticRenewalQuoteRequest) GetAllocationIds() []string {
@@ -3311,7 +4008,7 @@ type StaticRenewalQuoteLine struct {
 
 func (x *StaticRenewalQuoteLine) Reset() {
 	*x = StaticRenewalQuoteLine{}
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[44]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[53]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3323,7 +4020,7 @@ func (x *StaticRenewalQuoteLine) String() string {
 func (*StaticRenewalQuoteLine) ProtoMessage() {}
 
 func (x *StaticRenewalQuoteLine) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[44]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[53]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3336,7 +4033,7 @@ func (x *StaticRenewalQuoteLine) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StaticRenewalQuoteLine.ProtoReflect.Descriptor instead.
 func (*StaticRenewalQuoteLine) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{44}
+	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{53}
 }
 
 func (x *StaticRenewalQuoteLine) GetAllocationId() string {
@@ -3388,7 +4085,7 @@ type StaticRenewalQuote struct {
 
 func (x *StaticRenewalQuote) Reset() {
 	*x = StaticRenewalQuote{}
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[45]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[54]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3400,7 +4097,7 @@ func (x *StaticRenewalQuote) String() string {
 func (*StaticRenewalQuote) ProtoMessage() {}
 
 func (x *StaticRenewalQuote) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[45]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[54]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3413,7 +4110,7 @@ func (x *StaticRenewalQuote) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StaticRenewalQuote.ProtoReflect.Descriptor instead.
 func (*StaticRenewalQuote) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{45}
+	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{54}
 }
 
 func (x *StaticRenewalQuote) GetLines() []*StaticRenewalQuoteLine {
@@ -3453,7 +4150,7 @@ type StaticRenewalRequest struct {
 
 func (x *StaticRenewalRequest) Reset() {
 	*x = StaticRenewalRequest{}
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[46]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[55]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3465,7 +4162,7 @@ func (x *StaticRenewalRequest) String() string {
 func (*StaticRenewalRequest) ProtoMessage() {}
 
 func (x *StaticRenewalRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[46]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[55]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3478,7 +4175,7 @@ func (x *StaticRenewalRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StaticRenewalRequest.ProtoReflect.Descriptor instead.
 func (*StaticRenewalRequest) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{46}
+	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{55}
 }
 
 func (x *StaticRenewalRequest) GetAllocationIds() []string {
@@ -3529,7 +4226,7 @@ type StaticRenewalResolutionRequest struct {
 
 func (x *StaticRenewalResolutionRequest) Reset() {
 	*x = StaticRenewalResolutionRequest{}
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[47]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[56]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3541,7 +4238,7 @@ func (x *StaticRenewalResolutionRequest) String() string {
 func (*StaticRenewalResolutionRequest) ProtoMessage() {}
 
 func (x *StaticRenewalResolutionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[47]
+	mi := &file_proxycontrol_v1_wallet_proto_msgTypes[56]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3554,7 +4251,7 @@ func (x *StaticRenewalResolutionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StaticRenewalResolutionRequest.ProtoReflect.Descriptor instead.
 func (*StaticRenewalResolutionRequest) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{47}
+	return file_proxycontrol_v1_wallet_proto_rawDescGZIP(), []int{56}
 }
 
 func (x *StaticRenewalResolutionRequest) GetTenantId() string {
@@ -3851,7 +4548,76 @@ const file_proxycontrol_v1_wallet_proto_rawDesc = "" +
 	"\x15StaticIPExchangeQuota\x12\x1c\n" +
 	"\tremaining\x18\x01 \x01(\x05R\tremaining\x12\x1a\n" +
 	"\breserved\x18\x02 \x01(\x05R\breserved\x12\x12\n" +
-	"\x04used\x18\x03 \x01(\x05R\x04used\"`\n" +
+	"\x04used\x18\x03 \x01(\x05R\x04used\"\x83\x01\n" +
+	"\x1dOperatorStaticIPExchangeQuota\x12\x14\n" +
+	"\x05total\x18\x01 \x01(\x05R\x05total\x12\x1c\n" +
+	"\tremaining\x18\x02 \x01(\x05R\tremaining\x12\x1a\n" +
+	"\breserved\x18\x03 \x01(\x05R\breserved\x12\x12\n" +
+	"\x04used\x18\x04 \x01(\x05R\x04used\"W\n" +
+	" OperatorStaticIPExchangesRequest\x12\x1b\n" +
+	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x16\n" +
+	"\x06cursor\x18\x02 \x01(\tR\x06cursor\"\x85\x01\n" +
+	"\x19OperatorStaticIPExchanges\x12G\n" +
+	"\texchanges\x18\x01 \x03(\v2).proxycontrol.v1.OperatorStaticIPExchangeR\texchanges\x12\x1f\n" +
+	"\vnext_cursor\x18\x02 \x01(\tR\n" +
+	"nextCursor\"\xbf\x03\n" +
+	"\x18OperatorStaticIPExchange\x12=\n" +
+	"\bexchange\x18\x01 \x01(\v2!.proxycontrol.v1.StaticIPExchangeR\bexchange\x12\x1b\n" +
+	"\ttenant_id\x18\x02 \x01(\tR\btenantId\x12*\n" +
+	"\x11supplier_order_id\x18\x03 \x01(\tR\x0fsupplierOrderId\x12(\n" +
+	"\x10supplier_item_id\x18\x04 \x01(\tR\x0esupplierItemId\x12\x15\n" +
+	"\x06old_ip\x18\x05 \x01(\tR\x05oldIp\x12\x15\n" +
+	"\x06new_ip\x18\x06 \x01(\tR\x05newIp\x129\n" +
+	"\n" +
+	"unknown_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tunknownAt\x12\x19\n" +
+	"\bin_queue\x18\b \x01(\bR\ainQueue\x12\x1e\n" +
+	"\n" +
+	"resolution\x18\t \x01(\tR\n" +
+	"resolution\x12/\n" +
+	"\x13resolution_conflict\x18\n" +
+	" \x01(\bR\x12resolutionConflict\x12\x1c\n" +
+	"\tcorrected\x18\v \x01(\bR\tcorrected\"i\n" +
+	"$OperatorStaticIPExchangeAuditRequest\x12\x1b\n" +
+	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12$\n" +
+	"\tbefore_id\x18\x02 \x01(\x03B\a\xfaB\x04\"\x02(\x00R\bbeforeId\"\x98\x01\n" +
+	"!OperatorStaticIPExchangeAuditPage\x12M\n" +
+	"\aentries\x18\x01 \x03(\v23.proxycontrol.v1.OperatorStaticIPExchangeAuditEntryR\aentries\x12$\n" +
+	"\x0enext_before_id\x18\x02 \x01(\x03R\fnextBeforeId\"\xfb\x03\n" +
+	"\"OperatorStaticIPExchangeAuditEntry\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
+	"\x04kind\x18\x02 \x01(\tR\x04kind\x12'\n" +
+	"\x0fidempotency_key\x18\x03 \x01(\tR\x0eidempotencyKey\x12\x1f\n" +
+	"\vrequest_key\x18\x04 \x01(\tR\n" +
+	"requestKey\x12\x19\n" +
+	"\bactor_id\x18\x05 \x01(\tR\aactorId\x12\x1a\n" +
+	"\bevidence\x18\x06 \x01(\tR\bevidence\x12\x18\n" +
+	"\aoutcome\x18\a \x01(\tR\aoutcome\x12,\n" +
+	"\x12supplier_record_id\x18\b \x01(\tR\x10supplierRecordId\x12\x1f\n" +
+	"\vobserved_ip\x18\t \x01(\tR\n" +
+	"observedIp\x12F\n" +
+	"\x06before\x18\n" +
+	" \x01(\v2..proxycontrol.v1.OperatorStaticIPExchangeQuotaR\x06before\x12D\n" +
+	"\x05after\x18\v \x01(\v2..proxycontrol.v1.OperatorStaticIPExchangeQuotaR\x05after\x129\n" +
+	"\n" +
+	"created_at\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\x9c\x01\n" +
+	"*AdjustOperatorStaticIPExchangeQuotaRequest\x12\x1b\n" +
+	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x1f\n" +
+	"\vrequest_key\x18\x02 \x01(\tR\n" +
+	"requestKey\x12\x14\n" +
+	"\x05delta\x18\x03 \x01(\x05R\x05delta\x12\x1a\n" +
+	"\bevidence\x18\x04 \x01(\tR\bevidence\"\x86\x02\n" +
+	"&ResolveOperatorStaticIPExchangeRequest\x12\x1b\n" +
+	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12'\n" +
+	"\x0fidempotency_key\x18\x02 \x01(\tR\x0eidempotencyKey\x12\x1f\n" +
+	"\vrequest_key\x18\x03 \x01(\tR\n" +
+	"requestKey\x12\x18\n" +
+	"\aoutcome\x18\x04 \x01(\tR\aoutcome\x12\x1a\n" +
+	"\bevidence\x18\x05 \x01(\tR\bevidence\x12\x1f\n" +
+	"\vexpected_ip\x18\x06 \x01(\tR\n" +
+	"expectedIp\x12\x1e\n" +
+	"\n" +
+	"correction\x18\a \x01(\bR\n" +
+	"correction\"`\n" +
 	"\x15StaticIPConfigRequest\x12/\n" +
 	"\rallocation_id\x18\x02 \x01(\tB\n" +
 	"\xfaB\ar\x05\x10\x01(\x80\x01R\fallocationIdJ\x04\b\x01\x10\x02R\x10supplier_item_id\"o\n" +
@@ -3918,11 +4684,17 @@ const file_proxycontrol_v1_wallet_proto_rawDesc = "" +
 	"\bevidence\x18\x04 \x01(\tB\n" +
 	"\xfaB\ar\x05\x10\x01(\xf4\x03R\bevidence\x12#\n" +
 	"\rclose_unknown\x18\x05 \x01(\bR\fcloseUnknown\x12+\n" +
-	"\x11confirmed_failure\x18\x06 \x01(\bR\x10confirmedFailureJ\x04\b\x03\x10\x04R\x10supplier_item_id2\xfa)\n" +
+	"\x11confirmed_failure\x18\x06 \x01(\bR\x10confirmedFailureJ\x04\b\x03\x10\x04R\x10supplier_item_id2\xd55\n" +
 	"\rWalletService\x12\xc6\x01\n" +
 	"\x10ExchangeStaticIP\x12(.proxycontrol.v1.StaticIPExchangeRequest\x1a!.proxycontrol.v1.StaticIPExchange\"e\xbaG9\x127为一条已交付独享静态 IP 发起同地区换号\x82\xd3\xe4\x93\x02#:\x01*\"\x1e/v1/tenant/static-ip-exchanges\x12\xc1\x01\n" +
 	"\x13GetStaticIPExchange\x12'.proxycontrol.v1.StaticIPExchangeLookup\x1a!.proxycontrol.v1.StaticIPExchange\"^\xbaG#\x12!按原请求键查询换号记录\x82\xd3\xe4\x93\x022\x120/v1/tenant/static-ip-exchanges/{idempotency_key}\x12\xb3\x01\n" +
-	"\x18GetStaticIPExchangeQuota\x12\x1c.proxycontrol.v1.BaseRequest\x1a&.proxycontrol.v1.StaticIPExchangeQuota\"Q\xbaG#\x12!查询租户的免费换号额度\x82\xd3\xe4\x93\x02%\x12#/v1/tenant/static-ip-exchange-quota\x12\xcb\x01\n" +
+	"\x18GetStaticIPExchangeQuota\x12\x1c.proxycontrol.v1.BaseRequest\x1a&.proxycontrol.v1.StaticIPExchangeQuota\"Q\xbaG#\x12!查询租户的免费换号额度\x82\xd3\xe4\x93\x02%\x12#/v1/tenant/static-ip-exchange-quota\x12\xda\x01\n" +
+	" GetOperatorStaticIPExchangeQuota\x12$.proxycontrol.v1.WalletTenantRequest\x1a..proxycontrol.v1.OperatorStaticIPExchangeQuota\"`\xbaG\x1a\x12\x18查询租户换号额度\x82\xd3\xe4\x93\x02=\x12;/v1/operations/tenants/{tenant_id}/static-ip-exchange-quota\x12\xdb\x01\n" +
+	"\x1dListOperatorStaticIPExchanges\x121.proxycontrol.v1.OperatorStaticIPExchangesRequest\x1a*.proxycontrol.v1.OperatorStaticIPExchanges\"[\xbaG\x1a\x12\x18查询租户换号历史\x82\xd3\xe4\x93\x028\x126/v1/operations/tenants/{tenant_id}/static-ip-exchanges\x12\xe2\x01\n" +
+	"!ListOperatorStaticIPExchangeQueue\x121.proxycontrol.v1.OperatorStaticIPExchangesRequest\x1a*.proxycontrol.v1.OperatorStaticIPExchanges\"^\xbaG,\x12*查询超时或证据冲突的换号操作\x82\xd3\xe4\x93\x02)\x12'/v1/operations/static-ip-exchange-queue\x12\x88\x02\n" +
+	"!ListOperatorStaticIPExchangeAudit\x125.proxycontrol.v1.OperatorStaticIPExchangeAuditRequest\x1a2.proxycontrol.v1.OperatorStaticIPExchangeAuditPage\"x\xbaG2\x120查询租户换号调额、结案和冲突审计\x82\xd3\xe4\x93\x02=\x12;/v1/operations/tenants/{tenant_id}/static-ip-exchange-audit\x12\x98\x02\n" +
+	"#AdjustOperatorStaticIPExchangeQuota\x12;.proxycontrol.v1.AdjustOperatorStaticIPExchangeQuotaRequest\x1a3.proxycontrol.v1.OperatorStaticIPExchangeAuditEntry\"\x7f\xbaG/\x12-有凭据地增加或减少租户换号额度\x82\xd3\xe4\x93\x02G:\x01*\"B/v1/operations/tenants/{tenant_id}/static-ip-exchange-quota:adjust\x12\x92\x02\n" +
+	"\x1fResolveOperatorStaticIPExchange\x127.proxycontrol.v1.ResolveOperatorStaticIPExchangeRequest\x1a).proxycontrol.v1.OperatorStaticIPExchange\"\x8a\x01\xbaG)\x12'依据皇冠凭证结案或更正换号\x82\xd3\xe4\x93\x02X:\x01*\"S/v1/operations/tenants/{tenant_id}/static-ip-exchanges/{idempotency_key}/resolution\x12\xcb\x01\n" +
 	"\x16ListStaticRenewalTerms\x12*.proxycontrol.v1.StaticRenewalTermsRequest\x1a#.proxycontrol.v1.StaticRenewalTerms\"`\xbaG3\x121查询所选静态 IP 共同支持的续费租期\x82\xd3\xe4\x93\x02$:\x01*\"\x1f/v1/tenant/static-renewal-terms\x12\xbf\x01\n" +
 	"\x12QuoteStaticRenewal\x12*.proxycontrol.v1.StaticRenewalQuoteRequest\x1a#.proxycontrol.v1.StaticRenewalQuote\"X\xbaG*\x12(逐项确认静态 IP 保号续费报价\x82\xd3\xe4\x93\x02%:\x01*\" /v1/tenant/static-renewal-quotes\x12\xa7\x01\n" +
 	"\vRenewStatic\x12%.proxycontrol.v1.StaticRenewalRequest\x1a\x1e.proxycontrol.v1.PurchaseOrder\"Q\xbaG#\x12!提交单个或批量保号续费\x82\xd3\xe4\x93\x02%:\x01*\" /v1/tenant/static-renewal-orders\x12\xce\x01\n" +
@@ -3982,149 +4754,177 @@ func file_proxycontrol_v1_wallet_proto_rawDescGZIP() []byte {
 	return file_proxycontrol_v1_wallet_proto_rawDescData
 }
 
-var file_proxycontrol_v1_wallet_proto_msgTypes = make([]protoimpl.MessageInfo, 48)
+var file_proxycontrol_v1_wallet_proto_msgTypes = make([]protoimpl.MessageInfo, 57)
 var file_proxycontrol_v1_wallet_proto_goTypes = []any{
-	(*PurchaseTrafficPackageRequest)(nil),  // 0: proxycontrol.v1.PurchaseTrafficPackageRequest
-	(*FindWalletTenantRequest)(nil),        // 1: proxycontrol.v1.FindWalletTenantRequest
-	(*WalletTenantRequest)(nil),            // 2: proxycontrol.v1.WalletTenantRequest
-	(*QuoteWalletRechargeRequest)(nil),     // 3: proxycontrol.v1.QuoteWalletRechargeRequest
-	(*WalletRechargeQuote)(nil),            // 4: proxycontrol.v1.WalletRechargeQuote
-	(*RechargeWalletRequest)(nil),          // 5: proxycontrol.v1.RechargeWalletRequest
-	(*WalletTenant)(nil),                   // 6: proxycontrol.v1.WalletTenant
-	(*WalletEntry)(nil),                    // 7: proxycontrol.v1.WalletEntry
-	(*WalletEntries)(nil),                  // 8: proxycontrol.v1.WalletEntries
-	(*PurchaseOrders)(nil),                 // 9: proxycontrol.v1.PurchaseOrders
-	(*PurchaseOrder)(nil),                  // 10: proxycontrol.v1.PurchaseOrder
-	(*PurchaseOrderItem)(nil),              // 11: proxycontrol.v1.PurchaseOrderItem
-	(*CustomerWalletEntriesRequest)(nil),   // 12: proxycontrol.v1.CustomerWalletEntriesRequest
-	(*OperatorWalletEntriesRequest)(nil),   // 13: proxycontrol.v1.OperatorWalletEntriesRequest
-	(*CustomerPurchaseOrdersRequest)(nil),  // 14: proxycontrol.v1.CustomerPurchaseOrdersRequest
-	(*OperatorPurchaseOrdersRequest)(nil),  // 15: proxycontrol.v1.OperatorPurchaseOrdersRequest
-	(*CustomerPurchaseOrderRequest)(nil),   // 16: proxycontrol.v1.CustomerPurchaseOrderRequest
-	(*OperatorPurchaseOrderRequest)(nil),   // 17: proxycontrol.v1.OperatorPurchaseOrderRequest
-	(*StaticOffersRequest)(nil),            // 18: proxycontrol.v1.StaticOffersRequest
-	(*StaticOffer)(nil),                    // 19: proxycontrol.v1.StaticOffer
-	(*StaticOffers)(nil),                   // 20: proxycontrol.v1.StaticOffers
-	(*StaticPurchaseSelection)(nil),        // 21: proxycontrol.v1.StaticPurchaseSelection
-	(*StaticPurchaseQuoteLine)(nil),        // 22: proxycontrol.v1.StaticPurchaseQuoteLine
-	(*StaticPurchaseLine)(nil),             // 23: proxycontrol.v1.StaticPurchaseLine
-	(*StaticPurchaseQuoteRequest)(nil),     // 24: proxycontrol.v1.StaticPurchaseQuoteRequest
-	(*StaticPurchaseQuote)(nil),            // 25: proxycontrol.v1.StaticPurchaseQuote
-	(*PurchaseStaticIPRequest)(nil),        // 26: proxycontrol.v1.PurchaseStaticIPRequest
-	(*StaticIP)(nil),                       // 27: proxycontrol.v1.StaticIP
-	(*StaticIPs)(nil),                      // 28: proxycontrol.v1.StaticIPs
-	(*StaticIPExchangeRequest)(nil),        // 29: proxycontrol.v1.StaticIPExchangeRequest
-	(*StaticIPExchangeLookup)(nil),         // 30: proxycontrol.v1.StaticIPExchangeLookup
-	(*StaticIPExchange)(nil),               // 31: proxycontrol.v1.StaticIPExchange
-	(*StaticIPExchangeQuota)(nil),          // 32: proxycontrol.v1.StaticIPExchangeQuota
-	(*StaticIPConfigRequest)(nil),          // 33: proxycontrol.v1.StaticIPConfigRequest
-	(*StaticIPExportRequest)(nil),          // 34: proxycontrol.v1.StaticIPExportRequest
-	(*ResolveStaticPurchaseRequest)(nil),   // 35: proxycontrol.v1.ResolveStaticPurchaseRequest
-	(*PendingStaticPurchasesRequest)(nil),  // 36: proxycontrol.v1.PendingStaticPurchasesRequest
-	(*PendingStaticPurchase)(nil),          // 37: proxycontrol.v1.PendingStaticPurchase
-	(*PendingStaticPurchases)(nil),         // 38: proxycontrol.v1.PendingStaticPurchases
-	(*StaticIPExpiryNotices)(nil),          // 39: proxycontrol.v1.StaticIPExpiryNotices
-	(*StaticRenewalTermsRequest)(nil),      // 40: proxycontrol.v1.StaticRenewalTermsRequest
-	(*StaticRenewalTerm)(nil),              // 41: proxycontrol.v1.StaticRenewalTerm
-	(*StaticRenewalTerms)(nil),             // 42: proxycontrol.v1.StaticRenewalTerms
-	(*StaticRenewalQuoteRequest)(nil),      // 43: proxycontrol.v1.StaticRenewalQuoteRequest
-	(*StaticRenewalQuoteLine)(nil),         // 44: proxycontrol.v1.StaticRenewalQuoteLine
-	(*StaticRenewalQuote)(nil),             // 45: proxycontrol.v1.StaticRenewalQuote
-	(*StaticRenewalRequest)(nil),           // 46: proxycontrol.v1.StaticRenewalRequest
-	(*StaticRenewalResolutionRequest)(nil), // 47: proxycontrol.v1.StaticRenewalResolutionRequest
-	(*timestamppb.Timestamp)(nil),          // 48: google.protobuf.Timestamp
-	(*BaseRequest)(nil),                    // 49: proxycontrol.v1.BaseRequest
+	(*PurchaseTrafficPackageRequest)(nil),              // 0: proxycontrol.v1.PurchaseTrafficPackageRequest
+	(*FindWalletTenantRequest)(nil),                    // 1: proxycontrol.v1.FindWalletTenantRequest
+	(*WalletTenantRequest)(nil),                        // 2: proxycontrol.v1.WalletTenantRequest
+	(*QuoteWalletRechargeRequest)(nil),                 // 3: proxycontrol.v1.QuoteWalletRechargeRequest
+	(*WalletRechargeQuote)(nil),                        // 4: proxycontrol.v1.WalletRechargeQuote
+	(*RechargeWalletRequest)(nil),                      // 5: proxycontrol.v1.RechargeWalletRequest
+	(*WalletTenant)(nil),                               // 6: proxycontrol.v1.WalletTenant
+	(*WalletEntry)(nil),                                // 7: proxycontrol.v1.WalletEntry
+	(*WalletEntries)(nil),                              // 8: proxycontrol.v1.WalletEntries
+	(*PurchaseOrders)(nil),                             // 9: proxycontrol.v1.PurchaseOrders
+	(*PurchaseOrder)(nil),                              // 10: proxycontrol.v1.PurchaseOrder
+	(*PurchaseOrderItem)(nil),                          // 11: proxycontrol.v1.PurchaseOrderItem
+	(*CustomerWalletEntriesRequest)(nil),               // 12: proxycontrol.v1.CustomerWalletEntriesRequest
+	(*OperatorWalletEntriesRequest)(nil),               // 13: proxycontrol.v1.OperatorWalletEntriesRequest
+	(*CustomerPurchaseOrdersRequest)(nil),              // 14: proxycontrol.v1.CustomerPurchaseOrdersRequest
+	(*OperatorPurchaseOrdersRequest)(nil),              // 15: proxycontrol.v1.OperatorPurchaseOrdersRequest
+	(*CustomerPurchaseOrderRequest)(nil),               // 16: proxycontrol.v1.CustomerPurchaseOrderRequest
+	(*OperatorPurchaseOrderRequest)(nil),               // 17: proxycontrol.v1.OperatorPurchaseOrderRequest
+	(*StaticOffersRequest)(nil),                        // 18: proxycontrol.v1.StaticOffersRequest
+	(*StaticOffer)(nil),                                // 19: proxycontrol.v1.StaticOffer
+	(*StaticOffers)(nil),                               // 20: proxycontrol.v1.StaticOffers
+	(*StaticPurchaseSelection)(nil),                    // 21: proxycontrol.v1.StaticPurchaseSelection
+	(*StaticPurchaseQuoteLine)(nil),                    // 22: proxycontrol.v1.StaticPurchaseQuoteLine
+	(*StaticPurchaseLine)(nil),                         // 23: proxycontrol.v1.StaticPurchaseLine
+	(*StaticPurchaseQuoteRequest)(nil),                 // 24: proxycontrol.v1.StaticPurchaseQuoteRequest
+	(*StaticPurchaseQuote)(nil),                        // 25: proxycontrol.v1.StaticPurchaseQuote
+	(*PurchaseStaticIPRequest)(nil),                    // 26: proxycontrol.v1.PurchaseStaticIPRequest
+	(*StaticIP)(nil),                                   // 27: proxycontrol.v1.StaticIP
+	(*StaticIPs)(nil),                                  // 28: proxycontrol.v1.StaticIPs
+	(*StaticIPExchangeRequest)(nil),                    // 29: proxycontrol.v1.StaticIPExchangeRequest
+	(*StaticIPExchangeLookup)(nil),                     // 30: proxycontrol.v1.StaticIPExchangeLookup
+	(*StaticIPExchange)(nil),                           // 31: proxycontrol.v1.StaticIPExchange
+	(*StaticIPExchangeQuota)(nil),                      // 32: proxycontrol.v1.StaticIPExchangeQuota
+	(*OperatorStaticIPExchangeQuota)(nil),              // 33: proxycontrol.v1.OperatorStaticIPExchangeQuota
+	(*OperatorStaticIPExchangesRequest)(nil),           // 34: proxycontrol.v1.OperatorStaticIPExchangesRequest
+	(*OperatorStaticIPExchanges)(nil),                  // 35: proxycontrol.v1.OperatorStaticIPExchanges
+	(*OperatorStaticIPExchange)(nil),                   // 36: proxycontrol.v1.OperatorStaticIPExchange
+	(*OperatorStaticIPExchangeAuditRequest)(nil),       // 37: proxycontrol.v1.OperatorStaticIPExchangeAuditRequest
+	(*OperatorStaticIPExchangeAuditPage)(nil),          // 38: proxycontrol.v1.OperatorStaticIPExchangeAuditPage
+	(*OperatorStaticIPExchangeAuditEntry)(nil),         // 39: proxycontrol.v1.OperatorStaticIPExchangeAuditEntry
+	(*AdjustOperatorStaticIPExchangeQuotaRequest)(nil), // 40: proxycontrol.v1.AdjustOperatorStaticIPExchangeQuotaRequest
+	(*ResolveOperatorStaticIPExchangeRequest)(nil),     // 41: proxycontrol.v1.ResolveOperatorStaticIPExchangeRequest
+	(*StaticIPConfigRequest)(nil),                      // 42: proxycontrol.v1.StaticIPConfigRequest
+	(*StaticIPExportRequest)(nil),                      // 43: proxycontrol.v1.StaticIPExportRequest
+	(*ResolveStaticPurchaseRequest)(nil),               // 44: proxycontrol.v1.ResolveStaticPurchaseRequest
+	(*PendingStaticPurchasesRequest)(nil),              // 45: proxycontrol.v1.PendingStaticPurchasesRequest
+	(*PendingStaticPurchase)(nil),                      // 46: proxycontrol.v1.PendingStaticPurchase
+	(*PendingStaticPurchases)(nil),                     // 47: proxycontrol.v1.PendingStaticPurchases
+	(*StaticIPExpiryNotices)(nil),                      // 48: proxycontrol.v1.StaticIPExpiryNotices
+	(*StaticRenewalTermsRequest)(nil),                  // 49: proxycontrol.v1.StaticRenewalTermsRequest
+	(*StaticRenewalTerm)(nil),                          // 50: proxycontrol.v1.StaticRenewalTerm
+	(*StaticRenewalTerms)(nil),                         // 51: proxycontrol.v1.StaticRenewalTerms
+	(*StaticRenewalQuoteRequest)(nil),                  // 52: proxycontrol.v1.StaticRenewalQuoteRequest
+	(*StaticRenewalQuoteLine)(nil),                     // 53: proxycontrol.v1.StaticRenewalQuoteLine
+	(*StaticRenewalQuote)(nil),                         // 54: proxycontrol.v1.StaticRenewalQuote
+	(*StaticRenewalRequest)(nil),                       // 55: proxycontrol.v1.StaticRenewalRequest
+	(*StaticRenewalResolutionRequest)(nil),             // 56: proxycontrol.v1.StaticRenewalResolutionRequest
+	(*timestamppb.Timestamp)(nil),                      // 57: google.protobuf.Timestamp
+	(*BaseRequest)(nil),                                // 58: proxycontrol.v1.BaseRequest
 }
 var file_proxycontrol_v1_wallet_proto_depIdxs = []int32{
 	6,  // 0: proxycontrol.v1.WalletRechargeQuote.tenant:type_name -> proxycontrol.v1.WalletTenant
-	48, // 1: proxycontrol.v1.WalletRechargeQuote.expires_at:type_name -> google.protobuf.Timestamp
-	48, // 2: proxycontrol.v1.WalletTenant.registered_at:type_name -> google.protobuf.Timestamp
-	48, // 3: proxycontrol.v1.WalletEntry.created_at:type_name -> google.protobuf.Timestamp
+	57, // 1: proxycontrol.v1.WalletRechargeQuote.expires_at:type_name -> google.protobuf.Timestamp
+	57, // 2: proxycontrol.v1.WalletTenant.registered_at:type_name -> google.protobuf.Timestamp
+	57, // 3: proxycontrol.v1.WalletEntry.created_at:type_name -> google.protobuf.Timestamp
 	7,  // 4: proxycontrol.v1.WalletEntries.entries:type_name -> proxycontrol.v1.WalletEntry
 	10, // 5: proxycontrol.v1.PurchaseOrders.orders:type_name -> proxycontrol.v1.PurchaseOrder
-	48, // 6: proxycontrol.v1.PurchaseOrder.created_at:type_name -> google.protobuf.Timestamp
+	57, // 6: proxycontrol.v1.PurchaseOrder.created_at:type_name -> google.protobuf.Timestamp
 	11, // 7: proxycontrol.v1.PurchaseOrder.items:type_name -> proxycontrol.v1.PurchaseOrderItem
 	7,  // 8: proxycontrol.v1.PurchaseOrder.wallet_entries:type_name -> proxycontrol.v1.WalletEntry
 	11, // 9: proxycontrol.v1.PurchaseOrder.summary_item:type_name -> proxycontrol.v1.PurchaseOrderItem
 	19, // 10: proxycontrol.v1.StaticOffers.offers:type_name -> proxycontrol.v1.StaticOffer
-	48, // 11: proxycontrol.v1.StaticOffers.quoted_at:type_name -> google.protobuf.Timestamp
+	57, // 11: proxycontrol.v1.StaticOffers.quoted_at:type_name -> google.protobuf.Timestamp
 	19, // 12: proxycontrol.v1.StaticPurchaseQuoteLine.offer:type_name -> proxycontrol.v1.StaticOffer
 	21, // 13: proxycontrol.v1.StaticPurchaseQuoteRequest.lines:type_name -> proxycontrol.v1.StaticPurchaseSelection
 	19, // 14: proxycontrol.v1.StaticPurchaseQuote.offer:type_name -> proxycontrol.v1.StaticOffer
-	48, // 15: proxycontrol.v1.StaticPurchaseQuote.expires_at:type_name -> google.protobuf.Timestamp
+	57, // 15: proxycontrol.v1.StaticPurchaseQuote.expires_at:type_name -> google.protobuf.Timestamp
 	22, // 16: proxycontrol.v1.StaticPurchaseQuote.lines:type_name -> proxycontrol.v1.StaticPurchaseQuoteLine
 	23, // 17: proxycontrol.v1.PurchaseStaticIPRequest.lines:type_name -> proxycontrol.v1.StaticPurchaseLine
-	48, // 18: proxycontrol.v1.StaticIP.expires_at:type_name -> google.protobuf.Timestamp
+	57, // 18: proxycontrol.v1.StaticIP.expires_at:type_name -> google.protobuf.Timestamp
 	27, // 19: proxycontrol.v1.StaticIPs.allocations:type_name -> proxycontrol.v1.StaticIP
-	48, // 20: proxycontrol.v1.StaticIPExchange.created_at:type_name -> google.protobuf.Timestamp
-	48, // 21: proxycontrol.v1.StaticIPExchange.updated_at:type_name -> google.protobuf.Timestamp
-	48, // 22: proxycontrol.v1.PendingStaticPurchase.created_at:type_name -> google.protobuf.Timestamp
-	37, // 23: proxycontrol.v1.PendingStaticPurchases.purchases:type_name -> proxycontrol.v1.PendingStaticPurchase
-	41, // 24: proxycontrol.v1.StaticRenewalTerms.terms:type_name -> proxycontrol.v1.StaticRenewalTerm
-	48, // 25: proxycontrol.v1.StaticRenewalQuoteLine.original_expiry:type_name -> google.protobuf.Timestamp
-	44, // 26: proxycontrol.v1.StaticRenewalQuote.lines:type_name -> proxycontrol.v1.StaticRenewalQuoteLine
-	48, // 27: proxycontrol.v1.StaticRenewalQuote.expires_at:type_name -> google.protobuf.Timestamp
-	29, // 28: proxycontrol.v1.WalletService.ExchangeStaticIP:input_type -> proxycontrol.v1.StaticIPExchangeRequest
-	30, // 29: proxycontrol.v1.WalletService.GetStaticIPExchange:input_type -> proxycontrol.v1.StaticIPExchangeLookup
-	49, // 30: proxycontrol.v1.WalletService.GetStaticIPExchangeQuota:input_type -> proxycontrol.v1.BaseRequest
-	40, // 31: proxycontrol.v1.WalletService.ListStaticRenewalTerms:input_type -> proxycontrol.v1.StaticRenewalTermsRequest
-	43, // 32: proxycontrol.v1.WalletService.QuoteStaticRenewal:input_type -> proxycontrol.v1.StaticRenewalQuoteRequest
-	46, // 33: proxycontrol.v1.WalletService.RenewStatic:input_type -> proxycontrol.v1.StaticRenewalRequest
-	16, // 34: proxycontrol.v1.WalletService.RecheckStaticRenewal:input_type -> proxycontrol.v1.CustomerPurchaseOrderRequest
-	47, // 35: proxycontrol.v1.WalletService.ResolveStaticRenewal:input_type -> proxycontrol.v1.StaticRenewalResolutionRequest
-	18, // 36: proxycontrol.v1.WalletService.ListStaticOffers:input_type -> proxycontrol.v1.StaticOffersRequest
-	24, // 37: proxycontrol.v1.WalletService.QuoteStaticPurchase:input_type -> proxycontrol.v1.StaticPurchaseQuoteRequest
-	26, // 38: proxycontrol.v1.WalletService.PurchaseStaticIP:input_type -> proxycontrol.v1.PurchaseStaticIPRequest
-	49, // 39: proxycontrol.v1.WalletService.ListStaticIPs:input_type -> proxycontrol.v1.BaseRequest
-	49, // 40: proxycontrol.v1.WalletService.ClaimStaticIPExpiryNotices:input_type -> proxycontrol.v1.BaseRequest
-	33, // 41: proxycontrol.v1.WalletService.GetStaticIPConfig:input_type -> proxycontrol.v1.StaticIPConfigRequest
-	36, // 42: proxycontrol.v1.WalletService.ListPendingStaticPurchases:input_type -> proxycontrol.v1.PendingStaticPurchasesRequest
-	35, // 43: proxycontrol.v1.WalletService.ResolveStaticPurchase:input_type -> proxycontrol.v1.ResolveStaticPurchaseRequest
-	1,  // 44: proxycontrol.v1.WalletService.FindTenants:input_type -> proxycontrol.v1.FindWalletTenantRequest
-	2,  // 45: proxycontrol.v1.WalletService.GetTenant:input_type -> proxycontrol.v1.WalletTenantRequest
-	3,  // 46: proxycontrol.v1.WalletService.QuoteWalletRecharge:input_type -> proxycontrol.v1.QuoteWalletRechargeRequest
-	5,  // 47: proxycontrol.v1.WalletService.RechargeWallet:input_type -> proxycontrol.v1.RechargeWalletRequest
-	13, // 48: proxycontrol.v1.WalletService.ListOperatorWalletEntries:input_type -> proxycontrol.v1.OperatorWalletEntriesRequest
-	12, // 49: proxycontrol.v1.WalletService.ListCustomerWalletEntries:input_type -> proxycontrol.v1.CustomerWalletEntriesRequest
-	49, // 50: proxycontrol.v1.WalletService.GetCustomerWallet:input_type -> proxycontrol.v1.BaseRequest
-	0,  // 51: proxycontrol.v1.WalletService.PurchaseTrafficPackage:input_type -> proxycontrol.v1.PurchaseTrafficPackageRequest
-	15, // 52: proxycontrol.v1.WalletService.ListOperatorPurchaseOrders:input_type -> proxycontrol.v1.OperatorPurchaseOrdersRequest
-	14, // 53: proxycontrol.v1.WalletService.ListCustomerPurchaseOrders:input_type -> proxycontrol.v1.CustomerPurchaseOrdersRequest
-	17, // 54: proxycontrol.v1.WalletService.GetOperatorPurchaseOrder:input_type -> proxycontrol.v1.OperatorPurchaseOrderRequest
-	16, // 55: proxycontrol.v1.WalletService.GetCustomerPurchaseOrder:input_type -> proxycontrol.v1.CustomerPurchaseOrderRequest
-	31, // 56: proxycontrol.v1.WalletService.ExchangeStaticIP:output_type -> proxycontrol.v1.StaticIPExchange
-	31, // 57: proxycontrol.v1.WalletService.GetStaticIPExchange:output_type -> proxycontrol.v1.StaticIPExchange
-	32, // 58: proxycontrol.v1.WalletService.GetStaticIPExchangeQuota:output_type -> proxycontrol.v1.StaticIPExchangeQuota
-	42, // 59: proxycontrol.v1.WalletService.ListStaticRenewalTerms:output_type -> proxycontrol.v1.StaticRenewalTerms
-	45, // 60: proxycontrol.v1.WalletService.QuoteStaticRenewal:output_type -> proxycontrol.v1.StaticRenewalQuote
-	10, // 61: proxycontrol.v1.WalletService.RenewStatic:output_type -> proxycontrol.v1.PurchaseOrder
-	10, // 62: proxycontrol.v1.WalletService.RecheckStaticRenewal:output_type -> proxycontrol.v1.PurchaseOrder
-	10, // 63: proxycontrol.v1.WalletService.ResolveStaticRenewal:output_type -> proxycontrol.v1.PurchaseOrder
-	20, // 64: proxycontrol.v1.WalletService.ListStaticOffers:output_type -> proxycontrol.v1.StaticOffers
-	25, // 65: proxycontrol.v1.WalletService.QuoteStaticPurchase:output_type -> proxycontrol.v1.StaticPurchaseQuote
-	10, // 66: proxycontrol.v1.WalletService.PurchaseStaticIP:output_type -> proxycontrol.v1.PurchaseOrder
-	28, // 67: proxycontrol.v1.WalletService.ListStaticIPs:output_type -> proxycontrol.v1.StaticIPs
-	39, // 68: proxycontrol.v1.WalletService.ClaimStaticIPExpiryNotices:output_type -> proxycontrol.v1.StaticIPExpiryNotices
-	27, // 69: proxycontrol.v1.WalletService.GetStaticIPConfig:output_type -> proxycontrol.v1.StaticIP
-	38, // 70: proxycontrol.v1.WalletService.ListPendingStaticPurchases:output_type -> proxycontrol.v1.PendingStaticPurchases
-	10, // 71: proxycontrol.v1.WalletService.ResolveStaticPurchase:output_type -> proxycontrol.v1.PurchaseOrder
-	6,  // 72: proxycontrol.v1.WalletService.FindTenants:output_type -> proxycontrol.v1.WalletTenant
-	6,  // 73: proxycontrol.v1.WalletService.GetTenant:output_type -> proxycontrol.v1.WalletTenant
-	4,  // 74: proxycontrol.v1.WalletService.QuoteWalletRecharge:output_type -> proxycontrol.v1.WalletRechargeQuote
-	7,  // 75: proxycontrol.v1.WalletService.RechargeWallet:output_type -> proxycontrol.v1.WalletEntry
-	8,  // 76: proxycontrol.v1.WalletService.ListOperatorWalletEntries:output_type -> proxycontrol.v1.WalletEntries
-	8,  // 77: proxycontrol.v1.WalletService.ListCustomerWalletEntries:output_type -> proxycontrol.v1.WalletEntries
-	6,  // 78: proxycontrol.v1.WalletService.GetCustomerWallet:output_type -> proxycontrol.v1.WalletTenant
-	10, // 79: proxycontrol.v1.WalletService.PurchaseTrafficPackage:output_type -> proxycontrol.v1.PurchaseOrder
-	9,  // 80: proxycontrol.v1.WalletService.ListOperatorPurchaseOrders:output_type -> proxycontrol.v1.PurchaseOrders
-	9,  // 81: proxycontrol.v1.WalletService.ListCustomerPurchaseOrders:output_type -> proxycontrol.v1.PurchaseOrders
-	10, // 82: proxycontrol.v1.WalletService.GetOperatorPurchaseOrder:output_type -> proxycontrol.v1.PurchaseOrder
-	10, // 83: proxycontrol.v1.WalletService.GetCustomerPurchaseOrder:output_type -> proxycontrol.v1.PurchaseOrder
-	56, // [56:84] is the sub-list for method output_type
-	28, // [28:56] is the sub-list for method input_type
-	28, // [28:28] is the sub-list for extension type_name
-	28, // [28:28] is the sub-list for extension extendee
-	0,  // [0:28] is the sub-list for field type_name
+	57, // 20: proxycontrol.v1.StaticIPExchange.created_at:type_name -> google.protobuf.Timestamp
+	57, // 21: proxycontrol.v1.StaticIPExchange.updated_at:type_name -> google.protobuf.Timestamp
+	36, // 22: proxycontrol.v1.OperatorStaticIPExchanges.exchanges:type_name -> proxycontrol.v1.OperatorStaticIPExchange
+	31, // 23: proxycontrol.v1.OperatorStaticIPExchange.exchange:type_name -> proxycontrol.v1.StaticIPExchange
+	57, // 24: proxycontrol.v1.OperatorStaticIPExchange.unknown_at:type_name -> google.protobuf.Timestamp
+	39, // 25: proxycontrol.v1.OperatorStaticIPExchangeAuditPage.entries:type_name -> proxycontrol.v1.OperatorStaticIPExchangeAuditEntry
+	33, // 26: proxycontrol.v1.OperatorStaticIPExchangeAuditEntry.before:type_name -> proxycontrol.v1.OperatorStaticIPExchangeQuota
+	33, // 27: proxycontrol.v1.OperatorStaticIPExchangeAuditEntry.after:type_name -> proxycontrol.v1.OperatorStaticIPExchangeQuota
+	57, // 28: proxycontrol.v1.OperatorStaticIPExchangeAuditEntry.created_at:type_name -> google.protobuf.Timestamp
+	57, // 29: proxycontrol.v1.PendingStaticPurchase.created_at:type_name -> google.protobuf.Timestamp
+	46, // 30: proxycontrol.v1.PendingStaticPurchases.purchases:type_name -> proxycontrol.v1.PendingStaticPurchase
+	50, // 31: proxycontrol.v1.StaticRenewalTerms.terms:type_name -> proxycontrol.v1.StaticRenewalTerm
+	57, // 32: proxycontrol.v1.StaticRenewalQuoteLine.original_expiry:type_name -> google.protobuf.Timestamp
+	53, // 33: proxycontrol.v1.StaticRenewalQuote.lines:type_name -> proxycontrol.v1.StaticRenewalQuoteLine
+	57, // 34: proxycontrol.v1.StaticRenewalQuote.expires_at:type_name -> google.protobuf.Timestamp
+	29, // 35: proxycontrol.v1.WalletService.ExchangeStaticIP:input_type -> proxycontrol.v1.StaticIPExchangeRequest
+	30, // 36: proxycontrol.v1.WalletService.GetStaticIPExchange:input_type -> proxycontrol.v1.StaticIPExchangeLookup
+	58, // 37: proxycontrol.v1.WalletService.GetStaticIPExchangeQuota:input_type -> proxycontrol.v1.BaseRequest
+	2,  // 38: proxycontrol.v1.WalletService.GetOperatorStaticIPExchangeQuota:input_type -> proxycontrol.v1.WalletTenantRequest
+	34, // 39: proxycontrol.v1.WalletService.ListOperatorStaticIPExchanges:input_type -> proxycontrol.v1.OperatorStaticIPExchangesRequest
+	34, // 40: proxycontrol.v1.WalletService.ListOperatorStaticIPExchangeQueue:input_type -> proxycontrol.v1.OperatorStaticIPExchangesRequest
+	37, // 41: proxycontrol.v1.WalletService.ListOperatorStaticIPExchangeAudit:input_type -> proxycontrol.v1.OperatorStaticIPExchangeAuditRequest
+	40, // 42: proxycontrol.v1.WalletService.AdjustOperatorStaticIPExchangeQuota:input_type -> proxycontrol.v1.AdjustOperatorStaticIPExchangeQuotaRequest
+	41, // 43: proxycontrol.v1.WalletService.ResolveOperatorStaticIPExchange:input_type -> proxycontrol.v1.ResolveOperatorStaticIPExchangeRequest
+	49, // 44: proxycontrol.v1.WalletService.ListStaticRenewalTerms:input_type -> proxycontrol.v1.StaticRenewalTermsRequest
+	52, // 45: proxycontrol.v1.WalletService.QuoteStaticRenewal:input_type -> proxycontrol.v1.StaticRenewalQuoteRequest
+	55, // 46: proxycontrol.v1.WalletService.RenewStatic:input_type -> proxycontrol.v1.StaticRenewalRequest
+	16, // 47: proxycontrol.v1.WalletService.RecheckStaticRenewal:input_type -> proxycontrol.v1.CustomerPurchaseOrderRequest
+	56, // 48: proxycontrol.v1.WalletService.ResolveStaticRenewal:input_type -> proxycontrol.v1.StaticRenewalResolutionRequest
+	18, // 49: proxycontrol.v1.WalletService.ListStaticOffers:input_type -> proxycontrol.v1.StaticOffersRequest
+	24, // 50: proxycontrol.v1.WalletService.QuoteStaticPurchase:input_type -> proxycontrol.v1.StaticPurchaseQuoteRequest
+	26, // 51: proxycontrol.v1.WalletService.PurchaseStaticIP:input_type -> proxycontrol.v1.PurchaseStaticIPRequest
+	58, // 52: proxycontrol.v1.WalletService.ListStaticIPs:input_type -> proxycontrol.v1.BaseRequest
+	58, // 53: proxycontrol.v1.WalletService.ClaimStaticIPExpiryNotices:input_type -> proxycontrol.v1.BaseRequest
+	42, // 54: proxycontrol.v1.WalletService.GetStaticIPConfig:input_type -> proxycontrol.v1.StaticIPConfigRequest
+	45, // 55: proxycontrol.v1.WalletService.ListPendingStaticPurchases:input_type -> proxycontrol.v1.PendingStaticPurchasesRequest
+	44, // 56: proxycontrol.v1.WalletService.ResolveStaticPurchase:input_type -> proxycontrol.v1.ResolveStaticPurchaseRequest
+	1,  // 57: proxycontrol.v1.WalletService.FindTenants:input_type -> proxycontrol.v1.FindWalletTenantRequest
+	2,  // 58: proxycontrol.v1.WalletService.GetTenant:input_type -> proxycontrol.v1.WalletTenantRequest
+	3,  // 59: proxycontrol.v1.WalletService.QuoteWalletRecharge:input_type -> proxycontrol.v1.QuoteWalletRechargeRequest
+	5,  // 60: proxycontrol.v1.WalletService.RechargeWallet:input_type -> proxycontrol.v1.RechargeWalletRequest
+	13, // 61: proxycontrol.v1.WalletService.ListOperatorWalletEntries:input_type -> proxycontrol.v1.OperatorWalletEntriesRequest
+	12, // 62: proxycontrol.v1.WalletService.ListCustomerWalletEntries:input_type -> proxycontrol.v1.CustomerWalletEntriesRequest
+	58, // 63: proxycontrol.v1.WalletService.GetCustomerWallet:input_type -> proxycontrol.v1.BaseRequest
+	0,  // 64: proxycontrol.v1.WalletService.PurchaseTrafficPackage:input_type -> proxycontrol.v1.PurchaseTrafficPackageRequest
+	15, // 65: proxycontrol.v1.WalletService.ListOperatorPurchaseOrders:input_type -> proxycontrol.v1.OperatorPurchaseOrdersRequest
+	14, // 66: proxycontrol.v1.WalletService.ListCustomerPurchaseOrders:input_type -> proxycontrol.v1.CustomerPurchaseOrdersRequest
+	17, // 67: proxycontrol.v1.WalletService.GetOperatorPurchaseOrder:input_type -> proxycontrol.v1.OperatorPurchaseOrderRequest
+	16, // 68: proxycontrol.v1.WalletService.GetCustomerPurchaseOrder:input_type -> proxycontrol.v1.CustomerPurchaseOrderRequest
+	31, // 69: proxycontrol.v1.WalletService.ExchangeStaticIP:output_type -> proxycontrol.v1.StaticIPExchange
+	31, // 70: proxycontrol.v1.WalletService.GetStaticIPExchange:output_type -> proxycontrol.v1.StaticIPExchange
+	32, // 71: proxycontrol.v1.WalletService.GetStaticIPExchangeQuota:output_type -> proxycontrol.v1.StaticIPExchangeQuota
+	33, // 72: proxycontrol.v1.WalletService.GetOperatorStaticIPExchangeQuota:output_type -> proxycontrol.v1.OperatorStaticIPExchangeQuota
+	35, // 73: proxycontrol.v1.WalletService.ListOperatorStaticIPExchanges:output_type -> proxycontrol.v1.OperatorStaticIPExchanges
+	35, // 74: proxycontrol.v1.WalletService.ListOperatorStaticIPExchangeQueue:output_type -> proxycontrol.v1.OperatorStaticIPExchanges
+	38, // 75: proxycontrol.v1.WalletService.ListOperatorStaticIPExchangeAudit:output_type -> proxycontrol.v1.OperatorStaticIPExchangeAuditPage
+	39, // 76: proxycontrol.v1.WalletService.AdjustOperatorStaticIPExchangeQuota:output_type -> proxycontrol.v1.OperatorStaticIPExchangeAuditEntry
+	36, // 77: proxycontrol.v1.WalletService.ResolveOperatorStaticIPExchange:output_type -> proxycontrol.v1.OperatorStaticIPExchange
+	51, // 78: proxycontrol.v1.WalletService.ListStaticRenewalTerms:output_type -> proxycontrol.v1.StaticRenewalTerms
+	54, // 79: proxycontrol.v1.WalletService.QuoteStaticRenewal:output_type -> proxycontrol.v1.StaticRenewalQuote
+	10, // 80: proxycontrol.v1.WalletService.RenewStatic:output_type -> proxycontrol.v1.PurchaseOrder
+	10, // 81: proxycontrol.v1.WalletService.RecheckStaticRenewal:output_type -> proxycontrol.v1.PurchaseOrder
+	10, // 82: proxycontrol.v1.WalletService.ResolveStaticRenewal:output_type -> proxycontrol.v1.PurchaseOrder
+	20, // 83: proxycontrol.v1.WalletService.ListStaticOffers:output_type -> proxycontrol.v1.StaticOffers
+	25, // 84: proxycontrol.v1.WalletService.QuoteStaticPurchase:output_type -> proxycontrol.v1.StaticPurchaseQuote
+	10, // 85: proxycontrol.v1.WalletService.PurchaseStaticIP:output_type -> proxycontrol.v1.PurchaseOrder
+	28, // 86: proxycontrol.v1.WalletService.ListStaticIPs:output_type -> proxycontrol.v1.StaticIPs
+	48, // 87: proxycontrol.v1.WalletService.ClaimStaticIPExpiryNotices:output_type -> proxycontrol.v1.StaticIPExpiryNotices
+	27, // 88: proxycontrol.v1.WalletService.GetStaticIPConfig:output_type -> proxycontrol.v1.StaticIP
+	47, // 89: proxycontrol.v1.WalletService.ListPendingStaticPurchases:output_type -> proxycontrol.v1.PendingStaticPurchases
+	10, // 90: proxycontrol.v1.WalletService.ResolveStaticPurchase:output_type -> proxycontrol.v1.PurchaseOrder
+	6,  // 91: proxycontrol.v1.WalletService.FindTenants:output_type -> proxycontrol.v1.WalletTenant
+	6,  // 92: proxycontrol.v1.WalletService.GetTenant:output_type -> proxycontrol.v1.WalletTenant
+	4,  // 93: proxycontrol.v1.WalletService.QuoteWalletRecharge:output_type -> proxycontrol.v1.WalletRechargeQuote
+	7,  // 94: proxycontrol.v1.WalletService.RechargeWallet:output_type -> proxycontrol.v1.WalletEntry
+	8,  // 95: proxycontrol.v1.WalletService.ListOperatorWalletEntries:output_type -> proxycontrol.v1.WalletEntries
+	8,  // 96: proxycontrol.v1.WalletService.ListCustomerWalletEntries:output_type -> proxycontrol.v1.WalletEntries
+	6,  // 97: proxycontrol.v1.WalletService.GetCustomerWallet:output_type -> proxycontrol.v1.WalletTenant
+	10, // 98: proxycontrol.v1.WalletService.PurchaseTrafficPackage:output_type -> proxycontrol.v1.PurchaseOrder
+	9,  // 99: proxycontrol.v1.WalletService.ListOperatorPurchaseOrders:output_type -> proxycontrol.v1.PurchaseOrders
+	9,  // 100: proxycontrol.v1.WalletService.ListCustomerPurchaseOrders:output_type -> proxycontrol.v1.PurchaseOrders
+	10, // 101: proxycontrol.v1.WalletService.GetOperatorPurchaseOrder:output_type -> proxycontrol.v1.PurchaseOrder
+	10, // 102: proxycontrol.v1.WalletService.GetCustomerPurchaseOrder:output_type -> proxycontrol.v1.PurchaseOrder
+	69, // [69:103] is the sub-list for method output_type
+	35, // [35:69] is the sub-list for method input_type
+	35, // [35:35] is the sub-list for extension type_name
+	35, // [35:35] is the sub-list for extension extendee
+	0,  // [0:35] is the sub-list for field type_name
 }
 
 func init() { file_proxycontrol_v1_wallet_proto_init() }
@@ -4139,7 +4939,7 @@ func file_proxycontrol_v1_wallet_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proxycontrol_v1_wallet_proto_rawDesc), len(file_proxycontrol_v1_wallet_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   48,
+			NumMessages:   57,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

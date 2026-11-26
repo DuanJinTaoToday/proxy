@@ -73,6 +73,8 @@ func TestStaticExchangeTenantQuotaAndRenewalConflicts(t *testing.T) {
 				_, _ = io.WriteString(w, `{"code":-4}`)
 			case <-req.Context().Done():
 			}
+		case "/open/api/order/exchange-records":
+			_, _ = io.WriteString(w, `{"code":0,"count":0,"data":[]}`)
 		case "/open/api/order/exchange":
 			var body struct {
 				Type   string
