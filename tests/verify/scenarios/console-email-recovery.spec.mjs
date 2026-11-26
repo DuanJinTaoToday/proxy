@@ -24,6 +24,7 @@ test('客户从真实邮件重置密码，旧凭据、会话、链接失效', as
   const previous = await customerHeaders(request, email, oldPassword)
   await page.goto('/zh-CN/login')
   await page.getByText('忘记密码？', { exact: true }).click()
+  await expect(page.getByRole('heading', { name: '找回密码', exact: true })).toBeVisible()
   await field(page, '邮箱').fill(email.toUpperCase())
   await page.getByRole('button', { name: '发送重置链接', exact: true }).click()
   await expect(page.getByText('如果该邮箱已注册，重置密码的链接已发送。')).toBeVisible()

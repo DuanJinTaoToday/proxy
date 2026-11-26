@@ -611,6 +611,26 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/proxycontrol.v1.PurchaseOrder'
+    /v1/operations/tenants/{tenantId}/promotion:
+        get:
+            tags:
+                - AccessService
+            summary: 运营查询租户推广资格
+            operationId: AccessService_GetTenantPromotion
+            parameters:
+                - name: tenantId
+                  in: path
+                  description: 推广资格管理的目标租户 ID。
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.TenantPromotion'
     /v1/operations/tenants/{tenantId}/wallet/ledger:
         get:
             tags:
@@ -703,6 +723,26 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/proxycontrol.v1.WalletEntry'
+    /v1/operations/tenants/{tenantId}:pause-promotion:
+        post:
+            tags:
+                - AccessService
+            summary: 运营暂停租户推广资格
+            operationId: AccessService_PauseTenantPromotion
+            parameters:
+                - name: tenantId
+                  in: path
+                  description: 推广资格管理的目标租户 ID。
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.TenantPromotion'
     /v1/operations/tenants/{tenantId}:recover-email:
         post:
             tags:
@@ -754,6 +794,26 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/proxycontrol.v1.BaseResp'
+    /v1/operations/tenants/{tenantId}:resume-promotion:
+        post:
+            tags:
+                - AccessService
+            summary: 运营恢复租户推广资格
+            operationId: AccessService_ResumeTenantPromotion
+            parameters:
+                - name: tenantId
+                  in: path
+                  description: 推广资格管理的目标租户 ID。
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.TenantPromotion'
     /v1/operations/traffic-packages:
         get:
             tags:
@@ -1010,6 +1070,19 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/proxycontrol.v1.TenantAccess'
+    /v1/tenant/invite:
+        get:
+            tags:
+                - AccessService
+            summary: 查看已验证租户的专属邀请链接和邀请码
+            operationId: AccessService_GetTenantInvite
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.TenantInvite'
     /v1/tenant/orders:
         get:
             tags:
@@ -2256,6 +2329,12 @@ components:
                     description: 初始密码，至少 12 个字符。
                 verificationCode:
                     type: string
+                inviteCode:
+                    type: string
+                    description: 省略时使用链接值。提供非空手填码时覆盖链接值，提供空字符串时清除邀请归属。
+                linkInviteCode:
+                    type: string
+                    description: 邀请链接的 invite 查询参数。省略或为空时没有链接邀请码。
         proxycontrol.v1.ReportLifecycleRequest:
             type: object
             properties:
@@ -2832,6 +2911,24 @@ components:
                     description: 平台分配的全局唯一主账号名。
                 email:
                     type: string
+        proxycontrol.v1.TenantInvite:
+            type: object
+            properties:
+                inviteCode:
+                    type: string
+                    description: 租户固定邀请码，32 位十六进制字符。
+                inviteUrl:
+                    type: string
+                    description: 控制台的 HTTPS 注册链接，使用 invite 查询参数携带邀请码。
+                promotionStatus:
+                    type: string
+                    description: 推广资格为 active 或 paused。暂停时保留原邀请码和链接。
+        proxycontrol.v1.TenantPromotion:
+            type: object
+            properties:
+                promotionStatus:
+                    type: string
+                    description: 推广资格为 active 或 paused。已验证邮箱的租户默认可推广。
         proxycontrol.v1.TrafficAlert:
             type: object
             properties:
