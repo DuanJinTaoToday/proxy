@@ -23,7 +23,7 @@ func (r *WalletRepository) PurchasePackage(ctx context.Context, tenant string, p
 		}}
 		return nil
 	}
-	receipt, err := r.apply(ctx, command, purchase, prepare, func(tx *gorm.DB, receipt wallet.Entry) error {
+	receipt, err := r.apply(ctx, command, purchase, nil, prepare, func(tx *gorm.DB, receipt wallet.Entry) error {
 		return grantPurchasedTraffic(tx, tenant, receipt.OrderID, capacity, receipt.CreatedAt)
 	})
 	if err != nil {

@@ -17,6 +17,8 @@ func NewServerList(modules conf.Modules, httpServer *kratoshttp.Server,
 	servers := []transport.Server{httpServer}
 	if modules.Usage {
 		RegisterUsage(httpServer, usageHandler)
+	}
+	if modules.Usage || modules.StaticExchangeProbe {
 		servers = append(servers, scheduler)
 	}
 	return servers

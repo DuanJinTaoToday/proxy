@@ -132,14 +132,16 @@ func (id *supplierID) UnmarshalJSON(data []byte) error {
 }
 
 type allocation struct {
-	ID       supplierID `json:"id"`
-	NodeID   int64      `json:"nid"`
-	IP       string     `json:"ip"`
-	Port     int32      `json:"port"`
-	Username string     `json:"p_user"`
-	Password string     `json:"p_pass"`
-	Expires  string     `json:"stoptime"`
-	Status   int        `json:"status"`
+	ID            supplierID `json:"id"`
+	NodeID        int64      `json:"nid"`
+	ProxyID       supplierID `json:"proxyid"`
+	DetailProxyID supplierID `json:"proxy_id"`
+	IP            string     `json:"ip"`
+	Port          int32      `json:"port"`
+	Username      string     `json:"p_user"`
+	Password      string     `json:"p_pass"`
+	Expires       string     `json:"stoptime"`
+	Status        int        `json:"status"`
 }
 
 type delivery struct {
@@ -197,13 +199,22 @@ func parseDelivery(id supplierID, items []allocation, nodeID int64) wallet.Stati
 			strings.ContainsAny(ip.Username+ip.Password, "\r\n\x00") {
 			continue
 		}
-		result.Allocations = append(result.Allocations, wallet.StaticAllocation{NodeID: ip.NodeID, SupplierItemID: string(ip.ID),
+		proxyID := ip.ProxyID
+		if proxyID == "" {
+			proxyID = ip.DetailProxyID
+		}
+		result.Allocations = append(result.Allocations, wallet.StaticAllocation{NodeID: ip.NodeID, SupplierItemID: string(ip.ID), ProxyID: string(proxyID),
 			IP: ip.IP, Port: ip.Port, Username: ip.Username, Password: ip.Password, ExpiresAt: expires})
 	}
 	return result
 }
 
 func (c *Client) call(ctx context.Context, path string, params map[string]any, result any) (int, error) {
+	code, _, err := c.callWithStatus(ctx, path, params, result)
+	return code, err
+}
+
+func (c *Client) callWithStatus(ctx context.Context, path string, params map[string]any, result any) (int, int, error) {
 	params["timestamp"] = time.Now().Unix()
 	params["nonce"] = strings.ReplaceAll(uuid.NewString(), "-", "")
 	keys := make([]string, 0, len(params))
@@ -220,7 +231,7 @@ func (c *Client) call(ctx context.Context, path string, params map[string]any, r
 		default:
 			encoded, err := json.Marshal(value)
 			if err != nil {
-				return 0, wallet.ErrStaticUnavailable
+				return 0, 0, wallet.ErrStaticUnavailable
 			}
 			parts = append(parts, key+"="+string(encoded))
 		}
@@ -231,17 +242,17 @@ func (c *Client) call(ctx context.Context, path string, params map[string]any, r
 	params["sign"] = strings.ToUpper(hex.EncodeToString(sum[:]))
 	body, err := json.Marshal(params)
 	if err != nil {
-		return 0, wallet.ErrStaticUnavailable
+		return 0, 0, wallet.ErrStaticUnavailable
 	}
 	request, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL+"/open/api"+path, bytes.NewReader(body))
 	if err != nil {
-		return 0, wallet.ErrStaticUnavailable
+		return 0, 0, wallet.ErrStaticUnavailable
 	}
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("X-Partner-ID", c.partner)
 	response, err := c.http.Do(request)
 	if err != nil {
-		return 0, wallet.ErrStaticUnavailable
+		return 0, 0, wallet.ErrStaticUnavailable
 	}
 	defer func() { _ = response.Body.Close() }()
 	var envelope struct {
@@ -251,15 +262,15 @@ func (c *Client) call(ctx context.Context, path string, params map[string]any, r
 	const limit = 4 << 20
 	data, err := io.ReadAll(io.LimitReader(response.Body, limit+1))
 	if err != nil || len(data) > limit || json.Unmarshal(data, &envelope) != nil || envelope.Code == nil {
-		return 0, wallet.ErrStaticUnavailable
+		return 0, 0, wallet.ErrStaticUnavailable
 	}
 	if *envelope.Code != 0 {
-		return *envelope.Code, nil
+		return *envelope.Code, response.StatusCode, nil
 	}
 	if response.StatusCode != http.StatusOK || len(envelope.Data) == 0 || json.Unmarshal(envelope.Data, result) != nil {
-		return 0, wallet.ErrStaticUnavailable
+		return 0, 0, wallet.ErrStaticUnavailable
 	}
-	return 0, nil
+	return 0, response.StatusCode, nil
 }
 
 func parseSupplierExpiry(value string) (time.Time, error) {

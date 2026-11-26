@@ -10,7 +10,9 @@ import (
 	"fmt"
 	"log/slog"
 	"math"
+	"net"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -20,8 +22,16 @@ import (
 	"gorm.io/gorm"
 )
 
-func NewWalletRepositoryWithStatic(db *gorm.DB, supplier wallet.StaticSupplier, passwordKey string) (*WalletRepository, error) {
+func NewWalletRepositoryWithStatic(db *gorm.DB, supplier wallet.StaticSupplier, passwordKey, exchangeProbeAddress string) (*WalletRepository, error) {
 	repository := NewWalletRepository(db)
+	if exchangeProbeAddress != "" {
+		host, rawPort, err := net.SplitHostPort(exchangeProbeAddress)
+		port, portErr := strconv.ParseUint(rawPort, 10, 16)
+		if err != nil || host == "" || strings.ContainsAny(host, " /\\\t\r\n") || portErr != nil || port == 0 {
+			return nil, fmt.Errorf("ipcrown.exchange_probe_address must be a host and port")
+		}
+		repository.staticExchangeProbeAddress = exchangeProbeAddress
+	}
 	if supplier == nil && passwordKey == "" {
 		return repository, nil
 	}
@@ -42,6 +52,7 @@ type storedStaticIP struct {
 	wallet.StaticAllocation
 	PasswordCiphertext    []byte
 	PurchaseSpecification string
+	OriginalOffer         string
 	StaticRegion          string
 	StaticIPType          string
 }
@@ -246,7 +257,7 @@ func (r *WalletRepository) PurchaseStatic(ctx context.Context, tenant string, p 
 		return wallet.Order{}, err
 	}
 	var accepted wallet.Order
-	entry, err := r.apply(ctx, command, p, func(tx *gorm.DB, _ *wallet.Command) error {
+	entry, err := r.apply(ctx, command, p, nil, func(tx *gorm.DB, _ *wallet.Command) error {
 		if err := RequireProductSale(ctx, tx, product.Static); err != nil {
 			return err
 		}
@@ -298,10 +309,14 @@ func (r *WalletRepository) StaticAllocations(ctx context.Context, tenant string,
 	db := r.db.WithContext(ctx).Table("static_ip_allocations AS a").Where("a.tenant_id = ?", tenant)
 	if len(ids) == 0 {
 		db = db.Select(`a.allocation_id, a.order_id, a.ip, a.port, a.expires_at,
-			i.specification AS purchase_specification, i.static_region, i.static_ip_type,
-			COALESCE(r.order_id, 0) AS pending_renewal_order_id`).
+			i.specification AS purchase_specification, i.static_region, i.static_ip_type, i.reference AS original_offer,
+			COALESCE(r.order_id, 0) AS pending_renewal_order_id,
+			COALESCE(x.status, '') AS exchange_status, COALESCE(x.idempotency_key, '') AS exchange_idempotency_key`).
 			Joins("JOIN order_items i ON i.tenant_id=a.tenant_id AND i.order_id=a.order_id AND i.position=a.order_item_position").
-			Joins("LEFT JOIN static_renewal_items r ON r.tenant_id=a.tenant_id AND r.allocation_id=a.allocation_id AND r.outcome='pending'")
+			Joins("LEFT JOIN static_renewal_items r ON r.tenant_id=a.tenant_id AND r.allocation_id=a.allocation_id AND r.outcome='pending'").
+			Joins(`LEFT JOIN LATERAL (SELECT status, idempotency_key FROM static_ip_exchanges
+				WHERE tenant_id=a.tenant_id AND allocation_id=a.allocation_id
+				ORDER BY created_at DESC, idempotency_key DESC LIMIT 1) x ON true`)
 	} else {
 		db = db.Where("a.allocation_id IN ?", ids)
 	}
@@ -315,6 +330,14 @@ func (r *WalletRepository) StaticAllocations(ctx context.Context, tenant string,
 	for _, row := range rows {
 		if len(ids) == 0 {
 			row.Region, row.IPType = row.StaticRegion, row.StaticIPType
+			nodeID, shareMode, _, valid := wallet.ParseStaticPurchaseReference(row.OriginalOffer)
+			if valid {
+				row.NodeID = nodeID
+				row.ShareMode = shareMode
+				if row.ShareMode == "" {
+					row.ShareMode = "exclusive"
+				}
+			}
 			if row.Region == "" && row.IPType == "" {
 				row.Region, row.IPType, _ = strings.Cut(row.PurchaseSpecification, " · ")
 			}
@@ -403,6 +426,13 @@ func (r *WalletRepository) recordStaticDelivery(ctx context.Context, tenant stri
 			}
 			positions[nodeID] = item.Position
 		}
+		if len(delivery.Allocations) > 0 {
+			var locked []string
+			if err := tx.Raw(`SELECT allocation_id FROM static_ip_allocations
+				WHERE tenant_id=? AND order_id=? ORDER BY allocation_id FOR UPDATE`, tenant, id).Scan(&locked).Error; err != nil {
+				return err
+			}
+		}
 		for _, ip := range delivery.Allocations {
 			position, ok := positions[ip.NodeID]
 			if !ok {
@@ -412,13 +442,24 @@ func (r *WalletRepository) recordStaticDelivery(ctx context.Context, tenant stri
 				return errWalletUnavailable
 			}
 			password := r.staticCipher.Seal(nil, nil, []byte(ip.Password), staticPasswordScope(tenant, ip.SupplierItemID))
-			result := tx.Exec(`INSERT INTO static_ip_allocations
-                (supplier_item_id, tenant_id, order_id, order_item_position, ip, port, username, password_ciphertext, expires_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ON CONFLICT (supplier_item_id) DO UPDATE SET expires_at = GREATEST(static_ip_allocations.expires_at, EXCLUDED.expires_at)
-                WHERE static_ip_allocations.tenant_id = EXCLUDED.tenant_id AND static_ip_allocations.order_id = EXCLUDED.order_id
-                AND static_ip_allocations.order_item_position = EXCLUDED.order_item_position AND static_ip_allocations.ip = EXCLUDED.ip`,
-				ip.SupplierItemID, tenant, id, position, ip.IP, ip.Port, ip.Username, password, ip.ExpiresAt)
+			result := tx.Exec(`WITH exchanged AS (
+                    SELECT 1 FROM static_ip_exchanges x JOIN static_ip_allocations a
+                        ON a.tenant_id=x.tenant_id AND a.allocation_id=x.allocation_id
+                    WHERE a.tenant_id=? AND a.supplier_item_id=?
+                        AND x.status IN ('pending', 'unknown', 'activating', 'ready', 'support_required') LIMIT 1
+                )
+                INSERT INTO static_ip_allocations AS a
+                    (supplier_item_id, tenant_id, order_id, order_item_position, proxy_id, ip, port, username, password_ciphertext, expires_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT (supplier_item_id) DO UPDATE SET
+                    expires_at=CASE WHEN EXISTS (SELECT 1 FROM exchanged) THEN a.expires_at
+                        ELSE GREATEST(a.expires_at, EXCLUDED.expires_at) END,
+                    proxy_id=CASE WHEN a.proxy_id='' AND NOT EXISTS (SELECT 1 FROM exchanged)
+                        THEN EXCLUDED.proxy_id ELSE a.proxy_id END
+                WHERE a.tenant_id=EXCLUDED.tenant_id AND a.order_id=EXCLUDED.order_id
+                    AND a.order_item_position=EXCLUDED.order_item_position
+                    AND (a.ip=EXCLUDED.ip OR EXISTS (SELECT 1 FROM exchanged))`,
+				tenant, ip.SupplierItemID, ip.SupplierItemID, tenant, id, position, ip.ProxyID, ip.IP, ip.Port, ip.Username, password, ip.ExpiresAt)
 			if result.Error != nil {
 				return result.Error
 			}

@@ -51,6 +51,11 @@ func setupUsageWithSubaccounts(t *testing.T, enableSubaccounts bool, suppliers .
 
 func setupUsageWithLegacyAccounts(t *testing.T, enableSubaccounts bool, seedLegacyAccounts func(*gorm.DB), suppliers ...wallet.StaticSupplier) usageFixture {
 	t.Helper()
+	return setupUsageFixture(t, enableSubaccounts, seedLegacyAccounts, "", suppliers...)
+}
+
+func setupUsageFixture(t *testing.T, enableSubaccounts bool, seedLegacyAccounts func(*gorm.DB), probeAddress string, suppliers ...wallet.StaticSupplier) usageFixture {
+	t.Helper()
 	dsn := os.Getenv("PROXY_CONTROL_TEST_DSN")
 	if dsn == "" {
 		t.Skip("set PROXY_CONTROL_TEST_DSN to a local PostgreSQL URL with schema creation permission")
@@ -72,7 +77,7 @@ func setupUsageWithLegacyAccounts(t *testing.T, enableSubaccounts bool, seedLega
 		"00007_tenant_accounts.sql", "00008_wallet_orders.sql", "00009_products.sql", "00010_proxy_subaccounts.sql",
 		"00011_traffic_metering.sql", "00012_traffic_alerts.sql", "00013_static_purchases.sql", "00014_static_renewals.sql",
 		"00015_subaccount_created_at.sql", "00016_static_purchase_allocation_positions.sql",
-		"00018_email_access.sql", "00019_static_allocation_ids.sql",
+		"00018_email_access.sql", "00019_static_allocation_ids.sql", "00021_static_ip_exchanges.sql",
 	} {
 		if path == "00018_email_access.sql" && seedLegacyAccounts != nil {
 			seedLegacyAccounts(db)
@@ -111,7 +116,7 @@ func setupUsageWithLegacyAccounts(t *testing.T, enableSubaccounts bool, seedLega
 	server.RegisterUsage(handler, httpservice.NewUsage(service))
 	walletStore := repo.NewWalletRepository(db)
 	if len(suppliers) != 0 {
-		walletStore, err = repo.NewWalletRepositoryWithStatic(db, suppliers[0], base64.RawURLEncoding.EncodeToString(make([]byte, 32)))
+		walletStore, err = repo.NewWalletRepositoryWithStatic(db, suppliers[0], base64.RawURLEncoding.EncodeToString(make([]byte, 32)), probeAddress)
 		if err != nil {
 			t.Fatal(err)
 		}

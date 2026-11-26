@@ -157,9 +157,19 @@ func TestStaticRenewalPriceRecheckAndMixedSettlement(t *testing.T) {
 	if !ok {
 		t.Fatal("cutover migration is missing its rollback")
 	}
-	// Drop the new schema after delivery to recreate the v18 data at the cutover.
+	exchangeMigration, err := os.ReadFile("../migrations/00021_static_ip_exchanges.sql")
+	if err != nil {
+		t.Fatal(err)
+	}
+	exchangeUp, exchangeDown, ok := strings.Cut(string(exchangeMigration), "-- +goose Down")
+	if !ok {
+		t.Fatal("exchange migration is missing its rollback")
+	}
+	// Recreate the v18 data after delivery, then run both forward migrations.
+	execSQL(t, f.db, exchangeDown)
 	execSQL(t, f.db, down)
 	execSQL(t, f.db, up)
+	execSQL(t, f.db, exchangeUp)
 
 	readProto(t, req("PUT", salePath, `{"open":false}`, cashier), &sale)
 	const termsPath = "/v1/tenant/static-renewal-terms"

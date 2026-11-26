@@ -5,6 +5,7 @@ import (
 	"crypto/cipher"
 	"database/sql"
 	"fmt"
+	"sync"
 
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/wallet"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/conf"
@@ -16,10 +17,12 @@ import (
 )
 
 type WalletRepository struct {
-	db                 *gorm.DB
-	static             wallet.StaticSupplier
-	staticCipher       cipher.AEAD
-	publicStaticOffers publicStaticOfferCache
+	db                         *gorm.DB
+	static                     wallet.StaticSupplier
+	staticCipher               cipher.AEAD
+	publicStaticOffers         publicStaticOfferCache
+	staticExchangeProbeAddress string
+	staticExchangeProbing      sync.Mutex
 }
 
 func ProvideWalletRepository(resources *data.Data, biz *conf.Biz) (*WalletRepository, error) {
@@ -35,7 +38,7 @@ func ProvideWalletRepository(resources *data.Data, biz *conf.Biz) (*WalletReposi
 	if supplier == nil && (configuration.GetBaseUrl() != "" || configuration.GetPartnerId() != "" || configuration.GetApiSecret() != "") {
 		return nil, fmt.Errorf("invalid IPCrown base_url, partner_id or api_secret")
 	}
-	return NewWalletRepositoryWithStatic(db, supplier, configuration.GetPasswordKey())
+	return NewWalletRepositoryWithStatic(db, supplier, configuration.GetPasswordKey(), configuration.GetExchangeProbeAddress())
 }
 
 func NewWalletRepository(db *gorm.DB) *WalletRepository {

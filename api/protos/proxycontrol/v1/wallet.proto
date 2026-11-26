@@ -44,6 +44,21 @@ option (openapi.v3.document) = {
 };
 
 service WalletService {
+  rpc ExchangeStaticIP(StaticIPExchangeRequest) returns (StaticIPExchange) {
+    option (google.api.http) = {post: "/v1/tenant/static-ip-exchanges", body: "*"};
+    option (openapi.v3.operation) = {summary: "为一条已交付独享静态 IP 发起同地区换号"};
+  }
+
+  rpc GetStaticIPExchange(StaticIPExchangeLookup) returns (StaticIPExchange) {
+    option (google.api.http) = {get: "/v1/tenant/static-ip-exchanges/{idempotency_key}"};
+    option (openapi.v3.operation) = {summary: "按原请求键查询换号记录"};
+  }
+
+  rpc GetStaticIPExchangeQuota(BaseRequest) returns (StaticIPExchangeQuota) {
+    option (google.api.http) = {get: "/v1/tenant/static-ip-exchange-quota"};
+    option (openapi.v3.operation) = {summary: "查询租户的免费换号额度"};
+  }
+
   rpc ListStaticRenewalTerms(StaticRenewalTermsRequest) returns (StaticRenewalTerms) {
     option (google.api.http) = {post: "/v1/tenant/static-renewal-terms", body: "*"};
     option (openapi.v3.operation) = {summary: "查询所选静态 IP 共同支持的续费租期"};
@@ -545,11 +560,58 @@ message StaticIP {
   string ip_type = 9;
   // 仍待确认的续费订单编号。无待确认续费时省略。
   int64 pending_renewal_order_id = 10;
+  // 原采购的节点标识。静态 IP 列表中用来提交同地区换号。
+  int64 node_id = 12;
+  // 静态 IP 列表中的分配类型，exclusive 或 shared。
+  string share_mode = 13;
+  // 最新换号记录状态。没有记录时省略。
+  string exchange_status = 14;
+  // 最新换号记录的查询键。没有记录时省略。
+  string exchange_idempotency_key = 15;
 }
 
 message StaticIPs {
   // 当前租户的全部分配，含到期历史。
   repeated StaticIP allocations = 1;
+}
+
+message StaticIPExchangeRequest {
+  // 分配 ID，使用静态 IP 列表中的平台标识。
+  string allocation_id = 1 [(validate.rules).string = {min_len: 1, max_bytes: 128}];
+  // 请求的节点，必须等于分配的原节点。
+  int64 node_id = 2 [(validate.rules).int64.gt = 0];
+  // 租户内唯一的请求键。重试须沿用原键和请求参数。
+  string idempotency_key = 3 [(validate.rules).string = {pattern: "^[A-Za-z0-9_-]{1,128}$"}];
+}
+
+message StaticIPExchangeLookup {
+  // 原换号请求的幂等键。
+  string idempotency_key = 1 [(validate.rules).string = {pattern: "^[A-Za-z0-9_-]{1,128}$"}];
+}
+
+message StaticIPExchange {
+  // 换号前后相同的平台分配 ID。
+  string allocation_id = 1;
+  // 换号请求确认的原节点。
+  int64 node_id = 2;
+  // 可用于查原请求的幂等键。
+  string idempotency_key = 3;
+  // pending 发送中，unknown 待核实，failed 明确失败，activating 生效中，
+  // ready 可使用，support_required 已换号但拨测未通过。
+  string status = 4;
+  // 首次受理时间。
+  google.protobuf.Timestamp created_at = 5;
+  // 状态最近变更时间。
+  google.protobuf.Timestamp updated_at = 6;
+}
+
+message StaticIPExchangeQuota {
+  // 当前可预占的剩余次数。
+  int32 remaining = 1;
+  // 已预占但尚未核销或释放的次数。
+  int32 reserved = 2;
+  // 已确认成功、计入已用额度的次数。
+  int32 used = 3;
 }
 
 message StaticIPConfigRequest {

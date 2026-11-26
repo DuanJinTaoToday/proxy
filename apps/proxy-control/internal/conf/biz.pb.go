@@ -210,13 +210,15 @@ func (x *Subaccounts) GetExplicitSidtime() bool {
 }
 
 type IPCrown struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	BaseUrl       string                 `protobuf:"bytes,1,opt,name=base_url,json=baseUrl,proto3" json:"base_url,omitempty"`
-	PartnerId     string                 `protobuf:"bytes,2,opt,name=partner_id,json=partnerId,proto3" json:"partner_id,omitempty"`
-	ApiSecret     string                 `protobuf:"bytes,3,opt,name=api_secret,json=apiSecret,proto3" json:"api_secret,omitempty"`
-	PasswordKey   string                 `protobuf:"bytes,4,opt,name=password_key,json=passwordKey,proto3" json:"password_key,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	BaseUrl     string                 `protobuf:"bytes,1,opt,name=base_url,json=baseUrl,proto3" json:"base_url,omitempty"`
+	PartnerId   string                 `protobuf:"bytes,2,opt,name=partner_id,json=partnerId,proto3" json:"partner_id,omitempty"`
+	ApiSecret   string                 `protobuf:"bytes,3,opt,name=api_secret,json=apiSecret,proto3" json:"api_secret,omitempty"`
+	PasswordKey string                 `protobuf:"bytes,4,opt,name=password_key,json=passwordKey,proto3" json:"password_key,omitempty"`
+	// For static IP exchanges, the deployment-controlled SOCKS5 probe host and port.
+	ExchangeProbeAddress string `protobuf:"bytes,5,opt,name=exchange_probe_address,json=exchangeProbeAddress,proto3" json:"exchange_probe_address,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
 }
 
 func (x *IPCrown) Reset() {
@@ -273,6 +275,13 @@ func (x *IPCrown) GetApiSecret() string {
 func (x *IPCrown) GetPasswordKey() string {
 	if x != nil {
 		return x.PasswordKey
+	}
+	return ""
+}
+
+func (x *IPCrown) GetExchangeProbeAddress() string {
+	if x != nil {
+		return x.ExchangeProbeAddress
 	}
 	return ""
 }
@@ -387,14 +396,15 @@ const file_biz_proto_rawDesc = "" +
 	"\fpassword_key\x18\x01 \x01(\tR\vpasswordKey\x12!\n" +
 	"\fgateway_host\x18\x02 \x01(\tR\vgatewayHost\x12!\n" +
 	"\fgateway_port\x18\x03 \x01(\rR\vgatewayPort\x12)\n" +
-	"\x10explicit_sidtime\x18\x04 \x01(\bR\x0fexplicitSidtime\"\x85\x01\n" +
+	"\x10explicit_sidtime\x18\x04 \x01(\bR\x0fexplicitSidtime\"\xbb\x01\n" +
 	"\aIPCrown\x12\x19\n" +
 	"\bbase_url\x18\x01 \x01(\tR\abaseUrl\x12\x1d\n" +
 	"\n" +
 	"partner_id\x18\x02 \x01(\tR\tpartnerId\x12\x1d\n" +
 	"\n" +
 	"api_secret\x18\x03 \x01(\tR\tapiSecret\x12!\n" +
-	"\fpassword_key\x18\x04 \x01(\tR\vpasswordKey\"\x86\x02\n" +
+	"\fpassword_key\x18\x04 \x01(\tR\vpasswordKey\x124\n" +
+	"\x16exchange_probe_address\x18\x05 \x01(\tR\x14exchangeProbeAddress\"\x86\x02\n" +
 	"\tEmailAuth\x12%\n" +
 	"\x0econsole_origin\x18\x01 \x01(\tR\rconsoleOrigin\x12\x19\n" +
 	"\bcode_key\x18\x02 \x01(\tR\acodeKey\x12!\n" +

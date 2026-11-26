@@ -97,7 +97,9 @@ func (s *Wallet) ListStaticIPs(ctx context.Context, _ *v1.BaseRequest) (*v1.Stat
 func staticIPMessage(ip wallet.StaticAllocation) *v1.StaticIP {
 	return &v1.StaticIP{AllocationId: ip.AllocationID, OrderId: ip.OrderID, Ip: ip.IP, Port: ip.Port,
 		Username: ip.Username, Password: ip.Password, ExpiresAt: timestamppb.New(ip.ExpiresAt),
-		Region: ip.Region, IpType: ip.IPType, PendingRenewalOrderId: ip.PendingRenewalOrderID}
+		Region: ip.Region, IpType: ip.IPType, PendingRenewalOrderId: ip.PendingRenewalOrderID,
+		NodeId: ip.NodeID, ShareMode: ip.ShareMode, ExchangeStatus: ip.ExchangeStatus,
+		ExchangeIdempotencyKey: ip.ExchangeIdempotencyKey}
 }
 
 func (s *Wallet) GetStaticIPConfig(ctx context.Context, req *v1.StaticIPConfigRequest) (*v1.StaticIP, error) {

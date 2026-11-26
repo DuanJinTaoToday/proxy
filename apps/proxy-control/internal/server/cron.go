@@ -15,13 +15,15 @@ import (
 type cronServerImpl struct {
 	*cron.Server
 	service     *service.CronService
+	modules     conf.Modules
 	cronTaskCfg []*conf.Server_CronTask
 }
 
-func NewCronServer(app *conf.AppConfig, cronService *service.CronService) (*cronServerImpl, error) {
+func NewCronServer(app *conf.AppConfig, cronService *service.CronService, modules conf.Modules) (*cronServerImpl, error) {
 	bootstrap := app.GetBootstrap()
 	cronServer := &cronServerImpl{
 		service:     cronService,
+		modules:     modules,
 		Server:      cron.NewServer(),
 		cronTaskCfg: bootstrap.GetServer().GetCronTasks(),
 	}
@@ -59,7 +61,11 @@ func (s *cronServerImpl) Notify(value config.Value) {
 func (s *cronServerImpl) addCronTask() error {
 	value := reflect.ValueOf(s.service)
 	for _, cronTask := range s.cronTaskCfg {
-		method := value.MethodByName(cronTask.GetName())
+		name := cronTask.GetName()
+		if (name == "MaintainUsage" && !s.modules.Usage) || (name == "ProbeStaticExchanges" && !s.modules.StaticExchangeProbe) {
+			continue
+		}
+		method := value.MethodByName(name)
 		if !method.IsValid() {
 			continue
 		}
