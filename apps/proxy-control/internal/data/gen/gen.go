@@ -38,6 +38,7 @@ func generateModels(db *gorm.DB) error {
 	for _, name := range []string{
 		"tenants", "tenant_admins", "email_access_credentials", "email_access_rate_limits", "email_recovery_audit",
 		"tenant_promotions", "tenant_promotion_audit", "operators", "operator_permissions",
+		"commission_rate_versions", "commission_rate_settings", "commission_accounts", "referral_commissions",
 		"wallets", "wallet_entries", "purchase_orders", "wallet_recharge_quotes", "order_items",
 		"product_sales", "traffic_packages", "product_change_log",
 		"static_purchases", "static_ip_allocations", "static_purchase_resolutions", "static_renewal_items", "static_renewal_resolutions", "static_ip_exchange_quotas", "static_ip_exchanges",

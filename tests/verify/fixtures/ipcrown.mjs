@@ -11,6 +11,7 @@ const catalogCalls = new Map()
 const allocations = new Map()
 const orders = new Map()
 const pendingRenewals = new Map()
+const rejectNextPurchaseNodes = new Set()
 const delayedRenewalIDs = new Set()
 const renewalCalls = new Map()
 const exchangeCalls = new Map()
@@ -74,6 +75,9 @@ function place({ cid, pid, time, list }) {
     if (!node || selections.has(node) || !Number.isInteger(number) || number <= 0 ||
         number > node.max || !node.prices.some(price => price.price_type === time)) return unavailable
     selections.set(node, node.id === 101 && number === 3 ? 2 : number)
+  }
+  for (const { nid } of list) {
+    if (rejectNextPurchaseNodes.delete(nid)) return unavailable
   }
   const isPartial = list.some(({ nid, number }) => nid === 101 && number === 3)
   const proxyPorts = isPartial ? nextPartialProxyPorts.splice(0) : []
@@ -161,6 +165,12 @@ async function handle(request, response) {
       return json(response, 400, { error: 'Expected zero or two distinct valid SOCKS5 ports' })
     }
     nextPartialProxyPorts = ports
+    return json(response, 200, { ok: true })
+  }
+  if (path === '/fixture/purchases/reject-next') {
+    const { node_id } = body
+    if (!Number.isSafeInteger(node_id) || node_id <= 0) return json(response, 400, { error: 'Expected a fixture node ID' })
+    rejectNextPurchaseNodes.add(node_id)
     return json(response, 200, { ok: true })
   }
   if (path === '/fixture/catalog-control') {

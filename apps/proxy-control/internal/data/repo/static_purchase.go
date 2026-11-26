@@ -510,7 +510,7 @@ func (r *WalletRepository) recordStaticDelivery(ctx context.Context, tenant stri
 		if err != nil {
 			return err
 		}
-		_, err = applyWalletCommand(tx, command, order, before, fingerprint)
+		_, err = applyWalletCommand(tx, command, order, before, fingerprint, nil)
 		return err
 	})
 }

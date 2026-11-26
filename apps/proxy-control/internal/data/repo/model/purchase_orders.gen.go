@@ -23,6 +23,7 @@ type PurchaseOrder struct {
 	DeliveredBytes int64      `gorm:"column:delivered_bytes;type:bigint;not null" json:"delivered_bytes"`
 	DeliveredCount int64      `gorm:"column:delivered_count;type:bigint;not null" json:"delivered_count"`
 	CreatedAt      *time.Time `gorm:"column:created_at;type:timestamp with time zone;not null;default:clock_timestamp()" json:"created_at"`
+	SettledAt      *time.Time `gorm:"column:settled_at;type:timestamp with time zone" json:"settled_at"`
 }
 
 // TableName PurchaseOrder's table name

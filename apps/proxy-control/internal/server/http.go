@@ -32,6 +32,7 @@ func RegisterProduct(srv *http.Server, product *service.Product) {
 
 func RegisterWallet(srv *http.Server, wallet *service.Wallet) {
 	v1.RegisterWalletServiceHTTPServer(srv, wallet)
+	v1.RegisterCommissionServiceHTTPServer(srv, wallet)
 	srv.Route("/").POST("/v1/tenant/static-ips:export", func(ctx http.Context) error {
 		var request v1.StaticIPExportRequest
 		if err := ctx.Bind(&request); err != nil {

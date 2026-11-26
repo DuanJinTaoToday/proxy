@@ -333,6 +333,8 @@ message PurchaseOrder {
   PurchaseOrderItem summary_item = 16;
   // 客户列表中的锁定明细行数。
   int64 item_count = 17;
+  // 完成订单结算的时间。待定或无记录的历史订单省略。
+  google.protobuf.Timestamp settled_at = 18;
 }
 
 message PurchaseOrderItem {

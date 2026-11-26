@@ -167,6 +167,9 @@ func orderMessage(order wallet.Order) *v1.PurchaseOrder {
 		DeliveredBytes: order.DeliveredBytes, DeliveredCount: order.DeliveredCount,
 		CreatedAt: timestamppb.New(order.CreatedAt), SettledMinor: order.SettledMinor(), UnsettledMinor: order.UnsettledMinor(),
 	}
+	if order.SettledAt != nil {
+		message.SettledAt = timestamppb.New(*order.SettledAt)
+	}
 	if order.Kind == wallet.StaticPurchase || order.Kind == wallet.StaticRenewal {
 		message.PrepaidMinor = order.DebitedMinor
 	}

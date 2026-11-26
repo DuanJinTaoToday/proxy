@@ -82,6 +82,9 @@ func (r *WalletRepository) saveStaticRenewalOutcomes(ctx context.Context, tenant
 				return err
 			}
 		}
+		if err := recordOrderSettlement(tx, tenant, settlement.Order); err != nil {
+			return err
+		}
 		updated, err = findPurchaseOrder(tx, tenant, id, false)
 		return err
 	})
