@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/netip"
+	"strings"
 	"time"
 
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/wallet"
@@ -25,7 +26,7 @@ func (r *WalletRepository) StaticExchangeQuota(ctx context.Context, tenant strin
 	if r.db == nil {
 		return quota, errWalletUnavailable
 	}
-	result := r.db.WithContext(ctx).Raw(`SELECT COALESCE(q.quota - q.reserved - q.used, 10) AS remaining,
+	result := r.db.WithContext(ctx).Raw(`SELECT CASE WHEN q.tenant_id IS NULL THEN 10 ELSE GREATEST(0, q.quota::bigint - q.reserved - q.used)::integer END AS remaining,
 		COALESCE(q.reserved, 0) AS reserved, COALESCE(q.used, 0) AS used
 		FROM tenants t LEFT JOIN static_ip_exchange_quotas q ON q.tenant_id=t.id WHERE t.id=?`, tenant)
 	err := scanWalletRecord(result, &quota)
@@ -66,6 +67,10 @@ func (r *WalletRepository) ExchangeStaticIP(ctx context.Context, tenant string, 
 		return accepted, err
 	}
 
+	if err := r.markExchangeDispatch(ctx, tenant, req.IdempotencyKey, original.IP); err != nil {
+		return accepted, nil
+	}
+
 	// A client disconnect cannot cancel a request already reserved for dispatch.
 	process, cancel := context.WithTimeout(context.WithoutCancel(ctx), 15*time.Second)
 	defer cancel()
@@ -94,6 +99,31 @@ func (r *WalletRepository) ExchangeStaticIP(ctx context.Context, tenant string, 
 		return result, nil
 	}
 	return accepted, nil
+}
+
+func (r *WalletRepository) markExchangeDispatch(ctx context.Context, tenant, key, oldIP string) error {
+	var snapshot *string
+	if supplier, ok := r.static.(wallet.StaticExchangeHistorySupplier); ok {
+		lookup, cancel := context.WithTimeout(context.WithoutCancel(ctx), 4*time.Second)
+		rows, err := supplier.ExchangeHistory(lookup, oldIP, time.Now())
+		cancel()
+		if err == nil {
+			ids := make([]string, 0, len(rows))
+			for _, row := range rows {
+				ids = append(ids, row.ID)
+			}
+			encoded := strings.Join(ids, " ")
+			snapshot = &encoded
+		}
+	}
+	save, cancel := context.WithTimeout(context.WithoutCancel(ctx), 3*time.Second)
+	defer cancel()
+	result := r.db.WithContext(save).Exec(`UPDATE static_ip_exchanges SET dispatched_at=clock_timestamp(), history_snapshot=?
+		WHERE tenant_id=? AND idempotency_key=? AND status='pending'`, snapshot, tenant, key)
+	if result.Error == nil && result.RowsAffected != 1 {
+		return wallet.ErrState
+	}
+	return result.Error
 }
 
 func replayStaticExchange(prior wallet.StaticExchange, req wallet.StaticExchangeRequest) (wallet.StaticExchange, error) {
@@ -136,7 +166,7 @@ func (r *WalletRepository) reserveStaticExchange(ctx context.Context, tenant str
 			return err
 		}
 		var remaining int32
-		if err := scanWalletRecord(tx.Raw(`SELECT quota - reserved - used FROM static_ip_exchange_quotas WHERE tenant_id=? FOR UPDATE`, tenant), &remaining); err != nil {
+		if err := scanWalletRecord(tx.Raw(`SELECT GREATEST(0, quota::bigint - reserved - used) FROM static_ip_exchange_quotas WHERE tenant_id=? FOR UPDATE`, tenant), &remaining); err != nil {
 			return err
 		}
 		prior, err := staticExchangeRecord(tx, tenant, req.IdempotencyKey, false)
@@ -150,7 +180,7 @@ func (r *WalletRepository) reserveStaticExchange(ctx context.Context, tenant str
 		if err := validateStaticExchange(tx, tenant, req, original); err != nil {
 			return err
 		}
-		if remaining == 0 {
+		if remaining <= 0 {
 			return wallet.ErrStaticExchangeQuota
 		}
 		if err := scanWalletRecord(tx.Raw(`INSERT INTO static_ip_exchanges
@@ -242,9 +272,11 @@ func (r *WalletRepository) finishStaticExchange(ctx context.Context, tenant stri
 		}
 		return scanWalletRecord(tx.Raw(`UPDATE static_ip_exchanges SET status=?, updated_at=clock_timestamp(),
 			new_proxy_id=NULLIF(?, ''), new_ip=NULLIF(?, ''),
-			probe_at=CASE WHEN ? THEN clock_timestamp() END
+			probe_at=CASE WHEN ? THEN clock_timestamp() END,
+			unknown_at=CASE WHEN ? THEN statement_timestamp() END, next_check_at=CASE WHEN ? THEN statement_timestamp() END
 			WHERE tenant_id=? AND idempotency_key=? RETURNING `+exchangeRecordColumns,
-			status, next.ProxyID, next.IP, status == wallet.StaticExchangeActivating, tenant, req.IdempotencyKey), &record)
+			status, next.ProxyID, next.IP, status == wallet.StaticExchangeActivating, status == wallet.StaticExchangeUnknown,
+			status == wallet.StaticExchangeUnknown, tenant, req.IdempotencyKey), &record)
 	})
 	return record, err
 }

@@ -84,12 +84,17 @@ func ControlResponseEncoder(w stdhttp.ResponseWriter, req *stdhttp.Request, resp
 		*v1.Overview, *v1.WalletTenant, *v1.WalletRechargeQuote, *v1.WalletEntry, *v1.WalletEntries, *v1.PurchaseOrder, *v1.PurchaseOrders,
 		*v1.SubmitBatchResponse, *v1.QueryUsageResponse, *v1.ListRecordAnomaliesResponse, *v1.ListUsageGapsResponse,
 		*v1.DailyUsageResponse, *v1.TrafficAlert, *v1.StaticOffers, *v1.StaticIPs, *v1.PendingStaticPurchases, *v1.StaticPurchaseQuote, *v1.StaticIP, *v1.StaticIPExpiryNotices, *v1.StaticRenewalQuote, *v1.StaticRenewalTerms,
-		*v1.StaticIPExchange, *v1.StaticIPExchangeQuota:
+		*v1.StaticIPExchange, *v1.StaticIPExchangeQuota, *v1.OperatorStaticIPExchangeQuota, *v1.OperatorStaticIPExchange,
+		*v1.OperatorStaticIPExchanges, *v1.OperatorStaticIPExchangeAuditEntry, *v1.OperatorStaticIPExchangeAuditPage:
 		_, dailyUsage := response.(*v1.DailyUsageResponse)
 		_, overview := response.(*v1.Overview)
 		_, accessLocation := response.(*v1.AccessLocation)
 		_, staticOffers := response.(*v1.StaticOffers)
 		_, exchangeQuota := response.(*v1.StaticIPExchangeQuota)
+		switch response.(type) {
+		case *v1.OperatorStaticIPExchangeQuota, *v1.OperatorStaticIPExchangeAuditEntry, *v1.OperatorStaticIPExchangeAuditPage:
+			exchangeQuota = true
+		}
 		data, err := (protojson.MarshalOptions{UseProtoNames: true, EmitDefaultValues: dailyUsage || staticOffers || overview || accessLocation || exchangeQuota}).Marshal(response.(proto.Message))
 		if err != nil {
 			return err

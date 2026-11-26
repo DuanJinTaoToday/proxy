@@ -15,6 +15,11 @@ const delayedRenewalIDs = new Set()
 const renewalCalls = new Map()
 const exchangeCalls = new Map()
 const exchangeOutcomes = new Map()
+const exchangeHistory = []
+const trackHistoryModeAfterWrite = new Map()
+const exchangeHistoryMode = new Map()
+const exchangeHistoryReads = new Map()
+const blockedExchangeHistory = new Map()
 const sequenceByNode = new Map()
 const day = 24 * 60 * 60 * 1000
 
@@ -121,15 +126,56 @@ async function exchange({ type, ids, list, isrand }, response) {
   exchangeCalls.set(item.id, (exchangeCalls.get(item.id) ?? 0) + 1)
   const outcome = exchangeOutcomes.get(item.id)
   if (outcome === 'failed') return json(response, 200, { code: -5, data: [] })
-  const ports = { ready: 1081, unknown: 1082, unreachable: 65000 }
+  if (outcome === 'unknown-empty') return response.destroy()
+  const oldIP = item.ip
+  const ports = { ready: 1081, unknown: 1082, 'unknown-tracked': 1082, unreachable: 65000 }
   if (!Object.hasOwn(ports, outcome)) return json(response, 400, { error: 'Expected configured exchange outcome' })
   const { address } = await lookup('ipcrown-socks5', { family: 4 })
   Object.assign(item, { ip: address, port: ports[outcome], proxy_id: 1000000 + item.id })
-  if (outcome === 'unknown') {
-    response.destroy()
-    return
+  if (outcome === 'unknown-tracked') {
+    addExchangeHistory(item, oldIP, item.ip)
+    if (trackHistoryModeAfterWrite.has(item.id)) {
+      exchangeHistoryMode.set(oldIP, trackHistoryModeAfterWrite.get(item.id))
+    }
+  }
+  if (outcome === 'unknown' || outcome === 'unknown-tracked') {
+    return response.destroy()
   }
   return json(response, 200, { code: 0, data: [{ ...item, proxyid: item.proxy_id }] })
+}
+
+function addExchangeHistory(item, oldIP, ip) {
+  const orderID = [...orders].find(([, rows]) => rows.includes(item))[0]
+  const record = {
+    id: 62000 + exchangeHistory.length, proxyindex_id: orderID, proxylist_id: item.id,
+    nid: item.nid, old_nid: item.nid, old_ip: oldIP, ip,
+    // The real #17 sample included Crown's UTC+8 wall-clock reporting and slight clock skew.
+    create_time: supplierTime(Date.now() + 6000),
+  }
+  exchangeHistory.push(record)
+  return record
+}
+
+async function exchangeRecords({ ip, page, limit, start_time, end_time }, response) {
+  if (page !== 1 || limit !== 100 || typeof ip !== 'string' || !start_time || !end_time) {
+    return json(response, 400, { error: 'Expected bounded old-IP history query' })
+  }
+  exchangeHistoryReads.set(ip, (exchangeHistoryReads.get(ip) ?? 0) + 1)
+  const mode = exchangeHistoryMode.get(ip)
+  if (mode === 'timeout') return response.destroy()
+  const data = mode === 'hidden' ? [] : exchangeHistory.filter(row => row.old_ip === ip || row.ip === ip)
+  if (mode === 'blocked') {
+    await new Promise(resolve => {
+      const release = () => {
+        clearTimeout(expiry)
+        blockedExchangeHistory.delete(ip)
+        resolve()
+      }
+      const expiry = setTimeout(release, 6500)
+      blockedExchangeHistory.set(ip, release)
+    })
+  }
+  return json(response, 200, { code: 0, count: mode === 'truncated' ? data.length + 1 : data.length, data })
 }
 
 function json(response, status, data) {
@@ -192,11 +238,25 @@ async function handle(request, response) {
 
   if (path === '/fixture/exchanges') {
     const item = body.id === undefined ? findAllocation(body.ip) : allocations.get(body.id)
-    if (!item || (body.outcome !== undefined && !['ready', 'failed', 'unknown', 'unreachable'].includes(body.outcome))) {
+    if (!item || (body.outcome !== undefined && !['ready', 'failed', 'unknown', 'unknown-empty', 'unknown-tracked', 'unreachable'].includes(body.outcome))) {
       return json(response, 400, { error: 'Expected a fixture allocation and optional exchange outcome' })
     }
     if (body.outcome !== undefined) exchangeOutcomes.set(item.id, body.outcome)
-    return json(response, 200, { id: item.id, calls: exchangeCalls.get(item.id) ?? 0, renewals: renewalCalls.get(item.id) ?? 0 })
+    if (typeof body.history_after_write === 'string') trackHistoryModeAfterWrite.set(item.id, body.history_after_write)
+    return json(response, 200, { id: item.id, address: item.ip, calls: exchangeCalls.get(item.id) ?? 0, renewals: renewalCalls.get(item.id) ?? 0 })
+  }
+
+  if (path === '/fixture/exchange-records') {
+    if (body.mode !== undefined) {
+      exchangeHistoryMode.set(body.ip, body.mode)
+      if (body.mode !== 'blocked') blockedExchangeHistory.get(body.ip)?.()
+    }
+    if (body.reported_ip !== undefined) {
+      const item = allocations.get(body.id)
+      if (!item) return json(response, 400, { error: 'Expected allocation to inject history' })
+      addExchangeHistory(item, body.ip, body.reported_ip)
+    }
+    return json(response, 200, { reads: exchangeHistoryReads.get(body.ip) ?? 0 })
   }
 
   if (path === '/fixture/renewals/confirm') {
@@ -241,6 +301,8 @@ async function handle(request, response) {
       return json(response, 200, renew(params))
     case '/open/api/order/exchange':
       return exchange(params, response)
+    case '/open/api/order/exchange-records':
+      return exchangeRecords(params, response)
     default:
       return json(response, 404, { error: 'Unknown fixture route' })
   }

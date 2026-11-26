@@ -59,6 +59,36 @@ service WalletService {
     option (openapi.v3.operation) = {summary: "查询租户的免费换号额度"};
   }
 
+  rpc GetOperatorStaticIPExchangeQuota(WalletTenantRequest) returns (OperatorStaticIPExchangeQuota) {
+    option (google.api.http) = {get: "/v1/operations/tenants/{tenant_id}/static-ip-exchange-quota"};
+    option (openapi.v3.operation) = {summary: "查询租户换号额度"};
+  }
+
+  rpc ListOperatorStaticIPExchanges(OperatorStaticIPExchangesRequest) returns (OperatorStaticIPExchanges) {
+    option (google.api.http) = {get: "/v1/operations/tenants/{tenant_id}/static-ip-exchanges"};
+    option (openapi.v3.operation) = {summary: "查询租户换号历史"};
+  }
+
+  rpc ListOperatorStaticIPExchangeQueue(OperatorStaticIPExchangesRequest) returns (OperatorStaticIPExchanges) {
+    option (google.api.http) = {get: "/v1/operations/static-ip-exchange-queue"};
+    option (openapi.v3.operation) = {summary: "查询超时或证据冲突的换号操作"};
+  }
+
+  rpc ListOperatorStaticIPExchangeAudit(OperatorStaticIPExchangeAuditRequest) returns (OperatorStaticIPExchangeAuditPage) {
+    option (google.api.http) = {get: "/v1/operations/tenants/{tenant_id}/static-ip-exchange-audit"};
+    option (openapi.v3.operation) = {summary: "查询租户换号调额、结案和冲突审计"};
+  }
+
+  rpc AdjustOperatorStaticIPExchangeQuota(AdjustOperatorStaticIPExchangeQuotaRequest) returns (OperatorStaticIPExchangeAuditEntry) {
+    option (google.api.http) = {post: "/v1/operations/tenants/{tenant_id}/static-ip-exchange-quota:adjust", body: "*"};
+    option (openapi.v3.operation) = {summary: "有凭据地增加或减少租户换号额度"};
+  }
+
+  rpc ResolveOperatorStaticIPExchange(ResolveOperatorStaticIPExchangeRequest) returns (OperatorStaticIPExchange) {
+    option (google.api.http) = {post: "/v1/operations/tenants/{tenant_id}/static-ip-exchanges/{idempotency_key}/resolution", body: "*"};
+    option (openapi.v3.operation) = {summary: "依据皇冠凭证结案或更正换号"};
+  }
+
   rpc ListStaticRenewalTerms(StaticRenewalTermsRequest) returns (StaticRenewalTerms) {
     option (google.api.http) = {post: "/v1/tenant/static-renewal-terms", body: "*"};
     option (openapi.v3.operation) = {summary: "查询所选静态 IP 共同支持的续费租期"};
@@ -612,6 +642,84 @@ message StaticIPExchangeQuota {
   int32 reserved = 2;
   // 已确认成功、计入已用额度的次数。
   int32 used = 3;
+}
+
+message OperatorStaticIPExchangeQuota {
+  int32 total = 1;
+  int32 remaining = 2;
+  int32 reserved = 3;
+  int32 used = 4;
+}
+
+message OperatorStaticIPExchangesRequest {
+  string tenant_id = 1;
+  string cursor = 2;
+}
+
+message OperatorStaticIPExchanges {
+  repeated OperatorStaticIPExchange exchanges = 1;
+  string next_cursor = 2;
+}
+
+message OperatorStaticIPExchange {
+  StaticIPExchange exchange = 1;
+  string tenant_id = 2;
+  string supplier_order_id = 3;
+  string supplier_item_id = 4;
+  string old_ip = 5;
+  string new_ip = 6;
+  google.protobuf.Timestamp unknown_at = 7;
+  bool in_queue = 8;
+  string resolution = 9;
+  bool resolution_conflict = 10;
+  bool corrected = 11;
+}
+
+message OperatorStaticIPExchangeAuditRequest {
+  string tenant_id = 1;
+  int64 before_id = 2 [(validate.rules).int64.gte = 0];
+}
+
+message OperatorStaticIPExchangeAuditPage {
+  repeated OperatorStaticIPExchangeAuditEntry entries = 1;
+  int64 next_before_id = 2;
+}
+
+message OperatorStaticIPExchangeAuditEntry {
+  int64 id = 1;
+  string kind = 2;
+  string idempotency_key = 3;
+  string request_key = 4;
+  string actor_id = 5;
+  string evidence = 6;
+  string outcome = 7;
+  string supplier_record_id = 8;
+  string observed_ip = 9;
+  OperatorStaticIPExchangeQuota before = 10;
+  OperatorStaticIPExchangeQuota after = 11;
+  google.protobuf.Timestamp created_at = 12;
+}
+
+message AdjustOperatorStaticIPExchangeQuotaRequest {
+  string tenant_id = 1;
+  string request_key = 2;
+  int32 delta = 3;
+  // 操作依据。记录在审计中，不填写代理凭据。
+  string evidence = 4;
+}
+
+message ResolveOperatorStaticIPExchangeRequest {
+  string tenant_id = 1;
+  string idempotency_key = 2;
+  string request_key = 3;
+  // executed 或 not_executed。
+  string outcome = 4;
+  // 皇冠工单或回执编号。查无记录和旧 IP 未变都不构成未执行凭据。
+  string evidence = 5;
+  // 确认执行时填写皇冠凭证上的新 IP。
+  string expected_ip = 6;
+  // 处理已结案记录的迟到冲突时启用。
+  bool correction = 7;
 }
 
 message StaticIPConfigRequest {

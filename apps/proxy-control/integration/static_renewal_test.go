@@ -165,11 +165,21 @@ func TestStaticRenewalPriceRecheckAndMixedSettlement(t *testing.T) {
 	if !ok {
 		t.Fatal("exchange migration is missing its rollback")
 	}
-	// Recreate the v18 data after delivery, then run both forward migrations.
+	operationsMigration, err := os.ReadFile("../migrations/00022_static_exchange_operations.sql")
+	if err != nil {
+		t.Fatal(err)
+	}
+	operationsUp, operationsDown, ok := strings.Cut(string(operationsMigration), "-- +goose Down")
+	if !ok {
+		t.Fatal("exchange operations migration is missing its rollback")
+	}
+	// Recreate the pre-allocation-ID data after delivery, then run the forward migrations.
+	execSQL(t, f.db, operationsDown)
 	execSQL(t, f.db, exchangeDown)
 	execSQL(t, f.db, down)
 	execSQL(t, f.db, up)
 	execSQL(t, f.db, exchangeUp)
+	execSQL(t, f.db, operationsUp)
 
 	readProto(t, req("PUT", salePath, `{"open":false}`, cashier), &sale)
 	const termsPath = "/v1/tenant/static-renewal-terms"

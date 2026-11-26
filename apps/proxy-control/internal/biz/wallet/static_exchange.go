@@ -54,6 +54,7 @@ type StaticExchangeRepository interface {
 	StaticExchange(context.Context, string, string) (StaticExchange, error)
 	ExchangeStaticIP(context.Context, string, StaticExchangeRequest) (StaticExchange, error)
 	ProbeStaticExchanges(context.Context) error
+	ReconcileStaticExchanges(context.Context) error
 }
 
 func (s *Service) StaticExchangeQuota(ctx context.Context, token string) (StaticExchangeQuota, error) {
@@ -89,6 +90,10 @@ func (s *Service) ExchangeStaticIP(ctx context.Context, token string, req Static
 
 func (s *Service) ProbeStaticExchanges(ctx context.Context) error {
 	return s.store.ProbeStaticExchanges(ctx)
+}
+
+func (s *Service) ReconcileStaticExchanges(ctx context.Context) error {
+	return s.store.ReconcileStaticExchanges(ctx)
 }
 
 var staticExchangeKeyPattern = regexp.MustCompile(`^[A-Za-z0-9_-]{1,128}$`)

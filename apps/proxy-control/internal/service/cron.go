@@ -26,6 +26,10 @@ func (cs *CronService) MaintainUsage(ctx context.Context) error {
 	return cs.usage.Maintain(ctx)
 }
 
+func (cs *CronService) ReconcileStaticExchanges(ctx context.Context) error {
+	return cs.wallet.ReconcileStaticExchanges(ctx)
+}
+
 func (cs *CronService) ProbeStaticExchanges(ctx context.Context) error {
 	return cs.wallet.ProbeStaticExchanges(ctx)
 }

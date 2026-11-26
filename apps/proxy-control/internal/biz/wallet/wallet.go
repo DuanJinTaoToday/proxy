@@ -153,6 +153,7 @@ func PurchasedTrafficDebtOffset(before, capacity int64) int64 {
 type Repository interface {
 	StaticRenewalRepository
 	StaticExchangeRepository
+	ExchangeOperationsRepository
 	StaticRepository
 	FindTenant(context.Context, string, string) (Tenant, error)
 	Tenant(context.Context, string) (Tenant, error)
