@@ -155,6 +155,7 @@ type Repository interface {
 	CommissionRepository
 	StaticRenewalRepository
 	StaticExchangeRepository
+	ExchangeOperationsRepository
 	StaticRepository
 	FindTenant(context.Context, string, string) (Tenant, error)
 	Tenant(context.Context, string) (Tenant, error)

@@ -473,6 +473,28 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/proxycontrol.v1.Product'
+    /v1/operations/static-ip-exchange-queue:
+        get:
+            tags:
+                - WalletService
+            summary: 查询超时或证据冲突的换号操作
+            operationId: WalletService_ListOperatorStaticIPExchangeQueue
+            parameters:
+                - name: tenantId
+                  in: query
+                  schema:
+                    type: string
+                - name: cursor
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.OperatorStaticIPExchanges'
     /v1/operations/tenants:
         get:
             tags:
@@ -692,6 +714,127 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/proxycontrol.v1.TenantPromotion'
+    /v1/operations/tenants/{tenantId}/static-ip-exchange-audit:
+        get:
+            tags:
+                - WalletService
+            summary: 查询租户换号调额、结案和冲突审计
+            operationId: WalletService_ListOperatorStaticIPExchangeAudit
+            parameters:
+                - name: tenantId
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+                - name: beforeId
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.OperatorStaticIPExchangeAuditPage'
+    /v1/operations/tenants/{tenantId}/static-ip-exchange-quota:
+        get:
+            tags:
+                - WalletService
+            summary: 查询租户换号额度
+            operationId: WalletService_GetOperatorStaticIPExchangeQuota
+            parameters:
+                - name: tenantId
+                  in: path
+                  description: 租户 ID。
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.OperatorStaticIPExchangeQuota'
+    /v1/operations/tenants/{tenantId}/static-ip-exchange-quota:adjust:
+        post:
+            tags:
+                - WalletService
+            summary: 有凭据地增加或减少租户换号额度
+            operationId: WalletService_AdjustOperatorStaticIPExchangeQuota
+            parameters:
+                - name: tenantId
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.AdjustOperatorStaticIPExchangeQuotaRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.OperatorStaticIPExchangeAuditEntry'
+    /v1/operations/tenants/{tenantId}/static-ip-exchanges:
+        get:
+            tags:
+                - WalletService
+            summary: 查询租户换号历史
+            operationId: WalletService_ListOperatorStaticIPExchanges
+            parameters:
+                - name: tenantId
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+                - name: cursor
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.OperatorStaticIPExchanges'
+    /v1/operations/tenants/{tenantId}/static-ip-exchanges/{idempotencyKey}/resolution:
+        post:
+            tags:
+                - WalletService
+            summary: 依据皇冠凭证结案或更正换号
+            operationId: WalletService_ResolveOperatorStaticIPExchange
+            parameters:
+                - name: tenantId
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+                - name: idempotencyKey
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.ResolveOperatorStaticIPExchangeRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.OperatorStaticIPExchange'
     /v1/operations/tenants/{tenantId}/wallet/ledger:
         get:
             tags:
@@ -1769,6 +1912,19 @@ components:
                 is_mainland_china:
                     type: boolean
                     description: 仅归属地为中国大陆时为 true，未知及香港、澳门、台湾均为 false。
+        proxycontrol.v1.AdjustOperatorStaticIPExchangeQuotaRequest:
+            type: object
+            properties:
+                tenantId:
+                    type: string
+                requestKey:
+                    type: string
+                delta:
+                    type: integer
+                    format: int32
+                evidence:
+                    type: string
+                    description: 操作依据。记录在审计中，不填写代理凭据。
         proxycontrol.v1.AuthQuota:
             type: object
             properties:
@@ -2054,6 +2210,93 @@ components:
                     items:
                         type: string
                     description: 独立授权项：read_operations、manage_billing、manage_tenant_accounts。
+        proxycontrol.v1.OperatorStaticIPExchange:
+            type: object
+            properties:
+                exchange:
+                    $ref: '#/components/schemas/proxycontrol.v1.StaticIPExchange'
+                tenantId:
+                    type: string
+                supplierOrderId:
+                    type: string
+                supplierItemId:
+                    type: string
+                oldIp:
+                    type: string
+                newIp:
+                    type: string
+                unknownAt:
+                    type: string
+                    format: date-time
+                inQueue:
+                    type: boolean
+                resolution:
+                    type: string
+                resolutionConflict:
+                    type: boolean
+                corrected:
+                    type: boolean
+        proxycontrol.v1.OperatorStaticIPExchangeAuditEntry:
+            type: object
+            properties:
+                id:
+                    type: string
+                kind:
+                    type: string
+                idempotencyKey:
+                    type: string
+                requestKey:
+                    type: string
+                actorId:
+                    type: string
+                evidence:
+                    type: string
+                outcome:
+                    type: string
+                supplierRecordId:
+                    type: string
+                observedIp:
+                    type: string
+                before:
+                    $ref: '#/components/schemas/proxycontrol.v1.OperatorStaticIPExchangeQuota'
+                after:
+                    $ref: '#/components/schemas/proxycontrol.v1.OperatorStaticIPExchangeQuota'
+                createdAt:
+                    type: string
+                    format: date-time
+        proxycontrol.v1.OperatorStaticIPExchangeAuditPage:
+            type: object
+            properties:
+                entries:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/proxycontrol.v1.OperatorStaticIPExchangeAuditEntry'
+                nextBeforeId:
+                    type: string
+        proxycontrol.v1.OperatorStaticIPExchangeQuota:
+            type: object
+            properties:
+                total:
+                    type: integer
+                    format: int32
+                remaining:
+                    type: integer
+                    format: int32
+                reserved:
+                    type: integer
+                    format: int32
+                used:
+                    type: integer
+                    format: int32
+        proxycontrol.v1.OperatorStaticIPExchanges:
+            type: object
+            properties:
+                exchanges:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/proxycontrol.v1.OperatorStaticIPExchange'
+                nextCursor:
+                    type: string
         proxycontrol.v1.Overview:
             type: object
             properties:
@@ -2541,6 +2784,27 @@ components:
                 password:
                     type: string
                     description: 新密码，至少 12 个字符。
+        proxycontrol.v1.ResolveOperatorStaticIPExchangeRequest:
+            type: object
+            properties:
+                tenantId:
+                    type: string
+                idempotencyKey:
+                    type: string
+                requestKey:
+                    type: string
+                outcome:
+                    type: string
+                    description: executed 或 not_executed。
+                evidence:
+                    type: string
+                    description: 皇冠工单或回执编号。查无记录和旧 IP 未变都不构成未执行凭据。
+                expectedIp:
+                    type: string
+                    description: 确认执行时填写皇冠凭证上的新 IP。
+                correction:
+                    type: boolean
+                    description: 处理已结案记录的迟到冲突时启用。
         proxycontrol.v1.ResolveStaticPurchaseRequest:
             type: object
             properties:

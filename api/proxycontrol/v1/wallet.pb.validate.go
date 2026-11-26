@@ -5269,6 +5269,1245 @@ var _ interface {
 	ErrorName() string
 } = StaticIPExchangeQuotaValidationError{}
 
+// Validate checks the field values on OperatorStaticIPExchangeQuota with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *OperatorStaticIPExchangeQuota) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on OperatorStaticIPExchangeQuota with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// OperatorStaticIPExchangeQuotaMultiError, or nil if none found.
+func (m *OperatorStaticIPExchangeQuota) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *OperatorStaticIPExchangeQuota) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Total
+
+	// no validation rules for Remaining
+
+	// no validation rules for Reserved
+
+	// no validation rules for Used
+
+	if len(errors) > 0 {
+		return OperatorStaticIPExchangeQuotaMultiError(errors)
+	}
+
+	return nil
+}
+
+// OperatorStaticIPExchangeQuotaMultiError is an error wrapping multiple
+// validation errors returned by OperatorStaticIPExchangeQuota.ValidateAll()
+// if the designated constraints aren't met.
+type OperatorStaticIPExchangeQuotaMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m OperatorStaticIPExchangeQuotaMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m OperatorStaticIPExchangeQuotaMultiError) AllErrors() []error { return m }
+
+// OperatorStaticIPExchangeQuotaValidationError is the validation error
+// returned by OperatorStaticIPExchangeQuota.Validate if the designated
+// constraints aren't met.
+type OperatorStaticIPExchangeQuotaValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e OperatorStaticIPExchangeQuotaValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e OperatorStaticIPExchangeQuotaValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e OperatorStaticIPExchangeQuotaValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e OperatorStaticIPExchangeQuotaValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e OperatorStaticIPExchangeQuotaValidationError) ErrorName() string {
+	return "OperatorStaticIPExchangeQuotaValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e OperatorStaticIPExchangeQuotaValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sOperatorStaticIPExchangeQuota.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = OperatorStaticIPExchangeQuotaValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = OperatorStaticIPExchangeQuotaValidationError{}
+
+// Validate checks the field values on OperatorStaticIPExchangesRequest with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the first error encountered is returned, or nil if there are
+// no violations.
+func (m *OperatorStaticIPExchangesRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on OperatorStaticIPExchangesRequest with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// OperatorStaticIPExchangesRequestMultiError, or nil if none found.
+func (m *OperatorStaticIPExchangesRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *OperatorStaticIPExchangesRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for TenantId
+
+	// no validation rules for Cursor
+
+	if len(errors) > 0 {
+		return OperatorStaticIPExchangesRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// OperatorStaticIPExchangesRequestMultiError is an error wrapping multiple
+// validation errors returned by
+// OperatorStaticIPExchangesRequest.ValidateAll() if the designated
+// constraints aren't met.
+type OperatorStaticIPExchangesRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m OperatorStaticIPExchangesRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m OperatorStaticIPExchangesRequestMultiError) AllErrors() []error { return m }
+
+// OperatorStaticIPExchangesRequestValidationError is the validation error
+// returned by OperatorStaticIPExchangesRequest.Validate if the designated
+// constraints aren't met.
+type OperatorStaticIPExchangesRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e OperatorStaticIPExchangesRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e OperatorStaticIPExchangesRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e OperatorStaticIPExchangesRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e OperatorStaticIPExchangesRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e OperatorStaticIPExchangesRequestValidationError) ErrorName() string {
+	return "OperatorStaticIPExchangesRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e OperatorStaticIPExchangesRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sOperatorStaticIPExchangesRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = OperatorStaticIPExchangesRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = OperatorStaticIPExchangesRequestValidationError{}
+
+// Validate checks the field values on OperatorStaticIPExchanges with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *OperatorStaticIPExchanges) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on OperatorStaticIPExchanges with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// OperatorStaticIPExchangesMultiError, or nil if none found.
+func (m *OperatorStaticIPExchanges) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *OperatorStaticIPExchanges) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetExchanges() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, OperatorStaticIPExchangesValidationError{
+						field:  fmt.Sprintf("Exchanges[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, OperatorStaticIPExchangesValidationError{
+						field:  fmt.Sprintf("Exchanges[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return OperatorStaticIPExchangesValidationError{
+					field:  fmt.Sprintf("Exchanges[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	// no validation rules for NextCursor
+
+	if len(errors) > 0 {
+		return OperatorStaticIPExchangesMultiError(errors)
+	}
+
+	return nil
+}
+
+// OperatorStaticIPExchangesMultiError is an error wrapping multiple validation
+// errors returned by OperatorStaticIPExchanges.ValidateAll() if the
+// designated constraints aren't met.
+type OperatorStaticIPExchangesMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m OperatorStaticIPExchangesMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m OperatorStaticIPExchangesMultiError) AllErrors() []error { return m }
+
+// OperatorStaticIPExchangesValidationError is the validation error returned by
+// OperatorStaticIPExchanges.Validate if the designated constraints aren't met.
+type OperatorStaticIPExchangesValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e OperatorStaticIPExchangesValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e OperatorStaticIPExchangesValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e OperatorStaticIPExchangesValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e OperatorStaticIPExchangesValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e OperatorStaticIPExchangesValidationError) ErrorName() string {
+	return "OperatorStaticIPExchangesValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e OperatorStaticIPExchangesValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sOperatorStaticIPExchanges.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = OperatorStaticIPExchangesValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = OperatorStaticIPExchangesValidationError{}
+
+// Validate checks the field values on OperatorStaticIPExchange with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *OperatorStaticIPExchange) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on OperatorStaticIPExchange with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// OperatorStaticIPExchangeMultiError, or nil if none found.
+func (m *OperatorStaticIPExchange) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *OperatorStaticIPExchange) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetExchange()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, OperatorStaticIPExchangeValidationError{
+					field:  "Exchange",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, OperatorStaticIPExchangeValidationError{
+					field:  "Exchange",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetExchange()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return OperatorStaticIPExchangeValidationError{
+				field:  "Exchange",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	// no validation rules for TenantId
+
+	// no validation rules for SupplierOrderId
+
+	// no validation rules for SupplierItemId
+
+	// no validation rules for OldIp
+
+	// no validation rules for NewIp
+
+	if all {
+		switch v := interface{}(m.GetUnknownAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, OperatorStaticIPExchangeValidationError{
+					field:  "UnknownAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, OperatorStaticIPExchangeValidationError{
+					field:  "UnknownAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetUnknownAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return OperatorStaticIPExchangeValidationError{
+				field:  "UnknownAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	// no validation rules for InQueue
+
+	// no validation rules for Resolution
+
+	// no validation rules for ResolutionConflict
+
+	// no validation rules for Corrected
+
+	if len(errors) > 0 {
+		return OperatorStaticIPExchangeMultiError(errors)
+	}
+
+	return nil
+}
+
+// OperatorStaticIPExchangeMultiError is an error wrapping multiple validation
+// errors returned by OperatorStaticIPExchange.ValidateAll() if the designated
+// constraints aren't met.
+type OperatorStaticIPExchangeMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m OperatorStaticIPExchangeMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m OperatorStaticIPExchangeMultiError) AllErrors() []error { return m }
+
+// OperatorStaticIPExchangeValidationError is the validation error returned by
+// OperatorStaticIPExchange.Validate if the designated constraints aren't met.
+type OperatorStaticIPExchangeValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e OperatorStaticIPExchangeValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e OperatorStaticIPExchangeValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e OperatorStaticIPExchangeValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e OperatorStaticIPExchangeValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e OperatorStaticIPExchangeValidationError) ErrorName() string {
+	return "OperatorStaticIPExchangeValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e OperatorStaticIPExchangeValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sOperatorStaticIPExchange.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = OperatorStaticIPExchangeValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = OperatorStaticIPExchangeValidationError{}
+
+// Validate checks the field values on OperatorStaticIPExchangeAuditRequest
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the first error encountered is returned, or nil if
+// there are no violations.
+func (m *OperatorStaticIPExchangeAuditRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on OperatorStaticIPExchangeAuditRequest
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the result is a list of violation errors wrapped in
+// OperatorStaticIPExchangeAuditRequestMultiError, or nil if none found.
+func (m *OperatorStaticIPExchangeAuditRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *OperatorStaticIPExchangeAuditRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for TenantId
+
+	if m.GetBeforeId() < 0 {
+		err := OperatorStaticIPExchangeAuditRequestValidationError{
+			field:  "BeforeId",
+			reason: "value must be greater than or equal to 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return OperatorStaticIPExchangeAuditRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// OperatorStaticIPExchangeAuditRequestMultiError is an error wrapping multiple
+// validation errors returned by
+// OperatorStaticIPExchangeAuditRequest.ValidateAll() if the designated
+// constraints aren't met.
+type OperatorStaticIPExchangeAuditRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m OperatorStaticIPExchangeAuditRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m OperatorStaticIPExchangeAuditRequestMultiError) AllErrors() []error { return m }
+
+// OperatorStaticIPExchangeAuditRequestValidationError is the validation error
+// returned by OperatorStaticIPExchangeAuditRequest.Validate if the designated
+// constraints aren't met.
+type OperatorStaticIPExchangeAuditRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e OperatorStaticIPExchangeAuditRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e OperatorStaticIPExchangeAuditRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e OperatorStaticIPExchangeAuditRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e OperatorStaticIPExchangeAuditRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e OperatorStaticIPExchangeAuditRequestValidationError) ErrorName() string {
+	return "OperatorStaticIPExchangeAuditRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e OperatorStaticIPExchangeAuditRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sOperatorStaticIPExchangeAuditRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = OperatorStaticIPExchangeAuditRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = OperatorStaticIPExchangeAuditRequestValidationError{}
+
+// Validate checks the field values on OperatorStaticIPExchangeAuditPage with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the first error encountered is returned, or nil if there are
+// no violations.
+func (m *OperatorStaticIPExchangeAuditPage) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on OperatorStaticIPExchangeAuditPage
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the result is a list of violation errors wrapped in
+// OperatorStaticIPExchangeAuditPageMultiError, or nil if none found.
+func (m *OperatorStaticIPExchangeAuditPage) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *OperatorStaticIPExchangeAuditPage) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetEntries() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, OperatorStaticIPExchangeAuditPageValidationError{
+						field:  fmt.Sprintf("Entries[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, OperatorStaticIPExchangeAuditPageValidationError{
+						field:  fmt.Sprintf("Entries[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return OperatorStaticIPExchangeAuditPageValidationError{
+					field:  fmt.Sprintf("Entries[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	// no validation rules for NextBeforeId
+
+	if len(errors) > 0 {
+		return OperatorStaticIPExchangeAuditPageMultiError(errors)
+	}
+
+	return nil
+}
+
+// OperatorStaticIPExchangeAuditPageMultiError is an error wrapping multiple
+// validation errors returned by
+// OperatorStaticIPExchangeAuditPage.ValidateAll() if the designated
+// constraints aren't met.
+type OperatorStaticIPExchangeAuditPageMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m OperatorStaticIPExchangeAuditPageMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m OperatorStaticIPExchangeAuditPageMultiError) AllErrors() []error { return m }
+
+// OperatorStaticIPExchangeAuditPageValidationError is the validation error
+// returned by OperatorStaticIPExchangeAuditPage.Validate if the designated
+// constraints aren't met.
+type OperatorStaticIPExchangeAuditPageValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e OperatorStaticIPExchangeAuditPageValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e OperatorStaticIPExchangeAuditPageValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e OperatorStaticIPExchangeAuditPageValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e OperatorStaticIPExchangeAuditPageValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e OperatorStaticIPExchangeAuditPageValidationError) ErrorName() string {
+	return "OperatorStaticIPExchangeAuditPageValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e OperatorStaticIPExchangeAuditPageValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sOperatorStaticIPExchangeAuditPage.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = OperatorStaticIPExchangeAuditPageValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = OperatorStaticIPExchangeAuditPageValidationError{}
+
+// Validate checks the field values on OperatorStaticIPExchangeAuditEntry with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the first error encountered is returned, or nil if there are
+// no violations.
+func (m *OperatorStaticIPExchangeAuditEntry) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on OperatorStaticIPExchangeAuditEntry
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the result is a list of violation errors wrapped in
+// OperatorStaticIPExchangeAuditEntryMultiError, or nil if none found.
+func (m *OperatorStaticIPExchangeAuditEntry) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *OperatorStaticIPExchangeAuditEntry) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Id
+
+	// no validation rules for Kind
+
+	// no validation rules for IdempotencyKey
+
+	// no validation rules for RequestKey
+
+	// no validation rules for ActorId
+
+	// no validation rules for Evidence
+
+	// no validation rules for Outcome
+
+	// no validation rules for SupplierRecordId
+
+	// no validation rules for ObservedIp
+
+	if all {
+		switch v := interface{}(m.GetBefore()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, OperatorStaticIPExchangeAuditEntryValidationError{
+					field:  "Before",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, OperatorStaticIPExchangeAuditEntryValidationError{
+					field:  "Before",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetBefore()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return OperatorStaticIPExchangeAuditEntryValidationError{
+				field:  "Before",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetAfter()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, OperatorStaticIPExchangeAuditEntryValidationError{
+					field:  "After",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, OperatorStaticIPExchangeAuditEntryValidationError{
+					field:  "After",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetAfter()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return OperatorStaticIPExchangeAuditEntryValidationError{
+				field:  "After",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetCreatedAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, OperatorStaticIPExchangeAuditEntryValidationError{
+					field:  "CreatedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, OperatorStaticIPExchangeAuditEntryValidationError{
+					field:  "CreatedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCreatedAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return OperatorStaticIPExchangeAuditEntryValidationError{
+				field:  "CreatedAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return OperatorStaticIPExchangeAuditEntryMultiError(errors)
+	}
+
+	return nil
+}
+
+// OperatorStaticIPExchangeAuditEntryMultiError is an error wrapping multiple
+// validation errors returned by
+// OperatorStaticIPExchangeAuditEntry.ValidateAll() if the designated
+// constraints aren't met.
+type OperatorStaticIPExchangeAuditEntryMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m OperatorStaticIPExchangeAuditEntryMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m OperatorStaticIPExchangeAuditEntryMultiError) AllErrors() []error { return m }
+
+// OperatorStaticIPExchangeAuditEntryValidationError is the validation error
+// returned by OperatorStaticIPExchangeAuditEntry.Validate if the designated
+// constraints aren't met.
+type OperatorStaticIPExchangeAuditEntryValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e OperatorStaticIPExchangeAuditEntryValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e OperatorStaticIPExchangeAuditEntryValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e OperatorStaticIPExchangeAuditEntryValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e OperatorStaticIPExchangeAuditEntryValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e OperatorStaticIPExchangeAuditEntryValidationError) ErrorName() string {
+	return "OperatorStaticIPExchangeAuditEntryValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e OperatorStaticIPExchangeAuditEntryValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sOperatorStaticIPExchangeAuditEntry.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = OperatorStaticIPExchangeAuditEntryValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = OperatorStaticIPExchangeAuditEntryValidationError{}
+
+// Validate checks the field values on
+// AdjustOperatorStaticIPExchangeQuotaRequest with the rules defined in the
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *AdjustOperatorStaticIPExchangeQuotaRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on
+// AdjustOperatorStaticIPExchangeQuotaRequest with the rules defined in the
+// proto definition for this message. If any rules are violated, the result is
+// a list of violation errors wrapped in
+// AdjustOperatorStaticIPExchangeQuotaRequestMultiError, or nil if none found.
+func (m *AdjustOperatorStaticIPExchangeQuotaRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *AdjustOperatorStaticIPExchangeQuotaRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for TenantId
+
+	// no validation rules for RequestKey
+
+	// no validation rules for Delta
+
+	// no validation rules for Evidence
+
+	if len(errors) > 0 {
+		return AdjustOperatorStaticIPExchangeQuotaRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// AdjustOperatorStaticIPExchangeQuotaRequestMultiError is an error wrapping
+// multiple validation errors returned by
+// AdjustOperatorStaticIPExchangeQuotaRequest.ValidateAll() if the designated
+// constraints aren't met.
+type AdjustOperatorStaticIPExchangeQuotaRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m AdjustOperatorStaticIPExchangeQuotaRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m AdjustOperatorStaticIPExchangeQuotaRequestMultiError) AllErrors() []error { return m }
+
+// AdjustOperatorStaticIPExchangeQuotaRequestValidationError is the validation
+// error returned by AdjustOperatorStaticIPExchangeQuotaRequest.Validate if
+// the designated constraints aren't met.
+type AdjustOperatorStaticIPExchangeQuotaRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e AdjustOperatorStaticIPExchangeQuotaRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e AdjustOperatorStaticIPExchangeQuotaRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e AdjustOperatorStaticIPExchangeQuotaRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e AdjustOperatorStaticIPExchangeQuotaRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e AdjustOperatorStaticIPExchangeQuotaRequestValidationError) ErrorName() string {
+	return "AdjustOperatorStaticIPExchangeQuotaRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e AdjustOperatorStaticIPExchangeQuotaRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sAdjustOperatorStaticIPExchangeQuotaRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = AdjustOperatorStaticIPExchangeQuotaRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = AdjustOperatorStaticIPExchangeQuotaRequestValidationError{}
+
+// Validate checks the field values on ResolveOperatorStaticIPExchangeRequest
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the first error encountered is returned, or nil if
+// there are no violations.
+func (m *ResolveOperatorStaticIPExchangeRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on
+// ResolveOperatorStaticIPExchangeRequest with the rules defined in the proto
+// definition for this message. If any rules are violated, the result is a
+// list of violation errors wrapped in
+// ResolveOperatorStaticIPExchangeRequestMultiError, or nil if none found.
+func (m *ResolveOperatorStaticIPExchangeRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ResolveOperatorStaticIPExchangeRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for TenantId
+
+	// no validation rules for IdempotencyKey
+
+	// no validation rules for RequestKey
+
+	// no validation rules for Outcome
+
+	// no validation rules for Evidence
+
+	// no validation rules for ExpectedIp
+
+	// no validation rules for Correction
+
+	if len(errors) > 0 {
+		return ResolveOperatorStaticIPExchangeRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// ResolveOperatorStaticIPExchangeRequestMultiError is an error wrapping
+// multiple validation errors returned by
+// ResolveOperatorStaticIPExchangeRequest.ValidateAll() if the designated
+// constraints aren't met.
+type ResolveOperatorStaticIPExchangeRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ResolveOperatorStaticIPExchangeRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ResolveOperatorStaticIPExchangeRequestMultiError) AllErrors() []error { return m }
+
+// ResolveOperatorStaticIPExchangeRequestValidationError is the validation
+// error returned by ResolveOperatorStaticIPExchangeRequest.Validate if the
+// designated constraints aren't met.
+type ResolveOperatorStaticIPExchangeRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ResolveOperatorStaticIPExchangeRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ResolveOperatorStaticIPExchangeRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ResolveOperatorStaticIPExchangeRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ResolveOperatorStaticIPExchangeRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ResolveOperatorStaticIPExchangeRequestValidationError) ErrorName() string {
+	return "ResolveOperatorStaticIPExchangeRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ResolveOperatorStaticIPExchangeRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sResolveOperatorStaticIPExchangeRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ResolveOperatorStaticIPExchangeRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ResolveOperatorStaticIPExchangeRequestValidationError{}
+
 // Validate checks the field values on StaticIPConfigRequest with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.

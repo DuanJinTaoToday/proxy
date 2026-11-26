@@ -9,6 +9,9 @@ server:
     - name: ProbeStaticExchanges
       spec: "*/5 * * * * *"
       timeout: 15s
+    - name: ReconcileStaticExchanges
+      spec: "*/5 * * * * *"
+      timeout: 12s
 data:
   repo:
     ip_country_file: /config/ip-country-fixture.csv

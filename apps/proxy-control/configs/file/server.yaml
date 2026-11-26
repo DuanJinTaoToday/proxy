@@ -14,6 +14,9 @@ server:
     - name: ProbeStaticExchanges
       spec: "*/5 * * * * *"
       timeout: 15s
+    - name: ReconcileStaticExchanges
+      spec: "*/5 * * * * *"
+      timeout: 12s
 data:
   repo:
     # 配置数据库前先应用 migrations/ 下的 Goose 迁移。

@@ -31,6 +31,13 @@ type StaticIPExchange struct {
 	ProbeAt                    *time.Time `gorm:"column:probe_at;type:timestamp with time zone" json:"probe_at"`
 	CreatedAt                  *time.Time `gorm:"column:created_at;type:timestamp with time zone;not null;default:clock_timestamp()" json:"created_at"`
 	UpdatedAt                  *time.Time `gorm:"column:updated_at;type:timestamp with time zone;not null;default:clock_timestamp()" json:"updated_at"`
+	UnknownAt                  *time.Time `gorm:"column:unknown_at;type:timestamp with time zone" json:"unknown_at"`
+	NextCheckAt                *time.Time `gorm:"column:next_check_at;type:timestamp with time zone" json:"next_check_at"`
+	DispatchedAt               *time.Time `gorm:"column:dispatched_at;type:timestamp with time zone" json:"dispatched_at"`
+	HistorySnapshot            *string    `gorm:"column:history_snapshot;type:text" json:"history_snapshot"`
+	Resolution                 *string    `gorm:"column:resolution;type:text" json:"resolution"`
+	ResolutionConflict         bool       `gorm:"column:resolution_conflict;type:boolean;not null" json:"resolution_conflict"`
+	Corrected                  bool       `gorm:"column:corrected;type:boolean;not null" json:"corrected"`
 }
 
 // TableName StaticIPExchange's table name

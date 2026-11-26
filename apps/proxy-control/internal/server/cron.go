@@ -62,7 +62,7 @@ func (s *cronServerImpl) addCronTask() error {
 	value := reflect.ValueOf(s.service)
 	for _, cronTask := range s.cronTaskCfg {
 		name := cronTask.GetName()
-		if (name == "MaintainUsage" && !s.modules.Usage) || (name == "ProbeStaticExchanges" && !s.modules.StaticExchangeProbe) {
+		if (name == "MaintainUsage" && !s.modules.Usage) || ((name == "ProbeStaticExchanges" || name == "ReconcileStaticExchanges") && !s.modules.StaticExchangeProbe) {
 			continue
 		}
 		method := value.MethodByName(name)

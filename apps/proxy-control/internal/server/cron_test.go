@@ -91,7 +91,8 @@ func TestCronServerRegistersFileConfiguration(t *testing.T) {
 	bootstrap := app.GetBootstrap()
 	settings := bootstrap.GetServer()
 	tasks := settings.GetCronTasks()
-	if len(tasks) != 2 || tasks[0].GetName() != "MaintainUsage" || tasks[1].GetName() != "ProbeStaticExchanges" {
+	if len(tasks) != 3 || tasks[0].GetName() != "MaintainUsage" || tasks[1].GetName() != "ProbeStaticExchanges" ||
+		tasks[2].GetName() != "ReconcileStaticExchanges" {
 		t.Fatalf("unexpected cron tasks: %v", tasks)
 	}
 	cronService := service.NewCronService(nil, nil)
@@ -99,7 +100,7 @@ func TestCronServerRegistersFileConfiguration(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if tasks := scheduler.GetMapEntryId(); len(tasks) != 1 || tasks["ProbeStaticExchanges"] == 0 {
+	if tasks := scheduler.GetMapEntryId(); len(tasks) != 2 || tasks["ProbeStaticExchanges"] == 0 || tasks["ReconcileStaticExchanges"] == 0 {
 		t.Fatalf("unexpected tasks when usage is disabled: %v", tasks)
 	}
 }

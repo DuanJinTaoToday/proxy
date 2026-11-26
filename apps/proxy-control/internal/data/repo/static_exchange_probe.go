@@ -80,7 +80,8 @@ func (r *WalletRepository) recoverStaleStaticExchanges(ctx context.Context) erro
 		WHERE status='pending' AND updated_at <= statement_timestamp() - (? * interval '1 second')
 		ORDER BY updated_at, tenant_id, idempotency_key LIMIT ? FOR UPDATE SKIP LOCKED
 	)
-	UPDATE static_ip_exchanges x SET status='unknown', updated_at=clock_timestamp()
+	UPDATE static_ip_exchanges x SET status='unknown', updated_at=statement_timestamp(),
+		unknown_at=statement_timestamp(), next_check_at=statement_timestamp()
 	FROM stale s WHERE x.tenant_id=s.tenant_id AND x.idempotency_key=s.idempotency_key AND x.status='pending'`,
 		int(staleExchangeDispatchAge/time.Second), exchangeRecoveriesPerRun).Error
 }

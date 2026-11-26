@@ -40,6 +40,7 @@ try {
   compose(['build', 'console', 'control', 'migrate', 'ipcrown-socks5'])
   run.stage = 'deploy'
   compose(['up', '-d', '--wait', '--wait-timeout', '90', 'db'])
+  const databaseContainer = compose(['ps', '-q', 'db'], true).trim()
   compose(['run', '--rm', 'migrate'])
   // Discover the address of this run's Caddy before starting the control plane.
   compose(['up', '-d', '--no-deps', 'console'])
@@ -69,6 +70,7 @@ try {
     env: {
       ...process.env, VERIFY_URL: run.baseURL, VERIFY_MAILPIT_URL: mailpitURL, VERIFY_OUTPUT: evidence, VERIFY_ID: runId,
       VERIFY_IPCROWN_URL: supplierURL, VERIFY_IPCROWN_SOCKS5_PORTS: JSON.stringify(supplierSOCKS5Ports),
+      VERIFY_DB_CONTAINER: databaseContainer,
     },
   })
   run.result = 'passed'
