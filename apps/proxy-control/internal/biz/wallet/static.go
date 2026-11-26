@@ -58,16 +58,20 @@ type StaticQuote struct {
 }
 
 type StaticAllocation struct {
-	NodeID                int64
-	AllocationID          string
-	SupplierItemID        string
-	OrderID               int64
-	IP                    string
-	Port                  int32
-	Username, Password    string
-	ExpiresAt             time.Time
-	Region, IPType        string
-	PendingRenewalOrderID int64
+	NodeID                 int64
+	AllocationID           string
+	SupplierItemID         string
+	ProxyID                string
+	ShareMode              string
+	ExchangeStatus         string
+	ExchangeIdempotencyKey string
+	OrderID                int64
+	IP                     string
+	Port                   int32
+	Username, Password     string
+	ExpiresAt              time.Time
+	Region, IPType         string
+	PendingRenewalOrderID  int64
 }
 
 type StaticDelivery struct {

@@ -23,6 +23,7 @@ type StaticIPAllocation struct {
 	RemindedExpiry     *time.Time `gorm:"column:reminded_expiry;type:timestamp with time zone" json:"reminded_expiry"`
 	OrderItemPosition  *int32     `gorm:"column:order_item_position;type:integer;not null;default:1" json:"order_item_position"`
 	AllocationID       *string    `gorm:"column:allocation_id;type:text;not null;default:('sa_" json:"allocation_id"`
+	ProxyID            string     `gorm:"column:proxy_id;type:text;not null" json:"proxy_id"`
 }
 
 // TableName StaticIPAllocation's table name

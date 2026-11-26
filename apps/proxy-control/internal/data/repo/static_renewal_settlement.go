@@ -2,6 +2,8 @@ package repo
 
 import (
 	"context"
+	"maps"
+	"slices"
 
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/wallet"
 	"github.com/google/uuid"
@@ -19,6 +21,9 @@ func (r *WalletRepository) saveStaticRenewalOutcomes(ctx context.Context, tenant
 		updated = order
 		if order.Status != wallet.Pending {
 			return nil
+		}
+		if err := lockStaticAllocations(tx, tenant, slices.Collect(maps.Keys(results))); err != nil {
+			return err
 		}
 		var before int64
 		if err := scanWalletRecord(tx.Raw("SELECT available_minor FROM wallets WHERE tenant_id=? FOR UPDATE", tenant), &before); err != nil {

@@ -29,10 +29,10 @@ func (r *WalletRepository) Apply(ctx context.Context, command wallet.Command, fu
 	if command.Action == wallet.Debit && command.Kind == wallet.TrafficPackage && fulfill == nil {
 		return wallet.Entry{}, wallet.ErrInvalid
 	}
-	return r.apply(ctx, command, command, nil, fulfill)
+	return r.apply(ctx, command, command, nil, nil, fulfill)
 }
 
-func (r *WalletRepository) apply(ctx context.Context, command wallet.Command, request any,
+func (r *WalletRepository) apply(ctx context.Context, command wallet.Command, request any, allocationIDs []string,
 	prepare func(*gorm.DB, *wallet.Command) error, fulfill func(*gorm.DB, wallet.Entry) error,
 ) (wallet.Entry, error) {
 	if r.db == nil {
@@ -49,6 +49,11 @@ func (r *WalletRepository) apply(ctx context.Context, command wallet.Command, re
 			var err error
 			order, err = findPurchaseOrder(tx, command.TenantID, command.OrderID, true)
 			if err != nil {
+				return err
+			}
+		}
+		if len(allocationIDs) > 0 {
+			if err := lockStaticAllocations(tx, command.TenantID, allocationIDs); err != nil {
 				return err
 			}
 		}

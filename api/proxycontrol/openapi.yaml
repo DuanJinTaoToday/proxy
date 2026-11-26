@@ -1184,6 +1184,58 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/proxycontrol.v1.Overview'
+    /v1/tenant/static-ip-exchange-quota:
+        get:
+            tags:
+                - WalletService
+            summary: 查询租户的免费换号额度
+            operationId: WalletService_GetStaticIPExchangeQuota
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.StaticIPExchangeQuota'
+    /v1/tenant/static-ip-exchanges:
+        post:
+            tags:
+                - WalletService
+            summary: 为一条已交付独享静态 IP 发起同地区换号
+            operationId: WalletService_ExchangeStaticIP
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.StaticIPExchangeRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.StaticIPExchange'
+    /v1/tenant/static-ip-exchanges/{idempotencyKey}:
+        get:
+            tags:
+                - WalletService
+            summary: 按原请求键查询换号记录
+            operationId: WalletService_GetStaticIPExchange
+            parameters:
+                - name: idempotencyKey
+                  in: path
+                  description: 原换号请求的幂等键。
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.StaticIPExchange'
     /v1/tenant/static-ip-expiry-notices:
         post:
             tags:
@@ -2404,6 +2456,70 @@ components:
                 pendingRenewalOrderId:
                     type: string
                     description: 仍待确认的续费订单编号。无待确认续费时省略。
+                nodeId:
+                    type: string
+                    description: 原采购的节点标识。静态 IP 列表中用来提交同地区换号。
+                shareMode:
+                    type: string
+                    description: 静态 IP 列表中的分配类型，exclusive 或 shared。
+                exchangeStatus:
+                    type: string
+                    description: 最新换号记录状态。没有记录时省略。
+                exchangeIdempotencyKey:
+                    type: string
+                    description: 最新换号记录的查询键。没有记录时省略。
+        proxycontrol.v1.StaticIPExchange:
+            type: object
+            properties:
+                allocationId:
+                    type: string
+                    description: 换号前后相同的平台分配 ID。
+                nodeId:
+                    type: string
+                    description: 换号请求确认的原节点。
+                idempotencyKey:
+                    type: string
+                    description: 可用于查原请求的幂等键。
+                status:
+                    type: string
+                    description: |-
+                        pending 发送中，unknown 待核实，failed 明确失败，activating 生效中，
+                         ready 可使用，support_required 已换号但拨测未通过。
+                createdAt:
+                    type: string
+                    description: 首次受理时间。
+                    format: date-time
+                updatedAt:
+                    type: string
+                    description: 状态最近变更时间。
+                    format: date-time
+        proxycontrol.v1.StaticIPExchangeQuota:
+            type: object
+            properties:
+                remaining:
+                    type: integer
+                    description: 当前可预占的剩余次数。
+                    format: int32
+                reserved:
+                    type: integer
+                    description: 已预占但尚未核销或释放的次数。
+                    format: int32
+                used:
+                    type: integer
+                    description: 已确认成功、计入已用额度的次数。
+                    format: int32
+        proxycontrol.v1.StaticIPExchangeRequest:
+            type: object
+            properties:
+                allocationId:
+                    type: string
+                    description: 分配 ID，使用静态 IP 列表中的平台标识。
+                nodeId:
+                    type: string
+                    description: 请求的节点，必须等于分配的原节点。
+                idempotencyKey:
+                    type: string
+                    description: 租户内唯一的请求键。重试须沿用原键和请求参数。
         proxycontrol.v1.StaticIPExpiryNotices:
             type: object
             properties:

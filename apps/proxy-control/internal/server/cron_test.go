@@ -44,8 +44,8 @@ func TestCronServerReloadsFileWithoutRestart(t *testing.T) {
 	app := conf.NewAppConfig(&conf.Config_Source{File: path})
 	t.Cleanup(func() { _ = app.Close() })
 	runs := make(chan time.Time, 8)
-	cronService := service.NewCronService(usage.New(cronUsageRepo{runs: runs}, nil))
-	scheduler, err := server.NewCronServer(app, cronService)
+	cronService := service.NewCronService(usage.New(cronUsageRepo{runs: runs}, nil), nil)
+	scheduler, err := server.NewCronServer(app, cronService, conf.Modules{Usage: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -91,11 +91,15 @@ func TestCronServerRegistersFileConfiguration(t *testing.T) {
 	bootstrap := app.GetBootstrap()
 	settings := bootstrap.GetServer()
 	tasks := settings.GetCronTasks()
-	if len(tasks) != 1 || tasks[0].GetName() != "MaintainUsage" {
+	if len(tasks) != 2 || tasks[0].GetName() != "MaintainUsage" || tasks[1].GetName() != "ProbeStaticExchanges" {
 		t.Fatalf("unexpected cron tasks: %v", tasks)
 	}
-	cronService := service.NewCronService(nil)
-	if _, err := server.NewCronServer(app, cronService); err != nil {
+	cronService := service.NewCronService(nil, nil)
+	scheduler, err := server.NewCronServer(app, cronService, conf.Modules{StaticExchangeProbe: true})
+	if err != nil {
 		t.Fatal(err)
+	}
+	if tasks := scheduler.GetMapEntryId(); len(tasks) != 1 || tasks["ProbeStaticExchanges"] == 0 {
+		t.Fatalf("unexpected tasks when usage is disabled: %v", tasks)
 	}
 }

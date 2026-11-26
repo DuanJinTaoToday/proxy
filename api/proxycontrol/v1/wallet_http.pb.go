@@ -18,11 +18,14 @@ var _ = new(context.Context)
 const _ = http.SupportPackageIsVersion3
 
 const OperationWalletServiceClaimStaticIPExpiryNotices = "/proxycontrol.v1.WalletService/ClaimStaticIPExpiryNotices"
+const OperationWalletServiceExchangeStaticIP = "/proxycontrol.v1.WalletService/ExchangeStaticIP"
 const OperationWalletServiceFindTenants = "/proxycontrol.v1.WalletService/FindTenants"
 const OperationWalletServiceGetCustomerPurchaseOrder = "/proxycontrol.v1.WalletService/GetCustomerPurchaseOrder"
 const OperationWalletServiceGetCustomerWallet = "/proxycontrol.v1.WalletService/GetCustomerWallet"
 const OperationWalletServiceGetOperatorPurchaseOrder = "/proxycontrol.v1.WalletService/GetOperatorPurchaseOrder"
 const OperationWalletServiceGetStaticIPConfig = "/proxycontrol.v1.WalletService/GetStaticIPConfig"
+const OperationWalletServiceGetStaticIPExchange = "/proxycontrol.v1.WalletService/GetStaticIPExchange"
+const OperationWalletServiceGetStaticIPExchangeQuota = "/proxycontrol.v1.WalletService/GetStaticIPExchangeQuota"
 const OperationWalletServiceGetTenant = "/proxycontrol.v1.WalletService/GetTenant"
 const OperationWalletServiceListCustomerPurchaseOrders = "/proxycontrol.v1.WalletService/ListCustomerPurchaseOrders"
 const OperationWalletServiceListCustomerWalletEntries = "/proxycontrol.v1.WalletService/ListCustomerWalletEntries"
@@ -45,11 +48,14 @@ const OperationWalletServiceResolveStaticRenewal = "/proxycontrol.v1.WalletServi
 
 type WalletServiceHTTPServer interface {
 	ClaimStaticIPExpiryNotices(context.Context, *BaseRequest) (*StaticIPExpiryNotices, error)
+	ExchangeStaticIP(context.Context, *StaticIPExchangeRequest) (*StaticIPExchange, error)
 	FindTenants(context.Context, *FindWalletTenantRequest) (*WalletTenant, error)
 	GetCustomerPurchaseOrder(context.Context, *CustomerPurchaseOrderRequest) (*PurchaseOrder, error)
 	GetCustomerWallet(context.Context, *BaseRequest) (*WalletTenant, error)
 	GetOperatorPurchaseOrder(context.Context, *OperatorPurchaseOrderRequest) (*PurchaseOrder, error)
 	GetStaticIPConfig(context.Context, *StaticIPConfigRequest) (*StaticIP, error)
+	GetStaticIPExchange(context.Context, *StaticIPExchangeLookup) (*StaticIPExchange, error)
+	GetStaticIPExchangeQuota(context.Context, *BaseRequest) (*StaticIPExchangeQuota, error)
 	GetTenant(context.Context, *WalletTenantRequest) (*WalletTenant, error)
 	ListCustomerPurchaseOrders(context.Context, *CustomerPurchaseOrdersRequest) (*PurchaseOrders, error)
 	ListCustomerWalletEntries(context.Context, *CustomerWalletEntriesRequest) (*WalletEntries, error)
@@ -73,6 +79,9 @@ type WalletServiceHTTPServer interface {
 
 func RegisterWalletServiceHTTPServer(s *http.Server, srv WalletServiceHTTPServer) {
 	r := s.Route("/")
+	r.Handle("POST", "/v1/tenant/static-ip-exchanges", _WalletService_ExchangeStaticIP0_HTTP_Handler(srv))
+	r.Handle("GET", "/v1/tenant/static-ip-exchanges/{idempotency_key}", _WalletService_GetStaticIPExchange0_HTTP_Handler(srv))
+	r.Handle("GET", "/v1/tenant/static-ip-exchange-quota", _WalletService_GetStaticIPExchangeQuota0_HTTP_Handler(srv))
 	r.Handle("POST", "/v1/tenant/static-renewal-terms", _WalletService_ListStaticRenewalTerms0_HTTP_Handler(srv))
 	r.Handle("POST", "/v1/tenant/static-renewal-quotes", _WalletService_QuoteStaticRenewal0_HTTP_Handler(srv))
 	r.Handle("POST", "/v1/tenant/static-renewal-orders", _WalletService_RenewStatic0_HTTP_Handler(srv))
@@ -98,6 +107,66 @@ func RegisterWalletServiceHTTPServer(s *http.Server, srv WalletServiceHTTPServer
 	r.Handle("GET", "/v1/tenant/orders", _WalletService_ListCustomerPurchaseOrders0_HTTP_Handler(srv))
 	r.Handle("GET", "/v1/operations/tenants/{tenant_id}/orders/{order_id}", _WalletService_GetOperatorPurchaseOrder0_HTTP_Handler(srv))
 	r.Handle("GET", "/v1/tenant/orders/{order_id}", _WalletService_GetCustomerPurchaseOrder0_HTTP_Handler(srv))
+}
+
+func _WalletService_ExchangeStaticIP0_HTTP_Handler(srv WalletServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in StaticIPExchangeRequest
+		if err := ctx.Bind(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationWalletServiceExchangeStaticIP)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.ExchangeStaticIP(ctx, req.(*StaticIPExchangeRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*StaticIPExchange)
+		return ctx.Result(200, reply)
+	}
+}
+
+func _WalletService_GetStaticIPExchange0_HTTP_Handler(srv WalletServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in StaticIPExchangeLookup
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		if err := ctx.BindVars(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationWalletServiceGetStaticIPExchange)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.GetStaticIPExchange(ctx, req.(*StaticIPExchangeLookup))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*StaticIPExchange)
+		return ctx.Result(200, reply)
+	}
+}
+
+func _WalletService_GetStaticIPExchangeQuota0_HTTP_Handler(srv WalletServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in BaseRequest
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationWalletServiceGetStaticIPExchangeQuota)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.GetStaticIPExchangeQuota(ctx, req.(*BaseRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*StaticIPExchangeQuota)
+		return ctx.Result(200, reply)
+	}
 }
 
 func _WalletService_ListStaticRenewalTerms0_HTTP_Handler(srv WalletServiceHTTPServer) func(ctx http.Context) error {
@@ -610,11 +679,14 @@ func _WalletService_GetCustomerPurchaseOrder0_HTTP_Handler(srv WalletServiceHTTP
 
 type WalletServiceHTTPClient interface {
 	ClaimStaticIPExpiryNotices(ctx context.Context, req *BaseRequest, opts ...http.CallOption) (rsp *StaticIPExpiryNotices, err error)
+	ExchangeStaticIP(ctx context.Context, req *StaticIPExchangeRequest, opts ...http.CallOption) (rsp *StaticIPExchange, err error)
 	FindTenants(ctx context.Context, req *FindWalletTenantRequest, opts ...http.CallOption) (rsp *WalletTenant, err error)
 	GetCustomerPurchaseOrder(ctx context.Context, req *CustomerPurchaseOrderRequest, opts ...http.CallOption) (rsp *PurchaseOrder, err error)
 	GetCustomerWallet(ctx context.Context, req *BaseRequest, opts ...http.CallOption) (rsp *WalletTenant, err error)
 	GetOperatorPurchaseOrder(ctx context.Context, req *OperatorPurchaseOrderRequest, opts ...http.CallOption) (rsp *PurchaseOrder, err error)
 	GetStaticIPConfig(ctx context.Context, req *StaticIPConfigRequest, opts ...http.CallOption) (rsp *StaticIP, err error)
+	GetStaticIPExchange(ctx context.Context, req *StaticIPExchangeLookup, opts ...http.CallOption) (rsp *StaticIPExchange, err error)
+	GetStaticIPExchangeQuota(ctx context.Context, req *BaseRequest, opts ...http.CallOption) (rsp *StaticIPExchangeQuota, err error)
 	GetTenant(ctx context.Context, req *WalletTenantRequest, opts ...http.CallOption) (rsp *WalletTenant, err error)
 	ListCustomerPurchaseOrders(ctx context.Context, req *CustomerPurchaseOrdersRequest, opts ...http.CallOption) (rsp *PurchaseOrders, err error)
 	ListCustomerWalletEntries(ctx context.Context, req *CustomerWalletEntriesRequest, opts ...http.CallOption) (rsp *WalletEntries, err error)
@@ -652,6 +724,23 @@ func (c *WalletServiceHTTPClientImpl) ClaimStaticIPExpiryNotices(ctx context.Con
 		http.Accept("application/protojson"),
 		http.ContentType("application/protojson"),
 		http.Operation(OperationWalletServiceClaimStaticIPExpiryNotices),
+		http.PathTemplate(pattern),
+	}, opts...)
+	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (c *WalletServiceHTTPClientImpl) ExchangeStaticIP(ctx context.Context, in *StaticIPExchangeRequest, opts ...http.CallOption) (*StaticIPExchange, error) {
+	var out StaticIPExchange
+	pattern := "/v1/tenant/static-ip-exchanges"
+	path := http.BuildPath(pattern, in)
+	opts = append([]http.CallOption{
+		http.Accept("application/protojson"),
+		http.ContentType("application/protojson"),
+		http.Operation(OperationWalletServiceExchangeStaticIP),
 		http.PathTemplate(pattern),
 	}, opts...)
 	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
@@ -732,6 +821,38 @@ func (c *WalletServiceHTTPClientImpl) GetStaticIPConfig(ctx context.Context, in 
 	opts = append([]http.CallOption{
 		http.Accept("application/protojson"),
 		http.Operation(OperationWalletServiceGetStaticIPConfig),
+		http.PathTemplate(pattern),
+	}, opts...)
+	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (c *WalletServiceHTTPClientImpl) GetStaticIPExchange(ctx context.Context, in *StaticIPExchangeLookup, opts ...http.CallOption) (*StaticIPExchange, error) {
+	var out StaticIPExchange
+	pattern := "/v1/tenant/static-ip-exchanges/{idempotency_key}"
+	path := http.BuildPath(pattern, in, http.WithQueryParams())
+	opts = append([]http.CallOption{
+		http.Accept("application/protojson"),
+		http.Operation(OperationWalletServiceGetStaticIPExchange),
+		http.PathTemplate(pattern),
+	}, opts...)
+	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (c *WalletServiceHTTPClientImpl) GetStaticIPExchangeQuota(ctx context.Context, in *BaseRequest, opts ...http.CallOption) (*StaticIPExchangeQuota, error) {
+	var out StaticIPExchangeQuota
+	pattern := "/v1/tenant/static-ip-exchange-quota"
+	path := http.BuildPath(pattern, in, http.WithQueryParams())
+	opts = append([]http.CallOption{
+		http.Accept("application/protojson"),
+		http.Operation(OperationWalletServiceGetStaticIPExchangeQuota),
 		http.PathTemplate(pattern),
 	}, opts...)
 	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)

@@ -17,7 +17,7 @@ import (
 type staticRenewalAllocation struct {
 	AllocationID, SupplierItemID, SupplierOrderID, IP, OriginalOffer string
 	ExpiresAt                                                        time.Time
-	Pending                                                          bool
+	Pending, ExchangePending                                         bool
 }
 
 type staticRenewalProduct struct {
@@ -103,7 +103,7 @@ func (r *WalletRepository) renewalPrices(ctx context.Context, tenant string, ids
 	if r.static == nil || r.staticCipher == nil {
 		return nil, nil, wallet.ErrStaticUnavailable
 	}
-	allocations, err := renewalAllocations(r.db.WithContext(ctx), tenant, ids, false)
+	allocations, err := renewalAllocations(r.db.WithContext(ctx), tenant, ids)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -141,16 +141,15 @@ func (r *WalletRepository) renewalPrices(ctx context.Context, tenant string, ids
 	return allocations, prices, nil
 }
 
-func renewalAllocations(tx *gorm.DB, tenant string, ids []string, lock bool) ([]staticRenewalAllocation, error) {
+func renewalAllocations(tx *gorm.DB, tenant string, ids []string) ([]staticRenewalAllocation, error) {
 	query := `SELECT a.allocation_id, a.supplier_item_id, p.supplier_order_id, a.ip, a.expires_at, i.reference AS original_offer,
-        EXISTS (SELECT 1 FROM static_renewal_items r WHERE r.tenant_id=a.tenant_id AND r.allocation_id=a.allocation_id AND r.outcome='pending') AS pending
+        EXISTS (SELECT 1 FROM static_renewal_items r WHERE r.tenant_id=a.tenant_id AND r.allocation_id=a.allocation_id AND r.outcome='pending') AS pending,
+        EXISTS (SELECT 1 FROM static_ip_exchanges x WHERE x.tenant_id=a.tenant_id AND x.allocation_id=a.allocation_id
+            AND x.status IN ('pending', 'unknown')) AS exchange_pending
         FROM static_ip_allocations a
         JOIN static_purchases p ON p.tenant_id=a.tenant_id AND p.order_id=a.order_id
         JOIN order_items i ON i.tenant_id=a.tenant_id AND i.order_id=a.order_id AND i.position=a.order_item_position
         WHERE a.tenant_id=? AND a.allocation_id IN ? ORDER BY a.allocation_id`
-	if lock {
-		query += " FOR UPDATE OF a"
-	}
 	var rows []staticRenewalAllocation
 	if err := tx.Raw(query, tenant, ids).Scan(&rows).Error; err != nil {
 		return nil, err
@@ -160,6 +159,9 @@ func renewalAllocations(tx *gorm.DB, tenant string, ids []string, lock bool) ([]
 	}
 	now := time.Now()
 	for _, row := range rows {
+		if row.ExchangePending {
+			return nil, wallet.ErrStaticExchangePending
+		}
 		if row.Pending {
 			return nil, wallet.ErrStaticRenewalPending
 		}
@@ -171,6 +173,19 @@ func renewalAllocations(tx *gorm.DB, tenant string, ids []string, lock bool) ([]
 		}
 	}
 	return rows, nil
+}
+
+func lockStaticAllocations(tx *gorm.DB, tenant string, ids []string) error {
+	var locked []string
+	result := tx.Raw(`SELECT allocation_id FROM static_ip_allocations
+		WHERE tenant_id=? AND allocation_id IN ? ORDER BY allocation_id FOR UPDATE`, tenant, ids).Scan(&locked)
+	if result.Error != nil {
+		return result.Error
+	}
+	if len(locked) != len(ids) {
+		return wallet.ErrMissing
+	}
+	return nil
 }
 
 func (r *WalletRepository) confirmRenewalQuote(tenant string, p wallet.StaticRenewalRequest) (wallet.StaticRenewalQuote, error) {
@@ -238,8 +253,8 @@ func (r *WalletRepository) RenewStatic(ctx context.Context, tenant string, p wal
 			TermDays: line.TermDays, UnitMinor: line.UnitMinor, Quantity: 1})
 	}
 	var accepted wallet.Order
-	entry, err := r.apply(ctx, command, p, func(tx *gorm.DB, _ *wallet.Command) error {
-		current, err := renewalAllocations(tx, tenant, p.IDs, true)
+	entry, err := r.apply(ctx, command, p, p.IDs, func(tx *gorm.DB, _ *wallet.Command) error {
+		current, err := renewalAllocations(tx, tenant, p.IDs)
 		if err != nil {
 			return err
 		}

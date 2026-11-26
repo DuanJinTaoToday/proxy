@@ -11,6 +11,9 @@ server:
       spec:
       timeout:
 
+    - name: ProbeStaticExchanges
+      spec: "*/5 * * * * *"
+      timeout: 15s
 data:
   repo:
     # 配置数据库前先应用 migrations/ 下的 Goose 迁移。
@@ -30,6 +33,8 @@ biz:
     gateway_port:
     explicit_sidtime:
   ipcrown:
+    # 填写可经供应商 SOCKS5 出口访问的受控目标 host:port，填写后开放换号提交。
+    exchange_probe_address:
     base_url:
     partner_id:
     api_secret:

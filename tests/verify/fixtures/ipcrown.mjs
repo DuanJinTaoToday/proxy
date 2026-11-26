@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto'
+import { lookup } from 'node:dns/promises'
 import { createServer } from 'node:http'
 
 const exclusive = 200001
@@ -11,6 +12,9 @@ const allocations = new Map()
 const orders = new Map()
 const pendingRenewals = new Map()
 const delayedRenewalIDs = new Set()
+const renewalCalls = new Map()
+const exchangeCalls = new Map()
+const exchangeOutcomes = new Map()
 const sequenceByNode = new Map()
 const day = 24 * 60 * 60 * 1000
 
@@ -91,6 +95,7 @@ function renew({ cid, ids, time }) {
   if (ids.length === 1 && ids[0] === 20102) return { code: -4, data: [] }
   const results = []
   for (const id of ids) {
+    renewalCalls.set(id, (renewalCalls.get(id) ?? 0) + 1)
     const allocation = allocations.get(id)
     const original = Date.parse(allocation.stoptime.replace(' ', 'T') + '+08:00')
     const stoptime = supplierTime(original + termDays.get(time) * day)
@@ -105,6 +110,26 @@ function renew({ cid, ids, time }) {
     results.push({ id, stoptime })
   }
   return { code: 0, data: results }
+}
+
+async function exchange({ type, ids, list, isrand }, response) {
+  const item = Array.isArray(ids) && ids.length === 1 ? allocations.get(ids[0]) : undefined
+  if (!item || item.nid === 301 || type !== 'same' || isrand !== 4 ||
+      !Array.isArray(list) || list.length !== 1 || list[0].nid !== item.nid || list[0].number !== 1) {
+    return json(response, 400, { error: 'Expected one original detail ID and its matching node' })
+  }
+  exchangeCalls.set(item.id, (exchangeCalls.get(item.id) ?? 0) + 1)
+  const outcome = exchangeOutcomes.get(item.id)
+  if (outcome === 'failed') return json(response, 200, { code: -5, data: [] })
+  const ports = { ready: 1081, unknown: 1082, unreachable: 65000 }
+  if (!Object.hasOwn(ports, outcome)) return json(response, 400, { error: 'Expected configured exchange outcome' })
+  const { address } = await lookup('ipcrown-socks5', { family: 4 })
+  Object.assign(item, { ip: address, port: ports[outcome], proxy_id: 1000000 + item.id })
+  if (outcome === 'unknown') {
+    response.destroy()
+    return
+  }
+  return json(response, 200, { code: 0, data: [{ ...item, proxyid: item.proxy_id }] })
 }
 
 function json(response, status, data) {
@@ -165,6 +190,15 @@ async function handle(request, response) {
   }
   const findAllocation = ip => [...allocations.values()].find(item => item.ip === ip)
 
+  if (path === '/fixture/exchanges') {
+    const item = body.id === undefined ? findAllocation(body.ip) : allocations.get(body.id)
+    if (!item || (body.outcome !== undefined && !['ready', 'failed', 'unknown', 'unreachable'].includes(body.outcome))) {
+      return json(response, 400, { error: 'Expected a fixture allocation and optional exchange outcome' })
+    }
+    if (body.outcome !== undefined) exchangeOutcomes.set(item.id, body.outcome)
+    return json(response, 200, { id: item.id, calls: exchangeCalls.get(item.id) ?? 0, renewals: renewalCalls.get(item.id) ?? 0 })
+  }
+
   if (path === '/fixture/renewals/confirm') {
     const ids = body.ip === undefined ? [...pendingRenewals.keys()] : [findAllocation(body.ip)?.id]
     for (const id of ids) {
@@ -205,6 +239,8 @@ async function handle(request, response) {
     }
     case '/open/api/order/renew':
       return json(response, 200, renew(params))
+    case '/open/api/order/exchange':
+      return exchange(params, response)
     default:
       return json(response, 404, { error: 'Unknown fixture route' })
   }

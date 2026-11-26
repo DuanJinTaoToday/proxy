@@ -30,6 +30,8 @@ message IPCrown {
   string partner_id = 2;
   string api_secret = 3;
   string password_key = 4;
+  // For static IP exchanges, the deployment-controlled SOCKS5 probe host and port.
+  string exchange_probe_address = 5;
 }
 
 message EmailAuth {

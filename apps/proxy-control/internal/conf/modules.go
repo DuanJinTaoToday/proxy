@@ -1,11 +1,14 @@
 package conf
 
 type Modules struct {
-	ProxyAuth bool
-	Usage     bool
+	ProxyAuth           bool
+	Usage               bool
+	StaticExchangeProbe bool
 }
 
-func NewModules(settings *Data) Modules {
+func NewModules(settings *Data, biz *Biz) Modules {
 	repo := settings.GetRepo()
-	return Modules{ProxyAuth: repo.GetProxyAuth() != nil, Usage: repo.GetUsage() != nil}
+	modules := Modules{ProxyAuth: repo.GetProxyAuth() != nil, Usage: repo.GetUsage() != nil}
+	modules.StaticExchangeProbe = (modules.ProxyAuth || modules.Usage) && biz.GetIpcrown().GetPasswordKey() != ""
+	return modules
 }
