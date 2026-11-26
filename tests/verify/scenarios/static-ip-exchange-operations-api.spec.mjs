@@ -101,9 +101,9 @@ async function snapshot(page, info, f, evidence) {
   await info.attach('readonly-operations-audit', { body: await page.screenshot(), contentType: 'image/png' })
 }
 
-test('运营调额保留预占，待核实满十五分钟入队后通过皇冠两条只读证据核销一次', async (args, info) => {
+test('运营调额保留预占，待核实满十五分钟入队后通过皇冠两条只读证据核销一次', async ({ page, request, playwright, baseURL }, info) => {
   test.setTimeout(100000)
-  const f = await setup(args, 'exchange-ops-proof@example.test')
+  const f = await setup({ request, playwright, baseURL }, 'exchange-ops-proof@example.test')
   try {
     const allocation = await f.buy('101')
     const supplier = await f.fixture('exchanges', { ip: allocation.ip, outcome: 'unknown-tracked', history_after_write: 'hidden' })
@@ -194,15 +194,15 @@ test('运营调额保留预占，待核实满十五分钟入队后通过皇冠�
     const noBaselineAudit = (await f.audit()).filter(entry => entry.idempotency_key === unresolved.idempotency_key)
     expect(noBaselineAudit.map(entry => entry.kind)).toEqual(['correction', 'conflict', 'manual', 'observation'])
     expect(await f.quota()).toEqual({ remaining: 0, reserved: 0, used: 2 })
-    await snapshot(args.page, info, f, { quotaBefore, adjusted, queued, finalQuota, audit, noBaselineAudit })
+    await snapshot(page, info, f, { quotaBefore, adjusted, queued, finalQuota, audit, noBaselineAudit })
   } finally {
     await f.close()
   }
 })
 
-test('人工结案与自动核对只结一次，迟到的历史结果更正次数且保留新配置和当前预占', async (args, info) => {
+test('人工结案与自动核对只结一次，迟到的历史结果更正次数且保留新配置和当前预占', async ({ page, request, playwright, baseURL }, info) => {
   test.setTimeout(100000)
-  const f = await setup(args, 'exchange-ops-closure@example.test')
+  const f = await setup({ request, playwright, baseURL }, 'exchange-ops-closure@example.test')
   try {
     await f.adjustment(-7).then(json)
     const first = await f.buy('111')
@@ -260,7 +260,7 @@ test('人工结案与自动核对只结一次，迟到的历史结果更正次�
     expect(oldAudit.map(entry => entry.kind)).toEqual(['correction', 'conflict', 'manual'])
     expect(oldAudit[0]).toMatchObject({ actor_id: expect.any(String), before: { used: 2, reserved: 1 }, after: { used: 3, reserved: 1 } })
     expect(oldAudit[1]).toMatchObject({ outcome: 'executed', observed_ip: lateIP, supplier_record_id: expect.any(String) })
-    await snapshot(args.page, info, f, { beforeRelease, beforeCorrection, afterCorrection, oldAudit, raceAudit: audit.filter(entry => entry.idempotency_key === racing.idempotency_key) })
+    await snapshot(page, info, f, { beforeRelease, beforeCorrection, afterCorrection, oldAudit, raceAudit: audit.filter(entry => entry.idempotency_key === racing.idempotency_key) })
   } finally {
     await f.close()
   }
