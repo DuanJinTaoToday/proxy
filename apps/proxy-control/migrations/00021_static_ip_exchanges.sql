@@ -37,6 +37,8 @@ CREATE TABLE static_ip_exchanges (
 CREATE UNIQUE INDEX static_ip_exchanges_in_progress ON static_ip_exchanges (allocation_id)
     WHERE status IN ('pending', 'unknown', 'activating');
 CREATE INDEX static_ip_exchanges_by_allocation ON static_ip_exchanges (allocation_id, created_at DESC);
+CREATE INDEX static_ip_exchanges_pending_recovery ON static_ip_exchanges (updated_at, tenant_id, idempotency_key)
+    WHERE status = 'pending';
 CREATE INDEX static_ip_exchanges_probe_due ON static_ip_exchanges (probe_at)
     WHERE status = 'activating';
 

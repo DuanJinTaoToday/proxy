@@ -12,6 +12,8 @@ import (
 )
 
 const (
+	staleExchangeDispatchAge = 60 * time.Second
+	exchangeRecoveriesPerRun = 64
 	maxExchangeProbeAttempts = 4
 	exchangeProbeDelay       = 15 * time.Second
 	exchangeProbeTimeout     = 3 * time.Second
@@ -26,13 +28,19 @@ type exchangeProbe struct {
 }
 
 func (r *WalletRepository) ProbeStaticExchanges(ctx context.Context) error {
-	if r.db == nil || r.staticCipher == nil || r.staticExchangeProbeAddress == "" {
+	if r.db == nil {
 		return nil
 	}
 	if !r.staticExchangeProbing.TryLock() {
 		return nil
 	}
 	defer r.staticExchangeProbing.Unlock()
+	if err := r.recoverStaleStaticExchanges(ctx); err != nil {
+		return err
+	}
+	if r.staticCipher == nil || r.staticExchangeProbeAddress == "" {
+		return nil
+	}
 	for range exchangeProbesPerRun {
 		if err := ctx.Err(); err != nil {
 			return err
@@ -63,6 +71,18 @@ func (r *WalletRepository) ProbeStaticExchanges(ctx context.Context) error {
 		}
 	}
 	return nil
+}
+
+func (r *WalletRepository) recoverStaleStaticExchanges(ctx context.Context) error {
+	// Dispatch and receipt persistence use separate bounded contexts. Leave their normal window intact.
+	return r.db.WithContext(ctx).Exec(`WITH stale AS (
+		SELECT tenant_id, idempotency_key FROM static_ip_exchanges
+		WHERE status='pending' AND updated_at <= statement_timestamp() - (? * interval '1 second')
+		ORDER BY updated_at, tenant_id, idempotency_key LIMIT ? FOR UPDATE SKIP LOCKED
+	)
+	UPDATE static_ip_exchanges x SET status='unknown', updated_at=clock_timestamp()
+	FROM stale s WHERE x.tenant_id=s.tenant_id AND x.idempotency_key=s.idempotency_key AND x.status='pending'`,
+		int(staleExchangeDispatchAge/time.Second), exchangeRecoveriesPerRun).Error
 }
 
 func (r *WalletRepository) claimExchangeProbe(ctx context.Context) (exchangeProbe, error) {

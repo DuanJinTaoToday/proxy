@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -383,5 +384,132 @@ func TestStaticExchangeActivatingConfigRenewalAndPartialSettlement(t *testing.T)
 	readProto(t, req("GET", "/v1/tenant/static-ip-exchange-quota", ""), &quota)
 	if quota.GetUsed() != 1 || quota.GetReserved() != 0 || quota.GetRemaining() != 9 {
 		t.Fatalf("renewal and purchase reconciliation affected exchange quota: %v", &quota)
+	}
+}
+
+func TestStaticExchangeRecoversStaleDispatchWithoutResending(t *testing.T) {
+	const credentials = `{"email":"exchange-recovery@example.test","password":"static-exchange-password"}`
+	const route = "/v1/tenant/static-ip-exchanges"
+	const original = `{"id":61,"nid":3,"proxyid":600,"ip":"192.0.2.61","port":43000,"p_user":"fixture","p_pass":"fixture","stoptime":"2099-01-01 12:00:00"}`
+	const replacement = `{"id":61,"nid":3,"proxyid":601,"ip":"192.0.2.62","port":43000,"p_user":"fixture","p_pass":"fixture","stoptime":"2099-01-01 12:00:00"}`
+	var calls atomic.Int32
+	dispatching, release := make(chan struct{}, 1), make(chan struct{})
+	supplier := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		switch req.URL.Path {
+		case "/open/api/nodes-and-continents":
+			_, _ = io.WriteString(w, `{"code":0,"data":{"nodes":[{"id":3,"title":"Fixture","max":10,"prices":[{"price_type":"yp1","buytime":1,"price":10}]}]}}`)
+		case "/open/api/order/place":
+			_, _ = fmt.Fprintf(w, `{"code":0,"data":{"order_id":160,"list":[%s]}}`, original)
+		case "/open/api/order/exchange":
+			if calls.Add(1) == 1 {
+				dispatching <- struct{}{}
+			}
+			select {
+			case <-release:
+				_, _ = fmt.Fprintf(w, `{"code":0,"data":[%s]}`, replacement)
+			case <-req.Context().Done():
+			}
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer supplier.Close()
+	defer func() {
+		select {
+		case <-release:
+		default:
+			close(release)
+		}
+	}()
+	f := setupUsageFixture(t, true, nil, "probe.example.test:80", ipcrown.New(supplier.URL, "fixture", "fixture"))
+	execSQL(t, f.db, "INSERT INTO operators (id, username, password_hash) VALUES ('cashier','cashier',?)", testfixture.PasswordHash)
+	execSQL(t, f.db, "INSERT INTO operator_permissions (operator_id, permission) VALUES ('cashier','manage_billing')")
+	cashier := testfixture.Login(t, f.http, "cashier")
+	var tenant v1.TenantAccess
+	readProto(t, registerWithEmail(t, f, credentials), &tenant)
+	var login v1.LoginResponse
+	readProto(t, testfixture.Request(f.http, "POST", "/v1/access/login", credentials, ""), &login)
+	fundCatalogWallet(t, f.db, tenant.GetTenantId())
+	testfixture.AssertStatus(t, testfixture.Request(f.http, "PUT", "/v1/operations/product-sales/static",
+		`{"open":true,"quote_ready":true,"acceptance_evidence":"controlled fixture"}`, cashier), http.StatusOK, "")
+	req := func(method, path, body string) *httptest.ResponseRecorder {
+		return testfixture.Request(f.http, method, path, body, login.GetAccessToken())
+	}
+
+	var quote v1.StaticPurchaseQuote
+	readProto(t, req("POST", "/v1/tenant/static-purchase-quotes", `{"node_id":"3","term":"yp1","quantity":1}`), &quote)
+	var purchase v1.PurchaseOrder
+	readProto(t, req("POST", "/v1/tenant/static-orders", fmt.Sprintf(
+		`{"node_id":"3","term":"yp1","quantity":1,"unit_minor":"1000","request_key":"recovery-purchase","confirmation_token":%q}`,
+		quote.GetConfirmationToken())), &purchase)
+	if purchase.GetStatus() != "succeeded" {
+		t.Fatalf("could not purchase fixture allocation: %v", &purchase)
+	}
+	var allocations v1.StaticIPs
+	readProto(t, req("GET", "/v1/tenant/static-ips", ""), &allocations)
+	if len(allocations.GetAllocations()) != 1 {
+		t.Fatalf("missing fixture allocation: %v", &allocations)
+	}
+	id := allocations.GetAllocations()[0].GetAllocationId()
+	const key = "interrupted"
+	body := fmt.Sprintf(`{"allocation_id":%q,"node_id":"3","idempotency_key":%q}`, id, key)
+	submitted := make(chan *httptest.ResponseRecorder, 1)
+	go func() { submitted <- req("POST", route, body) }()
+	select {
+	case <-dispatching:
+	case <-time.After(5 * time.Second):
+		t.Fatal("exchange did not dispatch")
+	}
+
+	runCron := func() {
+		t.Helper()
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := f.cron.ProbeStaticExchanges(ctx); err != nil {
+			t.Fatal(err)
+		}
+	}
+	runCron()
+	var pending v1.StaticIPExchange
+	readProto(t, req("GET", route+"/"+key, ""), &pending)
+	if pending.GetStatus() != "pending" {
+		t.Fatalf("fresh dispatch state = %s", pending.GetStatus())
+	}
+
+	execSQL(t, f.db, "UPDATE static_ip_exchanges SET updated_at=clock_timestamp()-interval '65 seconds' WHERE tenant_id=? AND idempotency_key=?",
+		tenant.GetTenantId(), key)
+	runCron()
+	var recovered v1.StaticIPExchange
+	readProto(t, req("GET", route+"/"+key, ""), &recovered)
+	if recovered.GetStatus() != "unknown" || !recovered.GetUpdatedAt().AsTime().After(pending.GetUpdatedAt().AsTime()) {
+		t.Fatalf("stale dispatch should become unknown at recovery time: %v", &recovered)
+	}
+	close(release)
+	select {
+	case late := <-submitted:
+		var reply v1.StaticIPExchange
+		readProto(t, late, &reply)
+		if reply.GetStatus() != "unknown" {
+			t.Fatalf("late supplier success changed recovered outcome: %v", &reply)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("late exchange response never returned")
+	}
+	runCron()
+
+	var replay v1.StaticIPExchange
+	readProto(t, req("POST", route, body), &replay)
+	if replay.GetStatus() != "unknown" || !replay.GetUpdatedAt().AsTime().Equal(recovered.GetUpdatedAt().AsTime()) {
+		t.Fatalf("replay changed recovered operation: %v", &replay)
+	}
+	testfixture.AssertStatus(t, req("POST", route, fmt.Sprintf(`{"allocation_id":%q,"node_id":"3","idempotency_key":"fresh-key"}`, id)),
+		http.StatusConflict, "STATIC_EXCHANGE_PENDING")
+	var quota v1.StaticIPExchangeQuota
+	readProto(t, req("GET", "/v1/tenant/static-ip-exchange-quota", ""), &quota)
+	var current v1.StaticIP
+	readProto(t, req("GET", "/v1/tenant/static-ips/"+id+"/proxy-config", ""), &current)
+	if quota.GetRemaining() != 9 || quota.GetReserved() != 1 || quota.GetUsed() != 0 ||
+		calls.Load() != 1 || current.GetIp() != "192.0.2.61" {
+		t.Fatalf("recovery or late response changed reservation or current IP: quota %v, calls %d, IP %s", &quota, calls.Load(), current.GetIp())
 	}
 }

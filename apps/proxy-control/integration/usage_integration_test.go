@@ -37,6 +37,7 @@ type usageFixture struct {
 	db      *gorm.DB
 	http    http.Handler
 	mailbox testMailbox
+	cron    *httpservice.CronService
 }
 
 func setupUsage(t *testing.T, suppliers ...wallet.StaticSupplier) usageFixture {
@@ -137,7 +138,7 @@ func setupUsageFixture(t *testing.T, enableSubaccounts bool, seedLegacyAccounts 
 	}
 	server.RegisterSubaccounts(handler, httpservice.NewSubaccounts(subs))
 	server.RegisterOverview(handler, httpservice.NewOverview(overview.New(walletService, service, productService, subs)))
-	return usageFixture{db: db, http: handler, mailbox: mailbox}
+	return usageFixture{db: db, http: handler, mailbox: mailbox, cron: httpservice.NewCronService(service, walletService)}
 }
 
 func connect(t *testing.T, dsn string) *gorm.DB {
