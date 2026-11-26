@@ -40,10 +40,10 @@ export async function receivedLink(email, subject, baseURL) {
   return link
 }
 
-export async function registerEmail(request, { email, password = 'proxy-local-test' }) {
+export async function registerEmail(request, { email, password = 'proxy-local-test', invite }) {
   const previous = (await messagesTo(email, registrationSubject)).map(message => message.ID)
   const response = await request.post('/v1/access/register-code', { data: { email } })
   expect(response.status()).toBe(200)
   const verification_code = await receivedCode(email, previous)
-  return request.post('/v1/access/register', { data: { email, password, verification_code } })
+  return request.post('/v1/access/register', { data: { email, password, verification_code, ...invite } })
 }

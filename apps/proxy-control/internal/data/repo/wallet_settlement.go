@@ -77,14 +77,8 @@ func (r *WalletRepository) apply(ctx context.Context, command wallet.Command, re
 				return err
 			}
 		}
-		receipt, err = applyWalletCommand(tx, command, order, before, fingerprint)
-		if err != nil {
-			return err
-		}
-		if fulfill != nil {
-			return fulfill(tx, receipt)
-		}
-		return nil
+		receipt, err = applyWalletCommand(tx, command, order, before, fingerprint, fulfill)
+		return err
 	})
 	if err != nil {
 		return wallet.Entry{}, err
@@ -92,7 +86,9 @@ func (r *WalletRepository) apply(ctx context.Context, command wallet.Command, re
 	return receipt, nil
 }
 
-func applyWalletCommand(tx *gorm.DB, c wallet.Command, order wallet.Order, before int64, fingerprint string) (wallet.Entry, error) {
+func applyWalletCommand(tx *gorm.DB, c wallet.Command, order wallet.Order, before int64, fingerprint string,
+	fulfill func(*gorm.DB, wallet.Entry) error,
+) (wallet.Entry, error) {
 	settlement, err := c.Settle(before, order)
 	if err != nil {
 		return wallet.Entry{}, err
@@ -101,7 +97,22 @@ func applyWalletCommand(tx *gorm.DB, c wallet.Command, order wallet.Order, befor
 	if err != nil {
 		return wallet.Entry{}, err
 	}
-	return saveWalletEntry(tx, c, orderID, before, settlement.AfterMinor, fingerprint)
+	receipt, err := saveWalletEntry(tx, c, orderID, before, settlement.AfterMinor, fingerprint)
+	if err != nil {
+		return wallet.Entry{}, err
+	}
+	if fulfill != nil {
+		if err := fulfill(tx, receipt); err != nil {
+			return wallet.Entry{}, err
+		}
+	}
+	if c.Action == wallet.Debit || c.Action == wallet.Release {
+		settlement.Order.ID = orderID
+		if err := recordOrderSettlement(tx, c.TenantID, settlement.Order); err != nil {
+			return wallet.Entry{}, err
+		}
+	}
+	return receipt, nil
 }
 
 func saveWalletEntry(tx *gorm.DB, c wallet.Command, orderID, before, after int64, fingerprint string) (wallet.Entry, error) {

@@ -1,0 +1,107 @@
+syntax = "proto3";
+
+package proxycontrol.v1;
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+import "openapiv3/annotations.proto";
+import "proxycontrol/v1/common.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1";
+
+service CommissionService {
+  rpc GetCommissionRates(BaseRequest) returns (CommissionRates) {
+    option (google.api.http) = {get: "/v1/operations/commission-rates"};
+    option (openapi.v3.operation) = {summary: "查看全站首购和复购佣金费率"};
+  }
+
+  rpc SetCommissionRates(SetCommissionRatesRequest) returns (CommissionRates) {
+    option (google.api.http) = {put: "/v1/operations/commission-rates", body: "*"};
+    option (openapi.v3.operation) = {summary: "配置全站首购和复购佣金费率"};
+  }
+
+  rpc ListTenantCommissions(TenantCommissionsRequest) returns (CommissionPage) {
+    option (google.api.http) = {get: "/v1/tenant/commissions"};
+    option (openapi.v3.operation) = {summary: "查看当前租户的可用佣金与一级推荐记录"};
+  }
+
+  rpc ListOperationsCommissions(OperationsCommissionsRequest) returns (CommissionPage) {
+    option (google.api.http) = {get: "/v1/operations/tenants/{tenant_id}/commissions"};
+    option (openapi.v3.operation) = {summary: "查看指定推广租户的可用佣金与一级推荐记录"};
+  }
+}
+
+message SetCommissionRatesRequest {
+  // 必填首购费率，单位基点。1 基点等于 0.01 个百分点。
+  optional int32 first_purchase_bps = 1 [(validate.rules).int32 = {gte: 0, lte: 10000}];
+  // 必填复购费率，单位基点。范围为 0 至 10000。
+  optional int32 repeat_purchase_bps = 2 [(validate.rules).int32 = {gte: 0, lte: 10000}];
+}
+
+message CommissionRates {
+  // 不可变费率版本。修改任一费率产生新版本。
+  int64 version = 1;
+  // 首购费率，单位基点。
+  int32 first_purchase_bps = 2;
+  // 复购费率，单位基点。
+  int32 repeat_purchase_bps = 3;
+  // 配置该版本的运营 ID。初始 0/0 费率时为空。
+  string operator_id = 4;
+  // 该版本的生成时间。
+  google.protobuf.Timestamp updated_at = 5;
+}
+
+message TenantCommissionsRequest {
+  // 查询小于此 ID 的记录，0 表示从最新开始。
+  int64 before_id = 1 [(validate.rules).int64.gte = 0];
+  // 可选，仅查询此匿名客户标识对应的记录。
+  string customer_key = 2 [(validate.rules).string = {ignore_empty: true, uuid: true}];
+}
+
+message OperationsCommissionsRequest {
+  // 推广租户 ID。
+  string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+  // 查询小于此 ID 的记录，0 表示从最新开始。
+  int64 before_id = 2 [(validate.rules).int64.gte = 0];
+  // 可选，仅查询此匿名客户标识对应的记录。
+  string customer_key = 3 [(validate.rules).string = {ignore_empty: true, uuid: true}];
+}
+
+message CommissionPage {
+  // 推广租户当前可用佣金，人民币分。独立于钱包余额，筛选不改变此金额。
+  int64 available_minor = 1;
+  // 按记录编号倒序，每页最多 25 条。
+  repeated CommissionRecord records = 2;
+  // 下一页游标。为 0 时无下一页。
+  int64 next_before_id = 3;
+}
+
+message CommissionRecord {
+  // 佣金流水记录 ID，用于分页。
+  int64 id = 1;
+  // 稳定的随机匿名客户标识，与租户 ID 无关。
+  string customer_key = 2;
+  // 注册绑定来源 manual 或 link。
+  string referral_source = 3;
+  // 商品类型 traffic_package、static_purchase 或 static_renewal。
+  string product_kind = 4;
+  // 同一客户按正净扣款终态累计的结算顺序，从 1 开始。
+  int64 settlement_sequence = 5;
+  // first_purchase 或 repeat_purchase。
+  string classification = 6;
+  // 达到订单终态的结算时间。
+  google.protobuf.Timestamp settled_at = 7;
+  // 最终钱包净扣款，人民币分。
+  int64 net_debit_minor = 8;
+  // 实际入账的佣金，人民币分。
+  int64 commission_minor = 9;
+  // 结算时实际应用的费率，单位基点。暂停时为 0。
+  int32 rate_bps = 10;
+  // 结算引用的不可变费率配置版本。
+  int64 rate_version = 11;
+  // 计佣规则版本。
+  int32 rule_version = 12;
+  // credited、zero_commission 或 promotion_paused。
+  string status = 13;
+}

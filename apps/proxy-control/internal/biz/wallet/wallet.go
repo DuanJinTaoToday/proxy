@@ -67,6 +67,7 @@ type Order struct {
 	LockedMinor, DebitedMinor, ReleasedMinor, RefundedMinor int64
 	DeliveredBytes, DeliveredCount, ConfirmedMinor          int64
 	CreatedAt                                               time.Time
+	SettledAt                                               *time.Time
 	Items                                                   []OrderItem `gorm:"-"`
 	Entries                                                 []Entry     `gorm:"-"`
 	SummaryItem                                             *OrderItem  `gorm:"-"`
@@ -151,6 +152,7 @@ func PurchasedTrafficDebtOffset(before, capacity int64) int64 {
 }
 
 type Repository interface {
+	CommissionRepository
 	StaticRenewalRepository
 	StaticExchangeRepository
 	ExchangeOperationsRepository

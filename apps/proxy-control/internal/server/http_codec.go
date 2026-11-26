@@ -35,6 +35,8 @@ func ReportingDecoder(maxBytes int64) http.DecodeRequestFunc {
 			return decodeBoundedProto(req, message, 1<<20, "STATIC_IP_EXPORT", "static IP export request", "invalid static IP export body")
 		case *v1.UpdateTrafficPackageRequest, *v1.SetProductSaleRequest:
 			return decodeLimitedProto(req, message, "PRODUCT_REQUEST", "product request", "invalid product configuration body")
+		case *v1.SetCommissionRatesRequest:
+			return decodeLimitedProto(req, message, "COMMISSION_RATES", "commission rates request", "invalid commission rates body")
 		case *v1.SetLowBalanceThresholdRequest:
 			return decodeLimitedProto(req, message, "TRAFFIC_ALERT_REQUEST", "traffic alert request", "invalid traffic alert body")
 		case *v1.SubmitBatchRequest, *v1.ReportLifecycleRequest, *v1.ReportUnfinishedSessionsRequest, *v1.CompleteReplayRequest:
@@ -85,17 +87,19 @@ func ControlResponseEncoder(w stdhttp.ResponseWriter, req *stdhttp.Request, resp
 		*v1.SubmitBatchResponse, *v1.QueryUsageResponse, *v1.ListRecordAnomaliesResponse, *v1.ListUsageGapsResponse,
 		*v1.DailyUsageResponse, *v1.TrafficAlert, *v1.StaticOffers, *v1.StaticIPs, *v1.PendingStaticPurchases, *v1.StaticPurchaseQuote, *v1.StaticIP, *v1.StaticIPExpiryNotices, *v1.StaticRenewalQuote, *v1.StaticRenewalTerms,
 		*v1.StaticIPExchange, *v1.StaticIPExchangeQuota, *v1.OperatorStaticIPExchangeQuota, *v1.OperatorStaticIPExchange,
-		*v1.OperatorStaticIPExchanges, *v1.OperatorStaticIPExchangeAuditEntry, *v1.OperatorStaticIPExchangeAuditPage:
+		*v1.OperatorStaticIPExchanges, *v1.OperatorStaticIPExchangeAuditEntry, *v1.OperatorStaticIPExchangeAuditPage,
+		*v1.CommissionRates, *v1.CommissionPage:
 		_, dailyUsage := response.(*v1.DailyUsageResponse)
 		_, overview := response.(*v1.Overview)
 		_, accessLocation := response.(*v1.AccessLocation)
 		_, staticOffers := response.(*v1.StaticOffers)
-		_, exchangeQuota := response.(*v1.StaticIPExchangeQuota)
+		emitDefaultValues := dailyUsage || staticOffers || overview || accessLocation
 		switch response.(type) {
-		case *v1.OperatorStaticIPExchangeQuota, *v1.OperatorStaticIPExchangeAuditEntry, *v1.OperatorStaticIPExchangeAuditPage:
-			exchangeQuota = true
+		case *v1.StaticIPExchangeQuota, *v1.OperatorStaticIPExchangeQuota, *v1.OperatorStaticIPExchangeAuditEntry,
+			*v1.OperatorStaticIPExchangeAuditPage, *v1.CommissionRates, *v1.CommissionPage:
+			emitDefaultValues = true
 		}
-		data, err := (protojson.MarshalOptions{UseProtoNames: true, EmitDefaultValues: dailyUsage || staticOffers || overview || accessLocation || exchangeQuota}).Marshal(response.(proto.Message))
+		data, err := (protojson.MarshalOptions{UseProtoNames: true, EmitDefaultValues: emitDefaultValues}).Marshal(response.(proto.Message))
 		if err != nil {
 			return err
 		}

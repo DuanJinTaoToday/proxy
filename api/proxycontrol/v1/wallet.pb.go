@@ -789,7 +789,9 @@ type PurchaseOrder struct {
 	// 客户列表中的首条锁定明细，用于摘要展示。
 	SummaryItem *PurchaseOrderItem `protobuf:"bytes,16,opt,name=summary_item,json=summaryItem,proto3" json:"summary_item,omitempty"`
 	// 客户列表中的锁定明细行数。
-	ItemCount     int64 `protobuf:"varint,17,opt,name=item_count,json=itemCount,proto3" json:"item_count,omitempty"`
+	ItemCount int64 `protobuf:"varint,17,opt,name=item_count,json=itemCount,proto3" json:"item_count,omitempty"`
+	// 完成订单结算的时间。待定或无记录的历史订单省略。
+	SettledAt     *timestamppb.Timestamp `protobuf:"bytes,18,opt,name=settled_at,json=settledAt,proto3" json:"settled_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -941,6 +943,13 @@ func (x *PurchaseOrder) GetItemCount() int64 {
 		return x.ItemCount
 	}
 	return 0
+}
+
+func (x *PurchaseOrder) GetSettledAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.SettledAt
+	}
+	return nil
 }
 
 type PurchaseOrderItem struct {
@@ -4366,7 +4375,7 @@ const file_proxycontrol_v1_wallet_proto_rawDesc = "" +
 	"\x0ePurchaseOrders\x126\n" +
 	"\x06orders\x18\x01 \x03(\v2\x1e.proxycontrol.v1.PurchaseOrderR\x06orders\x12$\n" +
 	"\x0enext_before_id\x18\x02 \x01(\x03R\fnextBeforeId\x12#\n" +
-	"\rpending_count\x18\x03 \x01(\x03R\fpendingCount\"\xc6\x05\n" +
+	"\rpending_count\x18\x03 \x01(\x03R\fpendingCount\"\x81\x06\n" +
 	"\rPurchaseOrder\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
 	"\x04kind\x18\x02 \x01(\tR\x04kind\x12\x16\n" +
@@ -4387,7 +4396,9 @@ const file_proxycontrol_v1_wallet_proto_rawDesc = "" +
 	"\x0ewallet_entries\x18\x0f \x03(\v2\x1c.proxycontrol.v1.WalletEntryR\rwalletEntries\x12E\n" +
 	"\fsummary_item\x18\x10 \x01(\v2\".proxycontrol.v1.PurchaseOrderItemR\vsummaryItem\x12\x1d\n" +
 	"\n" +
-	"item_count\x18\x11 \x01(\x03R\titemCount\"\xd4\x02\n" +
+	"item_count\x18\x11 \x01(\x03R\titemCount\x129\n" +
+	"\n" +
+	"settled_at\x18\x12 \x01(\v2\x1a.google.protobuf.TimestampR\tsettledAt\"\xd4\x02\n" +
 	"\x11PurchaseOrderItem\x12\x1a\n" +
 	"\bposition\x18\x01 \x01(\x05R\bposition\x12$\n" +
 	"\rspecification\x18\x02 \x01(\tR\rspecification\x12%\n" +
@@ -4827,104 +4838,105 @@ var file_proxycontrol_v1_wallet_proto_depIdxs = []int32{
 	11, // 7: proxycontrol.v1.PurchaseOrder.items:type_name -> proxycontrol.v1.PurchaseOrderItem
 	7,  // 8: proxycontrol.v1.PurchaseOrder.wallet_entries:type_name -> proxycontrol.v1.WalletEntry
 	11, // 9: proxycontrol.v1.PurchaseOrder.summary_item:type_name -> proxycontrol.v1.PurchaseOrderItem
-	19, // 10: proxycontrol.v1.StaticOffers.offers:type_name -> proxycontrol.v1.StaticOffer
-	57, // 11: proxycontrol.v1.StaticOffers.quoted_at:type_name -> google.protobuf.Timestamp
-	19, // 12: proxycontrol.v1.StaticPurchaseQuoteLine.offer:type_name -> proxycontrol.v1.StaticOffer
-	21, // 13: proxycontrol.v1.StaticPurchaseQuoteRequest.lines:type_name -> proxycontrol.v1.StaticPurchaseSelection
-	19, // 14: proxycontrol.v1.StaticPurchaseQuote.offer:type_name -> proxycontrol.v1.StaticOffer
-	57, // 15: proxycontrol.v1.StaticPurchaseQuote.expires_at:type_name -> google.protobuf.Timestamp
-	22, // 16: proxycontrol.v1.StaticPurchaseQuote.lines:type_name -> proxycontrol.v1.StaticPurchaseQuoteLine
-	23, // 17: proxycontrol.v1.PurchaseStaticIPRequest.lines:type_name -> proxycontrol.v1.StaticPurchaseLine
-	57, // 18: proxycontrol.v1.StaticIP.expires_at:type_name -> google.protobuf.Timestamp
-	27, // 19: proxycontrol.v1.StaticIPs.allocations:type_name -> proxycontrol.v1.StaticIP
-	57, // 20: proxycontrol.v1.StaticIPExchange.created_at:type_name -> google.protobuf.Timestamp
-	57, // 21: proxycontrol.v1.StaticIPExchange.updated_at:type_name -> google.protobuf.Timestamp
-	36, // 22: proxycontrol.v1.OperatorStaticIPExchanges.exchanges:type_name -> proxycontrol.v1.OperatorStaticIPExchange
-	31, // 23: proxycontrol.v1.OperatorStaticIPExchange.exchange:type_name -> proxycontrol.v1.StaticIPExchange
-	57, // 24: proxycontrol.v1.OperatorStaticIPExchange.unknown_at:type_name -> google.protobuf.Timestamp
-	39, // 25: proxycontrol.v1.OperatorStaticIPExchangeAuditPage.entries:type_name -> proxycontrol.v1.OperatorStaticIPExchangeAuditEntry
-	33, // 26: proxycontrol.v1.OperatorStaticIPExchangeAuditEntry.before:type_name -> proxycontrol.v1.OperatorStaticIPExchangeQuota
-	33, // 27: proxycontrol.v1.OperatorStaticIPExchangeAuditEntry.after:type_name -> proxycontrol.v1.OperatorStaticIPExchangeQuota
-	57, // 28: proxycontrol.v1.OperatorStaticIPExchangeAuditEntry.created_at:type_name -> google.protobuf.Timestamp
-	57, // 29: proxycontrol.v1.PendingStaticPurchase.created_at:type_name -> google.protobuf.Timestamp
-	46, // 30: proxycontrol.v1.PendingStaticPurchases.purchases:type_name -> proxycontrol.v1.PendingStaticPurchase
-	50, // 31: proxycontrol.v1.StaticRenewalTerms.terms:type_name -> proxycontrol.v1.StaticRenewalTerm
-	57, // 32: proxycontrol.v1.StaticRenewalQuoteLine.original_expiry:type_name -> google.protobuf.Timestamp
-	53, // 33: proxycontrol.v1.StaticRenewalQuote.lines:type_name -> proxycontrol.v1.StaticRenewalQuoteLine
-	57, // 34: proxycontrol.v1.StaticRenewalQuote.expires_at:type_name -> google.protobuf.Timestamp
-	29, // 35: proxycontrol.v1.WalletService.ExchangeStaticIP:input_type -> proxycontrol.v1.StaticIPExchangeRequest
-	30, // 36: proxycontrol.v1.WalletService.GetStaticIPExchange:input_type -> proxycontrol.v1.StaticIPExchangeLookup
-	58, // 37: proxycontrol.v1.WalletService.GetStaticIPExchangeQuota:input_type -> proxycontrol.v1.BaseRequest
-	2,  // 38: proxycontrol.v1.WalletService.GetOperatorStaticIPExchangeQuota:input_type -> proxycontrol.v1.WalletTenantRequest
-	34, // 39: proxycontrol.v1.WalletService.ListOperatorStaticIPExchanges:input_type -> proxycontrol.v1.OperatorStaticIPExchangesRequest
-	34, // 40: proxycontrol.v1.WalletService.ListOperatorStaticIPExchangeQueue:input_type -> proxycontrol.v1.OperatorStaticIPExchangesRequest
-	37, // 41: proxycontrol.v1.WalletService.ListOperatorStaticIPExchangeAudit:input_type -> proxycontrol.v1.OperatorStaticIPExchangeAuditRequest
-	40, // 42: proxycontrol.v1.WalletService.AdjustOperatorStaticIPExchangeQuota:input_type -> proxycontrol.v1.AdjustOperatorStaticIPExchangeQuotaRequest
-	41, // 43: proxycontrol.v1.WalletService.ResolveOperatorStaticIPExchange:input_type -> proxycontrol.v1.ResolveOperatorStaticIPExchangeRequest
-	49, // 44: proxycontrol.v1.WalletService.ListStaticRenewalTerms:input_type -> proxycontrol.v1.StaticRenewalTermsRequest
-	52, // 45: proxycontrol.v1.WalletService.QuoteStaticRenewal:input_type -> proxycontrol.v1.StaticRenewalQuoteRequest
-	55, // 46: proxycontrol.v1.WalletService.RenewStatic:input_type -> proxycontrol.v1.StaticRenewalRequest
-	16, // 47: proxycontrol.v1.WalletService.RecheckStaticRenewal:input_type -> proxycontrol.v1.CustomerPurchaseOrderRequest
-	56, // 48: proxycontrol.v1.WalletService.ResolveStaticRenewal:input_type -> proxycontrol.v1.StaticRenewalResolutionRequest
-	18, // 49: proxycontrol.v1.WalletService.ListStaticOffers:input_type -> proxycontrol.v1.StaticOffersRequest
-	24, // 50: proxycontrol.v1.WalletService.QuoteStaticPurchase:input_type -> proxycontrol.v1.StaticPurchaseQuoteRequest
-	26, // 51: proxycontrol.v1.WalletService.PurchaseStaticIP:input_type -> proxycontrol.v1.PurchaseStaticIPRequest
-	58, // 52: proxycontrol.v1.WalletService.ListStaticIPs:input_type -> proxycontrol.v1.BaseRequest
-	58, // 53: proxycontrol.v1.WalletService.ClaimStaticIPExpiryNotices:input_type -> proxycontrol.v1.BaseRequest
-	42, // 54: proxycontrol.v1.WalletService.GetStaticIPConfig:input_type -> proxycontrol.v1.StaticIPConfigRequest
-	45, // 55: proxycontrol.v1.WalletService.ListPendingStaticPurchases:input_type -> proxycontrol.v1.PendingStaticPurchasesRequest
-	44, // 56: proxycontrol.v1.WalletService.ResolveStaticPurchase:input_type -> proxycontrol.v1.ResolveStaticPurchaseRequest
-	1,  // 57: proxycontrol.v1.WalletService.FindTenants:input_type -> proxycontrol.v1.FindWalletTenantRequest
-	2,  // 58: proxycontrol.v1.WalletService.GetTenant:input_type -> proxycontrol.v1.WalletTenantRequest
-	3,  // 59: proxycontrol.v1.WalletService.QuoteWalletRecharge:input_type -> proxycontrol.v1.QuoteWalletRechargeRequest
-	5,  // 60: proxycontrol.v1.WalletService.RechargeWallet:input_type -> proxycontrol.v1.RechargeWalletRequest
-	13, // 61: proxycontrol.v1.WalletService.ListOperatorWalletEntries:input_type -> proxycontrol.v1.OperatorWalletEntriesRequest
-	12, // 62: proxycontrol.v1.WalletService.ListCustomerWalletEntries:input_type -> proxycontrol.v1.CustomerWalletEntriesRequest
-	58, // 63: proxycontrol.v1.WalletService.GetCustomerWallet:input_type -> proxycontrol.v1.BaseRequest
-	0,  // 64: proxycontrol.v1.WalletService.PurchaseTrafficPackage:input_type -> proxycontrol.v1.PurchaseTrafficPackageRequest
-	15, // 65: proxycontrol.v1.WalletService.ListOperatorPurchaseOrders:input_type -> proxycontrol.v1.OperatorPurchaseOrdersRequest
-	14, // 66: proxycontrol.v1.WalletService.ListCustomerPurchaseOrders:input_type -> proxycontrol.v1.CustomerPurchaseOrdersRequest
-	17, // 67: proxycontrol.v1.WalletService.GetOperatorPurchaseOrder:input_type -> proxycontrol.v1.OperatorPurchaseOrderRequest
-	16, // 68: proxycontrol.v1.WalletService.GetCustomerPurchaseOrder:input_type -> proxycontrol.v1.CustomerPurchaseOrderRequest
-	31, // 69: proxycontrol.v1.WalletService.ExchangeStaticIP:output_type -> proxycontrol.v1.StaticIPExchange
-	31, // 70: proxycontrol.v1.WalletService.GetStaticIPExchange:output_type -> proxycontrol.v1.StaticIPExchange
-	32, // 71: proxycontrol.v1.WalletService.GetStaticIPExchangeQuota:output_type -> proxycontrol.v1.StaticIPExchangeQuota
-	33, // 72: proxycontrol.v1.WalletService.GetOperatorStaticIPExchangeQuota:output_type -> proxycontrol.v1.OperatorStaticIPExchangeQuota
-	35, // 73: proxycontrol.v1.WalletService.ListOperatorStaticIPExchanges:output_type -> proxycontrol.v1.OperatorStaticIPExchanges
-	35, // 74: proxycontrol.v1.WalletService.ListOperatorStaticIPExchangeQueue:output_type -> proxycontrol.v1.OperatorStaticIPExchanges
-	38, // 75: proxycontrol.v1.WalletService.ListOperatorStaticIPExchangeAudit:output_type -> proxycontrol.v1.OperatorStaticIPExchangeAuditPage
-	39, // 76: proxycontrol.v1.WalletService.AdjustOperatorStaticIPExchangeQuota:output_type -> proxycontrol.v1.OperatorStaticIPExchangeAuditEntry
-	36, // 77: proxycontrol.v1.WalletService.ResolveOperatorStaticIPExchange:output_type -> proxycontrol.v1.OperatorStaticIPExchange
-	51, // 78: proxycontrol.v1.WalletService.ListStaticRenewalTerms:output_type -> proxycontrol.v1.StaticRenewalTerms
-	54, // 79: proxycontrol.v1.WalletService.QuoteStaticRenewal:output_type -> proxycontrol.v1.StaticRenewalQuote
-	10, // 80: proxycontrol.v1.WalletService.RenewStatic:output_type -> proxycontrol.v1.PurchaseOrder
-	10, // 81: proxycontrol.v1.WalletService.RecheckStaticRenewal:output_type -> proxycontrol.v1.PurchaseOrder
-	10, // 82: proxycontrol.v1.WalletService.ResolveStaticRenewal:output_type -> proxycontrol.v1.PurchaseOrder
-	20, // 83: proxycontrol.v1.WalletService.ListStaticOffers:output_type -> proxycontrol.v1.StaticOffers
-	25, // 84: proxycontrol.v1.WalletService.QuoteStaticPurchase:output_type -> proxycontrol.v1.StaticPurchaseQuote
-	10, // 85: proxycontrol.v1.WalletService.PurchaseStaticIP:output_type -> proxycontrol.v1.PurchaseOrder
-	28, // 86: proxycontrol.v1.WalletService.ListStaticIPs:output_type -> proxycontrol.v1.StaticIPs
-	48, // 87: proxycontrol.v1.WalletService.ClaimStaticIPExpiryNotices:output_type -> proxycontrol.v1.StaticIPExpiryNotices
-	27, // 88: proxycontrol.v1.WalletService.GetStaticIPConfig:output_type -> proxycontrol.v1.StaticIP
-	47, // 89: proxycontrol.v1.WalletService.ListPendingStaticPurchases:output_type -> proxycontrol.v1.PendingStaticPurchases
-	10, // 90: proxycontrol.v1.WalletService.ResolveStaticPurchase:output_type -> proxycontrol.v1.PurchaseOrder
-	6,  // 91: proxycontrol.v1.WalletService.FindTenants:output_type -> proxycontrol.v1.WalletTenant
-	6,  // 92: proxycontrol.v1.WalletService.GetTenant:output_type -> proxycontrol.v1.WalletTenant
-	4,  // 93: proxycontrol.v1.WalletService.QuoteWalletRecharge:output_type -> proxycontrol.v1.WalletRechargeQuote
-	7,  // 94: proxycontrol.v1.WalletService.RechargeWallet:output_type -> proxycontrol.v1.WalletEntry
-	8,  // 95: proxycontrol.v1.WalletService.ListOperatorWalletEntries:output_type -> proxycontrol.v1.WalletEntries
-	8,  // 96: proxycontrol.v1.WalletService.ListCustomerWalletEntries:output_type -> proxycontrol.v1.WalletEntries
-	6,  // 97: proxycontrol.v1.WalletService.GetCustomerWallet:output_type -> proxycontrol.v1.WalletTenant
-	10, // 98: proxycontrol.v1.WalletService.PurchaseTrafficPackage:output_type -> proxycontrol.v1.PurchaseOrder
-	9,  // 99: proxycontrol.v1.WalletService.ListOperatorPurchaseOrders:output_type -> proxycontrol.v1.PurchaseOrders
-	9,  // 100: proxycontrol.v1.WalletService.ListCustomerPurchaseOrders:output_type -> proxycontrol.v1.PurchaseOrders
-	10, // 101: proxycontrol.v1.WalletService.GetOperatorPurchaseOrder:output_type -> proxycontrol.v1.PurchaseOrder
-	10, // 102: proxycontrol.v1.WalletService.GetCustomerPurchaseOrder:output_type -> proxycontrol.v1.PurchaseOrder
-	69, // [69:103] is the sub-list for method output_type
-	35, // [35:69] is the sub-list for method input_type
-	35, // [35:35] is the sub-list for extension type_name
-	35, // [35:35] is the sub-list for extension extendee
-	0,  // [0:35] is the sub-list for field type_name
+	57, // 10: proxycontrol.v1.PurchaseOrder.settled_at:type_name -> google.protobuf.Timestamp
+	19, // 11: proxycontrol.v1.StaticOffers.offers:type_name -> proxycontrol.v1.StaticOffer
+	57, // 12: proxycontrol.v1.StaticOffers.quoted_at:type_name -> google.protobuf.Timestamp
+	19, // 13: proxycontrol.v1.StaticPurchaseQuoteLine.offer:type_name -> proxycontrol.v1.StaticOffer
+	21, // 14: proxycontrol.v1.StaticPurchaseQuoteRequest.lines:type_name -> proxycontrol.v1.StaticPurchaseSelection
+	19, // 15: proxycontrol.v1.StaticPurchaseQuote.offer:type_name -> proxycontrol.v1.StaticOffer
+	57, // 16: proxycontrol.v1.StaticPurchaseQuote.expires_at:type_name -> google.protobuf.Timestamp
+	22, // 17: proxycontrol.v1.StaticPurchaseQuote.lines:type_name -> proxycontrol.v1.StaticPurchaseQuoteLine
+	23, // 18: proxycontrol.v1.PurchaseStaticIPRequest.lines:type_name -> proxycontrol.v1.StaticPurchaseLine
+	57, // 19: proxycontrol.v1.StaticIP.expires_at:type_name -> google.protobuf.Timestamp
+	27, // 20: proxycontrol.v1.StaticIPs.allocations:type_name -> proxycontrol.v1.StaticIP
+	57, // 21: proxycontrol.v1.StaticIPExchange.created_at:type_name -> google.protobuf.Timestamp
+	57, // 22: proxycontrol.v1.StaticIPExchange.updated_at:type_name -> google.protobuf.Timestamp
+	36, // 23: proxycontrol.v1.OperatorStaticIPExchanges.exchanges:type_name -> proxycontrol.v1.OperatorStaticIPExchange
+	31, // 24: proxycontrol.v1.OperatorStaticIPExchange.exchange:type_name -> proxycontrol.v1.StaticIPExchange
+	57, // 25: proxycontrol.v1.OperatorStaticIPExchange.unknown_at:type_name -> google.protobuf.Timestamp
+	39, // 26: proxycontrol.v1.OperatorStaticIPExchangeAuditPage.entries:type_name -> proxycontrol.v1.OperatorStaticIPExchangeAuditEntry
+	33, // 27: proxycontrol.v1.OperatorStaticIPExchangeAuditEntry.before:type_name -> proxycontrol.v1.OperatorStaticIPExchangeQuota
+	33, // 28: proxycontrol.v1.OperatorStaticIPExchangeAuditEntry.after:type_name -> proxycontrol.v1.OperatorStaticIPExchangeQuota
+	57, // 29: proxycontrol.v1.OperatorStaticIPExchangeAuditEntry.created_at:type_name -> google.protobuf.Timestamp
+	57, // 30: proxycontrol.v1.PendingStaticPurchase.created_at:type_name -> google.protobuf.Timestamp
+	46, // 31: proxycontrol.v1.PendingStaticPurchases.purchases:type_name -> proxycontrol.v1.PendingStaticPurchase
+	50, // 32: proxycontrol.v1.StaticRenewalTerms.terms:type_name -> proxycontrol.v1.StaticRenewalTerm
+	57, // 33: proxycontrol.v1.StaticRenewalQuoteLine.original_expiry:type_name -> google.protobuf.Timestamp
+	53, // 34: proxycontrol.v1.StaticRenewalQuote.lines:type_name -> proxycontrol.v1.StaticRenewalQuoteLine
+	57, // 35: proxycontrol.v1.StaticRenewalQuote.expires_at:type_name -> google.protobuf.Timestamp
+	29, // 36: proxycontrol.v1.WalletService.ExchangeStaticIP:input_type -> proxycontrol.v1.StaticIPExchangeRequest
+	30, // 37: proxycontrol.v1.WalletService.GetStaticIPExchange:input_type -> proxycontrol.v1.StaticIPExchangeLookup
+	58, // 38: proxycontrol.v1.WalletService.GetStaticIPExchangeQuota:input_type -> proxycontrol.v1.BaseRequest
+	2,  // 39: proxycontrol.v1.WalletService.GetOperatorStaticIPExchangeQuota:input_type -> proxycontrol.v1.WalletTenantRequest
+	34, // 40: proxycontrol.v1.WalletService.ListOperatorStaticIPExchanges:input_type -> proxycontrol.v1.OperatorStaticIPExchangesRequest
+	34, // 41: proxycontrol.v1.WalletService.ListOperatorStaticIPExchangeQueue:input_type -> proxycontrol.v1.OperatorStaticIPExchangesRequest
+	37, // 42: proxycontrol.v1.WalletService.ListOperatorStaticIPExchangeAudit:input_type -> proxycontrol.v1.OperatorStaticIPExchangeAuditRequest
+	40, // 43: proxycontrol.v1.WalletService.AdjustOperatorStaticIPExchangeQuota:input_type -> proxycontrol.v1.AdjustOperatorStaticIPExchangeQuotaRequest
+	41, // 44: proxycontrol.v1.WalletService.ResolveOperatorStaticIPExchange:input_type -> proxycontrol.v1.ResolveOperatorStaticIPExchangeRequest
+	49, // 45: proxycontrol.v1.WalletService.ListStaticRenewalTerms:input_type -> proxycontrol.v1.StaticRenewalTermsRequest
+	52, // 46: proxycontrol.v1.WalletService.QuoteStaticRenewal:input_type -> proxycontrol.v1.StaticRenewalQuoteRequest
+	55, // 47: proxycontrol.v1.WalletService.RenewStatic:input_type -> proxycontrol.v1.StaticRenewalRequest
+	16, // 48: proxycontrol.v1.WalletService.RecheckStaticRenewal:input_type -> proxycontrol.v1.CustomerPurchaseOrderRequest
+	56, // 49: proxycontrol.v1.WalletService.ResolveStaticRenewal:input_type -> proxycontrol.v1.StaticRenewalResolutionRequest
+	18, // 50: proxycontrol.v1.WalletService.ListStaticOffers:input_type -> proxycontrol.v1.StaticOffersRequest
+	24, // 51: proxycontrol.v1.WalletService.QuoteStaticPurchase:input_type -> proxycontrol.v1.StaticPurchaseQuoteRequest
+	26, // 52: proxycontrol.v1.WalletService.PurchaseStaticIP:input_type -> proxycontrol.v1.PurchaseStaticIPRequest
+	58, // 53: proxycontrol.v1.WalletService.ListStaticIPs:input_type -> proxycontrol.v1.BaseRequest
+	58, // 54: proxycontrol.v1.WalletService.ClaimStaticIPExpiryNotices:input_type -> proxycontrol.v1.BaseRequest
+	42, // 55: proxycontrol.v1.WalletService.GetStaticIPConfig:input_type -> proxycontrol.v1.StaticIPConfigRequest
+	45, // 56: proxycontrol.v1.WalletService.ListPendingStaticPurchases:input_type -> proxycontrol.v1.PendingStaticPurchasesRequest
+	44, // 57: proxycontrol.v1.WalletService.ResolveStaticPurchase:input_type -> proxycontrol.v1.ResolveStaticPurchaseRequest
+	1,  // 58: proxycontrol.v1.WalletService.FindTenants:input_type -> proxycontrol.v1.FindWalletTenantRequest
+	2,  // 59: proxycontrol.v1.WalletService.GetTenant:input_type -> proxycontrol.v1.WalletTenantRequest
+	3,  // 60: proxycontrol.v1.WalletService.QuoteWalletRecharge:input_type -> proxycontrol.v1.QuoteWalletRechargeRequest
+	5,  // 61: proxycontrol.v1.WalletService.RechargeWallet:input_type -> proxycontrol.v1.RechargeWalletRequest
+	13, // 62: proxycontrol.v1.WalletService.ListOperatorWalletEntries:input_type -> proxycontrol.v1.OperatorWalletEntriesRequest
+	12, // 63: proxycontrol.v1.WalletService.ListCustomerWalletEntries:input_type -> proxycontrol.v1.CustomerWalletEntriesRequest
+	58, // 64: proxycontrol.v1.WalletService.GetCustomerWallet:input_type -> proxycontrol.v1.BaseRequest
+	0,  // 65: proxycontrol.v1.WalletService.PurchaseTrafficPackage:input_type -> proxycontrol.v1.PurchaseTrafficPackageRequest
+	15, // 66: proxycontrol.v1.WalletService.ListOperatorPurchaseOrders:input_type -> proxycontrol.v1.OperatorPurchaseOrdersRequest
+	14, // 67: proxycontrol.v1.WalletService.ListCustomerPurchaseOrders:input_type -> proxycontrol.v1.CustomerPurchaseOrdersRequest
+	17, // 68: proxycontrol.v1.WalletService.GetOperatorPurchaseOrder:input_type -> proxycontrol.v1.OperatorPurchaseOrderRequest
+	16, // 69: proxycontrol.v1.WalletService.GetCustomerPurchaseOrder:input_type -> proxycontrol.v1.CustomerPurchaseOrderRequest
+	31, // 70: proxycontrol.v1.WalletService.ExchangeStaticIP:output_type -> proxycontrol.v1.StaticIPExchange
+	31, // 71: proxycontrol.v1.WalletService.GetStaticIPExchange:output_type -> proxycontrol.v1.StaticIPExchange
+	32, // 72: proxycontrol.v1.WalletService.GetStaticIPExchangeQuota:output_type -> proxycontrol.v1.StaticIPExchangeQuota
+	33, // 73: proxycontrol.v1.WalletService.GetOperatorStaticIPExchangeQuota:output_type -> proxycontrol.v1.OperatorStaticIPExchangeQuota
+	35, // 74: proxycontrol.v1.WalletService.ListOperatorStaticIPExchanges:output_type -> proxycontrol.v1.OperatorStaticIPExchanges
+	35, // 75: proxycontrol.v1.WalletService.ListOperatorStaticIPExchangeQueue:output_type -> proxycontrol.v1.OperatorStaticIPExchanges
+	38, // 76: proxycontrol.v1.WalletService.ListOperatorStaticIPExchangeAudit:output_type -> proxycontrol.v1.OperatorStaticIPExchangeAuditPage
+	39, // 77: proxycontrol.v1.WalletService.AdjustOperatorStaticIPExchangeQuota:output_type -> proxycontrol.v1.OperatorStaticIPExchangeAuditEntry
+	36, // 78: proxycontrol.v1.WalletService.ResolveOperatorStaticIPExchange:output_type -> proxycontrol.v1.OperatorStaticIPExchange
+	51, // 79: proxycontrol.v1.WalletService.ListStaticRenewalTerms:output_type -> proxycontrol.v1.StaticRenewalTerms
+	54, // 80: proxycontrol.v1.WalletService.QuoteStaticRenewal:output_type -> proxycontrol.v1.StaticRenewalQuote
+	10, // 81: proxycontrol.v1.WalletService.RenewStatic:output_type -> proxycontrol.v1.PurchaseOrder
+	10, // 82: proxycontrol.v1.WalletService.RecheckStaticRenewal:output_type -> proxycontrol.v1.PurchaseOrder
+	10, // 83: proxycontrol.v1.WalletService.ResolveStaticRenewal:output_type -> proxycontrol.v1.PurchaseOrder
+	20, // 84: proxycontrol.v1.WalletService.ListStaticOffers:output_type -> proxycontrol.v1.StaticOffers
+	25, // 85: proxycontrol.v1.WalletService.QuoteStaticPurchase:output_type -> proxycontrol.v1.StaticPurchaseQuote
+	10, // 86: proxycontrol.v1.WalletService.PurchaseStaticIP:output_type -> proxycontrol.v1.PurchaseOrder
+	28, // 87: proxycontrol.v1.WalletService.ListStaticIPs:output_type -> proxycontrol.v1.StaticIPs
+	48, // 88: proxycontrol.v1.WalletService.ClaimStaticIPExpiryNotices:output_type -> proxycontrol.v1.StaticIPExpiryNotices
+	27, // 89: proxycontrol.v1.WalletService.GetStaticIPConfig:output_type -> proxycontrol.v1.StaticIP
+	47, // 90: proxycontrol.v1.WalletService.ListPendingStaticPurchases:output_type -> proxycontrol.v1.PendingStaticPurchases
+	10, // 91: proxycontrol.v1.WalletService.ResolveStaticPurchase:output_type -> proxycontrol.v1.PurchaseOrder
+	6,  // 92: proxycontrol.v1.WalletService.FindTenants:output_type -> proxycontrol.v1.WalletTenant
+	6,  // 93: proxycontrol.v1.WalletService.GetTenant:output_type -> proxycontrol.v1.WalletTenant
+	4,  // 94: proxycontrol.v1.WalletService.QuoteWalletRecharge:output_type -> proxycontrol.v1.WalletRechargeQuote
+	7,  // 95: proxycontrol.v1.WalletService.RechargeWallet:output_type -> proxycontrol.v1.WalletEntry
+	8,  // 96: proxycontrol.v1.WalletService.ListOperatorWalletEntries:output_type -> proxycontrol.v1.WalletEntries
+	8,  // 97: proxycontrol.v1.WalletService.ListCustomerWalletEntries:output_type -> proxycontrol.v1.WalletEntries
+	6,  // 98: proxycontrol.v1.WalletService.GetCustomerWallet:output_type -> proxycontrol.v1.WalletTenant
+	10, // 99: proxycontrol.v1.WalletService.PurchaseTrafficPackage:output_type -> proxycontrol.v1.PurchaseOrder
+	9,  // 100: proxycontrol.v1.WalletService.ListOperatorPurchaseOrders:output_type -> proxycontrol.v1.PurchaseOrders
+	9,  // 101: proxycontrol.v1.WalletService.ListCustomerPurchaseOrders:output_type -> proxycontrol.v1.PurchaseOrders
+	10, // 102: proxycontrol.v1.WalletService.GetOperatorPurchaseOrder:output_type -> proxycontrol.v1.PurchaseOrder
+	10, // 103: proxycontrol.v1.WalletService.GetCustomerPurchaseOrder:output_type -> proxycontrol.v1.PurchaseOrder
+	70, // [70:104] is the sub-list for method output_type
+	36, // [36:70] is the sub-list for method input_type
+	36, // [36:36] is the sub-list for extension type_name
+	36, // [36:36] is the sub-list for extension extendee
+	0,  // [0:36] is the sub-list for field type_name
 }
 
 func init() { file_proxycontrol_v1_wallet_proto_init() }

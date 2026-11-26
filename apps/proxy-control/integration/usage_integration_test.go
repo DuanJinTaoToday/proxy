@@ -80,6 +80,7 @@ func setupUsageFixture(t *testing.T, enableSubaccounts bool, seedLegacyAccounts 
 		"00015_subaccount_created_at.sql", "00016_static_purchase_allocation_positions.sql",
 		"00018_email_access.sql", "00019_static_allocation_ids.sql",
 		"00020_direct_referrals.sql", "00021_static_ip_exchanges.sql", "00022_static_exchange_operations.sql",
+		"00023_referral_commissions.sql",
 	} {
 		if path == "00018_email_access.sql" && seedLegacyAccounts != nil {
 			seedLegacyAccounts(db)

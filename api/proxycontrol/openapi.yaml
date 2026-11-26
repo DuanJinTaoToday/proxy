@@ -329,6 +329,37 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/proxycontrol.v1.ListRecordAnomaliesResponse'
+    /v1/operations/commission-rates:
+        get:
+            tags:
+                - CommissionService
+            summary: 查看全站首购和复购佣金费率
+            operationId: CommissionService_GetCommissionRates
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.CommissionRates'
+        put:
+            tags:
+                - CommissionService
+            summary: 配置全站首购和复购佣金费率
+            operationId: CommissionService_SetCommissionRates
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.SetCommissionRatesRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.CommissionRates'
     /v1/operations/gaps:
         get:
             tags:
@@ -503,6 +534,36 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/proxycontrol.v1.WalletTenant'
+    /v1/operations/tenants/{tenantId}/commissions:
+        get:
+            tags:
+                - CommissionService
+            summary: 查看指定推广租户的可用佣金与一级推荐记录
+            operationId: CommissionService_ListOperationsCommissions
+            parameters:
+                - name: tenantId
+                  in: path
+                  description: 推广租户 ID。
+                  required: true
+                  schema:
+                    type: string
+                - name: beforeId
+                  in: query
+                  description: 查询小于此 ID 的记录，0 表示从最新开始。
+                  schema:
+                    type: string
+                - name: customerKey
+                  in: query
+                  description: 可选，仅查询此匿名客户标识对应的记录。
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.CommissionPage'
     /v1/operations/tenants/{tenantId}/orders:
         get:
             tags:
@@ -1213,6 +1274,30 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/proxycontrol.v1.TenantAccess'
+    /v1/tenant/commissions:
+        get:
+            tags:
+                - CommissionService
+            summary: 查看当前租户的可用佣金与一级推荐记录
+            operationId: CommissionService_ListTenantCommissions
+            parameters:
+                - name: beforeId
+                  in: query
+                  description: 查询小于此 ID 的记录，0 表示从最新开始。
+                  schema:
+                    type: string
+                - name: customerKey
+                  in: query
+                  description: 可选，仅查询此匿名客户标识对应的记录。
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.CommissionPage'
     /v1/tenant/invite:
         get:
             tags:
@@ -1902,6 +1987,86 @@ components:
                     type: integer
                     description: 要检查的权限。
                     format: enum
+        proxycontrol.v1.CommissionPage:
+            type: object
+            properties:
+                availableMinor:
+                    type: string
+                    description: 推广租户当前可用佣金，人民币分。独立于钱包余额，筛选不改变此金额。
+                records:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/proxycontrol.v1.CommissionRecord'
+                    description: 按记录编号倒序，每页最多 25 条。
+                nextBeforeId:
+                    type: string
+                    description: 下一页游标。为 0 时无下一页。
+        proxycontrol.v1.CommissionRates:
+            type: object
+            properties:
+                version:
+                    type: string
+                    description: 不可变费率版本。修改任一费率产生新版本。
+                firstPurchaseBps:
+                    type: integer
+                    description: 首购费率，单位基点。
+                    format: int32
+                repeatPurchaseBps:
+                    type: integer
+                    description: 复购费率，单位基点。
+                    format: int32
+                operatorId:
+                    type: string
+                    description: 配置该版本的运营 ID。初始 0/0 费率时为空。
+                updatedAt:
+                    type: string
+                    description: 该版本的生成时间。
+                    format: date-time
+        proxycontrol.v1.CommissionRecord:
+            type: object
+            properties:
+                id:
+                    type: string
+                    description: 佣金流水记录 ID，用于分页。
+                customerKey:
+                    type: string
+                    description: 稳定的随机匿名客户标识，与租户 ID 无关。
+                referralSource:
+                    type: string
+                    description: 注册绑定来源 manual 或 link。
+                productKind:
+                    type: string
+                    description: 商品类型 traffic_package、static_purchase 或 static_renewal。
+                settlementSequence:
+                    type: string
+                    description: 同一客户按正净扣款终态累计的结算顺序，从 1 开始。
+                classification:
+                    type: string
+                    description: first_purchase 或 repeat_purchase。
+                settledAt:
+                    type: string
+                    description: 达到订单终态的结算时间。
+                    format: date-time
+                netDebitMinor:
+                    type: string
+                    description: 最终钱包净扣款，人民币分。
+                commissionMinor:
+                    type: string
+                    description: 实际入账的佣金，人民币分。
+                rateBps:
+                    type: integer
+                    description: 结算时实际应用的费率，单位基点。暂停时为 0。
+                    format: int32
+                rateVersion:
+                    type: string
+                    description: 结算引用的不可变费率配置版本。
+                ruleVersion:
+                    type: integer
+                    description: 计佣规则版本。
+                    format: int32
+                status:
+                    type: string
+                    description: credited、zero_commission 或 promotion_paused。
         proxycontrol.v1.CompleteReplayRequest:
             type: object
             properties:
@@ -2355,6 +2520,10 @@ components:
                 itemCount:
                     type: string
                     description: 客户列表中的锁定明细行数。
+                settledAt:
+                    type: string
+                    description: 完成订单结算的时间。待定或无记录的历史订单省略。
+                    format: date-time
         proxycontrol.v1.PurchaseOrderItem:
             type: object
             properties:
@@ -2657,6 +2826,17 @@ components:
                 confirmedUndeliverable:
                     type: boolean
                     description: 有明确失败证据时允许在 72 小时前释放。只能配合 close_remaining。
+        proxycontrol.v1.SetCommissionRatesRequest:
+            type: object
+            properties:
+                firstPurchaseBps:
+                    type: integer
+                    description: 必填首购费率，单位基点。1 基点等于 0.01 个百分点。
+                    format: int32
+                repeatPurchaseBps:
+                    type: integer
+                    description: 必填复购费率，单位基点。范围为 0 至 10000。
+                    format: int32
         proxycontrol.v1.SetLowBalanceThresholdRequest:
             type: object
             properties:
@@ -3457,6 +3637,7 @@ components:
 tags:
     - name: AccessLocationService
     - name: AccessService
+    - name: CommissionService
     - name: GatewayAuthService
     - name: HealthService
     - name: OverviewService
