@@ -282,7 +282,7 @@ func recordClosedExchangeObservation(tx *gorm.DB, check exchangeCheck, review ex
 	}
 	same := check.Resolution == review.Outcome &&
 		(review.Outcome == wallet.StaticExchangeNotExecuted || sameExchangeIP(check.NewIP, review.Observation.IP))
-	if review.Actor == "" && !same && check.HistorySnapshot == nil {
+	if review.Actor == "" && !same && check.HistorySnapshot == nil && review.Observation.Allocation.SupplierItemID == "" {
 		return recordUnverifiedExchangeObservation(tx, check, review.Observation, quota)
 	}
 	if review.Actor == "" && check.Resolution == review.Outcome && !same && review.Observation.Allocation.SupplierItemID == "" {

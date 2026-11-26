@@ -174,13 +174,25 @@ test('运营调额保留预占，待核实满十五分钟入队后通过皇冠�
       entry.idempotency_key === unresolved.idempotency_key)?.kind)).toBe('observation')
     expect(await f.lookup(unresolved.idempotency_key)).toMatchObject({ status: 'unknown' })
     expect(await f.quota()).toEqual({ remaining: 0, reserved: 1, used: 1 })
+    await f.fixture('exchange-records', { ip: baselineMissing.ip, mode: 'hidden' })
+    const initiallyClosed = await f.resolution(unresolved.idempotency_key, {
+      request_key: randomUUID(), outcome: 'not_executed', evidence: 'Crown fixture ticket 102 initial finding',
+    }).then(json)
+    expect(initiallyClosed).toMatchObject({ resolution: 'not_executed' })
+    expect(await f.quota()).toEqual({ remaining: 1, reserved: 0, used: 1 })
+    await f.fixture('exchange-records', { ip: baselineMissing.ip, mode: 'visible' })
+    await synchronizeLookup(f, baselineMissing.ip, unresolved.idempotency_key)
+    await expect.poll(() => f.queue().then(entries => entries.find(entry =>
+      entry.exchange.idempotency_key === unresolved.idempotency_key)?.resolution_conflict)).toBe(true)
+    expect(await f.quota()).toEqual({ remaining: 1, reserved: 0, used: 1 })
     const { address } = await f.fixture('exchanges', { id: secondSupplier.id })
     const verified = await f.resolution(unresolved.idempotency_key, {
-      request_key: randomUUID(), outcome: 'executed', expected_ip: address, evidence: 'Crown fixture ticket 102 confirms application',
+      request_key: randomUUID(), outcome: 'executed', expected_ip: address, correction: true,
+      evidence: 'Crown fixture ticket 102 revised finding with receipt',
     }).then(json)
-    expect(verified).toMatchObject({ resolution: 'executed' })
+    expect(verified).toMatchObject({ resolution: 'executed', corrected: true })
     const noBaselineAudit = (await f.audit()).filter(entry => entry.idempotency_key === unresolved.idempotency_key)
-    expect(noBaselineAudit.map(entry => entry.kind)).toEqual(['manual', 'observation'])
+    expect(noBaselineAudit.map(entry => entry.kind)).toEqual(['correction', 'conflict', 'manual', 'observation'])
     expect(await f.quota()).toEqual({ remaining: 0, reserved: 0, used: 2 })
     await snapshot(args.page, info, f, { quotaBefore, adjusted, queued, finalQuota, audit, noBaselineAudit })
   } finally {
