@@ -68,3 +68,4 @@ configs:
           partner_id: verify
           api_secret: verify-supplier-secret
           password_key: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+          exchange_probe_address: ipcrown:8080
