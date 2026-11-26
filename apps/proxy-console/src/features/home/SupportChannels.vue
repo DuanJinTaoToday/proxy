@@ -46,7 +46,7 @@ function notifySoon() {
         <span v-if="variant === 'list'" class="support__value mono">{{ entry.value }}</span>
         <span v-else class="support__tip mono">{{ entry.value }}</span>
       </button>
-      <button v-else type="button" class="support__item support__item--off" aria-disabled="true" @click="notifySoon">
+      <button v-else type="button" class="support__item support__item--off" data-state="soon" @click="notifySoon">
         <component :is="entry.icon" v-if="entry.icon" class="support__icon" aria-hidden="true" />
         <svg v-else class="support__icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
           <path :d="qqGlyphPath" />
@@ -60,7 +60,7 @@ function notifySoon() {
 
 <style scoped>
 .support__item { position: relative; display: flex; align-items: center; border: 0; background: transparent; color: var(--home-on-dark); font-size: var(--home-fs-micro); cursor: pointer; transition: background .2s, color .2s; }
-.support__item--off { cursor: not-allowed; color: var(--home-on-dark-faint); }
+.support__item--off { color: var(--home-on-dark-faint); }
 .support__icon { flex: none; width: var(--space-5); height: var(--space-5); }
 
 .support--dock { position: fixed; z-index: 20; inset-inline-end: var(--space-3); inset-block-start: 50%; display: flex; flex-direction: column; gap: var(--space-1); padding: var(--space-2); border: var(--border-width) solid var(--home-line-dark-strong); border-radius: var(--home-radius-lg); background: var(--home-header-background); box-shadow: var(--home-dock-shadow); backdrop-filter: blur(var(--home-header-blur)); transform: translateY(-50%); }

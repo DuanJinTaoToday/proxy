@@ -39,7 +39,7 @@ test('双语首页、两种视口、直接访问和刷新，展示钴蓝版式�
       await expect(page).toHaveURL(new RegExp(`/${locale}/$`))
       await page.reload()
       await expect(page.locator('html')).toHaveAttribute('lang', locale)
-      await expect(page.getByRole('heading', { level: 1 })).toContainText(locale === 'zh-CN' ? '用真实住宅 IP' : 'Use real residential IPs to')
+      await expect(page.getByRole('heading', { level: 1 })).toContainText(locale === 'zh-CN' ? '用真实住宅 IP' : 'Real residential IPs to')
       for (const section of ['#products', '#coverage', '#solutions', '#faq', '.home-footer']) {
         await expect(page.locator(section)).toBeVisible()
       }

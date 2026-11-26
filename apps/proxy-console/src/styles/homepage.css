@@ -35,7 +35,7 @@ header.app-header.app-header--marketing {
   inset: 0 0 auto;
   z-index: 30;
   height: var(--home-header-height);
-  padding-inline: max(var(--home-gutter), calc((100vw - var(--home-wrap)) / 2));
+  padding-inline: max(var(--home-gutter), calc((100% - var(--home-wrap)) / 2));
   border-bottom-color: var(--home-line-dark);
   background: var(--home-header-background);
   backdrop-filter: blur(var(--home-header-blur));

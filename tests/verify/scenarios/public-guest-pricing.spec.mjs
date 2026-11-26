@@ -113,8 +113,20 @@ test('游客从首页查询动态和静态报价，支持静态选配购物车�
     expect(failed.status()).toBe(503)
     expect((await failed.json()).reason).toBe('STATIC_SUPPLIER_UNAVAILABLE')
 
-    // 停售与无库存统一呈现为不可售状态，与刷新失败区分开。
+    // 无库存地区从在售列表隐藏（Canada/Japan 仍有库存保持可购），全部无库存时与停售统一呈现为不可售状态，与刷新失败区分开。
     await page.goto('/zh-CN/pricing?category=exclusive')
+    await expect(page.locator('.offer-row', { hasText: 'Canada' }).first()).toBeVisible()
+    await expect(page.locator('.offer-row', { hasText: 'United States' })).toHaveCount(0)
+    await screenshot(page, info, 'guest-pricing-static-partial-oos')
+
+    await page.route('**/v1/public/static-offers*', route => route.fulfill({
+      json: {
+        open: true,
+        quoted_at: exclusive.quoted_at,
+        offers: exclusive.offers.map(row => ({ ...row, available: 0 })),
+      },
+    }), { times: 1 })
+    await page.reload()
     await expect(page.locator('[data-state="closed"]').first()).toBeVisible()
     await screenshot(page, info, 'guest-pricing-static-out-of-stock')
 
