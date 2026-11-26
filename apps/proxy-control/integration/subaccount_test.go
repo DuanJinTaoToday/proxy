@@ -13,16 +13,16 @@ import (
 
 func TestSubaccountAcceptance(t *testing.T) {
 	f := setupUsage(t)
-	tenant := func(phone string) (*v1.TenantAccess, string) {
-		body := fmt.Sprintf(`{"phone":%q,"password":"tenant-password42"}`, phone)
+	tenant := func(email string) (*v1.TenantAccess, string) {
+		body := fmt.Sprintf(`{"email":%q,"password":"tenant-password42"}`, email)
 		var a v1.TenantAccess
-		readProto(t, testfixture.Request(f.http, "POST", "/v1/access/register", body, ""), &a)
+		readProto(t, registerWithEmail(t, f, body), &a)
 		var login v1.LoginResponse
 		readProto(t, testfixture.Request(f.http, "POST", "/v1/access/login", body, ""), &login)
 		return &a, login.GetAccessToken()
 	}
-	admin, token := tenant("13800000044")
-	_, other := tenant("13800000045")
+	admin, token := tenant("tenant-13800000044@example.test")
+	_, other := tenant("tenant-13800000045@example.test")
 	const base = "/v1/tenant/subaccounts"
 	request := func(method, path, body, token string) *httptest.ResponseRecorder {
 		return testfixture.Request(f.http, method, path, body, token)

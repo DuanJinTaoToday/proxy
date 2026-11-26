@@ -16,9 +16,10 @@ import (
 )
 
 type WalletRepository struct {
-	db           *gorm.DB
-	static       wallet.StaticSupplier
-	staticCipher cipher.AEAD
+	db                 *gorm.DB
+	static             wallet.StaticSupplier
+	staticCipher       cipher.AEAD
+	publicStaticOffers publicStaticOfferCache
 }
 
 func ProvideWalletRepository(resources *data.Data, biz *conf.Biz) (*WalletRepository, error) {
@@ -46,10 +47,10 @@ func NewWalletRepository(db *gorm.DB) *WalletRepository {
 
 var errWalletUnavailable = errors.ServiceUnavailable("WALLET_UNAVAILABLE", "wallet service unavailable")
 
-func (r *WalletRepository) FindTenant(ctx context.Context, account, phone string) (wallet.Tenant, error) {
+func (r *WalletRepository) FindTenant(ctx context.Context, account, email string) (wallet.Tenant, error) {
 	return r.walletTenant(ctx, func(db *gorm.DB) *gorm.DB {
-		if phone != "" {
-			return db.Where("a.phone_e164 = ?", phone)
+		if email != "" {
+			return db.Where("a.email = ?", email)
 		}
 		return db.Where("t.primary_account_name = ?", account)
 	})
@@ -70,7 +71,7 @@ func (r *WalletRepository) CustomerWallet(ctx context.Context, id string) (walle
 	})
 }
 
-const walletTenantColumns = "t.id, t.name, t.primary_account_name, w.available_minor, b.available_bytes AS available_traffic_bytes, t.created_at AS registered_at, COALESCE(a.phone_e164, '') AS phone"
+const walletTenantColumns = "t.id, t.name, t.primary_account_name, w.available_minor, b.available_bytes AS available_traffic_bytes, t.created_at AS registered_at, COALESCE(a.email, '') AS email"
 
 func (r *WalletRepository) walletTenant(ctx context.Context, match func(*gorm.DB) *gorm.DB) (wallet.Tenant, error) {
 	var tenant wallet.Tenant

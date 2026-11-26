@@ -8,10 +8,13 @@ import (
 	v1 "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1"
 	"github.com/go-kratos/kratos/v3/errors"
 	"github.com/go-kratos/kratos/v3/transport/http"
+	"google.golang.org/protobuf/proto"
 )
 
 func DecodeProxyAuthRequest(req *stdhttp.Request, target any) error {
 	switch target.(type) {
+	case *v1.LoginRequest, *v1.RegisterRequest, *v1.EmailRequest, *v1.EmailCredentialRequest, *v1.StartEmailRecoveryRequest:
+		return decodeLimitedProto(req, target.(proto.Message), "ACCESS_REQUEST", "access request", "invalid access request body")
 	case *v1.LoadAuthStateRequest, *v1.RefreshAuthStateRequest:
 		const maxBody = 32 << 10
 		if req.ContentLength > maxBody {

@@ -6,7 +6,7 @@ interface OpsTenantWire {
   tenant_id: string
   name: string
   primary_account_name: string
-  phone?: string
+  email?: string
   registered_at?: string
   available_minor?: string
   available_traffic_bytes?: string
@@ -17,7 +17,7 @@ function mapTenant(wire: OpsTenantWire) {
     id: wire.tenant_id,
     name: wire.name,
     account: wire.primary_account_name,
-    phone: wire.phone,
+    email: wire.email,
     registeredAt: wire.registered_at ? new Date(wire.registered_at) : undefined,
     availableMinor: BigInt(wire.available_minor ?? 0),
     availableTrafficBytes: BigInt(wire.available_traffic_bytes ?? 0),
@@ -37,6 +37,11 @@ export async function getOpsTenant(id: string, signal: AbortSignal) {
 
 export async function resetOpsTenantPassword({ tenantId, password }: { tenantId: string, password: string }) {
   await request<unknown>(opsTenantPath(tenantId) + ':reset-password', { body: { password } })
+}
+
+// 向指定邮箱发送账号恢复链接，客户通过链接设置新密码后改用该邮箱登录。
+export async function sendOpsTenantRecoveryEmail({ tenantId, email }: { tenantId: string, email: string }) {
+  await request<unknown>(opsTenantPath(tenantId) + ':recover-email', { body: { email } })
 }
 
 export async function quoteWalletRecharge(tenant: string, { key, reason, amountMinor }: { key: string, reason: string, amountMinor: bigint }) {

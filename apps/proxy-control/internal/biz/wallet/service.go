@@ -29,7 +29,7 @@ func (s *Service) FindTenant(ctx context.Context, token, query string) (Tenant, 
 	if query == "" || len(query) > 128 || strings.ContainsRune(query, 0) {
 		return Tenant{}, ErrInvalid
 	}
-	return s.store.FindTenant(ctx, query, access.NormalizePhone(query))
+	return s.store.FindTenant(ctx, query, access.NormalizeEmail(query))
 }
 
 func (s *Service) Tenant(ctx context.Context, token, tenantID string, operations bool) (Tenant, error) {

@@ -15,15 +15,17 @@ func TestPersistentTenantRegistrationAndAccess(t *testing.T) {
 	fixture := setupUsage(t)
 	handler := fixture.http
 	const password = "tenant-pass1"
-	register := func(phone, pwd string) *httptest.ResponseRecorder {
-		return testfixture.Request(handler, "POST", "/v1/access/register", fmt.Sprintf(`{"phone":%q,"password":%q}`, phone, pwd), "")
+	register := func(email, pwd, code string) *httptest.ResponseRecorder {
+		return testfixture.Request(handler, "POST", "/v1/access/register", accessJSON(map[string]string{"email": email, "password": pwd, "verification_code": code}), "")
 	}
-	testfixture.AssertStatus(t, register("123", "password1234"), http.StatusBadRequest, "INVALID_PHONE")
-	testfixture.AssertStatus(t, register("13800001234", "12345678901"), http.StatusBadRequest, "INVALID_PASSWORD")
+	testfixture.AssertStatus(t, register("123", "password1234", ""), http.StatusBadRequest, "INVALID_EMAIL")
+	testfixture.AssertStatus(t, register("A.Lpha+Alias@Example.test", "12345678901", ""), http.StatusBadRequest, "INVALID_PASSWORD")
+
+	code := issueRegistrationCode(t, fixture, "A.Lpha+Alias@Example.test")
 
 	// Simulate the second balance insert failing after tenant, admin and wallet writes.
 	execSQL(t, fixture.db, "ALTER TABLE tenant_balances ADD CONSTRAINT reject_registration CHECK (updated_at IS NULL) NOT VALID")
-	testfixture.AssertStatus(t, register("13800001234", password), http.StatusServiceUnavailable, "ACCESS_UNAVAILABLE")
+	testfixture.AssertStatus(t, register("a.lpha+alias@example.test", password, code), http.StatusServiceUnavailable, "ACCESS_UNAVAILABLE")
 	execSQL(t, fixture.db, "ALTER TABLE tenant_balances DROP CONSTRAINT reject_registration")
 	count := func(query string, want int64, args ...any) {
 		t.Helper()
@@ -39,34 +41,35 @@ func TestPersistentTenantRegistrationAndAccess(t *testing.T) {
 
 	var wg sync.WaitGroup
 	replies := make([]*httptest.ResponseRecorder, 2)
-	for i, phone := range []string{"13800001234", "+8613800001234"} {
-		wg.Go(func() { replies[i] = register(phone, password) })
+	for i, email := range []string{"a.lpha+alias@example.test", " A.Lpha+Alias@Example.test "} {
+		wg.Go(func() { replies[i] = register(email, password, code) })
 	}
 	wg.Wait()
 	var tenant v1.TenantAccess
-	success, conflict := 0, 0
+	success, rejected := 0, 0
 	for _, r := range replies {
 		switch r.Code {
 		case http.StatusOK:
 			success++
 			readProto(t, r, &tenant)
-		case http.StatusConflict:
-			conflict++
-			testfixture.AssertStatus(t, r, http.StatusConflict, "PHONE_ALREADY_REGISTERED")
+		case http.StatusBadRequest:
+			rejected++
+			testfixture.AssertStatus(t, r, http.StatusBadRequest, "INVALID_VERIFICATION_CODE")
 		default:
 			t.Fatalf("unexpected register result: %d %s", r.Code, r.Body)
 		}
 	}
-	if success != 1 || conflict != 1 || tenant.GetTenantId() == "" || tenant.GetPrimaryAccountName() == "" {
-		t.Fatalf("registration outcomes %d successes, %d conflicts, tenant %q", success, conflict, tenant.GetTenantId())
+	if success != 1 || rejected != 1 || tenant.GetTenantId() == "" || tenant.GetPrimaryAccountName() == "" {
+		t.Fatalf("registration outcomes %d successes, %d rejected, tenant %q", success, rejected, tenant.GetTenantId())
 	}
 	count("SELECT count(*) FROM tenants", 1)
-	count("SELECT count(*) FROM tenant_admins WHERE phone_e164 = '+8613800001234'", 1)
+	count("SELECT count(*) FROM tenant_admins WHERE email = 'a.lpha+alias@example.test'", 1)
 	count("SELECT count(*) FROM wallets WHERE tenant_id = ? AND available_minor = 0", 1, tenant.GetTenantId())
 	count("SELECT count(*) FROM tenant_balances WHERE tenant_id = ? AND available_bytes = 0", 1, tenant.GetTenantId())
 
 	var other v1.TenantAccess
-	readProto(t, register("13900001234", password), &other)
+	const otherEmail = "other@example.test"
+	readProto(t, register(otherEmail, password, issueRegistrationCode(t, fixture, otherEmail)), &other)
 	if other.GetPrimaryAccountName() == tenant.GetPrimaryAccountName() {
 		t.Fatal("duplicate primary account name")
 	}
@@ -83,19 +86,19 @@ func TestPersistentTenantRegistrationAndAccess(t *testing.T) {
 		return result.GetAccessToken()
 	}
 	const loginPath = "/v1/access/login"
-	a := token(creds(loginPath, "phone", "+8613800001234", password))
-	b := token(creds(loginPath, "phone", "13800001234", password))
-	otherToken := token(creds(loginPath, "phone", "13900001234", password))
+	a := token(creds(loginPath, "email", " A.Lpha+Alias@Example.test ", password))
+	b := token(creds(loginPath, "email", "a.lpha+alias@example.test", password))
+	otherToken := token(creds(loginPath, "email", otherEmail, password))
 	proxyUsername := tenant.GetPrimaryAccountName() + ".demo"
-	testfixture.AssertStatus(t, creds(loginPath, "phone", proxyUsername, password), http.StatusUnauthorized, "INVALID_LOGIN")
+	testfixture.AssertStatus(t, creds(loginPath, "email", proxyUsername, password), http.StatusUnauthorized, "INVALID_LOGIN")
 	testfixture.AssertStatus(t, creds("/v1/operations/access/login", "username", proxyUsername, password), http.StatusUnauthorized, "INVALID_LOGIN")
-	testfixture.AssertStatus(t, creds(loginPath, "phone", "13800001234", "wrong"), http.StatusUnauthorized, "INVALID_LOGIN")
+	testfixture.AssertStatus(t, creds(loginPath, "email", "a.lpha+alias@example.test", "wrong"), http.StatusUnauthorized, "INVALID_LOGIN")
 	account := func(tkn string) *httptest.ResponseRecorder {
 		return testfixture.Request(handler, "GET", "/v1/tenant/account", "", tkn)
 	}
 	var owned v1.TenantAccess
 	readProto(t, account(a), &owned)
-	if owned.GetTenantId() != tenant.GetTenantId() {
+	if owned.GetTenantId() != tenant.GetTenantId() || owned.GetEmail() != "a.lpha+alias@example.test" {
 		t.Fatal("session resolved to another tenant")
 	}
 	var selected v1.TenantAccess
@@ -114,7 +117,7 @@ func TestPersistentTenantRegistrationAndAccess(t *testing.T) {
 	}
 	readOnly, billing, support := operator("readonly"), operator("billing"), operator("support")
 	testfixture.AssertStatus(t, account(billing), http.StatusForbidden, "ACCESS_DENIED")
-	testfixture.AssertStatus(t, creds(loginPath, "phone", "readonly", "test-password"), http.StatusUnauthorized, "INVALID_LOGIN")
+	testfixture.AssertStatus(t, creds(loginPath, "email", "readonly", "test-password"), http.StatusUnauthorized, "INVALID_LOGIN")
 	check := func(actor, tenantID string, perm v1.Permission) *httptest.ResponseRecorder {
 		return testfixture.Request(handler, "POST", "/v1/access/check", fmt.Sprintf(`{"permission":%d,"tenant_id":%q}`, perm, tenantID), actor)
 	}
@@ -140,6 +143,6 @@ func TestPersistentTenantRegistrationAndAccess(t *testing.T) {
 	testfixture.AssertStatus(t, account(a), http.StatusUnauthorized, "AUTHENTICATION_REQUIRED")
 	testfixture.AssertStatus(t, account(b), http.StatusUnauthorized, "AUTHENTICATION_REQUIRED")
 	testfixture.AssertStatus(t, account(otherToken), http.StatusOK, "")
-	testfixture.AssertStatus(t, creds(loginPath, "phone", "13800001234", password), http.StatusUnauthorized, "INVALID_LOGIN")
-	testfixture.AssertStatus(t, account(token(creds(loginPath, "phone", "13800001234", newPassword))), http.StatusOK, "")
+	testfixture.AssertStatus(t, creds(loginPath, "email", "a.lpha+alias@example.test", password), http.StatusUnauthorized, "INVALID_LOGIN")
+	testfixture.AssertStatus(t, account(token(creds(loginPath, "email", "a.lpha+alias@example.test", newPassword))), http.StatusOK, "")
 }

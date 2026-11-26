@@ -50,16 +50,24 @@ func staticPasswordScope(tenant, item string) []byte {
 	return []byte(tenant + ":" + item)
 }
 
-func (r *WalletRepository) StaticOffers(ctx context.Context, shareMode string, purposeID int32) ([]wallet.StaticOffer, error) {
+func (r *WalletRepository) requireStaticOfferSale(ctx context.Context) error {
 	if r.db == nil {
-		return nil, errWalletUnavailable
+		return errWalletUnavailable
 	}
 	if err := RequireProductSale(ctx, r.db, product.Static); err != nil {
-		return nil, err
+		return err
 	}
 	if r.static == nil {
-		return nil, wallet.ErrStaticUnavailable
+		return wallet.ErrStaticUnavailable
 	}
+	return nil
+}
+
+func (r *WalletRepository) liveStaticOffers(ctx context.Context, shareMode string, purposeID int32) ([]wallet.StaticOffer, error) {
+	if err := r.requireStaticOfferSale(ctx); err != nil {
+		return nil, err
+	}
+
 	offers, err := r.static.Offers(ctx, shareMode, purposeID)
 	if err != nil {
 		return nil, wallet.ErrStaticUnavailable
@@ -148,7 +156,7 @@ func (r *WalletRepository) confirmStaticQuote(tenant string, p wallet.StaticPurc
 }
 
 func (r *WalletRepository) currentStaticQuotes(ctx context.Context, p wallet.StaticPurchaseRequest) ([]wallet.StaticQuoteLine, error) {
-	offers, err := r.StaticOffers(ctx, p.ShareMode, p.PurposeID)
+	offers, err := r.liveStaticOffers(ctx, p.ShareMode, p.PurposeID)
 	if err != nil {
 		return nil, err
 	}
@@ -289,18 +297,18 @@ func (r *WalletRepository) StaticAllocations(ctx context.Context, tenant string,
 	var rows []storedStaticIP
 	db := r.db.WithContext(ctx).Table("static_ip_allocations AS a").Where("a.tenant_id = ?", tenant)
 	if len(ids) == 0 {
-		db = db.Select(`a.supplier_item_id, a.order_id, a.ip, a.port, a.expires_at,
+		db = db.Select(`a.allocation_id, a.order_id, a.ip, a.port, a.expires_at,
 			i.specification AS purchase_specification, i.static_region, i.static_ip_type,
 			COALESCE(r.order_id, 0) AS pending_renewal_order_id`).
 			Joins("JOIN order_items i ON i.tenant_id=a.tenant_id AND i.order_id=a.order_id AND i.position=a.order_item_position").
-			Joins("LEFT JOIN static_renewal_items r ON r.tenant_id=a.tenant_id AND r.supplier_item_id=a.supplier_item_id AND r.outcome='pending'")
+			Joins("LEFT JOIN static_renewal_items r ON r.tenant_id=a.tenant_id AND r.allocation_id=a.allocation_id AND r.outcome='pending'")
 	} else {
-		db = db.Where("a.supplier_item_id IN ?", ids)
+		db = db.Where("a.allocation_id IN ?", ids)
 	}
 	if onlyActive {
 		db = db.Where("a.expires_at > clock_timestamp()")
 	}
-	if err := db.Order("a.expires_at DESC, a.supplier_item_id").Scan(&rows).Error; err != nil {
+	if err := db.Order("a.expires_at DESC, a.allocation_id").Scan(&rows).Error; err != nil {
 		return nil, err
 	}
 	allocations := make([]wallet.StaticAllocation, 0, len(rows))
@@ -474,7 +482,7 @@ func (r *WalletRepository) PendingStaticPurchases(ctx context.Context, afterID i
 	err := r.db.WithContext(ctx).Raw(`
         SELECT o.id AS order_id, o.tenant_id, COALESCE(s.supplier_order_id, '') AS supplier_order_id,
             o.created_at, o.delivered_count, o.created_at <= clock_timestamp() - interval '72 hours' AS can_close,
-            COALESCE((SELECT string_agg(r.supplier_item_id, ',' ORDER BY r.position)
+            COALESCE((SELECT string_agg(r.allocation_id, ',' ORDER BY r.position)
                 FROM static_renewal_items r WHERE r.order_id=o.id AND r.outcome='pending'), '') AS pending_renewal_items
         FROM purchase_orders o LEFT JOIN static_purchases s ON s.tenant_id=o.tenant_id AND s.order_id=o.id
         WHERE (s.order_id IS NOT NULL OR o.kind='static_renewal') AND o.status='pending'

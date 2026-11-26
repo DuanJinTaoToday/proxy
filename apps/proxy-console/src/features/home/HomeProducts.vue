@@ -132,7 +132,10 @@ void loadProducts()
           </div>
         </article>
       </div>
-      <p class="footnote">{{ t('marketing.footnote') }}</p>
+      <p class="footnote">
+        {{ t('marketing.footnote') }}
+        <RouterLink class="pricing-link" :to="{ name: 'pricing', params: { locale } }">{{ t('marketing.allPricing') }} →</RouterLink>
+      </p>
     </div>
   </section>
 </template>

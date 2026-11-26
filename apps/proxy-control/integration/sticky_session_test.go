@@ -14,12 +14,12 @@ import (
 
 func TestGatewayStickySessions(t *testing.T) {
 	f := setupUsage(t)
-	const tenantCredentials = `{"phone":"13900000044","password":"tenant-password42"}`
+	const tenantCredentials = `{"email":"tenant-13900000044@example.test","password":"tenant-password42"}`
 	post := func(path, body, token string) *httptest.ResponseRecorder {
 		return testfixture.Request(f.http, "POST", path, body, token)
 	}
 	var tenant v1.TenantAccess
-	readProto(t, post("/v1/access/register", tenantCredentials, ""), &tenant)
+	readProto(t, registerWithEmail(t, f, tenantCredentials), &tenant)
 	var login v1.LoginResponse
 	readProto(t, post("/v1/access/login", tenantCredentials, ""), &login)
 	create := func(name string) string {

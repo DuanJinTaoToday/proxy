@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory, type RouteLocationNormalizedLoaded, type RouteRecordRaw, type RouteRecordSingleView } from 'vue-router'
-import { hasOperatorSession, hasSession, installOperatorSession, installSession, loadOperator, safeOperatorRedirect, safeRedirect } from '@/features/auth'
+import { hasOperatorSession, hasSession, installOperatorSession, installSession, loadOperator, safeOperatorRedirect, safeRedirect, stashLinkToken, type LinkPurpose } from '@/features/auth'
 import { applyLocale, isLocale, preferredLocale, rememberLocale } from './i18n'
 
 declare module 'vue-router' {
@@ -15,6 +15,8 @@ declare module 'vue-router' {
     // 带页签的页面：子路由各自独立，可直接访问、刷新和后退。
     tabs?: { name: string, labelKey: string }[]
     tabAction?: { name: string, labelKey: string }
+    // 邮件链接落地页携带的一次性令牌用途。
+    linkToken?: LinkPurpose
   }
 }
 
@@ -48,8 +50,13 @@ export const routes: RouteRecordRaw[] = [
     component: PublicLayout,
     children: [
       { path: '', name: 'home', component: () => import('@/pages/public/HomePage.vue'), meta: { titleKey: 'nav.home' } },
+      { path: 'pricing', name: 'pricing', component: () => import('@/pages/public/PricingPage.vue'), meta: { titleKey: 'publicPricing.title' } },
       { path: 'login', name: 'login', component: AuthPage, props: { mode: 'login' }, meta: { titleKey: 'auth.loginTitle', guestOnly: true } },
       { path: 'register', name: 'register', component: AuthPage, props: { mode: 'register' }, meta: { titleKey: 'auth.registerTitle', guestOnly: true } },
+      { path: 'forgot-password', name: 'forgot-password', component: AuthPage, props: { mode: 'forgot' }, meta: { titleKey: 'auth.forgotTitle', guestOnly: true } },
+      // 邮件链接落地页，已登录时同样可用。
+      { path: 'reset-password', name: 'reset-password', component: AuthPage, props: { mode: 'reset' }, meta: { titleKey: 'auth.reset.title', linkToken: 'reset' } },
+      { path: 'recover-email', name: 'recover-email', component: AuthPage, props: { mode: 'recover' }, meta: { titleKey: 'auth.recover.title', linkToken: 'recover' } },
     ],
   },
   {
@@ -110,6 +117,12 @@ const needsAuth = (route: RouteLocationNormalizedLoaded) => route.matched.some(r
 // 官网以 URL 的语言为准，并记为偏好，从英文官网注册或登录后控制台沿用英文；控制台和其他页面使用记住的偏好。
 // 未登录访问控制台时跳到登录页并带上回跳地址；已登录访问登录注册页时直接去回跳地址。
 router.beforeEach(async to => {
+  // 邮件链接的令牌在渲染前移出地址栏，替换当前历史记录，页面从本标签页暂存中读取。
+  if (to.meta.linkToken && 'token' in to.query) {
+    const { token, ...query } = to.query
+    stashLinkToken(to.meta.linkToken, typeof token === 'string' ? token : '')
+    return { path: to.path, query, hash: to.hash, replace: true }
+  }
   const urlLocale = isLocale(to.params.locale) ? to.params.locale : undefined
   if (urlLocale) rememberLocale(urlLocale)
   const locale = urlLocale ?? preferredLocale()

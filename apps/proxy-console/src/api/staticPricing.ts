@@ -38,12 +38,14 @@ function catalogParams(filter: StaticCatalogFilter) {
     : {}
 }
 
-export async function listStaticOffers(filter: StaticCatalogFilter, signal: AbortSignal) {
-  const wire = await request<{ open?: boolean, offers?: StaticOfferWire[] }>('/v1/public/static-offers', {
+// 官网游客价格页以匿名身份查询，避免浏览器里残留的过期凭据影响公开报价。
+export async function listStaticOffers(filter: StaticCatalogFilter, signal: AbortSignal, options: { anonymous?: boolean } = {}) {
+  const wire = await request<{ open?: boolean, quoted_at?: string, offers?: StaticOfferWire[] }>('/v1/public/static-offers', {
     query: catalogParams(filter),
     signal,
+    anonymous: options.anonymous,
   })
-  return { open: wire.open ?? false, offers: (wire.offers ?? []).map(toOffer) }
+  return { open: wire.open ?? false, quotedAt: wire.quoted_at || undefined, offers: (wire.offers ?? []).map(toOffer) }
 }
 
 export async function getStaticWalletBalance(signal: AbortSignal) {

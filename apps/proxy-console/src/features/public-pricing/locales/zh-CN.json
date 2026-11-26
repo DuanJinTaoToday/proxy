@@ -1,0 +1,83 @@
+{
+  "publicPricing": {
+    "title": "价格",
+    "lead": "动态住宅流量包与静态住宅 IP 的当前价格。注册后即可购买，下单时会再次确认价格与库存。",
+    "register": "免费注册",
+    "openConsole": "进入控制台",
+    "footnote": "价格以人民币计。流量按十进制 GB 计量（1 GB = 1,000,000,000 字节）。动态与静态代理共用一个账户与钱包。",
+    "loading": "正在加载报价",
+    "retry": "重试",
+    "categories": {
+      "dynamic": "动态住宅",
+      "exclusive": "独享静态 IP",
+      "shared": "共享静态 IP"
+    },
+    "status": {
+      "onSale": "在售",
+      "closed": "未开售",
+      "unavailable": "暂无可售",
+      "failed": "加载失败"
+    },
+    "dynamicHint": "按流量计费，流量包不过期。通过 SOCKS5 网关接入，出口自动轮换。",
+    "dynamicFailed": "动态住宅流量包暂时无法加载",
+    "dynamicClosed": "动态住宅流量包暂未开售，开售后在此公布价格。",
+    "noPackages": "当前没有在售的动态住宅流量包。",
+    "savings": "省 {percent}%",
+    "perGb": "每 GB {amount}",
+    "buyPackage": "购买 {capacity} GB",
+    "exclusiveHint": "每个独享 IP 只分配给一位客户，价格随地区和租期变化。",
+    "sharedHint": "共享 IP 可能由多位客户同时使用。选择用途后查看该用途的价格与库存。",
+    "purpose": "用途",
+    "purposeHint": "不同用途的可售数量不同。",
+    "purposes": {
+      "0": "不指定用途",
+      "8": "TikTok",
+      "9": "Sora",
+      "10": "ChatGPT"
+    },
+    "staticFailed": "静态 IP 报价暂时无法加载",
+    "exclusiveClosed": "独享静态 IP 暂未开售，开售后在此公布价格。",
+    "sharedClosed": "该用途的共享静态 IP 暂未开售，开售后在此公布价格。",
+    "noOffers": "当前没有可售的静态 IP 报价，请稍后再来查看。",
+    "allSoldOut": "全部报价暂时售罄",
+    "allSoldOutHint": "价格仅供参考，补货后即可购买。",
+    "filters": "筛选报价",
+    "search": "搜索国家、城市或 IP 类型",
+    "continent": "大洲",
+    "allContinents": "全部大洲",
+    "region": "地区",
+    "allRegions": "全部地区",
+    "unknownRegion": "地区未知",
+    "sort": "排序",
+    "sortBy": {
+      "price-asc": "价格从低到高",
+      "price-desc": "价格从高到低",
+      "stock": "库存从多到少",
+      "region": "按地区"
+    },
+    "inStockOnly": "仅看有货",
+    "term": "租期",
+    "allTerms": "全部租期",
+    "termDays": "{days} 天 | {days} 天",
+    "resultCount": "共 {total} 条报价，显示 {shown} 条 · 有货 {inStock} 条",
+    "noMatch": "没有符合筛选条件的报价。",
+    "clearFilters": "清除筛选",
+    "staticTable": "静态 IP 报价",
+    "type": "类型",
+    "exclusiveShort": "独享",
+    "sharedShort": "共享",
+    "line": "线路",
+    "availability": "库存",
+    "available": "可售 {count}",
+    "soldOut": "售罄",
+    "pricePerIp": "单价",
+    "perIpTerm": "每 IP / {days} 天 | 每 IP / {days} 天",
+    "quotedAt": "报价时间 {time}（北京时间）。",
+    "staticNote": "库存变化较快，最终价格与库存以下单时确认为准。",
+    "buyStatic": "购买静态 IP",
+    "errors": {
+      "STATIC_SUPPLIER_UNAVAILABLE": "供应商报价暂时不可用，请稍后重试。",
+      "PRODUCT_UNAVAILABLE": "商品报价暂时不可用，请稍后重试。"
+    }
+  }
+}

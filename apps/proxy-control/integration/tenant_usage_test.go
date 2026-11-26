@@ -14,20 +14,20 @@ import (
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/data/repo"
 )
 
-func usageTenant(t *testing.T, f usageFixture, phone string) (string, string) {
+func usageTenant(t *testing.T, f usageFixture, email string) (string, string) {
 	t.Helper()
-	body := `{"phone":"` + phone + `","password":"tenant-password47"}`
+	body := `{"email":"` + email + `","password":"tenant-password47"}`
 	var tenant v1.TenantAccess
 	var login v1.LoginResponse
-	readProto(t, testfixture.Request(f.http, "POST", "/v1/access/register", body, ""), &tenant)
+	readProto(t, registerWithEmail(t, f, body), &tenant)
 	readProto(t, testfixture.Request(f.http, "POST", "/v1/access/login", body, ""), &login)
 	return tenant.GetTenantId(), login.GetAccessToken()
 }
 
 func TestTenantDailyUsageAndCSV(t *testing.T) {
 	f := setupUsage(t)
-	_, token := usageTenant(t, f, "13800000047")
-	_, other := usageTenant(t, f, "13800000048")
+	_, token := usageTenant(t, f, "tenant-13800000047@example.test")
+	_, other := usageTenant(t, f, "tenant-13800000048@example.test")
 	create := func(name string) string {
 		t.Helper()
 		var account v1.Subaccount
@@ -105,7 +105,7 @@ func TestTenantDailyUsageAndCSV(t *testing.T) {
 
 func TestTenantTrafficAlertCycles(t *testing.T) {
 	f := setupUsage(t)
-	tenant, token := usageTenant(t, f, "13800000047")
+	tenant, token := usageTenant(t, f, "tenant-13800000047@example.test")
 	const path = "/v1/tenant/traffic-alert"
 	type state struct {
 		Threshold *string `json:"threshold_bytes"`

@@ -11,11 +11,11 @@ import { endpoint, useStaticIpPresentation } from './presentation'
 import { readRenewalSubmissions, type RenewalIntent } from './renewalIntent'
 import RenewalDialog from './RenewalDialog.vue'
 
-const props = defineProps<{ accountPhone: string }>()
+const props = defineProps<{ accountKey: string }>()
 const { t, locale } = useI18n()
 const { formatDate, errorMessage } = useStaticIpPresentation()
 const controller = new AbortController()
-const storageKey = `proxy-console.static-renewal.${props.accountPhone}`
+const storageKey = `proxy-console.static-renewal.${props.accountKey}`
 
 const statuses = ['active', 'expiring', 'pending', 'expired'] as const
 type Status = (typeof statuses)[number]
@@ -115,7 +115,7 @@ function canRenew(ip: StaticIp) {
 }
 
 function openRenewal(targets: StaticIp[]) {
-  const affected = savedSubmissions.value.find(submission => targets.some(ip => submission.supplier_item_ids.includes(ip.id)))
+  const affected = savedSubmissions.value.find(submission => targets.some(ip => submission.allocation_ids.includes(ip.id)))
   if (affected) {
     resumeRenewal(affected)
     return
@@ -147,7 +147,7 @@ function recordSubmission(payload: RenewalSubmission, unresolved: boolean) {
 
 function retryLabel(submission: RenewalSubmission, index: number) {
   if (savedSubmissions.value.length === 1) return t('staticIps.retryOriginal')
-  const firstIp = ips.value.find(ip => submission.supplier_item_ids.includes(ip.id))
+  const firstIp = ips.value.find(ip => submission.allocation_ids.includes(ip.id))
   return firstIp
     ? t('staticIps.retryOriginalIp', { ip: endpoint(firstIp) })
     : t('staticIps.retryOriginalIndex', { index: index + 1 })

@@ -6,7 +6,7 @@ import { ElButton, ElDropdown, ElDropdownItem, ElDropdownMenu } from 'element-pl
 import { ArrowDown, Check, DataLine, Menu } from '@element-plus/icons-vue'
 import BrandMark from '@/shared/ui/BrandMark.vue'
 import LinkButton from '@/shared/ui/LinkButton.vue'
-import { AccountMenu, hasSession, OperatorMenu, sessionPhone } from '@/features/auth'
+import { AccountMenu, hasSession, OperatorMenu, sessionEmail } from '@/features/auth'
 import { NotificationBell } from '@/features/notifications'
 import { applyLocale, isLocale, locales, rememberLocale, type Locale } from '../i18n'
 
@@ -42,6 +42,7 @@ function switchLocale(next: Locale) {
 
     <nav v-if="marketing" class="app-header__marketing-menu" :aria-label="t('marketing.resources')">
       <a href="#products">{{ t('marketing.products') }}</a>
+      <RouterLink :to="{ name: 'pricing', params: { locale } }">{{ t('marketing.pricing') }}</RouterLink>
       <a href="#integration">{{ t('marketing.guide') }}</a>
       <a href="#manage">{{ t('marketing.manage') }}</a>
       <a href="#faq">{{ t('marketing.faq') }}</a>
@@ -50,7 +51,7 @@ function switchLocale(next: Locale) {
       <RouterLink v-if="ops" to="/console" target="_blank" rel="noopener" class="app-header__customer-link">
         <DataLine aria-hidden="true" /><span>{{ t('header.customerConsole') }}</span>
       </RouterLink>
-      <NotificationBell v-else :key="sessionPhone" :account-key="sessionPhone" />
+      <NotificationBell v-else :key="sessionEmail" :account-key="sessionEmail" />
 
       <ElDropdown trigger="click" placement="bottom-end" @command="switchLocale">
         <ElButton class="app-header__language" text :aria-label="t('header.language', { name: t(`locale.${locale}`) })">

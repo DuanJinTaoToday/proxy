@@ -5,6 +5,8 @@ const exclusive = 200001
 const shared = 28
 const sharedPrices = new Map([[0, 8], [8, 9], [9, 10], [10, 11]])
 const termDays = new Map([['rp', 1], ['zp', 7], ['yp1', 30], ['yp3', 90], ['yp6', 180]])
+const catalogFaults = new Set()
+const catalogCalls = new Map()
 const allocations = new Map()
 const orders = new Map()
 const pendingRenewals = new Map()
@@ -136,6 +138,18 @@ async function handle(request, response) {
     nextPartialProxyPorts = ports
     return json(response, 200, { ok: true })
   }
+  if (path === '/fixture/catalog-control') {
+    const { category, purpose = 0, unavailable } = body
+    if (![exclusive, shared].includes(category) || ![0, 8, 9, 10].includes(purpose) ||
+        (unavailable !== undefined && typeof unavailable !== 'boolean')) {
+      return json(response, 400, { error: 'Invalid test catalog specification' })
+    }
+    const key = String(category) + '/' + purpose
+    if (unavailable === true) catalogFaults.add(key)
+    if (unavailable === false) catalogFaults.delete(key)
+    return json(response, 200, { calls: catalogCalls.get(key) ?? 0 })
+  }
+
   if (path === '/fixture/catalog') {
     if (!Number.isFinite(body.price) || body.price <= 0 || !Number.isSafeInteger(body.stock) || body.stock < 0) {
       return json(response, 400, { error: 'Expected a positive price and nonnegative stock' })
@@ -149,8 +163,10 @@ async function handle(request, response) {
     detailAvailable = body.available
     return json(response, 200, { available: detailAvailable })
   }
+  const findAllocation = ip => [...allocations.values()].find(item => item.ip === ip)
+
   if (path === '/fixture/renewals/confirm') {
-    const ids = body.id === undefined ? [...pendingRenewals.keys()] : [body.id]
+    const ids = body.ip === undefined ? [...pendingRenewals.keys()] : [findAllocation(body.ip)?.id]
     for (const id of ids) {
       if (!pendingRenewals.has(id)) continue
       allocations.get(id).stoptime = pendingRenewals.get(id)
@@ -160,8 +176,9 @@ async function handle(request, response) {
     return json(response, 200, { ok: true })
   }
   if (path === '/fixture/renewals/delay') {
-    if (!allocations.has(body.id)) return json(response, 400, { error: 'Expected an allocated fixture item ID' })
-    delayedRenewalIDs.add(body.id)
+    const allocation = findAllocation(body.ip)
+    if (!allocation) return json(response, 400, { error: 'Expected an allocated fixture IP' })
+    delayedRenewalIDs.add(allocation.id)
     return json(response, 200, { ok: true })
   }
 
@@ -171,8 +188,12 @@ async function handle(request, response) {
   }
 
   switch (path) {
-    case '/open/api/nodes-and-continents':
+    case '/open/api/nodes-and-continents': {
+      const key = String(params.cid) + '/' + (params.pid ?? 0)
+      catalogCalls.set(key, (catalogCalls.get(key) ?? 0) + 1)
+      if (catalogFaults.has(key)) return json(response, 503, { error: 'Fixture catalog temporarily unavailable' })
       return json(response, 200, { code: 0, data: { nodes: catalog(params.cid, params.pid) } })
+    }
     case '/open/api/order/place':
       return json(response, 200, place(params))
     case '/open/api/order/detail': {

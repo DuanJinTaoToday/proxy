@@ -2,7 +2,6 @@ package repo
 
 import (
 	"context"
-	"errors"
 
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/biz/access"
 	"github.com/DuanJinTaoToday/proxy/apps/proxy-control/internal/data"
@@ -27,51 +26,20 @@ func NewAccountRepository(db *gorm.DB) *AccountRepository {
 	return &AccountRepository{db: db.Session(&gorm.Session{Logger: logger.Discard})}
 }
 
-func (r *AccountRepository) CreateTenant(ctx context.Context, t access.Tenant, phone, digest string) (bool, error) {
-	created := false
-	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		// Roll back the tenant row on a concurrently claimed phone.
-		if err := tx.Exec("INSERT INTO tenants (id,name,primary_account_name) VALUES (?,?,?)", t.ID, t.Name, t.PrimaryAccountName).Error; err != nil {
-			return err
-		}
-		result := tx.Exec("INSERT INTO tenant_admins (tenant_id,phone_e164,password_hash) VALUES (?,?,?) ON CONFLICT (phone_e164) DO NOTHING", t.ID, phone, digest)
-		if result.Error != nil {
-			return result.Error
-		}
-		if result.RowsAffected == 0 {
-			return errPhoneClaimed
-		}
-		if err := tx.Exec("INSERT INTO wallets (tenant_id) VALUES (?)", t.ID).Error; err != nil {
-			return err
-		}
-		if err := tx.Exec("INSERT INTO tenant_balances (tenant_id,updated_at) VALUES (?,now())", t.ID).Error; err != nil {
-			return err
-		}
-		created = true
-		return nil
-	})
-	if err == errPhoneClaimed {
-		return false, nil
-	}
-	return created, err
-}
-
-var errPhoneClaimed = errors.New("phone already claimed")
-
 type accountRow struct {
-	ID, Name, PrimaryAccountName, PasswordHash string
-	Version                                    int64
+	ID, Name, PrimaryAccountName, Email, EmailDeliveryAddress, PasswordHash string
+	Version                                                                 int64
 }
 
 func (r *AccountRepository) customer(ctx context.Context, field, value string) (access.Principal, error) {
 	var row accountRow
-	err := r.db.WithContext(ctx).Raw(`SELECT t.id,t.name,t.primary_account_name,a.password_hash,a.session_version AS version
+	err := r.db.WithContext(ctx).Raw(`SELECT t.id,t.name,t.primary_account_name,COALESCE(a.email, '') AS email,COALESCE(a.email_delivery_address, '') AS email_delivery_address,a.password_hash,a.session_version AS version
  FROM tenant_admins a JOIN tenants t ON t.id=a.tenant_id WHERE `+field+" = ?", value).Scan(&row).Error
-	return access.Principal{ID: row.ID, PasswordHash: row.PasswordHash, Version: row.Version, Tenant: access.Tenant{ID: row.ID, Name: row.Name, PrimaryAccountName: row.PrimaryAccountName}}, err
+	return access.Principal{ID: row.ID, EmailDeliveryAddress: row.EmailDeliveryAddress, PasswordHash: row.PasswordHash, Version: row.Version, Tenant: access.Tenant{ID: row.ID, Name: row.Name, PrimaryAccountName: row.PrimaryAccountName, Email: row.Email}}, err
 }
 
-func (r *AccountRepository) CustomerByPhone(ctx context.Context, v string) (access.Principal, error) {
-	return r.customer(ctx, "a.phone_e164", v)
+func (r *AccountRepository) CustomerByEmail(ctx context.Context, v string) (access.Principal, error) {
+	return r.customer(ctx, "a.email", v)
 }
 
 func (r *AccountRepository) CustomerByTenant(ctx context.Context, v string) (access.Principal, error) {

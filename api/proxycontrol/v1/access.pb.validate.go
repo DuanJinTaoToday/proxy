@@ -63,6 +63,8 @@ func (m *TenantAccess) validate(all bool) error {
 
 	// no validation rules for PrimaryAccountName
 
+	// no validation rules for Email
+
 	if len(errors) > 0 {
 		return TenantAccessMultiError(errors)
 	}
@@ -162,21 +164,10 @@ func (m *LoginRequest) validate(all bool) error {
 
 	var errors []error
 
-	if utf8.RuneCountInString(m.GetPhone()) < 1 {
+	if utf8.RuneCountInString(m.GetEmail()) < 1 {
 		err := LoginRequestValidationError{
-			field:  "Phone",
+			field:  "Email",
 			reason: "value length must be at least 1 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if len(m.GetPhone()) > 32 {
-		err := LoginRequestValidationError{
-			field:  "Phone",
-			reason: "value length must be at most 32 bytes",
 		}
 		if !all {
 			return err
@@ -305,21 +296,10 @@ func (m *RegisterRequest) validate(all bool) error {
 
 	var errors []error
 
-	if utf8.RuneCountInString(m.GetPhone()) < 1 {
+	if utf8.RuneCountInString(m.GetEmail()) < 1 {
 		err := RegisterRequestValidationError{
-			field:  "Phone",
+			field:  "Email",
 			reason: "value length must be at least 1 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if len(m.GetPhone()) > 32 {
-		err := RegisterRequestValidationError{
-			field:  "Phone",
-			reason: "value length must be at most 32 bytes",
 		}
 		if !all {
 			return err
@@ -342,6 +322,28 @@ func (m *RegisterRequest) validate(all bool) error {
 		err := RegisterRequestValidationError{
 			field:  "Password",
 			reason: "value length must be at most 1024 bytes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetVerificationCode()) < 1 {
+		err := RegisterRequestValidationError{
+			field:  "VerificationCode",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(m.GetVerificationCode()) > 16 {
+		err := RegisterRequestValidationError{
+			field:  "VerificationCode",
+			reason: "value length must be at most 16 bytes",
 		}
 		if !all {
 			return err
@@ -426,6 +428,387 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = RegisterRequestValidationError{}
+
+// Validate checks the field values on EmailRequest with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *EmailRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on EmailRequest with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in EmailRequestMultiError, or
+// nil if none found.
+func (m *EmailRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *EmailRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if utf8.RuneCountInString(m.GetEmail()) < 1 {
+		err := EmailRequestValidationError{
+			field:  "Email",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return EmailRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// EmailRequestMultiError is an error wrapping multiple validation errors
+// returned by EmailRequest.ValidateAll() if the designated constraints aren't met.
+type EmailRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m EmailRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m EmailRequestMultiError) AllErrors() []error { return m }
+
+// EmailRequestValidationError is the validation error returned by
+// EmailRequest.Validate if the designated constraints aren't met.
+type EmailRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e EmailRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e EmailRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e EmailRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e EmailRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e EmailRequestValidationError) ErrorName() string { return "EmailRequestValidationError" }
+
+// Error satisfies the builtin error interface
+func (e EmailRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sEmailRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = EmailRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = EmailRequestValidationError{}
+
+// Validate checks the field values on EmailCredentialRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *EmailCredentialRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on EmailCredentialRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// EmailCredentialRequestMultiError, or nil if none found.
+func (m *EmailCredentialRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *EmailCredentialRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if utf8.RuneCountInString(m.GetToken()) != 43 {
+		err := EmailCredentialRequestValidationError{
+			field:  "Token",
+			reason: "value length must be 43 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+
+	}
+
+	if utf8.RuneCountInString(m.GetPassword()) < 12 {
+		err := EmailCredentialRequestValidationError{
+			field:  "Password",
+			reason: "value length must be at least 12 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(m.GetPassword()) > 1024 {
+		err := EmailCredentialRequestValidationError{
+			field:  "Password",
+			reason: "value length must be at most 1024 bytes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return EmailCredentialRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// EmailCredentialRequestMultiError is an error wrapping multiple validation
+// errors returned by EmailCredentialRequest.ValidateAll() if the designated
+// constraints aren't met.
+type EmailCredentialRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m EmailCredentialRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m EmailCredentialRequestMultiError) AllErrors() []error { return m }
+
+// EmailCredentialRequestValidationError is the validation error returned by
+// EmailCredentialRequest.Validate if the designated constraints aren't met.
+type EmailCredentialRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e EmailCredentialRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e EmailCredentialRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e EmailCredentialRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e EmailCredentialRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e EmailCredentialRequestValidationError) ErrorName() string {
+	return "EmailCredentialRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e EmailCredentialRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sEmailCredentialRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = EmailCredentialRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = EmailCredentialRequestValidationError{}
+
+// Validate checks the field values on StartEmailRecoveryRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *StartEmailRecoveryRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on StartEmailRecoveryRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// StartEmailRecoveryRequestMultiError, or nil if none found.
+func (m *StartEmailRecoveryRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *StartEmailRecoveryRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if utf8.RuneCountInString(m.GetTenantId()) < 1 {
+		err := StartEmailRecoveryRequestValidationError{
+			field:  "TenantId",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(m.GetTenantId()) > 64 {
+		err := StartEmailRecoveryRequestValidationError{
+			field:  "TenantId",
+			reason: "value length must be at most 64 bytes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetEmail()) < 1 {
+		err := StartEmailRecoveryRequestValidationError{
+			field:  "Email",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return StartEmailRecoveryRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// StartEmailRecoveryRequestMultiError is an error wrapping multiple validation
+// errors returned by StartEmailRecoveryRequest.ValidateAll() if the
+// designated constraints aren't met.
+type StartEmailRecoveryRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m StartEmailRecoveryRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m StartEmailRecoveryRequestMultiError) AllErrors() []error { return m }
+
+// StartEmailRecoveryRequestValidationError is the validation error returned by
+// StartEmailRecoveryRequest.Validate if the designated constraints aren't met.
+type StartEmailRecoveryRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e StartEmailRecoveryRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e StartEmailRecoveryRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e StartEmailRecoveryRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e StartEmailRecoveryRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e StartEmailRecoveryRequestValidationError) ErrorName() string {
+	return "StartEmailRecoveryRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e StartEmailRecoveryRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sStartEmailRecoveryRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = StartEmailRecoveryRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = StartEmailRecoveryRequestValidationError{}
 
 // Validate checks the field values on LoginOperatorRequest with the rules
 // defined in the proto definition for this message. If any rules are

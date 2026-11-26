@@ -10,6 +10,12 @@ IPCrown v2.0.0 文档提供节点库存查询、直接采购、订单详情及�
 - 单个节点的 `id` 对应采购请求的 `nid`。`data[].total` 为节点全部数量，`data[].max` 为可用数量，文档以 `max > 0` 表示可下单。响应根级 `total` 是列表记录总数。
 - `prices[]` 提供 `buytime`、`label`、`price_type` 与单位为元的 `price`。示例中的年卡金额与同页周期倍数说明存在差异，目录和实际采购金额的对应关系仍需验证。响应 `timestamp` 是接口响应时间戳，文档未提供独立的库存更新时间或库存延迟承诺。 [获取节点列表](https://www.yuque.com/ludeng-4v9rr/egw6bz/lq4d0lxmbgb1izii#QHLr2)
 
+## 公开报价预算
+
+控制面按独享和共享用途分别保留 20 秒报价快照。有效期从成功接收上游结果时起算，并作为公开响应的报价时间。同规格并发请求共享一次刷新。开售状态在公开响应时重新校验。无库存的规格保留在目录中。
+
+当前每个 IPCrown Partner ID 由单个控制面实例访问。该实例在任意滚动 60 秒内最多发起 20 次公开目录刷新，含失败的请求。在供应商 60 次查询上限中为购买、续费和核单等其他查询留下 40 次。刷新失败或预算耗尽时，公开报价返回 `STATIC_SUPPLIER_UNAVAILABLE`，购买和续费继续实时复核。一个 Partner ID 如需同时服务多个控制面实例，须在实例间共享同一刷新预算。
+
 ## 预留与采购
 
 - 已公开的目录和采购接口没有独立的预留请求、库存锁令牌或有效期。供应商也提供指定 IP 列表和下单接口，列表给出资源标识，购买通过单独的下单请求提交，文档未描述查询后会锁住所选 IP。 [接口概览](https://www.yuque.com/ludeng-4v9rr/egw6bz/lq4d0lxmbgb1izii#LlSps) · [定制 IP 列表](https://www.yuque.com/ludeng-4v9rr/egw6bz/lq4d0lxmbgb1izii#KaElh) · [定制 IP 下单](https://www.yuque.com/ludeng-4v9rr/egw6bz/lq4d0lxmbgb1izii#VywGX)

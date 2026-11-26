@@ -3,7 +3,7 @@ package wallet
 import (
 	"context"
 	"slices"
-	"strconv"
+
 	"strings"
 	"time"
 
@@ -143,8 +143,7 @@ func normalizeRenewalIDs(ids []string) ([]string, error) {
 	ids = slices.Clone(ids)
 	slices.Sort(ids)
 	for i, id := range ids {
-		numericID, err := strconv.ParseInt(id, 10, 64)
-		if err != nil || numericID <= 0 || (i > 0 && ids[i-1] == id) {
+		if id == "" || len(id) > 128 || strings.ContainsRune(id, 0) || (i > 0 && ids[i-1] == id) {
 			return nil, ErrInvalid
 		}
 	}

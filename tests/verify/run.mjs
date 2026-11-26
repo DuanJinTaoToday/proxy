@@ -51,11 +51,14 @@ try {
   const config = readFileSync(path.join(root, 'apps/proxy-control/configs/file/test-server.yaml'), 'utf8')
   const trustedProxies = 'trusted_proxy_cidrs: []'
   if (!config.includes(trustedProxies)) throw new Error('Expected empty trusted proxy config in test-server.yaml')
-  writeFileSync(controlConfig, config.replace(trustedProxies, 'trusted_proxy_cidrs: ["' + proxyIP + '/32"]'))
+  run.baseURL = 'https://localhost:' + hostPort('console', 443)
+  writeFileSync(controlConfig, config
+    .replace(trustedProxies, 'trusted_proxy_cidrs: ["' + proxyIP + '/32"]')
+    .replace('https://localhost:8443', run.baseURL))
   run.trustedProxyCIDR = proxyIP + '/32'
   compose(['up', '-d', '--wait', '--wait-timeout', '120', 'console', 'ipcrown-socks5'])
   run.images = compose(['images'], true).trim()
-  run.baseURL = 'https://localhost:' + hostPort('console', 443)
+  const mailpitURL = 'http://127.0.0.1:' + hostPort('mailpit', 8025)
   const supplierURL = 'http://127.0.0.1:' + hostPort('ipcrown', 8080)
   const supplierSOCKS5Ports = [1081, 1082].map(port => Number(hostPort('ipcrown-socks5', port)))
   run.stage = 'browser'
@@ -64,7 +67,7 @@ try {
   ], {
     cwd: suite, stdio: 'inherit',
     env: {
-      ...process.env, VERIFY_URL: run.baseURL, VERIFY_OUTPUT: evidence, VERIFY_ID: runId,
+      ...process.env, VERIFY_URL: run.baseURL, VERIFY_MAILPIT_URL: mailpitURL, VERIFY_OUTPUT: evidence, VERIFY_ID: runId,
       VERIFY_IPCROWN_URL: supplierURL, VERIFY_IPCROWN_SOCKS5_PORTS: JSON.stringify(supplierSOCKS5Ports),
     },
   })

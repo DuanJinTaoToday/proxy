@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { Dashboard } from '@/features/dashboard'
-import { sessionPhone } from '@/features/auth'
+import { sessionEmail } from '@/features/auth'
 </script>
 
 <template>
-  <Dashboard :key="sessionPhone" />
+  <Dashboard :key="sessionEmail" />
 </template>

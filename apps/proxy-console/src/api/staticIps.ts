@@ -1,7 +1,7 @@
 import { request, requestText } from './client'
 
 interface StaticIpWire {
-  supplier_item_id: string
+  allocation_id: string
   ip: string
   port: number
   expires_at: string
@@ -12,7 +12,7 @@ interface StaticIpWire {
 
 interface RenewalTermWire { term: string, term_days: number }
 interface RenewalQuoteLineWire {
-  supplier_item_id: string
+  allocation_id: string
   ip: string
   unit_minor: string
   term_days: number
@@ -21,12 +21,12 @@ interface RenewalQuoteLineWire {
 interface RenewalOrderWire {
   id: string
   status: 'succeeded' | 'failed' | 'partial' | 'pending'
-  items: { supplier_item_id: string, specification: string, outcome: RenewalOutcome }[]
+  items: { allocation_id: string, specification: string, outcome: RenewalOutcome }[]
 }
 export type RenewalOutcome = 'pending' | 'succeeded' | 'failed'
 
 export interface RenewalSubmission {
-  supplier_item_ids: string[]
+  allocation_ids: string[]
   term: string
   request_key: string
   confirmation_token: string
@@ -38,7 +38,7 @@ const ordersPath = '/v1/tenant/static-renewal-orders'
 export async function listStaticIps(signal: AbortSignal) {
   const { allocations = [] } = await request<{ allocations?: StaticIpWire[] }>(ipsPath, { signal })
   return allocations.map(wire => ({
-    id: wire.supplier_item_id,
+    id: wire.allocation_id,
     ip: wire.ip,
     port: wire.port,
     expiry: new Date(wire.expires_at),
@@ -58,24 +58,24 @@ export async function getStaticIpCredentials(id: string, signal: AbortSignal) {
 }
 
 export function exportStaticIps(ids: string[], signal: AbortSignal) {
-  return requestText(`${ipsPath}:export`, { body: { supplier_item_ids: ids }, signal }, 'text/plain')
+  return requestText(`${ipsPath}:export`, { body: { allocation_ids: ids }, signal }, 'text/plain')
 }
 
 export async function listRenewalTerms(ids: string[], signal: AbortSignal) {
   const { terms = [] } = await request<{ terms?: RenewalTermWire[] }>('/v1/tenant/static-renewal-terms', {
-    body: { supplier_item_ids: ids }, signal,
+    body: { allocation_ids: ids }, signal,
   })
   return terms.map(wire => ({ code: wire.term, days: wire.term_days }))
 }
 
 export async function quoteStaticRenewal(ids: string[], term: string, signal: AbortSignal) {
   const { lines, confirmation_token } = await request<{ lines: RenewalQuoteLineWire[], confirmation_token: string }>(
-    '/v1/tenant/static-renewal-quotes', { body: { supplier_item_ids: ids, term }, signal },
+    '/v1/tenant/static-renewal-quotes', { body: { allocation_ids: ids, term }, signal },
   )
   return {
     token: confirmation_token,
     lines: lines.map(wire => ({
-      id: wire.supplier_item_id,
+      id: wire.allocation_id,
       ip: wire.ip,
       unitMinor: BigInt(wire.unit_minor),
       newExpiry: new Date(Date.parse(wire.original_expiry) + wire.term_days * 86_400_000),
@@ -87,7 +87,7 @@ function toRenewalOrder(wire: RenewalOrderWire) {
   return {
     id: wire.id,
     status: wire.status,
-    items: wire.items.map(item => ({ id: item.supplier_item_id, ip: item.specification, outcome: item.outcome })),
+    items: wire.items.map(item => ({ id: item.allocation_id, ip: item.specification, outcome: item.outcome })),
   }
 }
 
