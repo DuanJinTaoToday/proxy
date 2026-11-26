@@ -1,10 +1,11 @@
 import { expect, test } from '@playwright/test'
 import { startSalesmartlyFixture } from '../fixtures/salesmartly.mjs'
 
+const widgetScript = process.env.SALESMARTLY_WIDGET_SCRIPT
 let fixture
 
 test.beforeAll(async () => {
-  fixture = await startSalesmartlyFixture()
+  fixture = await startSalesmartlyFixture({ widgetScript })
 })
 
 test.afterAll(async () => {
@@ -18,6 +19,9 @@ for (const entry of ['website', 'console']) {
     const support = page.frameLocator('iframe[title="访客客服"]')
     const heading = support.getByRole('heading', { name: '客服隔离来源' })
     await expect(heading).toBeVisible()
+    if (widgetScript) {
+      await expect(support.locator('salesmartly-chat-widget')).toBeAttached({ timeout: 45_000 })
+    }
 
     if (entry === 'console') {
       const order = await page.evaluate(async () => {
@@ -29,6 +33,10 @@ for (const entry of ['website', 'console']) {
       await expect(page.getByText('synthetic-order')).toBeVisible()
     }
 
+    const blockedOrder = page.waitForEvent('console', {
+      predicate: message => message.text().includes(parent + '/v1/tenant/orders') &&
+        message.text().includes('connect-src'),
+    })
     const body = await heading.evaluate(async (_, parentOrigin) => {
       function parentRead(read) {
         try {
@@ -48,6 +56,7 @@ for (const entry of ['website', 'console']) {
           .then(() => 'readable', error => error.name),
       }
     }, parent)
+    await blockedOrder
     expect(body).toEqual({
       origin: fixture.origins.support,
       parentDOM: 'SecurityError',
