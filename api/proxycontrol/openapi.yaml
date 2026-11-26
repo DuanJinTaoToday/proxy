@@ -855,7 +855,7 @@ paths:
                     type: string
                 - name: kind
                   in: query
-                  description: 流水类型。debit 包含预扣，refund 包含预扣释放。
+                  description: 流水类型。debit 包含预扣，refund 包含预扣释放，commission_transfer 为佣金转入。
                   schema:
                     type: string
                 - name: startDate
@@ -1274,6 +1274,25 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/proxycontrol.v1.TenantAccess'
+    /v1/tenant/commission-transfers:
+        post:
+            tags:
+                - CommissionService
+            summary: 将可用佣金转入当前租户钱包
+            operationId: CommissionService_TransferCommission
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/proxycontrol.v1.TransferCommissionRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/proxycontrol.v1.WalletEntry'
     /v1/tenant/commissions:
         get:
             tags:
@@ -1878,7 +1897,7 @@ paths:
                     type: string
                 - name: kind
                   in: query
-                  description: 流水类型。debit 包含预扣，refund 包含预扣释放。
+                  description: 流水类型。debit 包含预扣，refund 包含预扣释放，commission_transfer 为佣金转入。
                   schema:
                     type: string
                 - name: startDate
@@ -3418,6 +3437,15 @@ components:
                     type: array
                     items:
                         $ref: '#/components/schemas/proxycontrol.v1.TrafficPackage'
+        proxycontrol.v1.TransferCommissionRequest:
+            type: object
+            properties:
+                requestKey:
+                    type: string
+                    description: 单次转入的幂等键。结果未知时使用原金额和同一请求键重试。
+                amountMinor:
+                    type: string
+                    description: 转入金额，人民币分。
         proxycontrol.v1.UnfinishedSession:
             type: object
             properties:
@@ -3557,10 +3585,10 @@ components:
                     description: 流水编号。
                 orderId:
                     type: string
-                    description: 关联订单编号。充值时为 0。
+                    description: 关联订单编号。人工充值和佣金转入时为 0。
                 kind:
                     type: string
-                    description: 变动类型 recharge、debit、hold、release 或 refund。
+                    description: 变动类型 recharge、commission_transfer、debit、hold、release 或 refund。
                 beforeMinor:
                     type: string
                     description: 变动前可用余额，人民币分。

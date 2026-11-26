@@ -1945,7 +1945,7 @@ func (m *CustomerWalletEntriesRequest) validate(all bool) error {
 	if _, ok := _CustomerWalletEntriesRequest_Kind_InLookup[m.GetKind()]; !ok {
 		err := CustomerWalletEntriesRequestValidationError{
 			field:  "Kind",
-			reason: "value must be in list [ recharge debit hold release refund]",
+			reason: "value must be in list [ recharge commission_transfer debit hold release refund]",
 		}
 		if !all {
 			return err
@@ -2065,12 +2065,13 @@ var _ interface {
 } = CustomerWalletEntriesRequestValidationError{}
 
 var _CustomerWalletEntriesRequest_Kind_InLookup = map[string]struct{}{
-	"":         {},
-	"recharge": {},
-	"debit":    {},
-	"hold":     {},
-	"release":  {},
-	"refund":   {},
+	"":                    {},
+	"recharge":            {},
+	"commission_transfer": {},
+	"debit":               {},
+	"hold":                {},
+	"release":             {},
+	"refund":              {},
 }
 
 var _CustomerWalletEntriesRequest_StartDate_Pattern = regexp.MustCompile("^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
@@ -2135,7 +2136,7 @@ func (m *OperatorWalletEntriesRequest) validate(all bool) error {
 	if _, ok := _OperatorWalletEntriesRequest_Kind_InLookup[m.GetKind()]; !ok {
 		err := OperatorWalletEntriesRequestValidationError{
 			field:  "Kind",
-			reason: "value must be in list [ recharge debit hold release refund]",
+			reason: "value must be in list [ recharge commission_transfer debit hold release refund]",
 		}
 		if !all {
 			return err
@@ -2255,12 +2256,13 @@ var _ interface {
 } = OperatorWalletEntriesRequestValidationError{}
 
 var _OperatorWalletEntriesRequest_Kind_InLookup = map[string]struct{}{
-	"":         {},
-	"recharge": {},
-	"debit":    {},
-	"hold":     {},
-	"release":  {},
-	"refund":   {},
+	"":                    {},
+	"recharge":            {},
+	"commission_transfer": {},
+	"debit":               {},
+	"hold":                {},
+	"release":             {},
+	"refund":              {},
 }
 
 var _OperatorWalletEntriesRequest_StartDate_Pattern = regexp.MustCompile("^[0-9]{4}-[0-9]{2}-[0-9]{2}$")

@@ -21,12 +21,14 @@ const OperationCommissionServiceGetCommissionRates = "/proxycontrol.v1.Commissio
 const OperationCommissionServiceListOperationsCommissions = "/proxycontrol.v1.CommissionService/ListOperationsCommissions"
 const OperationCommissionServiceListTenantCommissions = "/proxycontrol.v1.CommissionService/ListTenantCommissions"
 const OperationCommissionServiceSetCommissionRates = "/proxycontrol.v1.CommissionService/SetCommissionRates"
+const OperationCommissionServiceTransferCommission = "/proxycontrol.v1.CommissionService/TransferCommission"
 
 type CommissionServiceHTTPServer interface {
 	GetCommissionRates(context.Context, *BaseRequest) (*CommissionRates, error)
 	ListOperationsCommissions(context.Context, *OperationsCommissionsRequest) (*CommissionPage, error)
 	ListTenantCommissions(context.Context, *TenantCommissionsRequest) (*CommissionPage, error)
 	SetCommissionRates(context.Context, *SetCommissionRatesRequest) (*CommissionRates, error)
+	TransferCommission(context.Context, *TransferCommissionRequest) (*WalletEntry, error)
 }
 
 func RegisterCommissionServiceHTTPServer(s *http.Server, srv CommissionServiceHTTPServer) {
@@ -35,6 +37,7 @@ func RegisterCommissionServiceHTTPServer(s *http.Server, srv CommissionServiceHT
 	r.Handle("PUT", "/v1/operations/commission-rates", _CommissionService_SetCommissionRates0_HTTP_Handler(srv))
 	r.Handle("GET", "/v1/tenant/commissions", _CommissionService_ListTenantCommissions0_HTTP_Handler(srv))
 	r.Handle("GET", "/v1/operations/tenants/{tenant_id}/commissions", _CommissionService_ListOperationsCommissions0_HTTP_Handler(srv))
+	r.Handle("POST", "/v1/tenant/commission-transfers", _CommissionService_TransferCommission0_HTTP_Handler(srv))
 }
 
 func _CommissionService_GetCommissionRates0_HTTP_Handler(srv CommissionServiceHTTPServer) func(ctx http.Context) error {
@@ -116,11 +119,31 @@ func _CommissionService_ListOperationsCommissions0_HTTP_Handler(srv CommissionSe
 	}
 }
 
+func _CommissionService_TransferCommission0_HTTP_Handler(srv CommissionServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in TransferCommissionRequest
+		if err := ctx.Bind(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationCommissionServiceTransferCommission)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.TransferCommission(ctx, req.(*TransferCommissionRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*WalletEntry)
+		return ctx.Result(200, reply)
+	}
+}
+
 type CommissionServiceHTTPClient interface {
 	GetCommissionRates(ctx context.Context, req *BaseRequest, opts ...http.CallOption) (rsp *CommissionRates, err error)
 	ListOperationsCommissions(ctx context.Context, req *OperationsCommissionsRequest, opts ...http.CallOption) (rsp *CommissionPage, err error)
 	ListTenantCommissions(ctx context.Context, req *TenantCommissionsRequest, opts ...http.CallOption) (rsp *CommissionPage, err error)
 	SetCommissionRates(ctx context.Context, req *SetCommissionRatesRequest, opts ...http.CallOption) (rsp *CommissionRates, err error)
+	TransferCommission(ctx context.Context, req *TransferCommissionRequest, opts ...http.CallOption) (rsp *WalletEntry, err error)
 }
 
 type CommissionServiceHTTPClientImpl struct {
@@ -190,6 +213,23 @@ func (c *CommissionServiceHTTPClientImpl) SetCommissionRates(ctx context.Context
 		http.PathTemplate(pattern),
 	}, opts...)
 	err := c.cc.Invoke(ctx, "PUT", path, in, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (c *CommissionServiceHTTPClientImpl) TransferCommission(ctx context.Context, in *TransferCommissionRequest, opts ...http.CallOption) (*WalletEntry, error) {
+	var out WalletEntry
+	pattern := "/v1/tenant/commission-transfers"
+	path := http.BuildPath(pattern, in)
+	opts = append([]http.CallOption{
+		http.Accept("application/protojson"),
+		http.ContentType("application/protojson"),
+		http.Operation(OperationCommissionServiceTransferCommission),
+		http.PathTemplate(pattern),
+	}, opts...)
+	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
 	if err != nil {
 		return nil, err
 	}

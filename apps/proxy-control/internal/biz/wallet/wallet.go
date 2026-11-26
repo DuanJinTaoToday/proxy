@@ -13,11 +13,12 @@ import (
 type Action string
 
 const (
-	Recharge Action = "recharge"
-	Debit    Action = "debit"
-	Hold     Action = "hold"
-	Release  Action = "release"
-	Refund   Action = "refund"
+	Recharge           Action = "recharge"
+	Debit              Action = "debit"
+	Hold               Action = "hold"
+	Release            Action = "release"
+	Refund             Action = "refund"
+	CommissionTransfer Action = "commission_transfer"
 )
 
 const (
@@ -194,6 +195,10 @@ func (c Command) Validate() error {
 		return ErrInvalid
 	}
 	switch c.Action {
+	case CommissionTransfer:
+		if c.OrderID == 0 && c.Kind == "" && c.Amount > 0 && len(c.Items)+len(c.ItemDeliveries) == 0 {
+			return nil
+		}
 	case Debit:
 		if c.OrderID == 0 && c.Kind == TrafficPackage && c.validItems() && len(c.ItemDeliveries) == 0 {
 			return nil
@@ -268,6 +273,8 @@ func (c Command) Settle(before int64, order Order) (Settlement, error) {
 		if before != *c.ExpectedBefore {
 			return Settlement{}, ErrBalanceChanged
 		}
+		delta = c.Amount
+	case CommissionTransfer:
 		delta = c.Amount
 	case Debit, Hold:
 		status := Succeeded

@@ -107,7 +107,7 @@ func (s *Service) Entries(ctx context.Context, token, tenantID string, operation
 		return nil, err
 	}
 	switch Action(filter.Kind) {
-	case "", Recharge, Debit, Hold, Release, Refund:
+	case "", Recharge, Debit, Hold, Release, Refund, CommissionTransfer:
 	default:
 		return nil, ErrInvalid
 	}
