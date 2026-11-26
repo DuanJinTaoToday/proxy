@@ -8,6 +8,7 @@
   --color-primary-border: #74ae9e;
   --color-on-primary: #ffffff;
   --color-accent: #b3f0d7;
+  --color-brand-accent: var(--color-primary);
   --color-canvas: #f4f6f5;
   --color-surface: #ffffff;
   --color-surface-muted: #f7faf8;
@@ -69,6 +70,7 @@
   --font-size-title: 24px;
   --font-size-display: 36px;
   --font-size-brand: 20px;
+  --brand-wordmark-tracking: -0.03em;
   --font-size-usage-axis: 11px;
   --font-size-dashboard-display: 30px;
   --font-weight-regular: 400;
@@ -178,6 +180,8 @@
   --ops-brand-size: 21px;
   --ops-brand-mark-radius: 9px;
   --ops-brand-gap: 10px;
+  --workspace-brand-size: 21px;
+  --workspace-brand-gap: 10px;
   --ops-display-size: 30px;
   --ops-heading-line-height: 40px;
   --ops-display-tracking: -.035em;
@@ -243,6 +247,7 @@
   --home-faint: rgba(255, 255, 255, .42);
   --home-cyan: #7fd4f5;
   --home-emerald: #6ee7b7;
+  --color-brand-accent: var(--home-emerald);
   --home-edge: 24px;
   --home-edge-mobile: 18px;
   --home-pill: 9999px;

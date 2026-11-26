@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" fill="none">
+  <defs>
+    <linearGradient id="roc-a-bg" x1="4" y1="2" x2="36" y2="38" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0f8a64"/>
+      <stop offset="100%" stop-color="#053b2c"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="36" height="36" rx="10" fill="url(#roc-a-bg)" stroke="#6ee7b7" stroke-opacity="0.38" stroke-width="1"/>
+  <path d="M10 11H23.6C27.8 11 30.2 13.4 30.2 16.7C30.2 20 27.8 22.3 23.6 22.3H17.2L20.2 18.4H23.3C25 18.4 25.9 17.7 25.9 16.7C25.9 15.7 25 15 23.3 15H14.4L10 11Z" fill="#FFFFFF"/>
+  <path d="M10 13.8L14.4 17.8V29H10V13.8Z" fill="#FFFFFF"/>
+  <path d="M19.2 23.8H24.5L30.2 29H24.4L19.2 23.8Z" fill="#6ee7b7"/>
+</svg>
