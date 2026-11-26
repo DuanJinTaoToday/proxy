@@ -24,7 +24,8 @@ async function readerSession(playwright, baseURL) {
 
 function clock(key, mode) {
   const shifts = {
-    check: "next_check_at=statement_timestamp()",
+    // Prioritize this fixture operation ahead of older records left by other scenarios.
+    check: "next_check_at=statement_timestamp()-interval '1 day'",
     recent: "created_at=statement_timestamp()-interval '30 minutes', unknown_at=statement_timestamp()",
     aged: "unknown_at=statement_timestamp()-interval '15 minutes 1 second'",
   }
@@ -88,7 +89,7 @@ async function setup({ request, playwright, baseURL }, email) {
 async function synchronizeLookup(f, ip, key) {
   const { reads } = await f.fixture('exchange-records', { ip })
   clock(key, 'check')
-  await expect.poll(() => f.fixture('exchange-records', { ip }).then(r => r.reads), { timeout: 12000 }).toBeGreaterThan(reads)
+  await expect.poll(() => f.fixture('exchange-records', { ip }).then(r => r.reads), { timeout: 20000 }).toBeGreaterThan(reads)
 }
 
 async function snapshot(page, info, f, evidence) {
@@ -233,11 +234,13 @@ test('人工结案与自动核对只结一次，迟到的历史结果更正次�
     const raceSupplier = await f.fixture('exchanges', { ip: concurrent.ip, outcome: 'unknown-tracked', history_after_write: 'hidden' })
     const racing = await f.submit(concurrent)
     clock(racing.idempotency_key, 'aged')
-    await f.fixture('exchange-records', { ip: concurrent.ip, mode: 'delay' })
+    await f.fixture('exchange-records', { ip: concurrent.ip, mode: 'blocked' })
     await synchronizeLookup(f, concurrent.ip, racing.idempotency_key)
     const { address: expectedIP } = await f.fixture('exchanges', { id: raceSupplier.id })
     const positive = { request_key: randomUUID(), outcome: 'executed', expected_ip: expectedIP, evidence: 'Crown fixture ticket 101 confirming receipt' }
     expect(await f.resolution(racing.idempotency_key, positive).then(json)).toMatchObject({ resolution: 'executed' })
+    expect((await f.audit()).find(entry => entry.idempotency_key === racing.idempotency_key)).toMatchObject({ kind: 'manual' })
+    await f.fixture('exchange-records', { ip: concurrent.ip, mode: 'visible' })
     await expect.poll(() => f.audit().then(audit => audit.filter(entry => entry.idempotency_key === racing.idempotency_key).map(entry => entry.kind)), {
       timeout: 15000,
     }).toEqual(['duplicate', 'manual'])

@@ -19,6 +19,7 @@ const exchangeHistory = []
 const trackHistoryModeAfterWrite = new Map()
 const exchangeHistoryMode = new Map()
 const exchangeHistoryReads = new Map()
+const blockedExchangeHistory = new Map()
 const sequenceByNode = new Map()
 const day = 24 * 60 * 60 * 1000
 
@@ -163,7 +164,17 @@ async function exchangeRecords({ ip, page, limit, start_time, end_time }, respon
   const mode = exchangeHistoryMode.get(ip)
   if (mode === 'timeout') return response.destroy()
   const data = mode === 'hidden' ? [] : exchangeHistory.filter(row => row.old_ip === ip || row.ip === ip)
-  if (mode === 'delay') await new Promise(resolve => setTimeout(resolve, 1400))
+  if (mode === 'blocked') {
+    await new Promise(resolve => {
+      const release = () => {
+        clearTimeout(expiry)
+        blockedExchangeHistory.delete(ip)
+        resolve()
+      }
+      const expiry = setTimeout(release, 6500)
+      blockedExchangeHistory.set(ip, release)
+    })
+  }
   return json(response, 200, { code: 0, count: mode === 'truncated' ? data.length + 1 : data.length, data })
 }
 
@@ -236,7 +247,10 @@ async function handle(request, response) {
   }
 
   if (path === '/fixture/exchange-records') {
-    if (body.mode !== undefined) exchangeHistoryMode.set(body.ip, body.mode)
+    if (body.mode !== undefined) {
+      exchangeHistoryMode.set(body.ip, body.mode)
+      if (body.mode !== 'blocked') blockedExchangeHistory.get(body.ip)?.()
+    }
     if (body.reported_ip !== undefined) {
       const item = allocations.get(body.id)
       if (!item) return json(response, 400, { error: 'Expected allocation to inject history' })
