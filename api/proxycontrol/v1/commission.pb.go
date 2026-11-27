@@ -25,6 +25,60 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type TransferCommissionRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 单次转入的幂等键。结果未知时使用原金额和同一请求键重试。
+	RequestKey string `protobuf:"bytes,1,opt,name=request_key,json=requestKey,proto3" json:"request_key,omitempty"`
+	// 转入金额，人民币分。
+	AmountMinor   int64 `protobuf:"varint,2,opt,name=amount_minor,json=amountMinor,proto3" json:"amount_minor,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TransferCommissionRequest) Reset() {
+	*x = TransferCommissionRequest{}
+	mi := &file_proxycontrol_v1_commission_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TransferCommissionRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TransferCommissionRequest) ProtoMessage() {}
+
+func (x *TransferCommissionRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proxycontrol_v1_commission_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TransferCommissionRequest.ProtoReflect.Descriptor instead.
+func (*TransferCommissionRequest) Descriptor() ([]byte, []int) {
+	return file_proxycontrol_v1_commission_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *TransferCommissionRequest) GetRequestKey() string {
+	if x != nil {
+		return x.RequestKey
+	}
+	return ""
+}
+
+func (x *TransferCommissionRequest) GetAmountMinor() int64 {
+	if x != nil {
+		return x.AmountMinor
+	}
+	return 0
+}
+
 type SetCommissionRatesRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 必填首购费率，单位基点。1 基点等于 0.01 个百分点。
@@ -37,7 +91,7 @@ type SetCommissionRatesRequest struct {
 
 func (x *SetCommissionRatesRequest) Reset() {
 	*x = SetCommissionRatesRequest{}
-	mi := &file_proxycontrol_v1_commission_proto_msgTypes[0]
+	mi := &file_proxycontrol_v1_commission_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -49,7 +103,7 @@ func (x *SetCommissionRatesRequest) String() string {
 func (*SetCommissionRatesRequest) ProtoMessage() {}
 
 func (x *SetCommissionRatesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_commission_proto_msgTypes[0]
+	mi := &file_proxycontrol_v1_commission_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -62,7 +116,7 @@ func (x *SetCommissionRatesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetCommissionRatesRequest.ProtoReflect.Descriptor instead.
 func (*SetCommissionRatesRequest) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_commission_proto_rawDescGZIP(), []int{0}
+	return file_proxycontrol_v1_commission_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *SetCommissionRatesRequest) GetFirstPurchaseBps() int32 {
@@ -97,7 +151,7 @@ type CommissionRates struct {
 
 func (x *CommissionRates) Reset() {
 	*x = CommissionRates{}
-	mi := &file_proxycontrol_v1_commission_proto_msgTypes[1]
+	mi := &file_proxycontrol_v1_commission_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -109,7 +163,7 @@ func (x *CommissionRates) String() string {
 func (*CommissionRates) ProtoMessage() {}
 
 func (x *CommissionRates) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_commission_proto_msgTypes[1]
+	mi := &file_proxycontrol_v1_commission_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -122,7 +176,7 @@ func (x *CommissionRates) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CommissionRates.ProtoReflect.Descriptor instead.
 func (*CommissionRates) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_commission_proto_rawDescGZIP(), []int{1}
+	return file_proxycontrol_v1_commission_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *CommissionRates) GetVersion() int64 {
@@ -172,7 +226,7 @@ type TenantCommissionsRequest struct {
 
 func (x *TenantCommissionsRequest) Reset() {
 	*x = TenantCommissionsRequest{}
-	mi := &file_proxycontrol_v1_commission_proto_msgTypes[2]
+	mi := &file_proxycontrol_v1_commission_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -184,7 +238,7 @@ func (x *TenantCommissionsRequest) String() string {
 func (*TenantCommissionsRequest) ProtoMessage() {}
 
 func (x *TenantCommissionsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_commission_proto_msgTypes[2]
+	mi := &file_proxycontrol_v1_commission_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -197,7 +251,7 @@ func (x *TenantCommissionsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TenantCommissionsRequest.ProtoReflect.Descriptor instead.
 func (*TenantCommissionsRequest) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_commission_proto_rawDescGZIP(), []int{2}
+	return file_proxycontrol_v1_commission_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *TenantCommissionsRequest) GetBeforeId() int64 {
@@ -228,7 +282,7 @@ type OperationsCommissionsRequest struct {
 
 func (x *OperationsCommissionsRequest) Reset() {
 	*x = OperationsCommissionsRequest{}
-	mi := &file_proxycontrol_v1_commission_proto_msgTypes[3]
+	mi := &file_proxycontrol_v1_commission_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -240,7 +294,7 @@ func (x *OperationsCommissionsRequest) String() string {
 func (*OperationsCommissionsRequest) ProtoMessage() {}
 
 func (x *OperationsCommissionsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_commission_proto_msgTypes[3]
+	mi := &file_proxycontrol_v1_commission_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -253,7 +307,7 @@ func (x *OperationsCommissionsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OperationsCommissionsRequest.ProtoReflect.Descriptor instead.
 func (*OperationsCommissionsRequest) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_commission_proto_rawDescGZIP(), []int{3}
+	return file_proxycontrol_v1_commission_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *OperationsCommissionsRequest) GetTenantId() string {
@@ -291,7 +345,7 @@ type CommissionPage struct {
 
 func (x *CommissionPage) Reset() {
 	*x = CommissionPage{}
-	mi := &file_proxycontrol_v1_commission_proto_msgTypes[4]
+	mi := &file_proxycontrol_v1_commission_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -303,7 +357,7 @@ func (x *CommissionPage) String() string {
 func (*CommissionPage) ProtoMessage() {}
 
 func (x *CommissionPage) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_commission_proto_msgTypes[4]
+	mi := &file_proxycontrol_v1_commission_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -316,7 +370,7 @@ func (x *CommissionPage) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CommissionPage.ProtoReflect.Descriptor instead.
 func (*CommissionPage) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_commission_proto_rawDescGZIP(), []int{4}
+	return file_proxycontrol_v1_commission_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *CommissionPage) GetAvailableMinor() int64 {
@@ -374,7 +428,7 @@ type CommissionRecord struct {
 
 func (x *CommissionRecord) Reset() {
 	*x = CommissionRecord{}
-	mi := &file_proxycontrol_v1_commission_proto_msgTypes[5]
+	mi := &file_proxycontrol_v1_commission_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -386,7 +440,7 @@ func (x *CommissionRecord) String() string {
 func (*CommissionRecord) ProtoMessage() {}
 
 func (x *CommissionRecord) ProtoReflect() protoreflect.Message {
-	mi := &file_proxycontrol_v1_commission_proto_msgTypes[5]
+	mi := &file_proxycontrol_v1_commission_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -399,7 +453,7 @@ func (x *CommissionRecord) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CommissionRecord.ProtoReflect.Descriptor instead.
 func (*CommissionRecord) Descriptor() ([]byte, []int) {
-	return file_proxycontrol_v1_commission_proto_rawDescGZIP(), []int{5}
+	return file_proxycontrol_v1_commission_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *CommissionRecord) GetId() int64 {
@@ -497,7 +551,12 @@ var File_proxycontrol_v1_commission_proto protoreflect.FileDescriptor
 
 const file_proxycontrol_v1_commission_proto_rawDesc = "" +
 	"\n" +
-	" proxycontrol/v1/commission.proto\x12\x0fproxycontrol.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bopenapiv3/annotations.proto\x1a\x1cproxycontrol/v1/common.proto\x1a\x17validate/validate.proto\"\xca\x01\n" +
+	" proxycontrol/v1/commission.proto\x12\x0fproxycontrol.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bopenapiv3/annotations.proto\x1a\x1cproxycontrol/v1/common.proto\x1a\x1cproxycontrol/v1/wallet.proto\x1a\x17validate/validate.proto\"t\n" +
+	"\x19TransferCommissionRequest\x12+\n" +
+	"\vrequest_key\x18\x01 \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\x01(\x80\x01R\n" +
+	"requestKey\x12*\n" +
+	"\famount_minor\x18\x02 \x01(\x03B\a\xfaB\x04\"\x02 \x00R\vamountMinor\"\xca\x01\n" +
 	"\x19SetCommissionRatesRequest\x12=\n" +
 	"\x12first_purchase_bps\x18\x01 \x01(\x05B\n" +
 	"\xfaB\a\x1a\x05\x18\x90N(\x00H\x00R\x10firstPurchaseBps\x88\x01\x01\x12?\n" +
@@ -539,12 +598,13 @@ const file_proxycontrol_v1_commission_proto_rawDesc = "" +
 	" \x01(\x05R\arateBps\x12!\n" +
 	"\frate_version\x18\v \x01(\x03R\vrateVersion\x12!\n" +
 	"\frule_version\x18\f \x01(\x05R\vruleVersion\x12\x16\n" +
-	"\x06status\x18\r \x01(\tR\x06status2\xa4\x06\n" +
+	"\x06status\x18\r \x01(\tR\x06status2\xdd\a\n" +
 	"\x11CommissionService\x12\xa9\x01\n" +
 	"\x12GetCommissionRates\x12\x1c.proxycontrol.v1.BaseRequest\x1a .proxycontrol.v1.CommissionRates\"S\xbaG)\x12'查看全站首购和复购佣金费率\x82\xd3\xe4\x93\x02!\x12\x1f/v1/operations/commission-rates\x12\xba\x01\n" +
 	"\x12SetCommissionRates\x12*.proxycontrol.v1.SetCommissionRatesRequest\x1a .proxycontrol.v1.CommissionRates\"V\xbaG)\x12'配置全站首购和复购佣金费率\x82\xd3\xe4\x93\x02$:\x01*\x1a\x1f/v1/operations/commission-rates\x12\xbe\x01\n" +
 	"\x15ListTenantCommissions\x12).proxycontrol.v1.TenantCommissionsRequest\x1a\x1f.proxycontrol.v1.CommissionPage\"Y\xbaG8\x126查看当前租户的可用佣金与一级推荐记录\x82\xd3\xe4\x93\x02\x18\x12\x16/v1/tenant/commissions\x12\xe4\x01\n" +
-	"\x19ListOperationsCommissions\x12-.proxycontrol.v1.OperationsCommissionsRequest\x1a\x1f.proxycontrol.v1.CommissionPage\"w\xbaG>\x12<查看指定推广租户的可用佣金与一级推荐记录\x82\xd3\xe4\x93\x020\x12./v1/operations/tenants/{tenant_id}/commissionsBEZCgithub.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1b\x06proto3"
+	"\x19ListOperationsCommissions\x12-.proxycontrol.v1.OperationsCommissionsRequest\x1a\x1f.proxycontrol.v1.CommissionPage\"w\xbaG>\x12<查看指定推广租户的可用佣金与一级推荐记录\x82\xd3\xe4\x93\x020\x12./v1/operations/tenants/{tenant_id}/commissions\x12\xb6\x01\n" +
+	"\x12TransferCommission\x12*.proxycontrol.v1.TransferCommissionRequest\x1a\x1c.proxycontrol.v1.WalletEntry\"V\xbaG)\x12'将可用佣金转入当前租户钱包\x82\xd3\xe4\x93\x02$:\x01*\"\x1f/v1/tenant/commission-transfersBEZCgithub.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1b\x06proto3"
 
 var (
 	file_proxycontrol_v1_commission_proto_rawDescOnce sync.Once
@@ -558,31 +618,35 @@ func file_proxycontrol_v1_commission_proto_rawDescGZIP() []byte {
 	return file_proxycontrol_v1_commission_proto_rawDescData
 }
 
-var file_proxycontrol_v1_commission_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_proxycontrol_v1_commission_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_proxycontrol_v1_commission_proto_goTypes = []any{
-	(*SetCommissionRatesRequest)(nil),    // 0: proxycontrol.v1.SetCommissionRatesRequest
-	(*CommissionRates)(nil),              // 1: proxycontrol.v1.CommissionRates
-	(*TenantCommissionsRequest)(nil),     // 2: proxycontrol.v1.TenantCommissionsRequest
-	(*OperationsCommissionsRequest)(nil), // 3: proxycontrol.v1.OperationsCommissionsRequest
-	(*CommissionPage)(nil),               // 4: proxycontrol.v1.CommissionPage
-	(*CommissionRecord)(nil),             // 5: proxycontrol.v1.CommissionRecord
-	(*timestamppb.Timestamp)(nil),        // 6: google.protobuf.Timestamp
-	(*BaseRequest)(nil),                  // 7: proxycontrol.v1.BaseRequest
+	(*TransferCommissionRequest)(nil),    // 0: proxycontrol.v1.TransferCommissionRequest
+	(*SetCommissionRatesRequest)(nil),    // 1: proxycontrol.v1.SetCommissionRatesRequest
+	(*CommissionRates)(nil),              // 2: proxycontrol.v1.CommissionRates
+	(*TenantCommissionsRequest)(nil),     // 3: proxycontrol.v1.TenantCommissionsRequest
+	(*OperationsCommissionsRequest)(nil), // 4: proxycontrol.v1.OperationsCommissionsRequest
+	(*CommissionPage)(nil),               // 5: proxycontrol.v1.CommissionPage
+	(*CommissionRecord)(nil),             // 6: proxycontrol.v1.CommissionRecord
+	(*timestamppb.Timestamp)(nil),        // 7: google.protobuf.Timestamp
+	(*BaseRequest)(nil),                  // 8: proxycontrol.v1.BaseRequest
+	(*WalletEntry)(nil),                  // 9: proxycontrol.v1.WalletEntry
 }
 var file_proxycontrol_v1_commission_proto_depIdxs = []int32{
-	6, // 0: proxycontrol.v1.CommissionRates.updated_at:type_name -> google.protobuf.Timestamp
-	5, // 1: proxycontrol.v1.CommissionPage.records:type_name -> proxycontrol.v1.CommissionRecord
-	6, // 2: proxycontrol.v1.CommissionRecord.settled_at:type_name -> google.protobuf.Timestamp
-	7, // 3: proxycontrol.v1.CommissionService.GetCommissionRates:input_type -> proxycontrol.v1.BaseRequest
-	0, // 4: proxycontrol.v1.CommissionService.SetCommissionRates:input_type -> proxycontrol.v1.SetCommissionRatesRequest
-	2, // 5: proxycontrol.v1.CommissionService.ListTenantCommissions:input_type -> proxycontrol.v1.TenantCommissionsRequest
-	3, // 6: proxycontrol.v1.CommissionService.ListOperationsCommissions:input_type -> proxycontrol.v1.OperationsCommissionsRequest
-	1, // 7: proxycontrol.v1.CommissionService.GetCommissionRates:output_type -> proxycontrol.v1.CommissionRates
-	1, // 8: proxycontrol.v1.CommissionService.SetCommissionRates:output_type -> proxycontrol.v1.CommissionRates
-	4, // 9: proxycontrol.v1.CommissionService.ListTenantCommissions:output_type -> proxycontrol.v1.CommissionPage
-	4, // 10: proxycontrol.v1.CommissionService.ListOperationsCommissions:output_type -> proxycontrol.v1.CommissionPage
-	7, // [7:11] is the sub-list for method output_type
-	3, // [3:7] is the sub-list for method input_type
+	7, // 0: proxycontrol.v1.CommissionRates.updated_at:type_name -> google.protobuf.Timestamp
+	6, // 1: proxycontrol.v1.CommissionPage.records:type_name -> proxycontrol.v1.CommissionRecord
+	7, // 2: proxycontrol.v1.CommissionRecord.settled_at:type_name -> google.protobuf.Timestamp
+	8, // 3: proxycontrol.v1.CommissionService.GetCommissionRates:input_type -> proxycontrol.v1.BaseRequest
+	1, // 4: proxycontrol.v1.CommissionService.SetCommissionRates:input_type -> proxycontrol.v1.SetCommissionRatesRequest
+	3, // 5: proxycontrol.v1.CommissionService.ListTenantCommissions:input_type -> proxycontrol.v1.TenantCommissionsRequest
+	4, // 6: proxycontrol.v1.CommissionService.ListOperationsCommissions:input_type -> proxycontrol.v1.OperationsCommissionsRequest
+	0, // 7: proxycontrol.v1.CommissionService.TransferCommission:input_type -> proxycontrol.v1.TransferCommissionRequest
+	2, // 8: proxycontrol.v1.CommissionService.GetCommissionRates:output_type -> proxycontrol.v1.CommissionRates
+	2, // 9: proxycontrol.v1.CommissionService.SetCommissionRates:output_type -> proxycontrol.v1.CommissionRates
+	5, // 10: proxycontrol.v1.CommissionService.ListTenantCommissions:output_type -> proxycontrol.v1.CommissionPage
+	5, // 11: proxycontrol.v1.CommissionService.ListOperationsCommissions:output_type -> proxycontrol.v1.CommissionPage
+	9, // 12: proxycontrol.v1.CommissionService.TransferCommission:output_type -> proxycontrol.v1.WalletEntry
+	8, // [8:13] is the sub-list for method output_type
+	3, // [3:8] is the sub-list for method input_type
 	3, // [3:3] is the sub-list for extension type_name
 	3, // [3:3] is the sub-list for extension extendee
 	0, // [0:3] is the sub-list for field type_name
@@ -594,14 +658,15 @@ func file_proxycontrol_v1_commission_proto_init() {
 		return
 	}
 	file_proxycontrol_v1_common_proto_init()
-	file_proxycontrol_v1_commission_proto_msgTypes[0].OneofWrappers = []any{}
+	file_proxycontrol_v1_wallet_proto_init()
+	file_proxycontrol_v1_commission_proto_msgTypes[1].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proxycontrol_v1_commission_proto_rawDesc), len(file_proxycontrol_v1_commission_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

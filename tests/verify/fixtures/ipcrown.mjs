@@ -22,6 +22,7 @@ const exchangeHistoryMode = new Map()
 const exchangeHistoryReads = new Map()
 const blockedExchangeHistory = new Map()
 const sequenceByNode = new Map()
+const issuedFixtureIPs = new Set()
 const day = 24 * 60 * 60 * 1000
 
 let usPrice = 10
@@ -55,6 +56,17 @@ function supplierTime(ms) {
   return new Date(ms + 8 * 60 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ')
 }
 
+function reserveFixtureIP(prefix, preferredSuffix) {
+  for (let offset = 0; offset < 254; offset++) {
+    const suffix = (preferredSuffix - 1 + offset) % 254 + 1
+    const ip = `${prefix}.${suffix}`
+    if (issuedFixtureIPs.has(ip)) continue
+    issuedFixtureIPs.add(ip)
+    return ip
+  }
+  throw new Error(`Fixture address pool exhausted for ${prefix}`)
+}
+
 function allocate(node, days, position, proxyPort) {
   const sequence = (sequenceByNode.get(node.id) ?? 0) + 1
   sequenceByNode.set(node.id, sequence)
@@ -63,7 +75,7 @@ function allocate(node, days, position, proxyPort) {
   const prefix = node.id === 301 ? '203.0.113' : node.id === 201 ? '198.51.100' : '192.0.2'
   const suffix = node.id === 301 ? sequence : node.id + sequence - 1
   const item = {
-    id, nid: node.id, ip: proxyPort ? '127.0.0.1' : `${prefix}.${suffix}`, port: proxyPort ?? 43000,
+    id, nid: node.id, ip: proxyPort ? '127.0.0.1' : reserveFixtureIP(prefix, suffix), port: proxyPort ?? 43000,
     p_user: 'fixture-user', p_pass: 'fixture-pass', stoptime: supplierTime(expiresAt), status: 1,
   }
   allocations.set(id, item)

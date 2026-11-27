@@ -6,6 +6,7 @@ import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 import "openapiv3/annotations.proto";
 import "proxycontrol/v1/common.proto";
+import "proxycontrol/v1/wallet.proto";
 import "validate/validate.proto";
 
 option go_package = "github.com/DuanJinTaoToday/proxy/api/proxycontrol/v1;proxycontrolv1";
@@ -30,6 +31,18 @@ service CommissionService {
     option (google.api.http) = {get: "/v1/operations/tenants/{tenant_id}/commissions"};
     option (openapi.v3.operation) = {summary: "查看指定推广租户的可用佣金与一级推荐记录"};
   }
+
+  rpc TransferCommission(TransferCommissionRequest) returns (WalletEntry) {
+    option (google.api.http) = {post: "/v1/tenant/commission-transfers", body: "*"};
+    option (openapi.v3.operation) = {summary: "将可用佣金转入当前租户钱包"};
+  }
+}
+
+message TransferCommissionRequest {
+  // 单次转入的幂等键。结果未知时使用原金额和同一请求键重试。
+  string request_key = 1 [(validate.rules).string = {min_len: 1, max_bytes: 128}];
+  // 转入金额，人民币分。
+  int64 amount_minor = 2 [(validate.rules).int64.gt = 0];
 }
 
 message SetCommissionRatesRequest {

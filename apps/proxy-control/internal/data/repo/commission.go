@@ -73,3 +73,27 @@ func (r *WalletRepository) Commissions(ctx context.Context, tenantID string, fil
 	}, &sql.TxOptions{Isolation: sql.LevelRepeatableRead, ReadOnly: true})
 	return page, err
 }
+
+func (r *WalletRepository) TransferCommission(ctx context.Context, command wallet.Command) (wallet.Entry, error) {
+	if command.Action != wallet.CommissionTransfer {
+		return wallet.Entry{}, wallet.ErrInvalid
+	}
+	if err := command.Validate(); err != nil {
+		return wallet.Entry{}, err
+	}
+	return r.apply(ctx, command, command, nil, debitCommissionAccount, nil)
+}
+
+// apply holds the wallet lock and has checked for a replay before reaching the
+// commission account. The balance predicate is rechecked after any row lock wait.
+func debitCommissionAccount(tx *gorm.DB, command *wallet.Command) error {
+	result := tx.Exec(`UPDATE commission_accounts SET available_minor=available_minor-?
+		WHERE tenant_id=? AND available_minor>=?`, command.Amount, command.TenantID, command.Amount)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return wallet.ErrCommissionBalance
+	}
+	return nil
+}

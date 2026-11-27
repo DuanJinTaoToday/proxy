@@ -1,80 +1,90 @@
 {
   "publicPricing": {
     "title": "Pricing",
-    "lead": "Current prices for rotating residential data and static residential IPs. Sign up to buy. Prices and stock are confirmed again at checkout.",
-    "register": "Create a free account",
-    "openConsole": "Open console",
-    "footnote": "Prices are in CNY. Data is metered in decimal GB (1 GB = 1,000,000,000 bytes). Rotating and static proxies share one account and wallet.",
+    "categoryLabel": "Product category",
+    "footnote": "Prices are in CNY. Data is metered in decimal GB (1 GB = 1,000,000,000 bytes). Rotating and static proxies share one account and wallet; final price and stock are confirmed at checkout.",
     "loading": "Loading prices",
     "retry": "Retry",
+    "buyNow": "Buy now",
+    "contactSupport": "Contact support",
     "categories": {
-      "dynamic": "Rotating residential",
-      "exclusive": "Dedicated static IPs",
-      "shared": "Shared static IPs"
+      "dynamic": "Dynamic residential",
+      "exclusive": "Dedicated static",
+      "shared": "Shared static"
     },
-    "status": {
-      "onSale": "On sale",
-      "closed": "Not on sale",
-      "unavailable": "Unavailable",
-      "failed": "Failed to load"
+    "tabs": {
+      "dynamic": {
+        "title": "Dynamic residential proxy plans",
+        "sub": "Pay by traffic with no expiry and predictable costs, built for public data collection, ad verification, and recurring market research."
+      },
+      "exclusive": {
+        "title": "Dedicated static residential plans",
+        "sub": "Long-lived residential IPs reserved solely for your team, supporting renewal and same-region replacement for e-commerce and multi-account operations."
+      },
+      "shared": {
+        "title": "Shared static residential plans",
+        "sub": "Cost-efficient fixed residential IPs selectable by use case for lightweight fixed-exit needs."
+      }
     },
-    "dynamicHint": "Pay by data with packages that never expire. Connect through a SOCKS5 gateway with rotating exits.",
-    "dynamicFailed": "Could not load rotating proxy packages",
-    "dynamicClosed": "Rotating proxy packages are not on sale yet. Prices will appear here when sales open.",
-    "noPackages": "No rotating proxy packages are on sale right now.",
+    "dynamicFailed": "Could not load dynamic residential packages",
+    "dynamicClosed": "Dynamic residential packages are not on sale right now. Prices will appear here when sales resume.",
+    "noPackages": "No dynamic residential packages are on sale right now.",
     "savings": "Save {percent}%",
-    "perGb": "{amount} per GB",
+    "perGbShort": "/GB",
     "buyPackage": "Buy {capacity} GB",
-    "exclusiveHint": "Each dedicated IP is assigned to one customer. Prices vary by region and lease term.",
-    "sharedHint": "Several customers may share each IP. Choose an intended use to see the prices and stock for that use.",
-    "purpose": "Intended use",
-    "purposeHint": "Stock varies by intended use.",
+    "dynamic": {
+      "guideTitle": "Purchase guide",
+      "guide": {
+        "billing": {
+          "title": "Billed by traffic",
+          "desc": "Pick a traffic package sized for your workload. Totals and per-GB rates sync with the live catalog and never expire."
+        },
+        "protocol": {
+          "title": "Standard SOCKS5 access",
+          "desc": "Create proxy sub-accounts in the console right after purchase to copy gateway hosts and credentials."
+        },
+        "compliance": {
+          "title": "Regional availability",
+          "desc": "For use outside mainland China only. Not available in mainland China."
+        }
+      },
+      "badgeTitle": "Enterprise residential network",
+      "badgeDesc": "Unified billing and sub-account controls, ready immediately after purchase.",
+      "realCapacity": "{size} GB included",
+      "socks5Tag": "SOCKS5",
+      "customTitle": "Enterprise custom",
+      "customDesc": "Need high-volume traffic or tailored routing? Contact human support for a custom plan."
+    },
+    "purpose": "Use case",
     "purposes": {
-      "0": "General use",
+      "0": "All uses",
       "8": "TikTok",
       "9": "Sora",
       "10": "ChatGPT"
     },
     "staticFailed": "Could not load static IP prices",
-    "exclusiveClosed": "Dedicated static IPs are not on sale yet. Prices will appear here when sales open.",
-    "sharedClosed": "Shared static IPs are not on sale for this use yet. Prices will appear here when sales open.",
-    "noOffers": "No static IP offers are available right now. Check back later.",
-    "allSoldOut": "All offers are out of stock",
-    "allSoldOutHint": "Prices are shown for reference. Check back later for new stock.",
-    "filters": "Filter offers",
-    "search": "Search country, city, or IP type",
-    "continent": "Continent",
-    "allContinents": "All continents",
-    "region": "Region",
-    "allRegions": "All regions",
-    "unknownRegion": "Region unavailable",
-    "sort": "Sort by",
-    "sortBy": {
-      "price-asc": "Price: low to high",
-      "price-desc": "Price: high to low",
-      "stock": "Most in stock",
-      "region": "Region"
-    },
-    "inStockOnly": "In stock only",
-    "term": "Lease term",
-    "allTerms": "All terms",
+    "term": "Validity",
     "termDays": "{days} day | {days} days",
-    "resultCount": "Showing {shown} of {total} offers · {inStock} in stock",
-    "noMatch": "No offers match your filters.",
-    "clearFilters": "Clear filters",
-    "staticTable": "Static IP offers",
-    "type": "Type",
-    "exclusiveShort": "Dedicated",
-    "sharedShort": "Shared",
-    "line": "Proxy line",
-    "availability": "Availability",
-    "available": "{count} available",
-    "soldOut": "Out of stock",
-    "pricePerIp": "Price per IP",
-    "perIpTerm": "per IP / {days} day | per IP / {days} days",
-    "quotedAt": "Prices as of {time} (Beijing time).",
-    "staticNote": "Stock changes often. Final price and stock are confirmed at checkout.",
-    "buyStatic": "Buy static IPs",
+    "available": "{count} in stock",
+    "static": {
+      "regionsTitle": "Available regions",
+      "defaultTag": "Residential",
+      "perIp": "/IP",
+      "unavailable": "This static residential category is currently closed or out of stock. Sellable regions will appear once available.",
+      "cartTitle": "Selected items",
+      "clearAll": "Clear all",
+      "colRegion": "Region",
+      "colTerm": "Term",
+      "colPrice": "Unit",
+      "colQty": "Qty",
+      "emptyHint": "Select regions on the left to build your order",
+      "decrease": "Decrease quantity",
+      "increase": "Increase quantity",
+      "totalCount": "Total IPs",
+      "totalPrice": "Total",
+      "lineLimit": "You can select up to {count} offers per order. You can still adjust quantities or proceed to buy.",
+      "quantityLimit": "You can buy up to {count} IPs per order. Reduce quantities before adding more."
+    },
     "errors": {
       "STATIC_SUPPLIER_UNAVAILABLE": "Static IP prices are temporarily unavailable from the supplier. Try again shortly.",
       "PRODUCT_UNAVAILABLE": "Product pricing is temporarily unavailable. Try again shortly."

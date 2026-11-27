@@ -16,7 +16,11 @@ export interface LoginResult {
 }
 
 export interface Credentials { email: string, password: string }
-export interface Registration extends Credentials { verificationCode: string }
+export interface Registration extends Credentials {
+  verificationCode: string
+  inviteCode?: string
+  linkInviteCode?: string
+}
 
 interface TenantAccessWire { tenant_id: string, name: string, primary_account_name: string, email?: string }
 interface LoginResponseWire { access_token: string, expires_in_seconds: number }
@@ -34,9 +38,16 @@ export async function requestRegisterCode(email: string) {
   await request<unknown>('/v1/access/register-code', { body: { email }, anonymous: true })
 }
 
-export async function register({ email, password, verificationCode }: Registration) {
+export async function register({ email, password, verificationCode, inviteCode, linkInviteCode }: Registration) {
+  const body: Record<string, string> = {
+    email,
+    password,
+    verification_code: verificationCode,
+  }
+  if (inviteCode !== undefined) body.invite_code = inviteCode
+  if (linkInviteCode !== undefined) body.link_invite_code = linkInviteCode
   return toTenantAccess(await request<TenantAccessWire>('/v1/access/register', {
-    body: { email, password, verification_code: verificationCode },
+    body,
     anonymous: true,
   }))
 }

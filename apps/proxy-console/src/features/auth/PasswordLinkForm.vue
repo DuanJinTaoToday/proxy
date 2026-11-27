@@ -100,10 +100,10 @@ function forgetToken() {
           <span>{{ t('auth.newPassword') }}</span>
           <span class="auth-card__hint">{{ t('auth.passwordHint') }}</span>
         </template>
-        <ElInput id="link-password" v-model="form.password" type="password" show-password autocomplete="new-password" :placeholder="t('auth.newPasswordPlaceholder')" @input="passwordError = ''" />
+        <ElInput id="link-password" v-model="form.password" name="password" type="password" show-password autocomplete="new-password" enterkeyhint="next" :placeholder="t('auth.newPasswordPlaceholder')" @input="passwordError = ''" />
       </ElFormItem>
       <ElFormItem :label="t('auth.confirmPassword')" prop="confirm" for="link-confirm">
-        <ElInput id="link-confirm" v-model="form.confirm" type="password" show-password autocomplete="new-password" :placeholder="t('auth.confirmPlaceholder')" />
+        <ElInput id="link-confirm" v-model="form.confirm" name="confirmPassword" type="password" show-password autocomplete="new-password" enterkeyhint="done" :placeholder="t('auth.confirmPlaceholder')" />
       </ElFormItem>
       <ElButton type="primary" native-type="submit" :loading="submitting" class="auth-card__submit">{{ t(keyOf('submit')) }}</ElButton>
     </ElForm>

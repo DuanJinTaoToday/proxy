@@ -18,6 +18,11 @@
     "password": "Password",
     "passwordPlaceholder": "Enter your password",
     "passwordHint": "At least 12 characters",
+    "inviteCode": "Invite code (optional)",
+    "inviteCodePlaceholder": "Enter an invite code if you have one",
+    "clearInviteCode": "Clear invite code",
+    "inviteInvalid": "This invite code is invalid. Check the code or clear it to continue signing up.",
+    "invitePromotionPaused": "Promotion is currently paused for this invite code. Try another code or clear it to continue signing up.",
     "submitLogin": "Sign in",
     "submitRegister": "Sign up and sign in",
     "noAccount": "No account yet?",
@@ -79,6 +84,25 @@
       "read_operations": "Read operations",
       "manage_billing": "Manage billing",
       "manage_tenant_accounts": "Manage tenant accounts"
+    },
+    "showcase": {
+      "headline": "Global residential proxy network",
+      "lead": "Manage rotating residential traffic and static residential IPs from one enterprise console.",
+      "compliance": "For use outside mainland China only. Not available in mainland China.",
+      "items": {
+        "network": {
+          "title": "Rotating & static in one place",
+          "desc": "Non-expiring pay-per-GB traffic alongside dedicated and shared static IPs."
+        },
+        "access": {
+          "title": "Standard SOCKS5 sub-accounts",
+          "desc": "Issue credentials, configure sessions, and set per-account caps in minutes."
+        },
+        "billing": {
+          "title": "Unified wallet & clear ledger",
+          "desc": "Track real-time usage, order history, and renewal reminders in one account."
+        }
+      }
     }
   }
 }

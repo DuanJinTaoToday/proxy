@@ -7,7 +7,7 @@ import { ArrowLeft } from '@element-plus/icons-vue'
 import { getOpsTenant, listOpsTenantOrders, type OpsTenant } from '@/api/opsTenants'
 import { hasOperatorPermission } from '@/features/auth'
 import { OrderDrawer, readOrderId } from '@/features/orders'
-import { OpsRecoverEmailDialog, OpsResetPasswordDialog } from '@/features/users'
+import { OpsPromotionCard, OpsRecoverEmailDialog, OpsResetPasswordDialog } from '@/features/users'
 import { OpsRechargeDialog } from '@/features/wallet'
 import { shanghaiDateTime } from '@/shared/lib/businessDates'
 import { formatYuan } from '@/shared/lib/money'
@@ -17,7 +17,13 @@ import { useErrorMessage } from '@/shared/lib/useErrorMessage'
 const { t, locale, n } = useI18n()
 const route = useRoute()
 const router = useRouter()
-const tab = computed(() => route.name === 'ops-tenant-ledger' ? 'ledger' : 'orders')
+type TenantTab = 'orders' | 'ledger' | 'commissions'
+const tenantTabs: readonly { tab: TenantTab, routeName: string }[] = [
+  { tab: 'orders', routeName: 'ops-tenant' },
+  { tab: 'ledger', routeName: 'ops-tenant-ledger' },
+  { tab: 'commissions', routeName: 'ops-tenant-commissions' },
+]
+const tab = computed<TenantTab>(() => tenantTabs.find(item => item.routeName === route.name)?.tab ?? 'orders')
 const orderId = computed(() => readOrderId(route.query.order))
 const ledgerRevision = ref(0)
 const pendingCount = ref(0)
@@ -35,9 +41,9 @@ watch([tab, () => route.params.tenantId], async ([section, id], _previous, onCle
 }, { immediate: true })
 
 function selectTab(nextTab: string | number) {
-  if (nextTab !== tab.value) {
-    void router.push({ name: nextTab === 'ledger' ? 'ops-tenant-ledger' : 'ops-tenant' })
-  }
+  if (nextTab === tab.value) return
+  const target = tenantTabs.find(item => item.tab === nextTab)
+  if (target) void router.push({ name: target.routeName })
 }
 
 function closeOrder() {
@@ -127,6 +133,8 @@ function trafficBalance(bytes: bigint) {
       </ElCard>
     </div>
 
+    <OpsPromotionCard :key="detail.tenant.id" :tenant-id="detail.tenant.id" class="tenant-promotion" />
+
     <ElTabs class="tenant-history-tabs ops-page-tabs" :model-value="tab" @update:model-value="selectTab">
       <ElTabPane name="orders" class="tenant-history-panel" :label="t('users.opsOrders')">
         <template #label>
@@ -141,6 +149,10 @@ function trafficBalance(bytes: bigint) {
       <ElTabPane name="ledger" class="tenant-history-panel" :label="t('wallet.ledger')">
         <template #label><span :class="{ 'tenant-tab-label--active': tab === 'ledger' }">{{ t('wallet.ledger') }}</span></template>
         <RouterView v-if="tab === 'ledger'" :key="`${detail.tenant.id}:${ledgerRevision}`" :tenant-id="detail.tenant.id" />
+      </ElTabPane>
+      <ElTabPane name="commissions" class="tenant-history-panel" :label="t('users.opsCommissions')">
+        <template #label><span :class="{ 'tenant-tab-label--active': tab === 'commissions' }">{{ t('users.opsCommissions') }}</span></template>
+        <RouterView v-if="tab === 'commissions'" :key="detail.tenant.id" :tenant-id="detail.tenant.id" />
       </ElTabPane>
     </ElTabs>
     <OrderDrawer :key="detail.tenant.id" :tenant-id="detail.tenant.id" :order-id="orderId" @close="closeOrder" />
@@ -182,4 +194,5 @@ function trafficBalance(bytes: bigint) {
 .tenant-metrics__amount { margin-block-start: var(--space-1); font-size: var(--ops-display-size); font-weight: var(--font-weight-heavy); line-height: calc(var(--space-6) + var(--space-1)); letter-spacing: var(--ops-display-tracking); overflow-wrap: anywhere; }
 .tenant-metrics__debt { color: var(--color-warning-text); }
 .tenant-metrics__hint { margin-block-start: var(--ops-detail-meta-gap); line-height: normal; color: var(--color-text-secondary); font-size: var(--font-size-xs); }
+.tenant-promotion { margin-block-end: var(--space-4); }
 </style>

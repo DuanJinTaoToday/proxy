@@ -20,7 +20,11 @@ const { t, locale } = useI18n()
 const errorMessage = useErrorMessage()
 
 const formRef = ref<FormInstance>()
-const form = reactive({ email: '', verificationCode: '', password: '' })
+const isRegister = computed(() => props.mode === 'register')
+const readSingleInvite = (value: unknown) => (typeof value === 'string' ? value.trim() : '')
+const linkInviteCode = ref(isRegister.value ? readSingleInvite(route.query.invite) : '')
+const inviteTouched = ref(false)
+const form = reactive({ email: '', verificationCode: '', password: '', inviteCode: linkInviteCode.value })
 const submitting = ref(false)
 const sendingCode = ref(false)
 const codeSent = ref(false)
@@ -28,9 +32,8 @@ const { remaining: cooldownLeft, start: startCooldown } = useCooldown()
 const failure = ref('')
 // 注册已成功但自动登录失败：提示账号已创建并引导去登录，避免重复注册。
 const registeredOnly = ref(false)
-const fieldErrors = reactive({ email: '', verificationCode: '', password: '' })
+const fieldErrors = reactive({ email: '', verificationCode: '', password: '', inviteCode: '' })
 
-const isRegister = computed(() => props.mode === 'register')
 // 在认证页面之间切换时带上回跳地址。
 const authPage = (page: string) => ({ path: `/${locale.value}/${page}`, query: redirectQuery(route.query.redirect) })
 const otherPage = computed(() => authPage(isRegister.value ? 'login' : 'register'))
@@ -60,10 +63,41 @@ const fieldOf: Record<string, keyof typeof fieldErrors> = {
   EMAIL_ALREADY_REGISTERED: 'email',
   INVALID_VERIFICATION_CODE: 'verificationCode',
   INVALID_PASSWORD: 'password',
+  INVALID_INVITE_CODE: 'inviteCode',
+  PROMOTION_PAUSED: 'inviteCode',
+}
+const inviteErrorKey: Record<string, string> = {
+  INVALID_INVITE_CODE: 'auth.inviteInvalid',
+  PROMOTION_PAUSED: 'auth.invitePromotionPaused',
 }
 watch(() => form.email, () => { fieldErrors.email = '' })
 watch(() => form.verificationCode, () => { fieldErrors.verificationCode = '' })
 watch(() => form.password, () => { fieldErrors.password = '' })
+watch(() => form.inviteCode, () => { fieldErrors.inviteCode = '' })
+watch(() => route.query.invite, (value) => {
+  if (!isRegister.value) return
+  const next = readSingleInvite(value)
+  if (!next) return
+  linkInviteCode.value = next
+  if (!inviteTouched.value) form.inviteCode = next
+})
+
+function updateInviteCode(value: string) {
+  inviteTouched.value = true
+  form.inviteCode = value
+}
+
+function clearInviteCode() {
+  inviteTouched.value = true
+  form.inviteCode = ''
+  fieldErrors.inviteCode = ''
+}
+
+function registerInvitePayload() {
+  if (inviteTouched.value) return { inviteCode: form.inviteCode.trim() }
+  if (linkInviteCode.value) return { linkInviteCode: linkInviteCode.value }
+  return undefined
+}
 
 function resetFeedback() {
   failure.value = ''
@@ -71,6 +105,7 @@ function resetFeedback() {
   fieldErrors.email = ''
   fieldErrors.verificationCode = ''
   fieldErrors.password = ''
+  fieldErrors.inviteCode = ''
 }
 
 // 无论邮箱是否已注册都显示同一提示，避免借此探测账号。
@@ -94,7 +129,7 @@ async function submit() {
   if (!await formRef.value?.validate().catch(() => false)) return
   submitting.value = true
   try {
-    if (isRegister.value) await register(form.email, form.password, form.verificationCode)
+    if (isRegister.value) await register(form.email, form.password, form.verificationCode, registerInvitePayload())
   } catch (error) {
     showError(error)
     submitting.value = false
@@ -116,9 +151,19 @@ async function submit() {
 }
 
 function showError(error: unknown) {
-  const field = error instanceof ApiError ? fieldOf[error.reason] : undefined
-  if (field) fieldErrors[field] = errorMessage(error)
-  else failure.value = errorMessage(error)
+  if (error instanceof ApiError) {
+    const localKey = inviteErrorKey[error.reason]
+    if (localKey) {
+      fieldErrors.inviteCode = t(localKey)
+      return
+    }
+    const field = fieldOf[error.reason]
+    if (field) {
+      fieldErrors[field] = errorMessage(error)
+      return
+    }
+  }
+  failure.value = errorMessage(error)
 }
 </script>
 
@@ -131,11 +176,11 @@ function showError(error: unknown) {
 
     <ElForm ref="formRef" :model="form" :rules="rules" label-position="top" size="large" @submit.prevent="submit">
       <ElFormItem :label="t('auth.email')" prop="email" for="auth-email" :error="fieldErrors.email">
-        <ElInput id="auth-email" v-model="form.email" type="email" autocomplete="email" inputmode="email" maxlength="254" :placeholder="t('auth.emailPlaceholder')" />
+        <ElInput id="auth-email" v-model="form.email" name="email" type="email" autocomplete="username" inputmode="email" spellcheck="false" enterkeyhint="next" maxlength="254" :placeholder="t('auth.emailPlaceholder')" />
       </ElFormItem>
       <ElFormItem v-if="isRegister" :label="t('auth.code')" prop="verificationCode" for="auth-code" :error="fieldErrors.verificationCode">
         <div class="auth-code">
-          <ElInput id="auth-code" v-model="form.verificationCode" autocomplete="one-time-code" inputmode="numeric" maxlength="32" :placeholder="t('auth.codePlaceholder')" />
+          <ElInput id="auth-code" v-model="form.verificationCode" name="verificationCode" autocomplete="one-time-code" inputmode="numeric" enterkeyhint="next" maxlength="32" :placeholder="t('auth.codePlaceholder')" />
           <ElButton class="auth-code__send" :loading="sendingCode" :disabled="cooldownLeft > 0" @click="sendCode">
             {{ cooldownLeft > 0 ? t('auth.resendIn', { seconds: cooldownLeft }) : t(codeSent ? 'auth.resendCode' : 'auth.sendCode') }}
           </ElButton>
@@ -146,7 +191,25 @@ function showError(error: unknown) {
           <span>{{ t('auth.password') }}</span>
           <span v-if="isRegister" class="auth-card__hint">{{ t('auth.passwordHint') }}</span>
         </template>
-        <ElInput id="auth-password" v-model="form.password" type="password" show-password :autocomplete="isRegister ? 'new-password' : 'current-password'" :placeholder="t('auth.passwordPlaceholder')" />
+        <ElInput id="auth-password" v-model="form.password" name="password" type="password" show-password :autocomplete="isRegister ? 'new-password' : 'current-password'" :enterkeyhint="isRegister ? 'next' : 'done'" :placeholder="t('auth.passwordPlaceholder')" />
+      </ElFormItem>
+      <ElFormItem v-if="isRegister" :label="t('auth.inviteCode')" prop="inviteCode" for="auth-invite-code" :error="fieldErrors.inviteCode">
+        <div class="auth-invite">
+          <ElInput
+            id="auth-invite-code"
+            :model-value="form.inviteCode"
+            name="inviteCode"
+            autocomplete="off"
+            spellcheck="false"
+            enterkeyhint="done"
+            maxlength="64"
+            :placeholder="t('auth.inviteCodePlaceholder')"
+            @update:model-value="updateInviteCode"
+          />
+          <ElButton class="auth-invite__clear" :disabled="!form.inviteCode" @click="clearInviteCode">
+            {{ t('auth.clearInviteCode') }}
+          </ElButton>
+        </div>
       </ElFormItem>
       <ElButton type="primary" native-type="submit" :loading="submitting" class="auth-card__submit">
         {{ t(isRegister ? 'auth.submitRegister' : 'auth.submitLogin') }}
@@ -154,14 +217,14 @@ function showError(error: unknown) {
     </ElForm>
 
     <div class="auth-card__footer">
-      <span>{{ t(isRegister ? 'auth.haveAccount' : 'auth.noAccount') }}<LinkButton :to="otherPage" text type="primary">{{ t(isRegister ? 'auth.loginLink' : 'auth.registerLink') }}</LinkButton></span>
-      <LinkButton v-if="!isRegister" :to="authPage('forgot-password')" text>{{ t('auth.forgot') }}</LinkButton>
+      <span class="auth-card__footer-switch">{{ t(isRegister ? 'auth.haveAccount' : 'auth.noAccount') }}<LinkButton :to="otherPage" text type="primary" class="auth-card__footer-link">{{ t(isRegister ? 'auth.loginLink' : 'auth.registerLink') }}</LinkButton></span>
+      <LinkButton v-if="!isRegister" :to="authPage('forgot-password')" text class="auth-card__footer-link">{{ t('auth.forgot') }}</LinkButton>
     </div>
   </AuthCard>
 </template>
 
 <style scoped>
-.auth-code { display: flex; flex-wrap: wrap; gap: var(--space-2); width: 100%; }
-.auth-code > :first-child { flex: 1 1 10em; }
-.auth-code__send { margin-left: 0; }
+.auth-code, .auth-invite { display: flex; flex-wrap: wrap; gap: var(--space-2); width: 100%; }
+.auth-code > :first-child, .auth-invite > :first-child { flex: 1 1 10em; min-width: 0; }
+.auth-code__send, .auth-invite__clear { margin-left: 0; }
 </style>

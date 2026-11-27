@@ -1,0 +1,166 @@
+{
+  "opsExchange": {
+    "tabs": {
+      "pendingOrders": "待处理订单",
+      "staticExchanges": "静态 IP 换号"
+    },
+    "common": {
+      "retry": "重试",
+      "refresh": "刷新",
+      "loadMore": "加载更多",
+      "cancel": "取消",
+      "close": "关闭",
+      "none": "—",
+      "totalShown": "当前已显示 {count} 条",
+      "readOnlyHint": "当前账号仅具备只读权限，无法执行调额或人工结案。"
+    },
+    "search": {
+      "title": "租户查询与对账",
+      "description": "输入租户邮箱或主账号查看换号额度、历史与审计，也可从下方异常队列直接进入对应租户。",
+      "label": "租户搜索",
+      "placeholder": "输入邮箱或主账号",
+      "submit": "查询租户",
+      "notFound": "未找到匹配的租户。",
+      "selected": "当前租户",
+      "tenantId": "租户 ID",
+      "tenantAccount": "主账号",
+      "clearTenant": "清除选中"
+    },
+    "queue": {
+      "title": "换号异常队列",
+      "description": "展示待人工核实或存在迟到结果冲突的静态 IP 换号记录，可点击租户进入对账或直接发起结案。",
+      "filterSelected": "仅看当前租户",
+      "empty": "当前没有待处理的换号异常。",
+      "openTenant": "查看租户"
+    },
+    "quota": {
+      "title": "换号额度",
+      "adjustButton": "调整额度",
+      "total": "总额度",
+      "remaining": "剩余可用",
+      "reserved": "预占中",
+      "used": "已使用",
+      "selectTenantHint": "请先查询租户或从异常队列中选择一条记录，查看该租户的额度、历史与审计。"
+    },
+    "history": {
+      "title": "租户换号历史",
+      "empty": "该租户暂无静态 IP 换号记录。"
+    },
+    "audit": {
+      "title": "额度与结案审计",
+      "empty": "该租户暂无额度或结案审计记录。"
+    },
+    "columns": {
+      "status": "状态",
+      "tenant": "租户",
+      "requestAndAllocation": "请求与平台分配",
+      "ips": "旧 IP / 新 IP",
+      "supplier": "供应商单据",
+      "time": "时间",
+      "actions": "操作",
+      "auditKind": "类型",
+      "actor": "操作人",
+      "evidence": "核查依据",
+      "quotaChange": "额度前后值",
+      "outcomeAndIp": "结果与观测 IP",
+      "requestKey": "幂等 / 请求键"
+    },
+    "labels": {
+      "allocationId": "分配 ID",
+      "nodeId": "节点 ID",
+      "idempotencyKey": "换号请求键",
+      "requestKey": "请求键",
+      "supplierOrder": "订单",
+      "supplierItem": "条目",
+      "supplierRecord": "供应商单号",
+      "observedIp": "观测 IP",
+      "unknownAt": "转入待核实",
+      "createdAt": "创建",
+      "updatedAt": "更新",
+      "before": "变更前",
+      "after": "变更后"
+    },
+    "status": {
+      "unknownNotQueued": "待核实（未入队）",
+      "unknownQueued": "待核实（已入队）",
+      "resolutionConflict": "迟到结果冲突",
+      "corrected": "已更正",
+      "pending": "处理中",
+      "activating": "激活中",
+      "ready": "已就绪",
+      "support_required": "需人工介入",
+      "failed": "换号失败",
+      "unknown": "待核实",
+      "other": "其他状态"
+    },
+    "resolution": {
+      "executed": "已确认执行",
+      "notExecuted": "已确认未执行"
+    },
+    "auditKind": {
+      "adjustment": "额度调整",
+      "automatic": "自动对账",
+      "manual": "人工结案",
+      "correction": "冲突更正",
+      "conflict": "迟到冲突",
+      "duplicate": "重复请求",
+      "observation": "观测记录",
+      "other": "其他记录"
+    },
+    "actions": {
+      "resolve": "人工结案",
+      "correct": "更正结案",
+      "retryOriginal": "重试原请求"
+    },
+    "pendingBanner": {
+      "title": "当前租户存在未收到明确回执的写请求",
+      "description": "为防止重复扣减或误复用幂等键，请直接重试原请求或刷新状态核对后再操作。",
+      "adjustItem": "额度调整（变动：{delta}，请求键：{requestKey}）",
+      "resolveItem": "人工结案（换号键：{idempotencyKey}，请求键：{requestKey}）",
+      "correctItem": "更正结案（换号键：{idempotencyKey}，请求键：{requestKey}）"
+    },
+    "dialog": {
+      "adjustTitle": "调整额度",
+      "resolveTitle": "人工结案",
+      "correctTitle": "更正结案",
+      "deltaLabel": "额度变动",
+      "deltaPlaceholder": "输入非零整数，正数为增加、负数为调减",
+      "deltaHint": "正数增加总额与剩余额度；负数仅可调减当前剩余额度（最多调减 {maxDecrease}），不可借用预占或已用额度。",
+      "deltaIncrease": "本次将增加 +{value}",
+      "deltaDecrease": "本次将调减 {value}",
+      "projected": "预计变动后：总额 {total} / 剩余 {remaining}（以服务端审计结果为准）",
+      "evidenceLabel": "核查依据",
+      "adjustEvidencePlaceholder": "填写工单号、审批依据或对账说明",
+      "resolveEvidencePlaceholder": "填写已核验的供应商工单号、回执编号或人工核对记录",
+      "outcomeLabel": "结案结果",
+      "outcomeExecuted": "确认已执行（已换号）",
+      "outcomeNotExecuted": "确认未执行（未换号）",
+      "expectedIpLabel": "核验新 IP",
+      "expectedIpPlaceholder": "填写供应商凭证中确认的新 IP",
+      "confirmAdjust": "确认调额",
+      "confirmResolve": "确认结案",
+      "verificationWarningTitle": "必须基于实际核验结果结案",
+      "verificationWarningBody": "查无记录、查询失败或旧 IP 未变均不能作为未执行凭据。请先在供应商侧完成实际核验并填写有效依据，切勿凭界面状态推测结果。",
+      "correctionWarningTitle": "迟到结果冲突更正",
+      "correctionWarningBody": "仅用于处理已结案记录收到的迟到冲突结果，提交后由服务端校验并确保不影响较新配置。",
+      "pendingIntentTitle": "上次提交未收到明确回执，已锁定原请求",
+      "pendingIntentBody": "为避免修改参数后误复用同一请求键，表单已锁定。请点击“重试原请求”按原路径与原参数重放；在获得同一请求键的权威成功回执前将保留原请求，重新登录后同账号仍可继续重试。",
+      "lockedRequestKey": "原请求键",
+      "lockedPath": "原请求路径",
+      "adjustSuccessTitle": "调额已完成，以下为服务端真实审计结果",
+      "resolveSuccess": "结案请求已提交并刷新状态。",
+      "correctSuccess": "更正结案已提交并刷新状态。",
+      "quotaSnapshot": "总额 {total} / 剩余 {remaining} / 预占 {reserved} / 已用 {used}"
+    },
+    "validation": {
+      "permission": "缺少财务管理权限，无法提交写操作。",
+      "deltaRequired": "请输入非零整数的额度变动值。",
+      "deltaRange": "额度变动超出 32 位有符号整数范围。",
+      "deltaExceedsRemaining": "调减数量不能超过当前剩余可用额度（不可借用预占或已用）。",
+      "evidenceRequired": "请填写有效的核查依据。",
+      "outcomeRequired": "请选择核验后的结案结果。",
+      "expectedIpRequired": "确认已执行时必须填写核验新 IP。",
+      "notEligible": "当前记录状态不符合该操作资格。"
+    }
+  }
+}

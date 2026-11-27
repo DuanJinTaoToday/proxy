@@ -38,6 +38,14 @@
     "selected": "已选套餐",
     "trafficChange": "{before} → {after}",
     "confirmedPackage": "动态住宅代理-GB · {capacity}",
-    "trafficDebt": "当前欠 {amount}，到账后先抵扣欠量。"
+    "trafficDebt": "当前欠 {amount}，到账后先抵扣欠量。",
+    "backToPricing": "返回报价页选择其他商品",
+    "selectAvailablePrompt": "请先在左侧选择当前在售的流量套餐。",
+    "intentInvalid": "带入的套餐参数无效，请选择当前在售套餐。",
+    "intentUnavailable": "原选流量套餐已下架，请手动选择其他在售档位。",
+    "intentClosed": "动态住宅流量套餐已停售，可返回报价页选择其他商品。",
+    "intentPriceChanged": "该套餐价格已从 {previous} 更新为 {current}，请核对最新价格后点击立即购买确认。",
+    "intentVersionChanged": "该套餐报价已更新，当前价格为 {current}，请核对后点击立即购买确认。",
+    "intentRestored": "已为您恢复所选流量套餐，请核对价格和余额后点击立即购买确认。"
   }
 }

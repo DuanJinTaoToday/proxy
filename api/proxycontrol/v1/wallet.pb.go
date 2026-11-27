@@ -524,9 +524,9 @@ type WalletEntry struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 流水编号。
 	Id int64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	// 关联订单编号。充值时为 0。
+	// 关联订单编号。人工充值和佣金转入时为 0。
 	OrderId int64 `protobuf:"varint,2,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
-	// 变动类型 recharge、debit、hold、release 或 refund。
+	// 变动类型 recharge、commission_transfer、debit、hold、release 或 refund。
 	Kind string `protobuf:"bytes,3,opt,name=kind,proto3" json:"kind,omitempty"`
 	// 变动前可用余额，人民币分。
 	BeforeMinor int64 `protobuf:"varint,4,opt,name=before_minor,json=beforeMinor,proto3" json:"before_minor,omitempty"`
@@ -1073,7 +1073,7 @@ type CustomerWalletEntriesRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 查询此编号之前的流水。默认从最新开始。
 	BeforeId int64 `protobuf:"varint,1,opt,name=before_id,json=beforeId,proto3" json:"before_id,omitempty"`
-	// 流水类型。debit 包含预扣，refund 包含预扣释放。
+	// 流水类型。debit 包含预扣，refund 包含预扣释放，commission_transfer 为佣金转入。
 	Kind string `protobuf:"bytes,2,opt,name=kind,proto3" json:"kind,omitempty"`
 	// 上海业务日起点（YYYY-MM-DD），包含当天。
 	StartDate string `protobuf:"bytes,3,opt,name=start_date,json=startDate,proto3" json:"start_date,omitempty"`
@@ -1147,7 +1147,7 @@ type OperatorWalletEntriesRequest struct {
 	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
 	// 查询此编号之前的流水。默认从最新开始。
 	BeforeId int64 `protobuf:"varint,2,opt,name=before_id,json=beforeId,proto3" json:"before_id,omitempty"`
-	// 流水类型。debit 包含预扣，refund 包含预扣释放。
+	// 流水类型。debit 包含预扣，refund 包含预扣释放，commission_transfer 为佣金转入。
 	Kind string `protobuf:"bytes,3,opt,name=kind,proto3" json:"kind,omitempty"`
 	// 上海业务日起点（YYYY-MM-DD），包含当天。
 	StartDate string `protobuf:"bytes,4,opt,name=start_date,json=startDate,proto3" json:"start_date,omitempty"`
@@ -4410,17 +4410,17 @@ const file_proxycontrol_v1_wallet_proto_rawDesc = "" +
 	"\x0fdelivered_count\x18\a \x01(\x05R\x0edeliveredCount\x12#\n" +
 	"\rallocation_id\x18\n" +
 	" \x01(\tR\fallocationId\x12\x18\n" +
-	"\aoutcome\x18\t \x01(\tR\aoutcomeJ\x04\b\b\x10\tR\x10supplier_item_id\"\x93\x02\n" +
+	"\aoutcome\x18\t \x01(\tR\aoutcomeJ\x04\b\b\x10\tR\x10supplier_item_id\"\xa8\x02\n" +
 	"\x1cCustomerWalletEntriesRequest\x12$\n" +
-	"\tbefore_id\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02(\x00R\bbeforeId\x12C\n" +
-	"\x04kind\x18\x02 \x01(\tB/\xfaB,r*R\x00R\brechargeR\x05debitR\x04holdR\areleaseR\x06refundR\x04kind\x12E\n" +
+	"\tbefore_id\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02(\x00R\bbeforeId\x12X\n" +
+	"\x04kind\x18\x02 \x01(\tBD\xfaBAr?R\x00R\brechargeR\x13commission_transferR\x05debitR\x04holdR\areleaseR\x06refundR\x04kind\x12E\n" +
 	"\n" +
 	"start_date\x18\x03 \x01(\tB&\xfaB#r!2\x1c^[0-9]{4}-[0-9]{2}-[0-9]{2}$\xd0\x01\x01R\tstartDate\x12A\n" +
-	"\bend_date\x18\x04 \x01(\tB&\xfaB#r!2\x1c^[0-9]{4}-[0-9]{2}-[0-9]{2}$\xd0\x01\x01R\aendDate\"\xbb\x02\n" +
+	"\bend_date\x18\x04 \x01(\tB&\xfaB#r!2\x1c^[0-9]{4}-[0-9]{2}-[0-9]{2}$\xd0\x01\x01R\aendDate\"\xd0\x02\n" +
 	"\x1cOperatorWalletEntriesRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01(@R\btenantId\x12$\n" +
-	"\tbefore_id\x18\x02 \x01(\x03B\a\xfaB\x04\"\x02(\x00R\bbeforeId\x12C\n" +
-	"\x04kind\x18\x03 \x01(\tB/\xfaB,r*R\x00R\brechargeR\x05debitR\x04holdR\areleaseR\x06refundR\x04kind\x12E\n" +
+	"\tbefore_id\x18\x02 \x01(\x03B\a\xfaB\x04\"\x02(\x00R\bbeforeId\x12X\n" +
+	"\x04kind\x18\x03 \x01(\tBD\xfaBAr?R\x00R\brechargeR\x13commission_transferR\x05debitR\x04holdR\areleaseR\x06refundR\x04kind\x12E\n" +
 	"\n" +
 	"start_date\x18\x04 \x01(\tB&\xfaB#r!2\x1c^[0-9]{4}-[0-9]{2}-[0-9]{2}$\xd0\x01\x01R\tstartDate\x12A\n" +
 	"\bend_date\x18\x05 \x01(\tB&\xfaB#r!2\x1c^[0-9]{4}-[0-9]{2}-[0-9]{2}$\xd0\x01\x01R\aendDate\"\xd2\x03\n" +

@@ -1,4 +1,6 @@
-// 粗略的大陆轮廓（经度, 纬度），只用来生成点阵，不追求地理精度。
+import type { FlagCode } from '@/shared/ui/FlagIcon.vue'
+
+// 大洲与主要岛屿轮廓（经度, 纬度），供首屏动态网络图、核心优势 3D 球面及全球覆盖点阵地图共用。
 type Ring = [number, number][]
 
 const land: Ring[] = [
@@ -15,7 +17,7 @@ const land: Ring[] = [
   // 英国与爱尔兰
   [[-6, 50], [2, 51], [0, 54], [-2, 57], [-5, 59], [-6, 56], [-5, 54], [-3, 52]],
   [[-10, 52], [-6, 52], [-6, 55], [-10, 54]],
-  // 非洲
+  // 非洲与马达加斯加
   [[-17, 21], [-16, 28], [-10, 30], [-6, 36], [10, 37], [11, 33], [20, 31], [32, 31], [35, 28], [43, 12], [51, 12], [42, -1], [40, -10], [40, -16], [35, -24], [32, -29], [27, -34], [19, -35], [17, -29], [12, -17], [13, -6], [9, -1], [9, 4], [4, 6], [-8, 4], [-14, 9], [-17, 14]],
   [[44, -25], [47, -25], [50, -15], [49, -12], [44, -17]],
   // 亚洲
@@ -45,13 +47,48 @@ function inside(ring: Ring, lon: number, lat: number) {
   return hit
 }
 
-const isLand = (lon: number, lat: number) => land.some(ring => inside(ring, lon, lat))
+export const isLand = (lon: number, lat: number) => land.some(ring => inside(ring, lon, lat))
 
-/** 平面地图用的规则网格点。 */
+/** 平面点阵世界地图采样点（经度, 纬度）。 */
 export function gridDots(step: number) {
   const dots: [number, number][] = []
-  for (let lat = 80; lat >= -56; lat -= step)
-    for (let lon = -180; lon < 180; lon += step)
+  for (let lat = 78; lat >= -56; lat -= step) {
+    for (let lon = -180; lon < 180; lon += step) {
       if (isLand(lon, lat)) dots.push([lon, lat])
+    }
+  }
   return dots
 }
+
+export interface CoverageHub {
+  code: FlagCode
+  labelKey: string
+  lon: number
+  lat: number
+  pillSide: 'left' | 'right'
+}
+
+export const coverageHubs: CoverageHub[] = [
+  { code: 'ca', labelKey: 'ca', lon: -102, lat: 56, pillSide: 'right' },
+  { code: 'us', labelKey: 'us', lon: -104, lat: 36, pillSide: 'right' },
+  { code: 'br', labelKey: 'br', lon: -50, lat: -14, pillSide: 'right' },
+  { code: 'gb', labelKey: 'gb', lon: -2, lat: 53, pillSide: 'right' },
+  { code: 'sg', labelKey: 'sg', lon: 104, lat: 2, pillSide: 'left' },
+  { code: 'jp', labelKey: 'jp', lon: 139, lat: 36, pillSide: 'left' },
+]
+
+export const coverageRoutes: [number, number][] = [
+  [1, 3],
+  [1, 2],
+  [3, 5],
+  [3, 4],
+  [4, 5],
+  [2, 3],
+]
+
+export const heroPhrases = ['stores', 'social', 'data', 'ads', 'markets'] as const
+
+export const heroExits = [
+  'losAngeles', 'london', 'tokyo', 'frankfurt', 'saoPaulo',
+  'singapore', 'newYork', 'paris', 'toronto', 'sydney',
+] as const

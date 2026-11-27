@@ -20,7 +20,8 @@ func ReportingDecoder(maxBytes int64) http.DecodeRequestFunc {
 		switch body.(type) {
 		case *v1.StickySessionRequest, *v1.CreateSubaccountRequest, *v1.UpdateSubaccountRequest:
 			return decodeLimitedProto(req, message, "SUBACCOUNT_REQUEST", "subaccount request", "invalid subaccount body")
-		case *v1.QuoteWalletRechargeRequest, *v1.RechargeWalletRequest, *v1.PurchaseTrafficPackageRequest, *v1.StaticPurchaseQuoteRequest, *v1.ResolveStaticPurchaseRequest:
+		case *v1.QuoteWalletRechargeRequest, *v1.RechargeWalletRequest, *v1.PurchaseTrafficPackageRequest, *v1.StaticPurchaseQuoteRequest, *v1.ResolveStaticPurchaseRequest,
+			*v1.TransferCommissionRequest:
 			return decodeLimitedProto(req, message, "WALLET_REQUEST", "wallet request", "invalid wallet body")
 		case *v1.PurchaseStaticIPRequest:
 			return decodeBoundedProto(req, message, 16<<10, "WALLET_REQUEST", "wallet request", "invalid wallet body")

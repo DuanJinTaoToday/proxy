@@ -1,6 +1,7 @@
 {
   "users": {
     "opsOrders": "Orders",
+    "opsCommissions": "Referral commissions",
     "account": "Account",
     "primaryAccount": "Primary account",
     "email": "Email address",
@@ -51,6 +52,116 @@
       "confirm": "Confirm and send",
       "sent": "Account recovery email sent to {email}",
       "sentDetail": "Ask the customer to check their inbox and set a new password before the link expires. You can send it again if the link expires."
+    },
+    "referral": {
+      "title": "Referral sharing",
+      "loading": "Loading referral details…",
+      "loadFailed": "Could not load referral details",
+      "emailNotVerified": "Verify your email address to use referral sharing",
+      "emailNotVerifiedDetail": "Your email address is not verified yet. Once verified, your invite code and invite link will appear here.",
+      "status": "Promotion status",
+      "statusActive": "Active",
+      "statusPaused": "Paused",
+      "pausedNotice": "Promotion is currently paused for this account. New invite sign-ups will not be accepted while paused.",
+      "inviteCode": "Invite code",
+      "inviteUrl": "Invite link",
+      "copyCode": "Copy invite code",
+      "copyUrl": "Copy invite link",
+      "codeCopied": "Invite code copied",
+      "urlCopied": "Invite link copied",
+      "copyFailed": "Automatic copy failed. Select the text and copy it manually."
+    },
+    "promotion": {
+      "title": "Promotion eligibility",
+      "loading": "Loading promotion eligibility…",
+      "loadFailed": "Could not load promotion eligibility",
+      "statusActive": "Active",
+      "statusPaused": "Paused",
+      "activeHint": "This tenant’s invite code can be used for new sign-ups.",
+      "pausedHint": "Promotion is paused for this tenant. Their invite code cannot be used for new sign-ups.",
+      "permission": "Only operators who can manage tenant accounts can change promotion eligibility",
+      "pause": "Pause promotion",
+      "resume": "Resume promotion",
+      "pauseTitle": "Pause promotion for this tenant?",
+      "pauseDescription": "While paused, new sign-ups using this tenant’s invite code will be rejected. Existing attribution is not affected.",
+      "pauseConfirm": "Confirm pause",
+      "resumeTitle": "Resume promotion for this tenant?",
+      "resumeDescription": "Once resumed, this tenant’s invite code can be used for new sign-ups again.",
+      "resumeConfirm": "Confirm resume",
+      "pausedSuccess": "Promotion paused",
+      "resumedSuccess": "Promotion resumed"
+    },
+    "commissions": {
+      "title": "Commission records",
+      "availableBalance": "Available commission",
+      "availableBalanceHint": "Total available commission, unaffected by filters below",
+      "customerKeyLabel": "Anonymous customer ID",
+      "customerKeyPlaceholder": "e.g. 550e8400-e29b-41d4-a716-446655440000",
+      "customerKeyHint": "Enter a complete anonymous customer ID to view matching commission records.",
+      "invalidCustomerKey": "Enter a complete 36-character standard UUID.",
+      "search": "Search",
+      "clear": "Clear",
+      "loading": "Loading commission records…",
+      "loadFailed": "Could not load commission records",
+      "loadMoreFailed": "Could not load older records. Loaded records have been kept.",
+      "loadOlder": "Load older records",
+      "allLoaded": "All records loaded",
+      "empty": "No commission records yet",
+      "emptyFiltered": "No matching commission records",
+      "rateVersionTag": "Rate v{version}",
+      "ruleVersionTag": "Rule v{version}",
+      "columns": {
+        "customerKey": "Anonymous customer ID",
+        "source": "Referral source",
+        "product": "Product",
+        "classification": "Order type",
+        "settledAt": "Settled at",
+        "netDebit": "Net debit",
+        "rate": "Applied rate",
+        "commission": "Commission",
+        "status": "Status"
+      },
+      "sources": {
+        "manual": "Manual",
+        "link": "Link"
+      },
+      "products": {
+        "traffic_package": "Traffic package",
+        "static_purchase": "Static IP purchase",
+        "static_renewal": "Static IP renewal"
+      },
+      "classifications": {
+        "first_purchase": "First purchase",
+        "repeat_purchase": "Repeat purchase"
+      },
+      "statuses": {
+        "credited": "Credited",
+        "zero_commission": "Zero commission",
+        "promotion_paused": "Promotion paused"
+      },
+      "rates": {
+        "title": "Global commission rates",
+        "loading": "Loading global commission rates…",
+        "loadFailed": "Could not load global commission rates",
+        "scopeNotice": "Saved rates apply to future settlements across the platform. Historical records keep the rates applied at settlement.",
+        "writeOnlyPrompt": "Enter new rates for both tiers.",
+        "savedSummary": "Saved rates: first purchase {first}, repeat purchase {repeat} (rate v{version}).",
+        "manageLink": "Go to global commission rates",
+        "updatedAt": "Updated on {date}",
+        "firstPurchase": "First-purchase rate",
+        "repeatPurchase": "Repeat-purchase rate",
+        "save": "Save rates",
+        "saved": "Global commission rates saved",
+        "saveFailed": "Could not save global commission rates. Your draft has been kept so you can retry.",
+        "precisionHint": "0% to 100%, in increments of 0.01%.",
+        "billingPermissionOnly": "Only operators with billing management permission can edit global commission rates.",
+        "validation": {
+          "empty": "Enter a rate percentage.",
+          "format": "Enter a valid decimal number (for example, 0, 12.34, or 100).",
+          "precision": "Enter at most two decimal places (minimum step 0.01%).",
+          "range": "Rate must be between 0% and 100%."
+        }
+      }
     }
   },
   "accessLocation": {
