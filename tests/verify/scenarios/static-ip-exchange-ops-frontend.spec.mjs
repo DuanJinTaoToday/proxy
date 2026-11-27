@@ -175,7 +175,8 @@ test('计费运营按证据更正迟到冲突，旧记录不覆盖同一分配�
   const email = 'ops-exchange-ui-correct@example.test'
   const f = await setup({ request, playwright, baseURL }, email)
   try {
-    const ip = await f.buy('111')
+    // Japan has its own fixture address range, unlike the shared US/Canada prefix.
+    const ip = await f.buy('201')
     const supplier = await f.fixture('exchanges', { ip: ip.ip, outcome: 'unknown-empty' })
     const old = await f.submit(ip)
     expect(old.status).toBe('unknown')
