@@ -1,8 +1,9 @@
 export const supportFixtureMode = process.env.PROXY_VERIFY_SUPPORT_FIXTURE ?? 'unset'
 
 export const supportFixture = {
+  telegramInput: 'https://rocproxy_issue_112_verify.t.me/',
   telegram: 'https://t.me/rocproxy_issue_112_verify',
-  qq: 'https://wpa.qq.com/msgrd?v=3&uin=1000000999&site=qq&menu=yes',
+  qq: 'https://wpa1.qq.com/rocproxy-verify-112?_type=wpa&qidian=true',
   phone: '+1 (202) 555-0142',
   clipboard: '+12025550142',
 }
@@ -14,7 +15,7 @@ export function supportBuildArgs() {
 
   const values = {
     unset: { telegram: '', qq: '', phone: '' },
-    configured: supportFixture,
+    configured: { ...supportFixture, telegram: supportFixture.telegramInput },
     invalid: { telegram: 'https://t.me.invalid/rocproxy_verify', qq: 'https://t.me/rocproxy_verify', phone: 'verify' },
   }[supportFixtureMode]
 

@@ -33,7 +33,7 @@ function notifySoon() {
 <template>
   <nav class="support" :class="`support--${variant}`" :aria-label="t('marketing.support.title')">
     <template v-for="entry in entries" :key="entry.channel">
-      <a v-if="entry.href" class="support__item" :data-channel="entry.channel" :href="entry.href" target="_blank" rel="noopener noreferrer">
+      <a v-if="entry.href" class="support__item" :href="entry.href" target="_blank" rel="noopener noreferrer">
         <component :is="entry.icon" v-if="entry.icon" class="support__icon" aria-hidden="true" />
         <svg v-else class="support__icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
           <path :d="qqGlyphPath" />
@@ -42,13 +42,13 @@ function notifySoon() {
         <span v-if="variant !== 'dock'" class="support__value">{{ t('marketing.support.open') }}</span>
         <span class="support__sr">{{ t('marketing.support.newTab') }}</span>
       </a>
-      <button v-else-if="entry.phone" type="button" class="support__item" :data-channel="entry.channel" :title="t('marketing.support.copyHint')" @click="copyPhone(entry.phone)">
+      <button v-else-if="entry.phone" type="button" class="support__item" :title="t('marketing.support.copyHint')" @click="copyPhone(entry.phone)">
         <Phone class="support__icon" aria-hidden="true" />
         <span class="support__label">{{ label(entry.channel) }}</span>
         <span v-if="variant !== 'dock'" class="support__value mono">{{ entry.phone.display }}</span>
         <span v-else class="support__tip mono">{{ entry.phone.display }}</span>
       </button>
-      <button v-else type="button" class="support__item support__item--off" :data-channel="entry.channel" data-state="soon" @click="notifySoon">
+      <button v-else type="button" class="support__item support__item--off" data-state="soon" @click="notifySoon">
         <component :is="entry.icon" v-if="entry.icon" class="support__icon" aria-hidden="true" />
         <svg v-else class="support__icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
           <path :d="qqGlyphPath" />

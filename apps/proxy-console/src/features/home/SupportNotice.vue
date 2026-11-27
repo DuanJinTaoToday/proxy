@@ -10,7 +10,7 @@ const items = ['noticeVerify', 'noticeContinue', 'noticeCredentials'] as const
   <div class="support-notice" role="note" :aria-label="t('marketing.support.noticeTitle')">
     <p class="support-notice__title">{{ t('marketing.support.noticeTitle') }}</p>
     <ul>
-      <li v-for="item in items" :key="item" :data-notice="item">{{ t(`marketing.support.${item}`) }}</li>
+      <li v-for="item in items" :key="item">{{ t(`marketing.support.${item}`) }}</li>
     </ul>
   </div>
 </template>

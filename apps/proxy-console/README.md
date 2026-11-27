@@ -28,8 +28,8 @@
 
 | 变量 | 值 |
 | --- | --- |
-| `VITE_SUPPORT_TELEGRAM_URL` | Telegram 客服账号的官方 HTTPS 链接 |
-| `VITE_SUPPORT_QQ_URL` | 腾讯为该客服账号生成的 HTTPS 名片或会话链接。兼容旧变量 `VITE_SUPPORT_QQ` |
+| `VITE_SUPPORT_TELEGRAM_URL` | Telegram 客服账号的 `t.me` HTTPS 联系链接，支持用户名和国际格式电话号码 |
+| `VITE_SUPPORT_QQ_URL` | 腾讯为该客服账号生成的 `qm.qq.com`、`wpa.qq.com` 或 `wpa1.qq.com` HTTPS 名片或会话链接。兼容旧变量 `VITE_SUPPORT_QQ` |
 | `VITE_SUPPORT_PHONE` | 公开的客服电话，可含国际区号和展示分隔符 |
 
 空白或无效值不会生成可用联系方式。正式开通前，从官网首页和登录后客户控制台的账号菜单分别打开两条外链，确认收件账号归属。点击电话后核对剪贴板中的拨号号码。在线客服仍待 #102/#112 联验与评审。

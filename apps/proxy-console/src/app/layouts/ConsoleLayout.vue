@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { ElDropdownItem } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import { sessionEmail } from '@/features/auth'
-import ConsoleSupport from '@/features/home/ConsoleSupport.vue'
+import { ConsoleSupport } from '@/features/home'
 import WorkspaceFrame from './WorkspaceFrame.vue'
 import { consoleNav } from '../navigation'
 
