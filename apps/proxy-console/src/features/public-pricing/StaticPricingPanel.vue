@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useRouter, type LocationQueryRaw } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ElButton } from 'element-plus'
 import { Box, Delete, Minus, Plus } from '@element-plus/icons-vue'
 import type { StaticPurchaseOffer } from '@/api/staticPricing'
 import { formatYuan } from '@/shared/lib/money'
+import { buildStaticPurchaseIntentQuery } from '@/features/checkout'
 import { flagForRegion } from '@/shared/lib/regionFlags'
 import FlagIcon from '@/shared/ui/FlagIcon.vue'
 import { usePricingError } from './pricingError'
@@ -114,15 +115,18 @@ const totalCount = computed(() => cartItems.value.reduce((sum, item) => sum + it
 const totalMinor = computed(() => cartItems.value.reduce((sum, item) => sum + item.offer.unitMinor * BigInt(item.qty), 0n))
 
 function checkout() {
-  if (!cartItems.value.length) return
-  const query: LocationQueryRaw = {
+  if (!cartItems.value.length || !selectedTerm.value) return
+  const query = buildStaticPurchaseIntentQuery({
     shareMode: props.shareMode,
-    term: selectedTerm.value || undefined,
-    items: cartItems.value.map(item => `${item.offer.nodeId}:${item.qty}`).join(','),
-  }
-  if (props.shareMode === 'shared' && props.purpose) {
-    query.purpose = String(props.purpose)
-  }
+    purposeId: props.shareMode === 'shared' && props.purpose ? props.purpose : undefined,
+    term: selectedTerm.value,
+    lines: cartItems.value.map(item => ({
+      nodeId: item.offer.nodeId,
+      quantity: item.qty,
+      unitMinor: item.offer.unitMinor,
+      available: item.offer.available,
+    })),
+  })
   void router.push({ name: 'console-static-pricing', query })
 }
 </script>

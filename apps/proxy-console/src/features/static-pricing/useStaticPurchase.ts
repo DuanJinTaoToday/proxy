@@ -16,9 +16,11 @@ import {
   type StaticPurchaseRequest,
   type StaticPurchaseSelection,
 } from '@/api/staticPricing'
+import type { StaticPurchaseSnapshot } from '@/features/checkout'
 
 type CatalogState =
-  | { kind: 'loading' | 'closed' }
+  | { kind: 'loading' }
+  | { kind: 'closed' }
   | { kind: 'failed', error: unknown }
   | { kind: 'open', offers: StaticPurchaseOffer[] }
 
@@ -26,7 +28,7 @@ type RecheckedLine = StaticPurchaseLine & { currentOffer?: StaticPurchaseOffer }
 type Checkout =
   | { kind: 'closed' }
   | { kind: 'loading' }
-  | { kind: 'confirm', quote: StaticPurchaseQuote, changed?: 'specification' | 'priceOrStock' }
+  | { kind: 'confirm', quote: StaticPurchaseQuote, changed?: 'specification' | 'priceOrStock', snapshots?: ReadonlyMap<string, StaticPurchaseSnapshot> }
   | { kind: 'blocked', rechecked?: RecheckedLine[], retry?: StaticPurchaseSelection, error: unknown }
   | { kind: 'unresolved', body: StaticPurchaseRequest, error?: unknown }
   | { kind: 'result', order: StaticPurchaseOrder, error?: unknown }
@@ -82,14 +84,18 @@ function reason(error: unknown) {
   return error instanceof ApiError ? error.reason : ''
 }
 
-export function useStaticPurchase(accountKey: string, onPurchase: () => void) {
+export function useStaticPurchase(accountKey: string, onPurchase: () => void, initialFilter?: StaticCatalogFilter) {
   const storageKey = `proxy-console.static-purchase.${accountKey}`
   const pendingKey = `${storageKey}.pending-orders`
   const pendingOrderIds = shallowRef(readPendingOrders(pendingKey))
   const restored = restoreRequest(storageKey)
-  const filters = ref<StaticCatalogFilter>(restored?.share_mode === 'shared'
-    ? { shareMode: 'shared', purposeId: restored.purpose_id }
-    : { shareMode: 'exclusive' })
+  const filters = ref<StaticCatalogFilter>(
+    restored
+      ? (restored.share_mode === 'shared'
+          ? { shareMode: 'shared', purposeId: restored.purpose_id }
+          : { shareMode: 'exclusive' })
+      : (initialFilter ?? { shareMode: 'exclusive' }),
+  )
   const catalog = shallowRef<CatalogState>({ kind: 'loading' })
   const wallet = shallowRef<{ kind: 'loading' } | { kind: 'ready', balance: bigint } | { kind: 'failed', error: unknown }>({ kind: 'loading' })
   const checkout = shallowRef<Checkout>(restored ? { kind: 'unresolved', body: restored } : { kind: 'closed' })
@@ -205,8 +211,12 @@ export function useStaticPurchase(accountKey: string, onPurchase: () => void) {
     }
   }
 
-  async function reviewPurchase(review: StaticPurchaseSelection, confirm = false) {
-    if (busy.value) return
+  async function reviewPurchase(
+    review: StaticPurchaseSelection,
+    confirm = false,
+    snapshots?: ReadonlyMap<string, StaticPurchaseSnapshot>,
+  ) {
+    if (busy.value || checkout.value.kind === 'unresolved') return
     const filter = filters.value
     lastError.value = undefined
     busy.value = true
@@ -222,10 +232,19 @@ export function useStaticPurchase(accountKey: string, onPurchase: () => void) {
       })
       const priceOrStockChanged = quote.lines.some(({ offer }, index) => {
         const previous = review.lines[index]?.offer
-        return offer.unitMinor !== previous?.unitMinor || offer.available !== previous?.available
+        const snapshot = snapshots?.get(offer.nodeId)
+        return offer.unitMinor !== previous?.unitMinor
+          || offer.available !== previous?.available
+          || (snapshot?.unitMinor !== undefined && offer.unitMinor !== snapshot.unitMinor)
+          || (snapshot?.available !== undefined && offer.available !== snapshot.available)
       })
       if (!confirm || specificationChanged || priceOrStockChanged || (balance.value !== undefined && balance.value < staticSelectionTotal(quote.lines))) {
-        checkout.value = { kind: 'confirm', quote, changed: specificationChanged ? 'specification' : priceOrStockChanged ? 'priceOrStock' : undefined }
+        checkout.value = {
+          kind: 'confirm',
+          quote,
+          changed: specificationChanged ? 'specification' : priceOrStockChanged ? 'priceOrStock' : undefined,
+          snapshots: snapshots?.size ? snapshots : undefined,
+        }
       } else {
         await runPurchase(makeStaticPurchaseRequest(quote, filter), quote)
       }

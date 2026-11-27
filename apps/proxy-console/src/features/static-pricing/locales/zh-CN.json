@@ -94,6 +94,15 @@
     "availableCount": "可购 {count}",
     "pricePerIp": "{price}/IP",
     "summaryProduct": "订单摘要 · {product}",
-    "ipCount": "IP 数量"
+    "ipCount": "IP 数量",
+    "nodeFallback": "节点 #{id}",
+    "unavailableLineWithStock": "该地区暂无所选租期的报价（当前可售 {stock}）。",
+    "previousUnitPrice": "原单个 IP 价格",
+    "previousStock": "原可购库存",
+    "backToPricing": "返回报价页选择其他商品",
+    "intentInvalid": "带入的购买参数无效或不完整，请重新选择地区和数量。",
+    "intentUnavailable": "所选部分商品已下架或无对应租期报价，已保留原选择，请移除或选择其他商品。",
+    "intentInsufficientStock": "所选商品当前库存不足，已保留原数量，请调整数量或移除后继续。",
+    "intentChanged": "公开报价与当前实时报价存在变动，请核对最新价格和库存后再确认支付。"
   }
 }

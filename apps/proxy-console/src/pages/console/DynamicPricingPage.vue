@@ -1,20 +1,33 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ElAlert, ElButton, ElCard, ElDialog, ElEmpty, ElSkeleton } from 'element-plus'
 import { CircleCheck } from '@element-plus/icons-vue'
 import { unitPrice } from '@/features/catalog'
-import { useTrafficCheckout } from '@/features/checkout'
+import { dynamicIntentQueryKeys, parseDynamicPurchaseIntent, stripQueryKeys, useTrafficCheckout } from '@/features/checkout'
 import { formatYuan } from '@/shared/lib/money'
 import { formatGB } from '@/shared/lib/trafficUnits'
 import { useErrorMessage } from '@/shared/lib/useErrorMessage'
+import LinkButton from '@/shared/ui/LinkButton.vue'
 
 const { t, te, locale } = useI18n()
 const errorMessage = useErrorMessage()
 const route = useRoute()
-const { confirmedTier, data, loadError, loading, openConfirmation, pending, receipt, refresh, rejection, selected, selectedId, submit, submitting } =
-  useTrafficCheckout(typeof route.query.package === 'string' ? route.query.package : undefined)
+const router = useRouter()
+
+function consumeIntent() {
+  const { nextQuery, changed } = stripQueryKeys(route.query, dynamicIntentQueryKeys)
+  if (changed) void router.replace({ query: nextQuery })
+}
+
+const {
+  confirmedTier, data, intentNotice, loadError, loading, openConfirmation, pending, receipt, refresh, rejection,
+  selectPackage, selected, submit, submitting,
+} = useTrafficCheckout({
+  intent: () => parseDynamicPurchaseIntent(route.query),
+  onConsume: consumeIntent,
+})
 
 const money = (minor: bigint) => formatYuan(minor, locale.value)
 const capacity = (bytes: bigint) => formatGB(bytes, locale.value)
@@ -39,6 +52,20 @@ const rejectionMessage = computed(() => {
   const key = 'trafficPricing.errors.' + rejection.value
   return t(te(key) ? key : 'trafficPricing.rejected')
 })
+const intentAlert = computed(() => {
+  const notice = intentNotice.value
+  if (!notice) return undefined
+  if (notice.kind === 'invalid') return { type: 'warning' as const, title: t('trafficPricing.intentInvalid') }
+  if (notice.kind === 'unavailable') return { type: 'warning' as const, title: t('trafficPricing.intentUnavailable') }
+  if (notice.kind === 'closed') return { type: 'warning' as const, title: t('trafficPricing.intentClosed') }
+  if (notice.kind === 'changed') {
+    const title = notice.previousPriceMinor !== undefined
+      ? t('trafficPricing.intentPriceChanged', { previous: money(notice.previousPriceMinor), current: money(notice.currentPriceMinor) })
+      : t('trafficPricing.intentVersionChanged', { current: money(notice.currentPriceMinor) })
+    return { type: 'warning' as const, title }
+  }
+  return { type: 'info' as const, title: t('trafficPricing.intentRestored') }
+})
 </script>
 
 <template>
@@ -51,20 +78,24 @@ const rejectionMessage = computed(() => {
       <ElButton type="primary" :loading="submitting" :disabled="loading" @click="submit">{{ t('trafficPricing.retryPurchase') }}</ElButton>
     </ElAlert>
     <ElAlert v-if="rejectionMessage && !submitting" type="warning" :closable="false" show-icon :title="rejectionMessage" />
+    <ElAlert v-if="intentAlert && !pending && !receipt && !submitting" :type="intentAlert.type" :closable="false" show-icon :title="intentAlert.title" />
     <ElAlert v-if="loadError" :title="errorMessage(loadError)" type="error" :closable="false" show-icon>
       <ElButton size="small" @click="refresh">{{ t('trafficPricing.retryLoad') }}</ElButton>
     </ElAlert>
     <ElSkeleton v-if="!data && loading" animated :rows="5" />
     <template v-if="data && !loadError">
-      <ElCard v-if="!data.catalog.open || !data.catalog.canPurchase || !selected" class="checkout" shadow="never">
+      <ElCard v-if="!data.catalog.open || !data.catalog.canPurchase || !offerCards.length" class="checkout" shadow="never">
         <ElEmpty :description="t(data.catalog.open ? 'trafficPricing.noPackages' : 'trafficPricing.closed')" :image-size="80" />
+        <div class="closed-actions">
+          <LinkButton :to="{ name: 'pricing', params: { locale } }">{{ t('trafficPricing.backToPricing') }}</LinkButton>
+        </div>
       </ElCard>
       <div v-else class="traffic-purchase">
         <div role="radiogroup" :aria-label="t('trafficPricing.choose')" class="offers">
-          <label v-for="tier in offerCards" :key="tier.id" class="offer" :class="{ selected: tier.id === selected.id }">
-            <input type="radio" name="traffic-package" :value="tier.id" :checked="tier.id === selected.id"
+          <label v-for="tier in offerCards" :key="tier.id" class="offer" :class="{ selected: tier.id === selected?.id }">
+            <input type="radio" name="traffic-package" :value="tier.id" :checked="tier.id === selected?.id"
               :disabled="loading || submitting || Boolean(pending)"
-              :aria-label="t('trafficPricing.package', { capacity: gb(tier.capacityBytes) })" @change="selectedId = tier.id" />
+              :aria-label="t('trafficPricing.package', { capacity: gb(tier.capacityBytes) })" @change="selectPackage(tier.id)" />
             <span v-if="tier.discountPercent > 0" class="savings" :title="t('trafficPricing.savings', { percent: tier.discountPercent })">
               {{ t('trafficPricing.savingsBadge', { percent: tier.discountPercent }) }}
             </span>
@@ -80,20 +111,31 @@ const rejectionMessage = computed(() => {
         </div>
 
         <ElCard class="checkout" shadow="never">
-          <dl class="summary">
-            <div><dt>{{ t('trafficPricing.selected') }}</dt><dd>{{ t('trafficPricing.package', { capacity: gb(selected.capacityBytes) }) }}</dd></div>
-            <div>
-              <dt>{{ t('trafficPricing.afterTraffic') }}</dt>
-              <dd>{{ t('trafficPricing.trafficChange', { before: gb(data.trafficBytes), after: gb(data.trafficBytes + selected.capacityBytes) }) }}</dd>
-            </div>
-            <div><dt>{{ t('trafficPricing.wallet') }}</dt><dd>{{ money(data.walletMinor) }}</dd></div>
-            <div class="total"><dt>{{ t('trafficPricing.due') }}</dt><dd>{{ money(selected.priceMinor) }}</dd></div>
-          </dl>
-          <ElAlert v-if="shortfall > 0n && !pending" type="warning" :closable="false" show-icon
-            :title="t('trafficPricing.shortfall', { amount: money(shortfall) })" />
-          <ElButton class="buy" size="large" type="primary" :loading="loading || submitting" :disabled="Boolean(pending)" @click="openConfirmation">
-            {{ t('trafficPricing.buy') }}
-          </ElButton>
+          <template v-if="selected">
+            <dl class="summary">
+              <div><dt>{{ t('trafficPricing.selected') }}</dt><dd>{{ t('trafficPricing.package', { capacity: gb(selected.capacityBytes) }) }}</dd></div>
+              <div>
+                <dt>{{ t('trafficPricing.afterTraffic') }}</dt>
+                <dd>{{ t('trafficPricing.trafficChange', { before: gb(data.trafficBytes), after: gb(data.trafficBytes + selected.capacityBytes) }) }}</dd>
+              </div>
+              <div><dt>{{ t('trafficPricing.wallet') }}</dt><dd>{{ money(data.walletMinor) }}</dd></div>
+              <div class="total"><dt>{{ t('trafficPricing.due') }}</dt><dd>{{ money(selected.priceMinor) }}</dd></div>
+            </dl>
+            <ElAlert v-if="shortfall > 0n && !pending" type="warning" :closable="false" show-icon
+              :title="t('trafficPricing.shortfall', { amount: money(shortfall) })" />
+            <ElButton class="buy" size="large" type="primary" :loading="loading || submitting" :disabled="Boolean(pending)" @click="openConfirmation">
+              {{ t('trafficPricing.buy') }}
+            </ElButton>
+          </template>
+          <template v-else>
+            <dl class="summary">
+              <div><dt>{{ t('trafficPricing.wallet') }}</dt><dd>{{ money(data.walletMinor) }}</dd></div>
+            </dl>
+            <p class="billing select-prompt">{{ t('trafficPricing.selectAvailablePrompt') }}</p>
+            <ElButton class="buy" size="large" type="primary" disabled>
+              {{ t('trafficPricing.buy') }}
+            </ElButton>
+          </template>
           <p class="billing">{{ t('trafficPricing.billing') }}</p>
         </ElCard>
       </div>
@@ -151,6 +193,8 @@ const rejectionMessage = computed(() => {
 .buy { inline-size: 100%; }
 .checkout .el-alert { margin-block-end: var(--space-3); }
 .billing { margin: var(--space-5) 0 0; }
+.select-prompt { margin: 0 0 var(--space-3); }
+.closed-actions { display: flex; justify-content: center; padding-bottom: var(--space-4); }
 .traffic-confirm { --el-dialog-width: min(var(--traffic-confirm-width), calc(100% - 2 * var(--space-4))); }
 @media (max-width: 1180px) {
   .traffic-purchase { grid-template-columns: minmax(0, 1fr); }

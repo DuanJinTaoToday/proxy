@@ -62,9 +62,6 @@ function trackPurchaseWrites(page) {
 
 async function showStaticConfirmation(page) {
   const dialog = page.getByRole('dialog', { name: '确认购买', exact: true })
-  const buy = page.getByRole('button', { name: '立即购买', exact: true })
-  await expect(dialog.or(buy).first()).toBeVisible()
-  if (!(await dialog.isVisible())) await buy.click()
   await expect(dialog).toBeVisible()
   return dialog
 }
@@ -120,7 +117,7 @@ test('游客邮箱验码注册后恢复静态购物车，窄屏余额为零且�
     await authenticateFromCart(page, email, true)
     await expect(page).toHaveURL(/\/console\/static\/pricing(?:\?|$)/)
     await expect(page.locator('.cart-line')).toContainText('United States')
-    await expect(page.locator('.cart-line').getByRole('spinbutton')).toHaveValue('2')
+    await expect(page.locator('.cart-line input[type="number"], .cart-line input[role="spinbutton"]')).toHaveValue('2')
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390)
     tenant = await authenticatedApi(playwright, baseURL, { email })
     expect(await balancesAndOrders(tenant)).toEqual({ wallet: '0', orders: [], ledger: [] })
