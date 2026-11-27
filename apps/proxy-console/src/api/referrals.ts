@@ -16,14 +16,17 @@ export interface TenantPromotion {
 interface TenantInviteWire {
   invite_code: string
   invite_url: string
-  promotion_status: PromotionStatus
+  promotion_status: unknown
 }
 
 interface TenantPromotionWire {
-  promotion_status: PromotionStatus
+  promotion_status: unknown
 }
 
-const toPromotionStatus = (value: string): PromotionStatus => (value === 'paused' ? 'paused' : 'active')
+const toPromotionStatus = (value: unknown): PromotionStatus => {
+  if (value === 'active' || value === 'paused') return value
+  throw new Error(`Invalid promotion status: ${String(value)}`)
+}
 
 export async function getTenantInvite(signal?: AbortSignal): Promise<TenantInvite> {
   const wire = await request<TenantInviteWire>('/v1/tenant/invite', { signal })

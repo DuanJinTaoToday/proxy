@@ -61,6 +61,12 @@ test('邀请链接、手填优先和清除只绑定一次，邀请码报错沿�
       const code = await fillRegistration(page, linked.invite_url, email)
       await expect(inviteField(page)).toHaveValue(linked.invite_code)
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390)
+      if (source === 'link') {
+        await page.getByRole('link', { name: '注册', exact: true }).click()
+        await expect(page).toHaveURL(/\/zh-CN\/register$/)
+        await expect(field(page, '验证码')).toHaveValue(code)
+        await expect(inviteField(page)).toHaveValue(linked.invite_code)
+      }
       if (source !== 'link') {
         await inviteField(page).fill('not-a-valid-code')
         const rejected = await submitRegistration(page)
@@ -87,6 +93,9 @@ test('邀请链接、手填优先和清除只绑定一次，邀请码报错沿�
         referrer: source === 'link' ? linked.id : manual.id, source,
       }
       expect(registrationAttribution(id)).toEqual(attribution)
+      const otherInvite = source === 'manual' ? linked.invite_url : manual.invite_url
+      await page.goto(otherInvite)
+      await expect(page).toHaveURL(/\/console$/)
       await page.goto('/console/account/profile')
       await expect(page.getByRole('button', { name: '复制邀请码' })).toBeVisible()
       expect(registrationAttribution(id)).toEqual(attribution)
@@ -140,6 +149,14 @@ test('推广员复制分享信息，运营权限与暂停恢复审计一致', as
       }
       expect(await change(pause, 'pause')).toMatchObject({ promotion_status: 'paused' })
       expect(promotionAudit(account.id)).toEqual([{ operator: username, before: false, after: true }])
+      for (const limitedUser of ['operator-readonly', 'operator-billing']) {
+        const { access_token } = await request.post('/v1/operations/access/login', {
+          data: { username: limitedUser, password },
+        }).then(json)
+        const headers = { Authorization: 'Bearer ' + access_token }
+        expect((await request.post(opsPath + ':resume-promotion', { headers, data: {} })).status()).toBe(403)
+        expect(await request.get(promotion, { headers }).then(json)).toMatchObject({ promotion_status: 'paused' })
+      }
       await page.reload()
       await expect(page.getByText(/推广.*暂停|已暂停/).filter({ visible: true }).first()).toBeVisible()
       await screenshot(ops, info, 'promotion-paused-by-account-operator')
@@ -170,5 +187,25 @@ test('推广员复制分享信息，运营权限与暂停恢复审计一致', as
     } finally {
       await operatorContext.close()
     }
+  }
+})
+
+test('服务端推广状态未知时，分享和运营页不把它显示为可推广', async ({ page, browser, baseURL }) => {
+  await signInTenant(page)
+  await page.route('**/v1/tenant/invite', route => route.fulfill({
+    json: { invite_code: 'fixture', invite_url: 'https://localhost/zh-CN/register', promotion_status: 'unrecognized' },
+  }))
+  await page.goto('/console/account/profile')
+  await expect(page.getByText(/加载.*推广|无法.*推广|推广.*加载失败/).filter({ visible: true }).first()).toBeVisible()
+  await expect(page.getByRole('button', { name: '复制邀请码', exact: true })).toHaveCount(0)
+  const context = await browser.newContext({ baseURL, ignoreHTTPSErrors: true })
+  try {
+    const ops = await context.newPage()
+    await ops.route('**/v1/operations/tenants/alpha/promotion', route => route.fulfill({ json: {} }))
+    await signInOperator(ops, '/ops/tenants/alpha', 'operator-support')
+    await expect(ops.getByText(/加载.*推广|无法.*推广|推广.*加载失败/).filter({ visible: true }).first()).toBeVisible()
+    await expect(ops.getByRole('button', { name: '暂停推广', exact: true })).toHaveCount(0)
+  } finally {
+    await context.close()
   }
 })

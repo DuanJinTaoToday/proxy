@@ -77,6 +77,7 @@ watch(() => form.inviteCode, () => { fieldErrors.inviteCode = '' })
 watch(() => route.query.invite, (value) => {
   if (!isRegister.value) return
   const next = readSingleInvite(value)
+  if (!next) return
   linkInviteCode.value = next
   if (!inviteTouched.value) form.inviteCode = next
 })
