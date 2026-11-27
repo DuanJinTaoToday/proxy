@@ -18,6 +18,7 @@ import { messages as staticPricingMessages } from '@/features/static-pricing'
 import { messages as staticGuideMessages } from '@/features/static-guide'
 import { messages as catalogMessages } from '@/features/catalog/messages'
 import { messages as opsUsageMessages } from '@/features/ops-usage/messages'
+import { messages as opsExchangeMessages } from '@/features/ops-static-exchanges/messages'
 import { messages as homeMessages } from '@/features/home/messages'
 import { messages as publicPricingMessages } from '@/features/public-pricing/messages'
 
@@ -38,7 +39,7 @@ type MessageSchema = typeof zhCN
 const moduleMessages: Record<Locale, Messages>[] = [
   authMessages, dynamicProxyMessages, dashboardMessages, notificationMessages,
   checkoutMessages, walletMessages, orderMessages, userMessages,
-  staticIpsMessages, staticPricingMessages, staticGuideMessages, catalogMessages, opsUsageMessages, homeMessages, publicPricingMessages,
+  staticIpsMessages, staticPricingMessages, staticGuideMessages, catalogMessages, opsUsageMessages, opsExchangeMessages, homeMessages, publicPricingMessages,
 ]
 function messagesFor(locale: Locale, base: MessageSchema) {
   return moduleMessages.reduce<Messages>((all, module) => ({ ...all, ...module[locale] }), base) as MessageSchema
