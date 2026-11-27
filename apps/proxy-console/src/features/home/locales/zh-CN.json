@@ -157,7 +157,12 @@
       "soon": "即将开通",
       "soonAll": "客服渠道即将开通。",
       "copyHint": "点击复制",
-      "copied": "已复制{name}"
+      "copied": "已复制{name}",
+      "newTab": "（在新标签页打开）",
+      "noticeTitle": "联系客服须知",
+      "noticeVerify": "涉及订单、余额或代理账号时，客服会先核实账号归属，核实后再沟通具体内容。",
+      "noticeContinue": "如暂时无法核实归属，请按客服指引继续核验。",
+      "noticeCredentials": "请勿向任何人提供登录密码、验证码或代理账号密码。"
     },
     "footer": {
       "ctaTitle": "准备好接入全球住宅网络了吗？",

@@ -52,7 +52,7 @@ test('双语首页、两种视口、直接访问和刷新，展示钴蓝版式�
       await expect(page.locator('#solutions .col')).toHaveCount(4)
       await expect(page.locator('#faq details')).toHaveCount(5)
       await expect(page.locator('canvas').first()).toBeVisible()
-      const supportNav = page.getByRole('navigation', { name: locale === 'zh-CN' ? '联系人工客服' : 'Contact human support' })
+      const supportNav = page.locator('.support--dock').and(page.getByRole('navigation', { name: locale === 'zh-CN' ? '联系人工客服' : 'Contact human support' }))
       await expect(supportNav).toBeVisible()
       if (width === 390) {
         await supportNav.getByRole('button', { name: locale === 'zh-CN' ? /在线客服/ : /Live chat/ }).click()

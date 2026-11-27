@@ -13,6 +13,7 @@ const drawerOpen = ref(false)
 <template>
   <AppHeader menu-button :ops="ops" :tenant="tenant" @open-menu="drawerOpen = true">
     <template #brand-extra><slot name="brand-extra" /></template>
+    <template #account-actions><slot name="account-actions" /></template>
   </AppHeader>
   <div class="workspace" :class="{ 'workspace--ops': ops, 'workspace--tenant': tenant }">
     <AppSidebar :ops="ops" :tenant="tenant" class="workspace__sidebar" :sections="sections" :label="navLabel" />

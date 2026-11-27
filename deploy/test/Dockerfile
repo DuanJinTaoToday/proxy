@@ -53,6 +53,9 @@ WORKDIR /src
 COPY apps/proxy-console/package*.json ./
 RUN --mount=type=cache,target=/root/.npm npm ci
 COPY apps/proxy-console/ ./
+ARG VITE_SUPPORT_TELEGRAM_URL
+ARG VITE_SUPPORT_QQ_URL
+ARG VITE_SUPPORT_PHONE
 RUN npm run build
 
 FROM caddy:2-alpine AS console

@@ -157,7 +157,12 @@
       "soon": "Coming soon",
       "soonAll": "Support channels are coming soon.",
       "copyHint": "Click to copy",
-      "copied": "{name} copied"
+      "copied": "{name} copied",
+      "newTab": "(opens in a new tab)",
+      "noticeTitle": "Before you contact support",
+      "noticeVerify": "For orders, balance or proxy accounts, support staff verify account ownership before discussing any details.",
+      "noticeContinue": "If support cannot confirm ownership, follow the agent's instructions to finish verification.",
+      "noticeCredentials": "Never share your login password, verification codes or proxy account passwords with anyone."
     },
     "footer": {
       "ctaTitle": "Ready to connect to a global residential network?",
