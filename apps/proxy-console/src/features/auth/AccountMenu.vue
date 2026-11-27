@@ -28,7 +28,7 @@ async function confirmSignOut() {
 
 <template>
   <ElDropdown trigger="click" placement="bottom-end">
-    <ElButton text :class="{ 'account-menu__trigger--tenant': tenant }" :aria-label="t('auth.accountMenu')">
+    <ElButton text class="account-menu__trigger" :class="{ 'account-menu__trigger--tenant': tenant }" :aria-label="t('auth.accountMenu')">
       <User class="account-menu__icon" />
       <span class="account-menu__name">{{ accountName }}</span>
       <ArrowDown class="account-menu__chevron" />

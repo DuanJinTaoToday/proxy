@@ -11,13 +11,24 @@ import { NotificationBell } from '@/features/notifications'
 import { applyLocale, isLocale, locales, rememberLocale, type Locale } from '../i18n'
 
 // 三个入口共用的顶栏。右侧顺序固定为「通知铃铛 → 语言切换 → 用户入口」。
-defineProps<{ menuButton?: boolean, ops?: boolean, tenant?: boolean, marketing?: boolean }>()
+defineProps<{ menuButton?: boolean, ops?: boolean, tenant?: boolean, marketing?: boolean, marketingLight?: boolean }>()
 defineEmits<{ openMenu: [] }>()
 
 const route = useRoute()
 const router = useRouter()
 const { t, locale } = useI18n()
 const homePath = computed(() => `/${locale.value}/`)
+
+const marketingLinks = computed(() => [
+  { key: 'pricing', to: `/${locale.value}/pricing`, label: t('marketing.navPricing'), active: route.name === 'pricing' },
+  { key: 'coverage', to: `/${locale.value}/#coverage`, label: t('marketing.navCoverage'), active: false },
+  { key: 'solutions', to: `/${locale.value}/#solutions`, label: t('marketing.navSolutions'), active: false },
+  { key: 'faq', to: `/${locale.value}/#faq`, label: t('marketing.navFaq'), active: false },
+])
+
+function navigateMarketing(path: string) {
+  void router.push(path)
+}
 
 // 官网切换到对应语言的同一路由并保留查询参数；控制台保持当前 URL，只更新偏好。
 function switchLocale(next: Locale) {
@@ -31,9 +42,27 @@ function switchLocale(next: Locale) {
 </script>
 
 <template>
-  <header class="app-header" :class="{ 'app-header--ops': ops, 'app-header--tenant': tenant, 'app-header--marketing': marketing }">
+  <header
+    class="app-header"
+    :class="{
+      'app-header--ops': ops,
+      'app-header--tenant': tenant,
+      'app-header--marketing': marketing,
+      'app-header--marketing-light': marketing && marketingLight,
+    }"
+  >
     <div class="app-header__start">
       <ElButton v-if="menuButton" class="app-header__menu" text :icon="Menu" :aria-label="t('nav.openMenu')" @click="$emit('openMenu')" />
+      <ElDropdown v-else-if="marketing" trigger="click" placement="bottom-start" class="app-header__marketing-drawer" @command="navigateMarketing">
+        <ElButton class="app-header__marketing-menu-btn" text :icon="Menu" :aria-label="t('nav.openMenu')" />
+        <template #dropdown>
+          <ElDropdownMenu>
+            <ElDropdownItem v-for="item in marketingLinks" :key="item.key" :command="item.to">
+              {{ item.label }}
+            </ElDropdownItem>
+          </ElDropdownMenu>
+        </template>
+      </ElDropdown>
       <RouterLink :to="ops ? '/ops' : homePath" class="app-header__brand" :aria-label="t('app.name')">
         <BrandMark />
       </RouterLink>
@@ -41,11 +70,14 @@ function switchLocale(next: Locale) {
     </div>
 
     <nav v-if="marketing" class="app-header__marketing-menu" :aria-label="t('marketing.resources')">
-      <a href="#products">{{ t('marketing.products') }}</a>
-      <RouterLink :to="{ name: 'pricing', params: { locale } }">{{ t('marketing.pricing') }}</RouterLink>
-      <a href="#integration">{{ t('marketing.guide') }}</a>
-      <a href="#manage">{{ t('marketing.manage') }}</a>
-      <a href="#faq">{{ t('marketing.faq') }}</a>
+      <RouterLink
+        v-for="item in marketingLinks"
+        :key="item.key"
+        :to="item.to"
+        :class="{ 'is-active': item.active }"
+      >
+        {{ item.label }}
+      </RouterLink>
     </nav>
     <div class="app-header__tools">
       <RouterLink v-if="ops" to="/console" target="_blank" rel="noopener" class="app-header__customer-link">
@@ -69,7 +101,7 @@ function switchLocale(next: Locale) {
       <OperatorMenu v-if="ops" />
       <AccountMenu v-else-if="hasSession()" :tenant="tenant" />
       <template v-else>
-        <LinkButton :to="`/${locale}/login`" text>{{ t('header.login') }}</LinkButton>
+        <LinkButton :to="`/${locale}/login`" text :class="{ 'home-header-login': marketing }">{{ t('header.login') }}</LinkButton>
         <LinkButton :to="`/${locale}/register`" type="primary" :class="{ 'home-header-register': marketing }">{{ t('header.register') }}</LinkButton>
       </template>
     </div>
@@ -104,6 +136,7 @@ function switchLocale(next: Locale) {
 .app-header__globe { width: var(--icon-size); height: var(--icon-size); margin-right: var(--space-1); }
 .app-header__check { display: inline-flex; width: var(--space-4); margin-right: var(--space-2); color: var(--color-primary); }
 .app-header__menu { display: none; }
+.app-header__marketing-drawer { display: none; }
 .app-header--ops .app-header__brand { gap: var(--ops-brand-gap); font-size: var(--ops-brand-size); font-weight: var(--font-weight-heavy); }
 .app-header--ops .app-header__start { gap: var(--ops-brand-gap); }
 .app-header--ops .app-header__language {
@@ -150,6 +183,10 @@ function switchLocale(next: Locale) {
 .app-header--tenant .app-header__globe { color: var(--color-text-secondary); }
 .app-header--tenant .app-header__chevron { width: var(--font-size-xs); margin-left: var(--tenant-header-item-gap); }
 .app-header--tenant .app-header__globe { margin-right: var(--tenant-header-item-gap); }
+
+@media (max-width: 1040px) {
+  .app-header__marketing-drawer { display: inline-flex; }
+}
 
 @media (max-width: 767px) {
   .app-header { padding-inline: var(--space-2); }

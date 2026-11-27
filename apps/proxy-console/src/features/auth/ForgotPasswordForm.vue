@@ -57,7 +57,7 @@ async function submit() {
 
     <ElForm ref="formRef" :model="form" :rules="rules" label-position="top" size="large" @submit.prevent="submit">
       <ElFormItem :label="t('auth.email')" prop="email" for="forgot-email" :error="emailError">
-        <ElInput id="forgot-email" v-model="form.email" type="email" autocomplete="email" inputmode="email" maxlength="254" :placeholder="t('auth.emailPlaceholder')" @input="emailError = ''" />
+        <ElInput id="forgot-email" v-model="form.email" name="email" type="email" autocomplete="username" inputmode="email" spellcheck="false" enterkeyhint="done" maxlength="254" :placeholder="t('auth.emailPlaceholder')" @input="emailError = ''" />
       </ElFormItem>
       <ElButton type="primary" native-type="submit" :loading="sending" :disabled="cooldownLeft > 0" class="auth-card__submit">
         {{ cooldownLeft > 0 ? t('auth.resendIn', { seconds: cooldownLeft }) : t(sent ? 'auth.resendResetLink' : 'auth.sendResetLink') }}

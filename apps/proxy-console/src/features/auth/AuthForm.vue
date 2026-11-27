@@ -131,11 +131,11 @@ function showError(error: unknown) {
 
     <ElForm ref="formRef" :model="form" :rules="rules" label-position="top" size="large" @submit.prevent="submit">
       <ElFormItem :label="t('auth.email')" prop="email" for="auth-email" :error="fieldErrors.email">
-        <ElInput id="auth-email" v-model="form.email" type="email" autocomplete="email" inputmode="email" maxlength="254" :placeholder="t('auth.emailPlaceholder')" />
+        <ElInput id="auth-email" v-model="form.email" name="email" type="email" autocomplete="username" inputmode="email" spellcheck="false" enterkeyhint="next" maxlength="254" :placeholder="t('auth.emailPlaceholder')" />
       </ElFormItem>
       <ElFormItem v-if="isRegister" :label="t('auth.code')" prop="verificationCode" for="auth-code" :error="fieldErrors.verificationCode">
         <div class="auth-code">
-          <ElInput id="auth-code" v-model="form.verificationCode" autocomplete="one-time-code" inputmode="numeric" maxlength="32" :placeholder="t('auth.codePlaceholder')" />
+          <ElInput id="auth-code" v-model="form.verificationCode" name="verificationCode" autocomplete="one-time-code" inputmode="numeric" enterkeyhint="next" maxlength="32" :placeholder="t('auth.codePlaceholder')" />
           <ElButton class="auth-code__send" :loading="sendingCode" :disabled="cooldownLeft > 0" @click="sendCode">
             {{ cooldownLeft > 0 ? t('auth.resendIn', { seconds: cooldownLeft }) : t(codeSent ? 'auth.resendCode' : 'auth.sendCode') }}
           </ElButton>
@@ -146,7 +146,7 @@ function showError(error: unknown) {
           <span>{{ t('auth.password') }}</span>
           <span v-if="isRegister" class="auth-card__hint">{{ t('auth.passwordHint') }}</span>
         </template>
-        <ElInput id="auth-password" v-model="form.password" type="password" show-password :autocomplete="isRegister ? 'new-password' : 'current-password'" :placeholder="t('auth.passwordPlaceholder')" />
+        <ElInput id="auth-password" v-model="form.password" name="password" type="password" show-password :autocomplete="isRegister ? 'new-password' : 'current-password'" enterkeyhint="done" :placeholder="t('auth.passwordPlaceholder')" />
       </ElFormItem>
       <ElButton type="primary" native-type="submit" :loading="submitting" class="auth-card__submit">
         {{ t(isRegister ? 'auth.submitRegister' : 'auth.submitLogin') }}
@@ -154,8 +154,8 @@ function showError(error: unknown) {
     </ElForm>
 
     <div class="auth-card__footer">
-      <span>{{ t(isRegister ? 'auth.haveAccount' : 'auth.noAccount') }}<LinkButton :to="otherPage" text type="primary">{{ t(isRegister ? 'auth.loginLink' : 'auth.registerLink') }}</LinkButton></span>
-      <LinkButton v-if="!isRegister" :to="authPage('forgot-password')" text>{{ t('auth.forgot') }}</LinkButton>
+      <span class="auth-card__footer-switch">{{ t(isRegister ? 'auth.haveAccount' : 'auth.noAccount') }}<LinkButton :to="otherPage" text type="primary" class="auth-card__footer-link">{{ t(isRegister ? 'auth.loginLink' : 'auth.registerLink') }}</LinkButton></span>
+      <LinkButton v-if="!isRegister" :to="authPage('forgot-password')" text class="auth-card__footer-link">{{ t('auth.forgot') }}</LinkButton>
     </div>
   </AuthCard>
 </template>

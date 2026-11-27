@@ -79,6 +79,25 @@
       "read_operations": "运营读取",
       "manage_billing": "计费管理",
       "manage_tenant_accounts": "租户账号管理"
+    },
+    "showcase": {
+      "headline": "全球真实住宅代理网络",
+      "lead": "统一账号管理动态住宅流量与静态住宅 IP，标准协议即开即用。",
+      "compliance": "仅支持境外网络环境使用，中国大陆不可用",
+      "items": {
+        "network": {
+          "title": "动态与静态一体化",
+          "desc": "动态按 GB 计费不过期，静态独享与共享按地区选配。"
+        },
+        "access": {
+          "title": "标准 SOCKS5 子账号",
+          "desc": "控制台集中管理代理凭据、会话模式与用量限额。"
+        },
+        "billing": {
+          "title": "统一钱包与透明账单",
+          "desc": "实时查看消耗明细、订单状态与到期提醒。"
+        }
+      }
     }
   }
 }
