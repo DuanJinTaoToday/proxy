@@ -110,6 +110,7 @@
       "currentAddress": "当前接入地址",
       "previousAddress": "换号前地址",
       "waitingNewAddress": "正在等待新连接信息…",
+      "differentListRecord": "当前列表记录与本次不同，请以列表接入参数为准",
       "submitting": "正在提交换号请求",
       "checking": "正在查询原换号结果",
       "polling": "正在自动同步最新换号状态…",

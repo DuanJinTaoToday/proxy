@@ -110,6 +110,7 @@
       "currentAddress": "Current access address",
       "previousAddress": "Previous address",
       "waitingNewAddress": "Waiting for new connection details…",
+      "differentListRecord": "The current list record differs from this exchange. Use the access details shown in the list.",
       "submitting": "Submitting exchange request",
       "checking": "Checking original exchange result",
       "polling": "Automatically checking for status updates…",

@@ -159,11 +159,16 @@ test('换号丢回执时复用请求键，待核实与续费互斥，额度用�
     await expect(cta(page, '重试原请求').filter({ visible: true }).first()).toBeVisible()
     expect(lostPayload).toMatchObject({ allocation_id: first.allocation_id, idempotency_key: expect.any(String) })
     const retry = cta(page, '重试原请求').filter({ visible: true }).first()
+    const failedRefresh = page.waitForEvent('requestfailed', req => req.method() === 'GET' && urlPath(req) === ips)
+    await page.route('**' + ips, route => route.abort('failed'), { times: 1 })
     const secondRequest = submission(page)
     await retry.click()
     expect((await secondRequest).postDataJSON()).toEqual(lostPayload)
     await expect.poll(() => setup.record(lostPayload.idempotency_key).then(record => record.status)).toBe('unknown')
-    await expect(page.getByText(/待核实/).filter({ visible: true }).first()).toBeVisible()
+    await expect(dialog).toContainText('待核实')
+    await failedRefresh
+    await cta(dialog, '完成').click()
+    await expect(cta(page, '查询原结果').filter({ visible: true }).first()).toBeVisible()
     await page.reload()
     await expect(rowFor(page, first.ip)).toContainText('待核实')
     await expect(cta(rowFor(page, first.ip), '续费')).toBeDisabled()
@@ -182,22 +187,27 @@ test('换号丢回执时复用请求键，待核实与续费互斥，额度用�
   }
 })
 
-test('换号请求未送达且刷新后查无记录，仍可沿用原请求键提交', async ({ page, request, playwright, baseURL }, info) => {
+test('换号请求超时且刷新后查无记录，仍可沿用原请求键提交', async ({ page, request, playwright, baseURL }, info) => {
   const email = 'exchange-ui-reload@example.test'
   const setup = await prepare({ request, playwright, baseURL }, email)
+  const held = Promise.withResolvers()
   try {
     const [allocation] = await setup.buy({ node_id: '111', term: 'yp1', quantity: 1 })
     const upstream = await fixture(request, { ip: allocation.ip, outcome: 'ready' })
+    await page.clock.install()
     await signInTenant(page, email)
     await page.goto('/console/static/ips')
     const dialog = await openExchange(page, allocation)
-    let original
-    await page.route('**/v1/tenant/static-ip-exchanges', route => {
-      original = route.request().postDataJSON()
-      return route.abort('failed')
+    await page.route('**/v1/tenant/static-ip-exchanges', async route => {
+      await held.promise
+      await route.abort('failed').catch(() => {})
     }, { times: 1 })
+    const firstRequest = submission(page)
     await cta(dialog, '确认换号').click()
+    const original = (await firstRequest).postDataJSON()
+    await page.clock.fastForward(21000)
     await expect(cta(dialog, '重试原请求')).toBeVisible()
+    held.resolve()
     expect(await setup.quota()).toEqual({ remaining: 10, reserved: 0, used: 0 })
     await page.reload()
     const lookup = cta(page, '查询原结果').filter({ visible: true }).first()
@@ -209,13 +219,14 @@ test('换号请求未送达且刷新后查无记录，仍可沿用原请求键�
     await missing
     await expect(resumed).toContainText(/未找到|暂未查到|未查到|没有找到|未在服务端查到/)
     await screenshot(page, info, 'persisted-exchange-key-after-lookup-not-found')
-    const sent = submission(page)
+    const sent = page.waitForResponse(resp => resp.ok() && resp.request().method() === 'POST' && urlPath(resp) === exchanges)
     await cta(resumed, '重试原请求').click()
-    expect((await sent).postDataJSON()).toEqual(original)
+    expect((await sent).request().postDataJSON()).toEqual(original)
     await expect.poll(() => setup.record(original.idempotency_key).then(r => r.status), { timeout: 20000 }).toBe('ready')
     expect(await fixture(request, { id: upstream.id })).toMatchObject({ calls: 1 })
     expect(await setup.quota()).toEqual({ remaining: 9, reserved: 0, used: 1 })
   } finally {
+    held.resolve()
     await setup.close()
   }
 })

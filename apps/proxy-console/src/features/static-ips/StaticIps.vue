@@ -7,8 +7,8 @@ import {
 } from 'element-plus'
 import { CircleCheck, Clock, CopyDocument, Download, Loading, Refresh, Search } from '@element-plus/icons-vue'
 import { exportStaticIps, getStaticIpCredentials, listStaticIps, type RenewalSubmission, type StaticIp } from '@/api/staticIps'
-import { isStaticIpExchangeStatus, type StaticIpExchangeStatus, type StaticIpExchangeSubmission } from '@/api/staticIpExchanges'
-import { endpoint, useStaticIpPresentation } from './presentation'
+import { isStaticIpExchangeStatus, type StaticIpExchangeSubmission } from '@/api/staticIpExchanges'
+import { endpoint, exchangeStatusTagType, useStaticIpPresentation } from './presentation'
 import { readRenewalSubmissions, type RenewalIntent } from './renewalIntent'
 import RenewalDialog from './RenewalDialog.vue'
 import ExchangeDialog from './ExchangeDialog.vue'
@@ -43,6 +43,7 @@ function isStaticIp(row: unknown): row is StaticIp {
 
 const ips = shallowRef<StaticIp[]>([])
 const loading = ref(true)
+const listVersion = ref(0)
 const copying = ref<string>()
 const exporting = ref(false)
 const listError = shallowRef<unknown>()
@@ -71,15 +72,6 @@ const {
   inspectExchange,
   resumeExchange,
 } = useStaticIpExchanges(props.accountKey, controller.signal)
-
-const exchangeStatusTagType: Record<StaticIpExchangeStatus, 'info' | 'warning' | 'danger' | 'success'> = {
-  pending: 'info',
-  unknown: 'warning',
-  failed: 'danger',
-  activating: 'info',
-  ready: 'success',
-  support_required: 'warning',
-}
 
 const hasExpiry = (ip: StaticIp) => Number.isFinite(ip.expiry.getTime())
 const isAvailable = (ip: StaticIp) => ip.expiry.getTime() > now.value
@@ -139,6 +131,7 @@ async function loadIps() {
     now.value = Date.now()
     table.value?.clearSelection()
     ips.value = items
+    listVersion.value += 1
     reconcileSavedExchanges(items)
   } catch (error) {
     if (!controller.signal.aborted) listError.value = error
@@ -511,6 +504,8 @@ onUnmounted(() => {
       v-if="exchangeIntent"
       :intent="exchangeIntent"
       :current-allocation="currentExchangeAllocation"
+      :list-loading="loading"
+      :list-version="listVersion"
       :quota="quota"
       :quota-loading="quotaLoading"
       :quota-error="quotaError"

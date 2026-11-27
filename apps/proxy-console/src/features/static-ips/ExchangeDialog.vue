@@ -12,12 +12,14 @@ import {
   type StaticIpExchangeStatus,
   type StaticIpExchangeSubmission,
 } from '@/api/staticIpExchanges'
-import { endpoint, useStaticIpPresentation } from './presentation'
+import { endpoint, exchangeStatusTagType, useStaticIpPresentation } from './presentation'
 import type { ExchangeIntent } from './exchangeIntent'
 
 const props = defineProps<{
   intent: ExchangeIntent
   currentAllocation?: StaticIp
+  listLoading?: boolean
+  listVersion?: number
   quota?: StaticIpExchangeQuota
   quotaLoading?: boolean
   quotaError?: unknown
@@ -41,25 +43,18 @@ const submission = shallowRef<StaticIpExchangeSubmission | undefined>(
 const busy = ref<'submitting' | 'checking'>()
 const failure = shallowRef<unknown>()
 const notFoundOnServer = ref(false)
-const completedResume = ref(false)
+const awaitingListVersion = ref<number>()
 const pollAttempts = ref(0)
 const pollExhausted = ref(false)
 const polling = ref(false)
 
+const requestTimeoutMs = 20_000
 const maxPollAttempts = 10
 const pollIntervalMs = 3_000
 let pollTimer: number | undefined
 
-const statusTagType: Record<StaticIpExchangeStatus, 'info' | 'warning' | 'danger' | 'success'> = {
-  pending: 'info',
-  unknown: 'warning',
-  failed: 'danger',
-  activating: 'info',
-  ready: 'success',
-  support_required: 'warning',
-}
-
 const confirmedStatuses: readonly StaticIpExchangeStatus[] = ['activating', 'ready', 'support_required']
+const initialExchangeSnapshot = props.intent.kind === 'exchange' ? endpoint(props.intent.ip) : undefined
 
 function isConfirmedStatus(status: StaticIpExchangeStatus | undefined): boolean {
   return status !== undefined && confirmedStatuses.includes(status)
@@ -76,12 +71,21 @@ const confirmedAllocation = computed(() => {
   if (!isConfirmedStatus(current.exchangeStatus)) return undefined
   return current
 })
+const listRefreshedAfterConfirm = computed(() =>
+  awaitingListVersion.value !== undefined
+  && !props.listLoading
+  && (props.listVersion ?? 0) > awaitingListVersion.value,
+)
+const listRecordDiverged = computed(() => {
+  const rec = record.value
+  if (!rec || !isConfirmedStatus(rec.status) || confirmedAllocation.value) return false
+  if (!listRefreshedAfterConfirm.value) return false
+  return props.currentAllocation?.exchangeIdempotencyKey !== rec.idempotencyKey
+})
 const previousAddress = computed(() => {
-  const original = props.intent.ip
-  if (!original) return undefined
-  const originalEndpoint = endpoint(original)
-  if (confirmedAllocation.value && endpoint(confirmedAllocation.value) === originalEndpoint) return undefined
-  return originalEndpoint
+  if (!initialExchangeSnapshot) return undefined
+  if (confirmedAllocation.value && endpoint(confirmedAllocation.value) === initialExchangeSnapshot) return undefined
+  return initialExchangeSnapshot
 })
 const supportHref = computed(() => (locale.value === 'en' ? '/en#contact' : '/zh-CN#contact'))
 const activeKey = computed(() =>
@@ -155,6 +159,33 @@ function schedulePoll(key: string) {
   }, pollIntervalMs)
 }
 
+async function runWithTimeout<T>(task: (signal: AbortSignal) => Promise<T>): Promise<T> {
+  const attempt = new AbortController()
+  let timedOut = false
+  const onParentAbort = () => attempt.abort()
+  if (controller.signal.aborted) {
+    attempt.abort()
+  } else {
+    controller.signal.addEventListener('abort', onParentAbort, { once: true })
+  }
+  const timer = window.setTimeout(() => {
+    timedOut = true
+    attempt.abort()
+  }, requestTimeoutMs)
+
+  try {
+    return await task(attempt.signal)
+  } catch (error) {
+    if (timedOut && !controller.signal.aborted) {
+      throw new ApiError(0, 'NETWORK', 'request timed out')
+    }
+    throw error
+  } finally {
+    window.clearTimeout(timer)
+    controller.signal.removeEventListener('abort', onParentAbort)
+  }
+}
+
 async function pollOnce(key: string) {
   if (busy.value || controller.signal.aborted) {
     polling.value = false
@@ -162,11 +193,12 @@ async function pollOnce(key: string) {
   }
   pollAttempts.value += 1
   try {
-    const next = await getStaticIpExchange(key, controller.signal)
+    const next = await runWithTimeout(signal => getStaticIpExchange(key, signal))
     if (controller.signal.aborted) return
     const previousStatus = record.value?.status
     record.value = next
-    if (next.status !== previousStatus || (isConfirmedStatus(next.status) && !confirmedAllocation.value)) {
+    if (next.status !== previousStatus || (isConfirmedStatus(next.status) && !confirmedAllocation.value && !listRecordDiverged.value)) {
+      if (isConfirmedStatus(next.status)) awaitingListVersion.value = props.listVersion ?? 0
       emit('changed', next.allocationId)
     }
     if (shouldPoll(next.status)) schedulePoll(key)
@@ -179,6 +211,7 @@ async function pollOnce(key: string) {
 
 function submit() {
   const existing = submission.value
+  const isRetry = Boolean(existing)
   if (!existing && !canConfirmNew.value) return
   clearPoll()
   notFoundOnServer.value = false
@@ -197,16 +230,16 @@ function submit() {
     )
     publishSubmission(payload, true)
     try {
-      const next = await submitStaticIpExchange(payload, controller.signal)
+      const next = await runWithTimeout(signal => submitStaticIpExchange(payload, signal))
       if (controller.signal.aborted) return
-      publishSubmission(payload, false)
+      submission.value = undefined
       record.value = next
+      if (isConfirmedStatus(next.status)) awaitingListVersion.value = props.listVersion ?? 0
       emit('changed', next.allocationId)
       if (shouldPoll(next.status)) schedulePoll(next.idempotencyKey)
     } catch (error) {
-      if (!controller.signal.aborted && isDefiniteRejection(error)) {
+      if (!controller.signal.aborted && !isRetry && isDefiniteRejection(error)) {
         publishSubmission(payload, false)
-        completedResume.value = props.intent.kind === 'resume'
         emit('changed')
       }
       throw error
@@ -224,10 +257,11 @@ function lookupOriginal() {
 
   return perform('checking', async () => {
     try {
-      const next = await getStaticIpExchange(key, controller.signal)
+      const next = await runWithTimeout(signal => getStaticIpExchange(key, signal))
       if (controller.signal.aborted) return
-      if (submission.value) publishSubmission(submission.value, false)
+      submission.value = undefined
       record.value = next
+      if (isConfirmedStatus(next.status)) awaitingListVersion.value = props.listVersion ?? 0
       emit('changed', next.allocationId)
       if (shouldPoll(next.status)) schedulePoll(next.idempotencyKey)
     } catch (error) {
@@ -269,7 +303,7 @@ onUnmounted(() => {
         <div class="exchange-summary">
           <div class="summary-row">
             <span class="summary-label">{{ t('staticIps.state') }}</span>
-            <ElTag :type="statusTagType[record.status]">
+            <ElTag :type="exchangeStatusTagType[record.status]">
               {{ t(`staticIps.exchange.status.${record.status}`) }}
             </ElTag>
           </div>
@@ -277,6 +311,7 @@ onUnmounted(() => {
             <div class="summary-row">
               <span class="summary-label">{{ t('staticIps.exchange.currentAddress') }}</span>
               <span v-if="confirmedAllocation" class="summary-value tabular">{{ endpoint(confirmedAllocation) }}</span>
+              <span v-else-if="listRecordDiverged" class="summary-pending" role="status">{{ t('staticIps.exchange.differentListRecord') }}</span>
               <span v-else class="summary-pending" role="status">{{ t('staticIps.exchange.waitingNewAddress') }}</span>
             </div>
             <div v-if="previousAddress" class="summary-row">
@@ -403,11 +438,11 @@ onUnmounted(() => {
     <template #footer>
       <div class="dialog-actions">
         <ElButton
-          :type="(record && record.status !== 'pending' && record.status !== 'activating') || completedResume ? 'primary' : 'default'"
+          :type="record && record.status !== 'pending' && record.status !== 'activating' ? 'primary' : 'default'"
           :disabled="busy === 'submitting'"
           @click="open = false"
         >
-          {{ t(record || completedResume ? 'staticIps.exchange.done' : 'staticIps.exchange.cancel') }}
+          {{ t(record ? 'staticIps.exchange.done' : 'staticIps.exchange.cancel') }}
         </ElButton>
 
         <template v-if="record">
