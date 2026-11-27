@@ -2,7 +2,7 @@
 import { useI18n } from 'vue-i18n'
 import { ElAlert, ElButton, ElCard, ElSkeleton } from 'element-plus'
 import { accountEmail, accountLoadFailed, currentAccount, loadAccount } from '@/features/auth'
-import { AccessLocationCard, ReferralShareCard } from '@/features/users'
+import { AccessLocationCard, CommissionRecords, ReferralShareCard } from '@/features/users'
 
 const { t } = useI18n()
 </script>
@@ -29,6 +29,7 @@ const { t } = useI18n()
     </ElCard>
     <AccessLocationCard />
     <ReferralShareCard class="account-profile__referral" />
+    <CommissionRecords mode="tenant" class="account-profile__commissions" />
   </div>
 </template>
 
@@ -40,7 +41,8 @@ const { t } = useI18n()
   gap: var(--space-4);
   line-height: normal;
 }
-.account-profile__referral { grid-column: 1 / -1; }
+.account-profile__referral,
+.account-profile__commissions { grid-column: 1 / -1; min-width: 0; }
 .profile-card { --el-card-padding: var(--space-5); border-radius: var(--dashboard-card-radius); }
 .profile-card h2 { margin-block-end: var(--space-4); font-size: var(--font-size-xl); line-height: var(--tenant-profile-heading-height); }
 dl { display: grid; gap: var(--space-3); margin: 0; }

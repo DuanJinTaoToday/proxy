@@ -1,6 +1,7 @@
 {
   "users": {
     "opsOrders": "订单",
+    "opsCommissions": "推广佣金",
     "account": "账户",
     "primaryAccount": "主账号",
     "email": "邮箱",
@@ -89,6 +90,75 @@
       "resumeConfirm": "确认恢复",
       "pausedSuccess": "已暂停推广资格",
       "resumedSuccess": "已恢复推广资格"
+    },
+    "commissions": {
+      "title": "佣金明细",
+      "availableBalance": "可用佣金",
+      "availableBalanceHint": "账户总可用佣金，不受下方筛选影响",
+      "customerKeyLabel": "匿名客户标识",
+      "customerKeyPlaceholder": "例如 550e8400-e29b-41d4-a716-446655440000",
+      "customerKeyHint": "输入完整的匿名客户标识，查询对应的佣金记录。",
+      "invalidCustomerKey": "请输入完整的 36 位标准 UUID 格式匿名客户标识。",
+      "search": "查询",
+      "clear": "清空",
+      "loading": "正在加载佣金明细…",
+      "loadFailed": "无法加载佣金明细",
+      "loadMoreFailed": "加载更旧明细失败，已保留当前已加载记录",
+      "loadOlder": "加载更旧明细",
+      "allLoaded": "已加载全部记录",
+      "empty": "暂无佣金记录",
+      "emptyFiltered": "未找到匹配的佣金记录",
+      "rateVersionTag": "版本 v{version}",
+      "ruleVersionTag": "规则 v{version}",
+      "columns": {
+        "customerKey": "匿名客户标识",
+        "source": "邀请来源",
+        "product": "商品",
+        "classification": "结算类型",
+        "settledAt": "结算时间",
+        "netDebit": "净扣",
+        "rate": "实际费率",
+        "commission": "实际佣金",
+        "status": "状态"
+      },
+      "sources": {
+        "manual": "手填",
+        "link": "链接"
+      },
+      "products": {
+        "traffic_package": "动态流量包",
+        "static_purchase": "静态住宅购买",
+        "static_renewal": "静态住宅续费"
+      },
+      "classifications": {
+        "first_purchase": "首购",
+        "repeat_purchase": "复购"
+      },
+      "statuses": {
+        "credited": "已入账",
+        "zero_commission": "零佣金",
+        "promotion_paused": "推广暂停"
+      },
+      "rates": {
+        "title": "全站佣金费率",
+        "loading": "正在加载全站佣金费率…",
+        "loadFailed": "无法加载全站佣金费率",
+        "scopeNotice": "保存后的费率适用于全站后续结算。历史记录保留结算时的费率。",
+        "updatedAt": "更新于 {date}",
+        "firstPurchase": "首购费率",
+        "repeatPurchase": "复购费率",
+        "save": "保存费率",
+        "saved": "已保存全站佣金费率",
+        "saveFailed": "保存全站佣金费率失败，已保留当前输入，可修改后重试",
+        "precisionHint": "支持 0% 至 100%，最小步长 0.01%。",
+        "billingPermissionOnly": "仅有计费管理权限的运营可修改全站佣金费率。",
+        "validation": {
+          "empty": "请输入费率百分比。",
+          "format": "请输入有效的十进制数字（例如 0、12.34 或 100）。",
+          "precision": "最多支持两位小数（最小单位 0.01%）。",
+          "range": "费率必须在 0% 至 100% 之间。"
+        }
+      }
     }
   },
   "accessLocation": {

@@ -17,7 +17,12 @@ import { useErrorMessage } from '@/shared/lib/useErrorMessage'
 const { t, locale, n } = useI18n()
 const route = useRoute()
 const router = useRouter()
-const tab = computed(() => route.name === 'ops-tenant-ledger' ? 'ledger' : 'orders')
+type TenantTab = 'orders' | 'ledger' | 'commissions'
+const tab = computed<TenantTab>(() => {
+  if (route.name === 'ops-tenant-ledger') return 'ledger'
+  if (route.name === 'ops-tenant-commissions') return 'commissions'
+  return 'orders'
+})
 const orderId = computed(() => readOrderId(route.query.order))
 const ledgerRevision = ref(0)
 const pendingCount = ref(0)
@@ -35,9 +40,13 @@ watch([tab, () => route.params.tenantId], async ([section, id], _previous, onCle
 }, { immediate: true })
 
 function selectTab(nextTab: string | number) {
-  if (nextTab !== tab.value) {
-    void router.push({ name: nextTab === 'ledger' ? 'ops-tenant-ledger' : 'ops-tenant' })
-  }
+  if (nextTab === tab.value) return
+  const name = nextTab === 'ledger'
+    ? 'ops-tenant-ledger'
+    : nextTab === 'commissions'
+      ? 'ops-tenant-commissions'
+      : 'ops-tenant'
+  void router.push({ name })
 }
 
 function closeOrder() {
@@ -143,6 +152,10 @@ function trafficBalance(bytes: bigint) {
       <ElTabPane name="ledger" class="tenant-history-panel" :label="t('wallet.ledger')">
         <template #label><span :class="{ 'tenant-tab-label--active': tab === 'ledger' }">{{ t('wallet.ledger') }}</span></template>
         <RouterView v-if="tab === 'ledger'" :key="`${detail.tenant.id}:${ledgerRevision}`" :tenant-id="detail.tenant.id" />
+      </ElTabPane>
+      <ElTabPane name="commissions" class="tenant-history-panel" :label="t('users.opsCommissions')">
+        <template #label><span :class="{ 'tenant-tab-label--active': tab === 'commissions' }">{{ t('users.opsCommissions') }}</span></template>
+        <RouterView v-if="tab === 'commissions'" :key="detail.tenant.id" :tenant-id="detail.tenant.id" />
       </ElTabPane>
     </ElTabs>
     <OrderDrawer :key="detail.tenant.id" :tenant-id="detail.tenant.id" :order-id="orderId" @close="closeOrder" />

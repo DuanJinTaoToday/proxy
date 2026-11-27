@@ -99,6 +99,7 @@ export const routes: RouteRecordRaw[] = [
         children: [
           { path: '', name: 'ops-tenant', component: () => import('@/pages/ops/OpsTenantOrdersPage.vue') },
           { path: 'ledger', name: 'ops-tenant-ledger', component: () => import('@/pages/ops/OpsTenantLedgerPage.vue') },
+          { path: 'commissions', name: 'ops-tenant-commissions', component: () => import('@/pages/ops/OpsTenantCommissionsPage.vue') },
         ],
       },
       { path: 'products', alias: ['products/dynamic', 'products/static'], name: 'ops-products', component: () => import('@/pages/ops/OpsProductsPage.vue'), meta: { titleKey: 'nav.opsProducts' } },

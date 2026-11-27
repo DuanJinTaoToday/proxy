@@ -1,5 +1,7 @@
 export { default as AccessLocationCard } from './AccessLocationCard.vue'
+export { default as CommissionRecords } from './CommissionRecords.vue'
 export { default as ReferralShareCard } from './ReferralShareCard.vue'
+export { default as OpsCommissionRates } from './OpsCommissionRates.vue'
 export { default as OpsPromotionCard } from './OpsPromotionCard.vue'
 export { default as OpsResetPasswordDialog } from './OpsResetPasswordDialog.vue'
 export { default as OpsRecoverEmailDialog } from './OpsRecoverEmailDialog.vue'
