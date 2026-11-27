@@ -1,10 +1,9 @@
 import { expect, test } from '@playwright/test'
 import { field, screenshot } from '../support/console.mjs'
-import { receivedCode } from '../support/mail.mjs'
+import { receivedCode, registerEmail } from '../support/mail.mjs'
 import { authenticatedApi, json, purchasePath, recharge, setSale, setTier } from '../support/traffic.mjs'
 
 const password = 'proxy-local-test'
-const alpha = 'alpha@example.test'
 const staticOrders = '/v1/tenant/static-orders'
 
 const setStaticSale = (operator, open) => operator.put('/v1/operations/product-sales/static', {
@@ -13,6 +12,11 @@ const setStaticSale = (operator, open) => operator.put('/v1/operations/product-s
 
 const setInventory = (request, { price = 10, stock = 6 } = {}) => request
   .post(new URL('/fixture/catalog', process.env.VERIFY_IPCROWN_URL).href, { data: { price, stock } }).then(json)
+
+async function newTenant(request, playwright, baseURL, email) {
+  await registerEmail(request, { email, password }).then(json)
+  return authenticatedApi(playwright, baseURL, { email })
+}
 
 async function balancesAndOrders(tenant) {
   const [wallet, orders, ledger] = await Promise.all([
@@ -23,7 +27,13 @@ async function balancesAndOrders(tenant) {
   return { wallet: wallet.available_minor ?? '0', orders: orders.orders ?? [], ledger: ledger.entries ?? [] }
 }
 
-async function staticCartToSignIn(page) {
+async function staticCartToSignIn(page, request) {
+  // Other scenarios can leave an earlier public quote snapshot on the same offer.
+  await expect.poll(async () => {
+    const { offers } = await request.get('/v1/public/static-offers').then(json)
+    const offer = offers?.find(row => row.node_id === '101' && row.term === 'yp1')
+    return offer && { price: offer.unit_minor, stock: offer.available }
+  }, { timeout: 25000, intervals: [250, 1000, 2000] }).toEqual({ price: '1000', stock: 6 })
   await page.goto('/zh-CN/pricing?category=exclusive')
   await page.locator('.offer-row', { hasText: 'United States' }).first().click()
   await page.getByRole('button', { name: '增加数量', exact: true }).click()
@@ -67,17 +77,18 @@ async function showStaticConfirmation(page) {
 }
 
 test('静态购物车登录回跳时复核新价，用户确认后仅写入一笔订单', async ({ page, request, playwright, baseURL }, info) => {
+  const email = 'cart-return-price@example.test'
   const operator = await authenticatedApi(playwright, baseURL)
-  const tenant = await authenticatedApi(playwright, baseURL, { email: alpha })
+  const tenant = await newTenant(request, playwright, baseURL, email)
   try {
     await setInventory(request)
     await setStaticSale(operator, true)
     await recharge(operator, tenant, '10000')
     const before = await balancesAndOrders(tenant)
     const writes = trackPurchaseWrites(page)
-    await staticCartToSignIn(page)
+    await staticCartToSignIn(page, request)
     await setInventory(request, { price: 13 })
-    await authenticateFromCart(page, alpha)
+    await authenticateFromCart(page, email)
     await expect(page).toHaveURL(/\/console\/static\/pricing(?:\?|$)/)
     const review = await showStaticConfirmation(page)
     await expect(review).toContainText('United States')
@@ -113,7 +124,7 @@ test('游客邮箱验码注册后恢复静态购物车，窄屏余额为零且�
     await setStaticSale(operator, true)
     const writes = trackPurchaseWrites(page)
     await page.setViewportSize({ width: 390, height: 844 })
-    await staticCartToSignIn(page)
+    await staticCartToSignIn(page, request)
     await authenticateFromCart(page, email, true)
     await expect(page).toHaveURL(/\/console\/static\/pricing(?:\?|$)/)
     await expect(page.locator('.cart-line')).toContainText('United States')
@@ -132,17 +143,18 @@ test('游客邮箱验码注册后恢复静态购物车，窄屏余额为零且�
 
 for (const change of ['stock', 'sale']) {
   test(`静态购物车登录后遇到${change === 'stock' ? '缺货' : '停售'}仍未落单扣款`, async ({ page, request, playwright, baseURL }, info) => {
+    const email = `cart-return-${change}@example.test`
     const operator = await authenticatedApi(playwright, baseURL)
-    const tenant = await authenticatedApi(playwright, baseURL, { email: alpha })
+    const tenant = await newTenant(request, playwright, baseURL, email)
     try {
       await setInventory(request)
       await setStaticSale(operator, true)
       const before = await balancesAndOrders(tenant)
       const writes = trackPurchaseWrites(page)
-      await staticCartToSignIn(page)
+      await staticCartToSignIn(page, request)
       if (change === 'stock') await setInventory(request, { stock: 1 })
       else await setStaticSale(operator, false)
-      await authenticateFromCart(page, alpha)
+      await authenticateFromCart(page, email)
       await expect(page).toHaveURL(/\/console\/static\/pricing(?:\?|$)/)
       if (change === 'stock') {
         await expect(page.getByText(/(?:库存|可购).*1.*(?:调整|移除)|(?:调整|移除).*1/).filter({ visible: true }).first()).toBeVisible()
@@ -163,9 +175,10 @@ for (const change of ['stock', 'sale']) {
   })
 }
 
-test('动态公开套餐回跳保持档位和单份语义，变价只在确认后扣款', async ({ page, playwright, baseURL }, info) => {
+test('动态公开套餐回跳保持档位和单份语义，变价只在确认后扣款', async ({ page, request, playwright, baseURL }, info) => {
+  const email = 'cart-return-dynamic@example.test'
   const operator = await authenticatedApi(playwright, baseURL)
-  const tenant = await authenticatedApi(playwright, baseURL, { email: alpha })
+  const tenant = await newTenant(request, playwright, baseURL, email)
   try {
     await setTier(operator, '5gb', '1500')
     await setSale(operator, true)
@@ -176,7 +189,7 @@ test('动态公开套餐回跳保持档位和单份语义，变价只在确认�
     await page.locator('a[href*="package=5gb"]').click()
     await expect(page).toHaveURL(/\/zh-CN\/login\?redirect=/)
     await setTier(operator, '5gb', '1800')
-    await authenticateFromCart(page, alpha)
+    await authenticateFromCart(page, email)
     await expect(page).toHaveURL(/\/console\/dynamic\/pricing(?:\?|$)/)
     await expect(page.getByRole('radio', { name: '5 GB 流量包', exact: true })).toBeChecked()
     await expect(page.getByText(/价格.*(?:变更|变化|更新)|(?:变更|变化|更新).*价格/).filter({ visible: true }).first()).toBeVisible()
