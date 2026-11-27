@@ -28,7 +28,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   closed: []
   submission: [payload: StaticIpExchangeSubmission, unresolved: boolean]
-  changed: [allocationId?: string]
+  changed: [record?: StaticIpExchangeRecord]
   retryQuota: []
 }>()
 
@@ -199,7 +199,7 @@ async function pollOnce(key: string) {
     record.value = next
     if (next.status !== previousStatus || (isConfirmedStatus(next.status) && !confirmedAllocation.value && !listRecordDiverged.value)) {
       if (isConfirmedStatus(next.status)) awaitingListVersion.value = props.listVersion ?? 0
-      emit('changed', next.allocationId)
+      emit('changed', next)
     }
     if (shouldPoll(next.status)) schedulePoll(key)
     else clearPoll()
@@ -235,7 +235,7 @@ function submit() {
       submission.value = undefined
       record.value = next
       if (isConfirmedStatus(next.status)) awaitingListVersion.value = props.listVersion ?? 0
-      emit('changed', next.allocationId)
+      emit('changed', next)
       if (shouldPoll(next.status)) schedulePoll(next.idempotencyKey)
     } catch (error) {
       if (!controller.signal.aborted && !isRetry && isDefiniteRejection(error)) {
@@ -262,7 +262,7 @@ function lookupOriginal() {
       submission.value = undefined
       record.value = next
       if (isConfirmedStatus(next.status)) awaitingListVersion.value = props.listVersion ?? 0
-      emit('changed', next.allocationId)
+      emit('changed', next)
       if (shouldPoll(next.status)) schedulePoll(next.idempotencyKey)
     } catch (error) {
       if (!controller.signal.aborted && error instanceof ApiError && error.status === 404) {

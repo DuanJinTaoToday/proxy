@@ -7,7 +7,7 @@ import {
 } from 'element-plus'
 import { CircleCheck, Clock, CopyDocument, Download, Loading, Refresh, Search } from '@element-plus/icons-vue'
 import { exportStaticIps, getStaticIpCredentials, listStaticIps, type RenewalSubmission, type StaticIp } from '@/api/staticIps'
-import { isStaticIpExchangeStatus, type StaticIpExchangeSubmission } from '@/api/staticIpExchanges'
+import { isStaticIpExchangeStatus, type StaticIpExchangeRecord, type StaticIpExchangeSubmission } from '@/api/staticIpExchanges'
 import { endpoint, exchangeStatusTagType, useStaticIpPresentation } from './presentation'
 import { readRenewalSubmissions, type RenewalIntent } from './renewalIntent'
 import RenewalDialog from './RenewalDialog.vue'
@@ -44,6 +44,7 @@ function isStaticIp(row: unknown): row is StaticIp {
 const ips = shallowRef<StaticIp[]>([])
 const loading = ref(true)
 const listVersion = ref(0)
+let listRequestSeq = 0
 const copying = ref<string>()
 const exporting = ref(false)
 const listError = shallowRef<unknown>()
@@ -64,6 +65,7 @@ const {
   lastExchangedId,
   loadQuota,
   recordExchangeSubmission,
+  noteResolvedExchange,
   reconcileSavedExchanges,
   unresolvedExchangeFor,
   isExchangeBlockingRenewal,
@@ -124,19 +126,21 @@ const currentExchangeAllocation = computed(() => {
 })
 
 async function loadIps() {
+  const seq = ++listRequestSeq
   loading.value = true
   listError.value = undefined
   try {
     const items = await listStaticIps(controller.signal)
+    if (controller.signal.aborted || seq !== listRequestSeq) return
     now.value = Date.now()
     table.value?.clearSelection()
     ips.value = items
     listVersion.value += 1
-    reconcileSavedExchanges(items)
+    reconcileSavedExchanges(items, seq)
   } catch (error) {
-    if (!controller.signal.aborted) listError.value = error
+    if (!controller.signal.aborted && seq === listRequestSeq) listError.value = error
   } finally {
-    loading.value = false
+    if (seq === listRequestSeq) loading.value = false
   }
 }
 
@@ -179,8 +183,11 @@ function exchangeRecoveryLabel(submission: StaticIpExchangeSubmission, index: nu
     : t('staticIps.exchange.queryOriginalIndex', { index: index + 1 })
 }
 
-function handleExchangeChanged(allocationId?: string) {
-  if (allocationId) lastExchangedId.value = allocationId
+function handleExchangeChanged(record?: StaticIpExchangeRecord) {
+  if (record) {
+    lastExchangedId.value = record.allocationId
+    noteResolvedExchange(record, listRequestSeq)
+  }
   void loadIps()
   void loadQuota()
 }

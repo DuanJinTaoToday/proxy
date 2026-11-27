@@ -3,6 +3,8 @@ import type { StaticIp } from '@/api/staticIps'
 import {
   getStaticIpExchangeQuota,
   type StaticIpExchangeQuota,
+  type StaticIpExchangeRecord,
+  type StaticIpExchangeStatus,
   type StaticIpExchangeSubmission,
 } from '@/api/staticIpExchanges'
 import {
@@ -24,8 +26,17 @@ export function useStaticIpExchanges(accountKey: string, signal: AbortSignal) {
   const quotaLoading = ref(true)
   const quotaError = shallowRef<unknown>()
   const savedExchanges = shallowRef<StaticIpExchangeSubmission[]>(readExchangeSubmissions(storageKey))
+  const resolvedExchanges = new Map<string, number>()
   const exchangeIntent = shallowRef<ExchangeIntent>()
   const lastExchangedId = ref<string>()
+
+  function resolutionKey(allocationId: string, idempotencyKey: string) {
+    return `${allocationId}:${idempotencyKey}`
+  }
+
+  function isResolvedStatus(status: StaticIpExchangeStatus) {
+    return status === 'activating' || status === 'ready' || status === 'support_required' || status === 'failed'
+  }
 
   async function loadQuota() {
     quotaLoading.value = true
@@ -48,15 +59,35 @@ export function useStaticIpExchanges(accountKey: string, signal: AbortSignal) {
       item => item.idempotency_key !== payload.idempotency_key && item.allocation_id !== payload.allocation_id,
     )
     if (unresolved) next.push(payload)
+    else resolvedExchanges.delete(resolutionKey(payload.allocation_id, payload.idempotency_key))
     savedExchanges.value = next
     writeExchangeSubmissions(storageKey, next)
   }
 
-  function reconcileSavedExchanges(items: StaticIp[]) {
+  function noteResolvedExchange(record: StaticIpExchangeRecord, listSequence: number) {
+    if (!isResolvedStatus(record.status)) return
+    const hasSaved = savedExchanges.value.some(
+      item => item.allocation_id === record.allocationId && item.idempotency_key === record.idempotencyKey,
+    )
+    if (hasSaved) resolvedExchanges.set(resolutionKey(record.allocationId, record.idempotencyKey), listSequence)
+  }
+
+  function reconcileSavedExchanges(items: StaticIp[], listSequence: number) {
     if (!savedExchanges.value.length) return
     const next = savedExchanges.value.filter(submission => {
       const match = items.find(ip => ip.id === submission.allocation_id)
-      return !(match && match.exchangeIdempotencyKey === submission.idempotency_key && match.exchangeStatus)
+      if (!match) return true
+      const key = resolutionKey(submission.allocation_id, submission.idempotency_key)
+      if (match.exchangeIdempotencyKey === submission.idempotency_key && match.exchangeStatus) {
+        resolvedExchanges.delete(key)
+        return false
+      }
+      const resolvedAt = resolvedExchanges.get(key)
+      if (resolvedAt !== undefined && listSequence > resolvedAt) {
+        resolvedExchanges.delete(key)
+        return false
+      }
+      return true
     })
     if (next.length !== savedExchanges.value.length) {
       savedExchanges.value = next
@@ -127,6 +158,7 @@ export function useStaticIpExchanges(accountKey: string, signal: AbortSignal) {
     lastExchangedId,
     loadQuota,
     recordExchangeSubmission,
+    noteResolvedExchange,
     reconcileSavedExchanges,
     unresolvedExchangeFor,
     isExchangeBlockingRenewal,

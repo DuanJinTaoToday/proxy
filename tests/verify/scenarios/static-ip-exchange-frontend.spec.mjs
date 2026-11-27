@@ -44,6 +44,13 @@ async function prepare({ request, playwright, baseURL }, email) {
       } }).then(json)
       return (await list()).filter(row => row.order_id === order.id)
     },
+    async renew(allocationId) {
+      const selection = { allocation_ids: [allocationId], term: 'yp1' }
+      const quote = await tenant.post('/v1/tenant/static-renewal-quotes', { data: selection }).then(json)
+      return tenant.post('/v1/tenant/static-renewal-orders', {
+        data: { ...selection, request_key: randomUUID(), confirmation_token: quote.confirmation_token },
+      }).then(json)
+    },
     async close() {
       try {
         await operator.put(sale, { data: { open: false } }).then(json)
@@ -130,6 +137,14 @@ test('独享换号后复制和导出新连接参数，从原分配继续续费',
     expect(await fixture(request, { id: upstream.id })).toMatchObject({ calls: 1, renewals: 1 })
     expect(await setup.config(allocation.allocation_id)).toMatchObject({ ip: latest.ip, port: latest.port })
     await info.attach('exchange-success-evidence', { body: JSON.stringify({ order: order.id, allocation: allocation.allocation_id, quota: await setup.quota(), originalDetailRenewals: 1 }), contentType: 'application/json' })
+
+    await request.post(new URL('/fixture/renewals/delay', process.env.VERIFY_IPCROWN_URL).href, {
+      data: { ip: latest.ip },
+    }).then(json)
+    expect(await setup.renew(allocation.allocation_id)).toMatchObject({ status: 'pending' })
+    await page.reload()
+    await expect(exchangeAction(changed)).toBeDisabled()
+    expect(await fixture(request, { id: upstream.id })).toMatchObject({ calls: 1, renewals: 2 })
   } finally {
     await setup.close()
   }
@@ -227,6 +242,54 @@ test('换号请求超时且刷新后查无记录，仍可沿用原请求键提�
     expect(await setup.quota()).toEqual({ remaining: 9, reserved: 0, used: 1 })
   } finally {
     held.resolve()
+    await setup.close()
+  }
+})
+
+test('查询丢回执的旧换号确认后，最新列表已是另一笔记录仍可续费', async ({ page, request, playwright, baseURL }, info) => {
+  const email = 'exchange-ui-newer-key@example.test'
+  const setup = await prepare({ request, playwright, baseURL }, email)
+  try {
+    const [allocation] = await setup.buy({ node_id: '101', term: 'yp1', quantity: 1 })
+    await fixture(request, { ip: allocation.ip, outcome: 'ready' })
+    await signInTenant(page, email)
+    await page.goto('/console/static/ips')
+    const dialog = await openExchange(page, allocation)
+    await page.route('**' + exchanges, async route => {
+      expect((await route.fetch()).ok()).toBe(true)
+      await route.abort('failed')
+    }, { times: 1 })
+    const sent = submission(page)
+    await cta(dialog, '确认换号').click()
+    const original = (await sent).postDataJSON()
+    await expect(cta(dialog, '重试原请求')).toBeVisible()
+    await expect.poll(() => setup.record(original.idempotency_key).then(record => record.status), { timeout: 20000 }).toBe('ready')
+    const current = await setup.config(allocation.allocation_id)
+
+    // The real request above remains queryable. The list doubles for another tab's later exchange.
+    const newerKey = randomUUID()
+    await page.route('**' + ips, async route => {
+      const response = await route.fetch()
+      const body = await response.json()
+      const row = body.allocations.find(ip => ip.allocation_id === allocation.allocation_id)
+      row.exchange_idempotency_key = newerKey
+      await route.fulfill({ response, json: body })
+    })
+    await page.reload()
+    await cta(page, '查询原结果').filter({ visible: true }).first().click()
+    const previousResult = page.getByRole('dialog').filter({ visible: true })
+    await expect(previousResult).toBeVisible()
+    const confirmed = page.waitForResponse(resp => resp.ok() && urlPath(resp) === exchanges + '/' + original.idempotency_key)
+    await cta(previousResult, '查询原结果').click()
+    expect(await (await confirmed).json()).toMatchObject({ status: 'ready', idempotency_key: original.idempotency_key })
+    await expect(previousResult).toContainText(/列表.*(不同|另一笔)|当前接入参数.*列表/)
+    await screenshot(page, info, 'old-exchange-result-newer-list-record')
+    await cta(previousResult, '完成').click()
+    const row = rowFor(page, current.ip)
+    await expect(cta(row, '续费')).toBeEnabled()
+    await expect(exchangeAction(row)).toBeEnabled()
+    expect(await setup.quota()).toEqual({ remaining: 9, reserved: 0, used: 1 })
+  } finally {
     await setup.close()
   }
 })
