@@ -3,6 +3,7 @@ import { computed, onScopeDispose, ref, shallowRef, useId, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElAlert, ElButton, ElCard, ElEmpty, ElInput, ElSkeleton, ElTable, ElTableColumn, ElTag } from 'element-plus'
 import {
+  isValidCustomerKey,
   listOpsTenantCommissions,
   listTenantCommissions,
   type CommissionRecord,
@@ -12,7 +13,7 @@ import { accountLoadFailed, currentAccount, hasOperatorPermission } from '@/feat
 import { shanghaiDateTime } from '@/shared/lib/businessDates'
 import { formatYuan } from '@/shared/lib/money'
 import { useErrorMessage } from '@/shared/lib/useErrorMessage'
-import { formatBpsPercent, isValidCustomerKey } from './commissionFormat'
+import { formatBpsPercent } from './commissionFormat'
 
 type ListState =
   | { kind: 'idle' }
@@ -32,10 +33,10 @@ interface SubjectKey {
   tenantId: string
 }
 
-const props = defineProps<{
-  mode: 'tenant' | 'ops'
-  tenantId?: string
-}>()
+const props = defineProps<
+  | { mode: 'tenant' }
+  | { mode: 'ops', tenantId: string }
+>()
 
 const { t, locale } = useI18n()
 const errorMessage = useErrorMessage()
@@ -86,19 +87,28 @@ function fetchPage(subject: SubjectKey, customerKey: string | undefined, beforeI
     : listTenantCommissions(query, signal)
 }
 
+function isStaleRequest(
+  controller: AbortController,
+  seq: number,
+  subject: SubjectKey,
+  customerKey: string | undefined,
+): boolean {
+  return controller.signal.aborted || seq !== requestSeq || !isSameSubject(subject) || activeCustomerKey.value !== customerKey
+}
+
+function emptySubjectState(): ListState {
+  if (props.mode === 'ops' && !canReadOps.value) return { kind: 'denied' }
+  if (props.mode === 'tenant' && !accountLoadFailed.value) return { kind: 'loading' }
+  return { kind: 'idle' }
+}
+
 async function loadInitial(customerKey = activeCustomerKey.value) {
   activeRequest?.abort()
   activeRequest = undefined
   const seq = ++requestSeq
   const subject = resolveSubject()
   if (!subject) {
-    if (props.mode === 'ops' && !canReadOps.value) {
-      listState.value = { kind: 'denied' }
-    } else if (props.mode === 'tenant' && !accountLoadFailed.value) {
-      listState.value = { kind: 'loading' }
-    } else {
-      listState.value = { kind: 'idle' }
-    }
+    listState.value = emptySubjectState()
     return
   }
 
@@ -107,9 +117,7 @@ async function loadInitial(customerKey = activeCustomerKey.value) {
   listState.value = { kind: 'loading' }
   try {
     const result = await fetchPage(subject, customerKey, undefined, controller.signal)
-    if (controller.signal.aborted || seq !== requestSeq || !isSameSubject(subject) || activeCustomerKey.value !== customerKey) {
-      return
-    }
+    if (isStaleRequest(controller, seq, subject, customerKey)) return
     availableMinor.value = result.availableMinor
     listState.value = {
       kind: 'ready',
@@ -118,9 +126,7 @@ async function loadInitial(customerKey = activeCustomerKey.value) {
       loadingMore: false,
     }
   } catch (error) {
-    if (controller.signal.aborted || seq !== requestSeq || !isSameSubject(subject) || activeCustomerKey.value !== customerKey) {
-      return
-    }
+    if (isStaleRequest(controller, seq, subject, customerKey)) return
     listState.value = { kind: 'error', error }
   }
 }
@@ -142,9 +148,7 @@ async function loadMore() {
 
   try {
     const result = await fetchPage(subject, customerKey, beforeId, controller.signal)
-    if (controller.signal.aborted || seq !== requestSeq || !isSameSubject(subject) || activeCustomerKey.value !== customerKey) {
-      return
-    }
+    if (isStaleRequest(controller, seq, subject, customerKey)) return
     const seen = new Set(current.records.map(record => record.id))
     const merged = [...current.records, ...result.records.filter(record => !seen.has(record.id))]
     availableMinor.value = result.availableMinor
@@ -155,9 +159,7 @@ async function loadMore() {
       loadingMore: false,
     }
   } catch (error) {
-    if (controller.signal.aborted || seq !== requestSeq || !isSameSubject(subject) || activeCustomerKey.value !== customerKey) {
-      return
-    }
+    if (isStaleRequest(controller, seq, subject, customerKey)) return
     listState.value = {
       ...current,
       loadingMore: false,
@@ -177,7 +179,7 @@ function resetForSubjectChange() {
 }
 
 watch(
-  [() => props.mode, () => props.tenantId, () => currentAccount.value?.tenantId, accountLoadFailed, canReadOps],
+  [() => props.mode, () => props.mode === 'ops' ? props.tenantId : undefined, () => currentAccount.value?.tenantId, accountLoadFailed, canReadOps],
   () => {
     const subject = resolveSubject()
     const nextKey = serializeSubject(subject)
@@ -190,13 +192,7 @@ watch(
       }
     }
     if (!subject) {
-      if (props.mode === 'ops' && !canReadOps.value) {
-        listState.value = { kind: 'denied' }
-      } else if (props.mode === 'tenant' && !accountLoadFailed.value) {
-        listState.value = { kind: 'loading' }
-      } else {
-        listState.value = { kind: 'idle' }
-      }
+      listState.value = emptySubjectState()
     }
   },
   { immediate: true },
@@ -558,7 +554,7 @@ const isInitialLoading = computed(() => listState.value.kind === 'loading')
 
 .commission-records__key {
   font-size: var(--font-size-xs);
-  line-height: 1.4;
+  line-height: var(--line-height-tight);
   user-select: all;
   word-break: break-all;
 }

@@ -51,6 +51,10 @@ const CLASSIFICATIONS: readonly CommissionClassification[] = ['first_purchase', 
 const RECORD_STATUSES: readonly CommissionRecordStatus[] = ['credited', 'zero_commission', 'promotion_paused']
 const UUID_PATTERN = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/
 
+export function isValidCustomerKey(value: unknown): value is string {
+  return typeof value === 'string' && UUID_PATTERN.test(value)
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
@@ -85,7 +89,7 @@ function decodeNextBeforeId(value: unknown): string | undefined {
 }
 
 function decodeCustomerKey(value: unknown): string {
-  if (typeof value === 'string' && UUID_PATTERN.test(value)) return value
+  if (isValidCustomerKey(value)) return value
   throw new Error('Invalid commission customer_key')
 }
 

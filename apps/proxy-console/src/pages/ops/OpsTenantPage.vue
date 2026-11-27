@@ -18,11 +18,12 @@ const { t, locale, n } = useI18n()
 const route = useRoute()
 const router = useRouter()
 type TenantTab = 'orders' | 'ledger' | 'commissions'
-const tab = computed<TenantTab>(() => {
-  if (route.name === 'ops-tenant-ledger') return 'ledger'
-  if (route.name === 'ops-tenant-commissions') return 'commissions'
-  return 'orders'
-})
+const tenantTabs: readonly { tab: TenantTab, routeName: string }[] = [
+  { tab: 'orders', routeName: 'ops-tenant' },
+  { tab: 'ledger', routeName: 'ops-tenant-ledger' },
+  { tab: 'commissions', routeName: 'ops-tenant-commissions' },
+]
+const tab = computed<TenantTab>(() => tenantTabs.find(item => item.routeName === route.name)?.tab ?? 'orders')
 const orderId = computed(() => readOrderId(route.query.order))
 const ledgerRevision = ref(0)
 const pendingCount = ref(0)
@@ -41,12 +42,8 @@ watch([tab, () => route.params.tenantId], async ([section, id], _previous, onCle
 
 function selectTab(nextTab: string | number) {
   if (nextTab === tab.value) return
-  const name = nextTab === 'ledger'
-    ? 'ops-tenant-ledger'
-    : nextTab === 'commissions'
-      ? 'ops-tenant-commissions'
-      : 'ops-tenant'
-  void router.push({ name })
+  const target = tenantTabs.find(item => item.tab === nextTab)
+  if (target) void router.push({ name: target.routeName })
 }
 
 function closeOrder() {

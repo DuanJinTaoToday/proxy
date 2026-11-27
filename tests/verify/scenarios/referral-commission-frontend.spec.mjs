@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process'
 import { randomUUID } from 'node:crypto'
 import { expect, test } from '@playwright/test'
 import { field, screenshot, signInOperator, signInTenant } from '../support/console.mjs'
@@ -5,6 +6,7 @@ import { registerEmail } from '../support/mail.mjs'
 import { authenticatedApi, json, purchasePath, recharge, setSale, setTier } from '../support/traffic.mjs'
 
 const profile = '/console/account/profile'
+const ratePage = '/ops/commission-rates'
 const customerCommissions = '/v1/tenant/commissions'
 const commissionRates = '/v1/operations/commission-rates'
 const tenantPage = id => '/ops/tenants/' + id + '/commissions'
@@ -16,6 +18,8 @@ const detail = page => page.getByRole('region', { name: '佣金明细', exact: t
 const customerRow = (page, key) => detail(page).getByRole('row').filter({ hasText: key })
 const ratesSection = page => page.getByRole('region', { name: '全站佣金费率', exact: true })
 const saveButton = page => ratesSection(page).getByRole('button', { name: '保存费率', exact: true })
+const ratesMenu = page => page.getByRole('navigation', { name: '运营导航' })
+  .getByRole('menuitem', { name: '佣金费率', exact: true })
 const money = (major, minor) => new RegExp('[¥￥]' + major + '\\.' + minor)
 
 async function operatorHeaders(request, username) {
@@ -83,7 +87,9 @@ test('推广员从业务订单查三类佣金，计费运营改费率后历史�
   }).then(json)
   const testContexts = []
   async function newPage() {
-    const context = await browser.newContext({ baseURL, ignoreHTTPSErrors: true })
+    const context = await browser.newContext({
+      baseURL, ignoreHTTPSErrors: true, viewport: { width: 1440, height: 1000 },
+    })
     testContexts.push(context)
     return context.newPage()
   }
@@ -105,6 +111,8 @@ test('推广员从业务订单查三类佣金，计费运营改费率后历史�
     await signInOperator(ops, '/ops/tenants/' + promoterId, 'operator-billing')
     await ops.getByRole('tab', { name: '推广佣金', exact: true }).click()
     await expect(ops).toHaveURL(baseURL + tenantPage(promoterId))
+    await ratesMenu(ops).click()
+    await expect(ops).toHaveURL(baseURL + ratePage)
     await expect(ratesSection(ops)).toBeVisible()
     const rateWrites = []
     ops.on('request', req => {
@@ -208,30 +216,35 @@ test('推广员从业务订单查三类佣金，计费运营改费率后历史�
       await expect(reader).toHaveURL(baseURL + tenantPage(promoterId))
       await expect(customerRow(reader, key)).toHaveCount(3)
       await expect(customerRow(reader, key).filter({ hasText: /静态.*(购买|采购)/ })).toContainText('12.34%')
-      await expect(ratesSection(reader)).toContainText(/50\.01/)
-      const edit = saveButton(reader)
-      if (await edit.count()) await expect(edit).toBeDisabled()
-      const headers = await operatorHeaders(request, username)
-      expect((await request.put(commissionRates, { headers, data: ratePayload(99, 99) })).status()).toBe(403)
       if (username === 'operator-readonly') {
-        await screenshot(reader, info, 'read-only-operator')
+        await screenshot(reader, info, 'read-only-operator-ledger')
         await reader.setViewportSize({ width: 390, height: 844 })
         expect(await reader.evaluate(() => document.documentElement.scrollWidth)).toBe(390)
         await expectCellsInView(detail(reader), customerRow(reader, key).filter({ hasText: /静态.*购买/ }),
           ['静态住宅购买', '¥1.23', '已入账'])
         await screenshot(reader, info, 'mobile-read-only-operator')
+        await reader.setViewportSize({ width: 1440, height: 1000 })
       }
+      await ratesMenu(reader).click()
+      await expect(reader).toHaveURL(baseURL + ratePage)
+      await expect(ratesSection(reader)).toContainText(/50\.01/)
+      await expect(saveButton(reader)).toHaveCount(0)
+      const headers = await operatorHeaders(request, username)
+      expect((await request.put(commissionRates, { headers, data: ratePayload(99, 99) })).status()).toBe(403)
+      if (username === 'operator-readonly') await screenshot(reader, info, 'read-only-operator-rates')
       await reader.goto(tenantPage(buyerId))
       await expect(detail(reader)).toContainText(money(0, '00'))
       await expect(customerRow(reader, key)).toHaveCount(0)
     }
     await ops.reload()
-    await expect(customerRow(ops, key)).toHaveCount(3)
     await expect(field(ops, '复购费率')).toHaveValue('50.01')
+    await screenshot(ops, info, 'billing-operator-current-rates')
+    await ops.goto(tenantPage(promoterId))
+    await expect(customerRow(ops, key)).toHaveCount(3)
     await expect(customerRow(ops, key).filter({ hasText: /静态.*(购买|采购)/ })).toContainText('12.34%')
     await expectCellsInView(detail(ops), customerRow(ops, key).filter({ hasText: /静态.*购买/ }),
       ['静态住宅购买', '¥1.23', '已入账', key, '手填', '复购', '¥10.00'])
-    await screenshot(ops, info, 'billing-operator-current-and-historical-rates')
+    await screenshot(ops, info, 'billing-operator-historical-rates')
     await info.attach('commission-settlement-evidence', {
       body: JSON.stringify({ boundary, rates, nextRates, pageData }, null, 2),
       contentType: 'application/json',
@@ -342,28 +355,86 @@ test('佣金历史用服务端游标翻页，失败可重试，切换语言保�
   }
 })
 
-test('账目和费率的空回执显示加载失败，重试后恢复运营权限内操作', async ({ page, baseURL }) => {
-  const records = tenantPath('alpha') + '/commissions'
+test('账目和费率的空回执显示加载失败，重试后恢复运营权限内操作', async ({ page, request, baseURL }) => {
+  const { tenant_id: id } = await registerEmail(request, { email: 'commission-retry-promoter@example.test' }).then(json)
+  const records = tenantPath(id) + '/commissions'
   for (const path of [commissionRates, records]) {
     await page.route('**' + path, route => route.fulfill({ json: {} }), { times: 1 })
   }
-  await signInOperator(page, tenantPage('alpha'), 'operator-billing')
-  await expect(page).toHaveURL(baseURL + tenantPage('alpha'))
+  await signInOperator(page, ratePage, 'operator-billing')
+  await expect(page).toHaveURL(baseURL + ratePage)
   const rates = ratesSection(page)
-  const ledger = detail(page)
   await expect(rates.getByText('无法加载全站佣金费率', { exact: true })).toBeVisible()
-  await expect(ledger.getByText('无法加载佣金明细', { exact: true })).toBeVisible()
   await expect(saveButton(page)).toHaveCount(0)
-  await expect(ledger).not.toContainText(/可用佣金|暂无佣金记录/)
 
   const loadedRates = calls(page, commissionRates)
   await rates.getByRole('button', { name: '重试', exact: true }).click()
   expect((await loadedRates).ok()).toBe(true)
   await expect(saveButton(page)).toBeEnabled()
 
+  await page.goto(tenantPage(id))
+  const ledger = detail(page)
+  await expect(ledger.getByText('无法加载佣金明细', { exact: true })).toBeVisible()
+  await expect(ledger).not.toContainText(/可用佣金|暂无佣金记录/)
   const accounts = calls(page, records)
   await ledger.getByRole('button', { name: '重试', exact: true }).click()
   const { available_minor } = await (await accounts).json()
   expect(available_minor).toBe('0')
   await expect(ledger).toContainText(money(0, '00'))
+})
+
+test('仅有计费权限的运营可保存两档费率，租户账目保持独立验权', async ({ page, request, baseURL }, info) => {
+  const container = process.env.VERIFY_DB_CONTAINER
+  if (!/^[a-f0-9]{64}$/.test(container)) throw new Error('Expected isolated verify database')
+  // Reuse the local seed's test password while granting only the permission under test.
+  execFileSync('docker', ['exec', '-i', container, 'psql', '-U', 'proxy', '-d', 'proxy', '-v', 'ON_ERROR_STOP=1'], {
+    input: `
+      INSERT INTO operators (id, username, password_hash)
+      SELECT 'verify-127-billing-only', 'verify-127-billing-only', password_hash
+      FROM operators WHERE id = 'local-operator-billing';
+      INSERT INTO operator_permissions (operator_id, permission)
+      VALUES ('verify-127-billing-only', 'manage_billing');
+    `,
+  })
+  const billing = await operatorHeaders(request, 'operator-billing')
+  const limited = await operatorHeaders(request, 'verify-127-billing-only')
+  const previousRates = await request.get(commissionRates, { headers: billing }).then(json)
+  const records = tenantPath('alpha') + '/commissions'
+  const requests = []
+  page.on('request', req => {
+    const path = new URL(req.url()).pathname
+    if (path === commissionRates || path === records) requests.push({ path, method: req.method() })
+  })
+  try {
+    expect((await request.get(commissionRates, { headers: limited })).status()).toBe(403)
+    expect((await request.get(records, { headers: limited })).status()).toBe(403)
+    await signInOperator(page, tenantPage('alpha'), 'verify-127-billing-only')
+    await expect(page).toHaveURL(baseURL + tenantPage('alpha'))
+    await expect(page.getByText('没有执行该操作的权限。', { exact: true })).toBeVisible()
+    await expect(detail(page)).toHaveCount(0)
+    await ratesMenu(page).click()
+    await expect(page).toHaveURL(baseURL + ratePage)
+    const first = field(page, '首购费率')
+    const repeat = field(page, '复购费率')
+    await expect(first).toHaveValue('')
+    await expect(repeat).toHaveValue('')
+    await first.fill('12.34')
+    await repeat.fill('56.78')
+    const saved = calls(page, commissionRates, 'PUT')
+    await saveButton(page).click()
+    const response = await saved
+    const expected = ratePayload(1234, 5678)
+    expect(response.request().postDataJSON()).toEqual(expected)
+    expect(response.ok()).toBe(true)
+    expect(await response.json()).toMatchObject({ ...expected, operator_id: 'verify-127-billing-only' })
+    await expect(first).toHaveValue('12.34')
+    await expect(repeat).toHaveValue('56.78')
+    expect(requests).toEqual([{ path: commissionRates, method: 'PUT' }])
+    expect(await request.get(commissionRates, { headers: billing }).then(json)).toMatchObject(expected)
+    await screenshot(page, info, 'billing-only-global-rate-write')
+  } finally {
+    await request.put(commissionRates, { headers: billing, data: ratePayload(
+      previousRates.first_purchase_bps, previousRates.repeat_purchase_bps,
+    ) }).then(json)
+  }
 })

@@ -1,14 +1,8 @@
-export const UUID_PATTERN = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/
-
 export type RateParseError = 'empty' | 'format' | 'precision' | 'range'
 
 export type RateParseResult =
   | { ok: true, bps: number }
   | { ok: false, error: RateParseError }
-
-export function isValidCustomerKey(value: string): boolean {
-  return UUID_PATTERN.test(value)
-}
 
 export function parsePercentToBps(raw: string): RateParseResult {
   const trimmed = raw.trim()

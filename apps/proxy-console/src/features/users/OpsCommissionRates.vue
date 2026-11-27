@@ -12,7 +12,14 @@ type RatesState =
   | { kind: 'denied' }
   | { kind: 'loading' }
   | { kind: 'error', error: unknown }
+  | { kind: 'write-only', saved?: CommissionRates }
   | { kind: 'ready', data: CommissionRates }
+
+const props = withDefaults(defineProps<{
+  headingLevel?: 'h1' | 'h2'
+}>(), {
+  headingLevel: 'h2',
+})
 
 const { t, locale } = useI18n()
 const errorMessage = useErrorMessage()
@@ -23,9 +30,9 @@ const firstErrorId = useId()
 const repeatErrorId = useId()
 
 const canRead = computed(() => hasOperatorPermission('read_operations'))
-const canEdit = computed(() => canRead.value && hasOperatorPermission('manage_billing'))
+const canEdit = computed(() => hasOperatorPermission('manage_billing'))
 
-const state = shallowRef<RatesState>({ kind: 'loading' })
+const state = shallowRef<RatesState>({ kind: 'denied' })
 const firstDraft = ref('')
 const repeatDraft = ref('')
 const firstError = ref<RateParseError | undefined>(undefined)
@@ -42,6 +49,22 @@ onScopeDispose(() => {
   activeSave?.abort()
 })
 
+const displayedRates = computed<CommissionRates | undefined>(() => {
+  if (state.value.kind === 'ready') return state.value.data
+  if (state.value.kind === 'write-only') return state.value.saved
+  return undefined
+})
+
+const showForm = computed(() => canEdit.value && (state.value.kind === 'ready' || state.value.kind === 'write-only'))
+
+function clearFormState() {
+  firstDraft.value = ''
+  repeatDraft.value = ''
+  firstError.value = undefined
+  repeatError.value = undefined
+  saveError.value = undefined
+}
+
 function syncDrafts(data: CommissionRates) {
   firstDraft.value = formatBpsInput(data.firstPurchaseBps)
   repeatDraft.value = formatBpsInput(data.repeatPurchaseBps)
@@ -54,7 +77,7 @@ async function load() {
   activeLoad = undefined
   const seq = ++loadSeq
   if (!canRead.value) {
-    state.value = { kind: 'denied' }
+    state.value = canEdit.value ? { kind: 'write-only' } : { kind: 'denied' }
     return
   }
 
@@ -74,38 +97,48 @@ async function load() {
 }
 
 watch(
-  canRead,
-  readable => {
-    if (!readable) {
-      activeLoad?.abort()
+  [canRead, canEdit],
+  ([readable, editable], previous) => {
+    const [prevReadable, prevEditable] = previous ?? [undefined, undefined]
+
+    if (!editable) {
       activeSave?.abort()
-      activeLoad = undefined
       activeSave = undefined
       saving.value = false
       saveError.value = undefined
       firstError.value = undefined
       repeatError.value = undefined
+    }
+
+    if (!readable && !editable) {
+      activeLoad?.abort()
+      activeLoad = undefined
+      loadSeq++
+      clearFormState()
       state.value = { kind: 'denied' }
       return
     }
-    void load()
+
+    if (readable) {
+      if (prevReadable !== true) {
+        void load()
+      } else if (prevEditable === true && !editable && state.value.kind === 'ready') {
+        syncDrafts(state.value.data)
+      }
+      return
+    }
+
+    // manage_billing without read_operations: never send GET, require explicit input for both tiers.
+    activeLoad?.abort()
+    activeLoad = undefined
+    loadSeq++
+    if (state.value.kind !== 'write-only') {
+      clearFormState()
+      state.value = { kind: 'write-only' }
+    }
   },
   { immediate: true },
 )
-
-watch(canEdit, editable => {
-  if (!editable) {
-    activeSave?.abort()
-    activeSave = undefined
-    saving.value = false
-    saveError.value = undefined
-    firstError.value = undefined
-    repeatError.value = undefined
-    if (state.value.kind === 'ready') {
-      syncDrafts(state.value.data)
-    }
-  }
-})
 
 function onFirstInput(value: string) {
   firstDraft.value = value
@@ -120,7 +153,7 @@ function onRepeatInput(value: string) {
 }
 
 async function save() {
-  if (saving.value || !canEdit.value || state.value.kind !== 'ready') return
+  if (saving.value || !canEdit.value || (state.value.kind !== 'ready' && state.value.kind !== 'write-only')) return
 
   const first = parsePercentToBps(firstDraft.value)
   const repeat = parsePercentToBps(repeatDraft.value)
@@ -137,8 +170,8 @@ async function save() {
       { firstPurchaseBps: first.bps, repeatPurchaseBps: repeat.bps },
       controller.signal,
     )
-    if (controller.signal.aborted || !canRead.value) return
-    state.value = { kind: 'ready', data: updated }
+    if (controller.signal.aborted || !canEdit.value) return
+    state.value = canRead.value ? { kind: 'ready', data: updated } : { kind: 'write-only', saved: updated }
     syncDrafts(updated)
     ElMessage.success(t('users.commissions.rates.saved'))
   } catch (error) {
@@ -157,13 +190,20 @@ async function save() {
   <ElCard class="ops-commission-rates" role="region" shadow="never" :aria-labelledby="headingId">
     <div class="ops-commission-rates__body">
       <div class="ops-commission-rates__header">
-        <h2 :id="headingId" class="ops-commission-rates__heading">{{ t('users.commissions.rates.title') }}</h2>
-        <div v-if="state.kind === 'ready'" class="ops-commission-rates__meta">
+        <component
+          :is="props.headingLevel"
+          :id="headingId"
+          class="ops-commission-rates__heading"
+          :class="props.headingLevel === 'h1' ? 'ops-page-title' : 'ops-commission-rates__heading--sub'"
+        >
+          {{ t('users.commissions.rates.title') }}
+        </component>
+        <div v-if="displayedRates" class="ops-commission-rates__meta">
           <ElTag type="info" effect="light" size="small">
-            {{ t('users.commissions.rateVersionTag', { version: state.data.version }) }}
+            {{ t('users.commissions.rateVersionTag', { version: displayedRates.version }) }}
           </ElTag>
           <span class="ops-commission-rates__updated">
-            {{ t('users.commissions.rates.updatedAt', { date: shanghaiDateTime(state.data.updatedAt, locale, 'short') }) }}
+            {{ t('users.commissions.rates.updatedAt', { date: shanghaiDateTime(displayedRates.updatedAt, locale, 'short') }) }}
           </span>
         </div>
       </div>
@@ -191,7 +231,7 @@ async function save() {
         <ElButton size="small" @click="load">{{ t('auth.retry') }}</ElButton>
       </div>
 
-      <template v-else-if="state.kind === 'ready'">
+      <template v-else>
         <ElAlert
           type="info"
           :title="t('users.commissions.rates.scopeNotice')"
@@ -199,7 +239,23 @@ async function save() {
           show-icon
         />
 
-        <form v-if="canEdit" class="ops-commission-rates__form" novalidate @submit.prevent="save">
+        <p v-if="state.kind === 'write-only' && !state.saved" class="ops-commission-rates__prompt">
+          {{ t('users.commissions.rates.writeOnlyPrompt') }}
+        </p>
+
+        <ElAlert
+          v-else-if="state.kind === 'write-only' && state.saved"
+          type="success"
+          :title="t('users.commissions.rates.savedSummary', {
+            first: formatBpsPercent(state.saved.firstPurchaseBps),
+            repeat: formatBpsPercent(state.saved.repeatPurchaseBps),
+            version: state.saved.version,
+          })"
+          :closable="false"
+          show-icon
+        />
+
+        <form v-if="showForm" class="ops-commission-rates__form" novalidate @submit.prevent="save">
           <div class="ops-commission-rates__inputs">
             <div class="ops-commission-rates__field">
               <label :for="firstRateId" class="ops-commission-rates__label">
@@ -263,7 +319,7 @@ async function save() {
           </div>
         </form>
 
-        <template v-else>
+        <template v-else-if="state.kind === 'ready'">
           <dl class="ops-commission-rates__readonly">
             <div class="ops-commission-rates__readonly-item">
               <dt>{{ t('users.commissions.rates.firstPurchase') }}</dt>
@@ -306,6 +362,9 @@ async function save() {
 
 .ops-commission-rates__heading {
   margin: 0;
+}
+
+.ops-commission-rates__heading--sub {
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-semibold);
 }
@@ -320,6 +379,12 @@ async function save() {
 .ops-commission-rates__updated {
   color: var(--color-text-secondary);
   font-size: var(--font-size-xs);
+}
+
+.ops-commission-rates__prompt {
+  margin: 0;
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
 }
 
 .ops-commission-rates__error {
