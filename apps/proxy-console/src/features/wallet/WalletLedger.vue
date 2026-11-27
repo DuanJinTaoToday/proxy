@@ -15,10 +15,11 @@ const emit = defineEmits<{ openOrder: [orderId: string] }>()
 const { t, locale } = useI18n()
 const route = useRoute()
 const router = useRouter()
-const filterKinds: WalletFilterKind[] = ['recharge', 'debit', 'refund']
+const filterKinds: WalletFilterKind[] = ['recharge', 'commission_transfer', 'debit', 'refund']
 type WalletEntry = ReturnType<typeof mapWalletEntry>
 const tagTypes: Record<WalletEntry['kind'], TagProps['type']> = {
   recharge: 'success',
+  commission_transfer: 'success',
   debit: 'info',
   hold: 'warning',
   release: 'info',
@@ -97,7 +98,7 @@ function previousPage() {
     <div class="wallet-ledger__toolbar">
       <div class="wallet-ledger__filters">
         <ElRadioGroup
-          :model-value="kind ?? 'all'" :aria-label="t('wallet.kindFilter')"
+          class="wallet-ledger__kind-filter" :model-value="kind ?? 'all'" :aria-label="t('wallet.kindFilter')"
           @update:model-value="setFilters($event, start, end)"
         >
           <ElRadioButton value="all">{{ t('wallet.all') }}</ElRadioButton>
@@ -134,7 +135,7 @@ function previousPage() {
         </template>
       </ElTableColumn>
       <!-- @vue-generic {WalletEntry} -->
-      <ElTableColumn :label="t('wallet.kind')" width="90">
+      <ElTableColumn :label="t('wallet.kind')" :min-width="locale === 'zh-CN' ? 108 : 168">
         <template #default="{ row }">
           <ElTag :type="tagTypes[row.kind]" size="small" :class="`wallet-ledger__kind--${row.kind}`" disable-transitions>{{ t(`wallet.kinds.${row.kind}`) }}</ElTag>
         </template>
@@ -157,6 +158,12 @@ function previousPage() {
           <span class="wallet-ledger__amount tabular" :class="{ 'wallet-ledger__amount--positive': row.amountMinor > 0n }">
             {{ row.amountMinor > 0n ? '+' : '' }}{{ formatYuan(row.amountMinor, locale) }}
           </span>
+        </template>
+      </ElTableColumn>
+      <!-- @vue-generic {WalletEntry} -->
+      <ElTableColumn :label="t('wallet.balanceBefore')" min-width="135" align="right">
+        <template #default="{ row }">
+          <span class="wallet-ledger__amount tabular">{{ formatYuan(row.beforeMinor, locale) }}</span>
         </template>
       </ElTableColumn>
       <!-- @vue-generic {WalletEntry} -->
@@ -209,6 +216,12 @@ function previousPage() {
 }
 .wallet-ledger__feedback { margin: var(--space-4); }
 .wallet-ledger__business-day, .wallet-ledger__pager { color: var(--color-text-secondary); font-size: var(--font-size-xs); }
+.wallet-ledger__kind-filter {
+  display: flex;
+  flex-wrap: wrap;
+  row-gap: var(--space-1);
+  max-inline-size: 100%;
+}
 .wallet-ledger__dates {
   display: flex;
   align-items: center;
