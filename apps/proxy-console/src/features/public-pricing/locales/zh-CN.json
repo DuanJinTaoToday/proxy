@@ -81,7 +81,9 @@
       "decrease": "减少数量",
       "increase": "增加数量",
       "totalCount": "总数量",
-      "totalPrice": "总价"
+      "totalPrice": "总价",
+      "lineLimit": "每笔订单最多选择 {count} 种规格，可调整已选数量或直接购买。",
+      "quantityLimit": "每笔订单最多购买 {count} 个 IP，请减少数量后再继续添加。"
     },
     "errors": {
       "STATIC_SUPPLIER_UNAVAILABLE": "供应商报价暂时不可用，请稍后重试。",

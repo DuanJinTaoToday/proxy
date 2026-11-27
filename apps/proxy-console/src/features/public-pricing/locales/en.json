@@ -81,7 +81,9 @@
       "decrease": "Decrease quantity",
       "increase": "Increase quantity",
       "totalCount": "Total IPs",
-      "totalPrice": "Total"
+      "totalPrice": "Total",
+      "lineLimit": "You can select up to {count} offers per order. You can still adjust quantities or proceed to buy.",
+      "quantityLimit": "You can buy up to {count} IPs per order. Reduce quantities before adding more."
     },
     "errors": {
       "STATIC_SUPPLIER_UNAVAILABLE": "Static IP prices are temporarily unavailable from the supplier. Try again shortly.",

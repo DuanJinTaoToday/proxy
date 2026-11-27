@@ -198,3 +198,29 @@ test('动态公开套餐回跳保持档位和单份语义，变价只在确认�
     await operator.dispose()
   }
 })
+
+test('公开购物车达到接口行数上限后仍可购买已选 25 个规格', async ({ page }) => {
+  await page.route('**/v1/public/static-offers*', route => route.fulfill({ json: {
+    open: true,
+    quoted_at: new Date().toISOString(),
+    offers: Array.from({ length: 26 }, (_, index) => ({
+      node_id: String(10001 + index), region: `Test region ${String(index + 1).padStart(2, '0')}`,
+      continent: 'North America', line: 'Residential', isp: '独享',
+      term: 'yp1', term_days: 30, unit_minor: '1000', available: 5,
+    })),
+  } }))
+  await page.goto('/zh-CN/pricing?category=exclusive')
+  const offers = page.locator('.offer-row')
+  await expect(offers).toHaveCount(26)
+  for (let index = 0; index < 25; index++) await offers.nth(index).click()
+  const lastOffer = offers.nth(25)
+  if (!(await lastOffer.isDisabled())) await lastOffer.click()
+  await expect(page.locator('.cart-list .cart-item')).toHaveCount(25)
+  await expect(page.getByText(/最多.*25|上限.*25|25.*上限/).filter({ visible: true }).first()).toBeVisible()
+  const buy = page.getByRole('button', { name: '立即购买', exact: true })
+  await expect(buy).toBeEnabled()
+  await buy.click()
+  await expect(page).toHaveURL(/\/zh-CN\/login\?redirect=/)
+  const target = new URL(new URL(page.url()).searchParams.get('redirect'), page.url())
+  expect(target.searchParams.get('items').split(',')).toHaveLength(25)
+})
