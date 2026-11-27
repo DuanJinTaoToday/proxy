@@ -34,7 +34,7 @@ interface SubjectKey {
 }
 
 const props = defineProps<
-  | { mode: 'tenant' }
+  | { mode: 'tenant', tenantId?: never }
   | { mode: 'ops', tenantId: string }
 >()
 
