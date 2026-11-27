@@ -14,6 +14,7 @@ import { shanghaiDateTime } from '@/shared/lib/businessDates'
 import { formatYuan } from '@/shared/lib/money'
 import { useErrorMessage } from '@/shared/lib/useErrorMessage'
 import { formatBpsPercent } from './commissionFormat'
+import CommissionTransferForm from './CommissionTransferForm.vue'
 
 type ListState =
   | { kind: 'idle' }
@@ -236,6 +237,7 @@ function statusTagType(status: CommissionRecordStatus): 'success' | 'info' | 'wa
 }
 
 const isInitialLoading = computed(() => listState.value.kind === 'loading')
+const transferTenantId = computed(() => (props.mode === 'tenant' ? currentAccount.value?.tenantId : undefined))
 </script>
 
 <template>
@@ -249,6 +251,14 @@ const isInitialLoading = computed(() => listState.value.kind === 'loading')
           <span class="commission-records__balance-hint">{{ t('users.commissions.availableBalanceHint') }}</span>
         </div>
       </div>
+
+      <CommissionTransferForm
+        v-if="transferTenantId"
+        :key="transferTenantId"
+        :tenant-id="transferTenantId"
+        :available-minor="availableMinor"
+        @refresh="loadInitial()"
+      />
 
       <ElAlert
         v-if="listState.kind === 'denied'"

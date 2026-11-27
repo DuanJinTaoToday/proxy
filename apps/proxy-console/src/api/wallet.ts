@@ -11,11 +11,12 @@ export interface WalletEntryWire {
   reason?: string
 }
 
-type WalletEntryKind = 'recharge' | 'debit' | 'hold' | 'release' | 'refund' | 'unknown'
+type WalletEntryKind = 'recharge' | 'commission_transfer' | 'debit' | 'hold' | 'release' | 'refund' | 'unknown'
 
 function entryKind(value: string): WalletEntryKind {
   switch (value) {
     case 'recharge':
+    case 'commission_transfer':
     case 'debit':
     case 'hold':
     case 'release':
@@ -64,7 +65,7 @@ export interface WalletEntriesWire {
   next_before_id?: string
 }
 
-export type WalletFilterKind = 'recharge' | 'debit' | 'refund'
+export type WalletFilterKind = 'recharge' | 'commission_transfer' | 'debit' | 'refund'
 interface WalletEntriesQuery {
   kind?: WalletFilterKind
   start_date?: string

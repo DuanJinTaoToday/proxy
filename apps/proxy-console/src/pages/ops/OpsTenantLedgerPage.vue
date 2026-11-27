@@ -17,7 +17,7 @@ const { t, locale } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const money = (minor: bigint) => formatYuan(minor, locale.value)
-const filterKinds: WalletFilterKind[] = ['recharge', 'debit', 'refund']
+const filterKinds: WalletFilterKind[] = ['recharge', 'commission_transfer', 'debit', 'refund']
 const kind = computed(() => filterKinds.find(value => value === route.query.kind))
 const dates = computed(() => readBusinessDateBounds(route.query.start, route.query.end))
 const range = computed<[string, string] | undefined>(() => dates.value.start && dates.value.end ? [dates.value.start, dates.value.end] : undefined)
@@ -43,7 +43,7 @@ watch([kind, () => dates.value.start, () => dates.value.end], history.reset, { i
   <OpsHistoryTable :label="t('wallet.ledger')" :state="state" :page="history.page.value"
     @retry="history.load" @previous="history.previous" @next="history.next">
     <template #filters>
-      <ElRadioGroup :model-value="kind ?? 'all'" :aria-label="t('wallet.kindFilter')" @update:model-value="filterKind">
+      <ElRadioGroup class="ops-ledger-kind-filter" :model-value="kind ?? 'all'" :aria-label="t('wallet.kindFilter')" @update:model-value="filterKind">
         <ElRadioButton value="all">{{ t('wallet.all') }}</ElRadioButton>
         <ElRadioButton v-for="item in filterKinds" :key="item" :value="item">{{ t(`wallet.kinds.${item}`) }}</ElRadioButton>
       </ElRadioGroup>
@@ -63,7 +63,7 @@ watch([kind, () => dates.value.start, () => dates.value.end], history.reset, { i
         </template>
       </ElTableColumn>
       <!-- @vue-generic {WalletEntry} -->
-      <ElTableColumn :label="t('wallet.kind')" :width="locale === 'zh-CN' ? 80 : undefined" min-width="80">
+      <ElTableColumn :label="t('wallet.kind')" :width="locale === 'zh-CN' ? 104 : undefined" :min-width="locale === 'zh-CN' ? 104 : 160">
         <template #default="{ row }"><span class="ops-ledger-kind" :class="`ops-ledger-kind--${row.kind}`">{{ t(`wallet.kinds.${row.kind}`) }}</span></template>
       </ElTableColumn>
       <!-- @vue-generic {WalletEntry} -->
@@ -101,6 +101,12 @@ watch([kind, () => dates.value.start, () => dates.value.end], history.reset, { i
 </template>
 
 <style scoped>
+.ops-ledger-kind-filter {
+  display: flex;
+  flex-wrap: wrap;
+  row-gap: var(--space-1);
+  max-inline-size: 100%;
+}
 .ops-ledger-dates { width: min(100%, var(--ops-history-dates-width)); }
 .ops-ledger-id, .ops-ledger-order { font-size: var(--font-size-xs); }
 .ops-ledger-order { margin-inline-start: var(--space-2); font-weight: var(--font-weight-regular); }
@@ -115,6 +121,7 @@ watch([kind, () => dates.value.start, () => dates.value.end], history.reset, { i
   line-height: var(--ops-tenant-chip-line-height);
 }
 .ops-ledger-kind--recharge { background: var(--color-primary-soft); color: var(--color-primary); }
+.ops-ledger-kind--commission_transfer { background: var(--color-success-bg); color: var(--color-success-text); }
 .ops-ledger-kind--hold { background: var(--color-warning-bg); color: var(--color-warning-text); }
 .ops-ledger-kind--release { padding-inline: var(--space-1); }
 .ops-ledger-kind--release, .ops-ledger-kind--refund { background: var(--color-info-bg); color: var(--color-info-text); }
