@@ -99,6 +99,7 @@
         "amountLabel": "转入金额（元）",
         "amountPlaceholder": "例如 10.00",
         "submit": "转入钱包",
+        "balanceUnavailable": "请先加载可用佣金，再转入钱包。",
         "retry": "重试原提交",
         "pendingLabel": "待确认转入金额",
         "pendingHint": "存在未确认的原提交，金额已锁定，可直接重试原提交以确认结果。",

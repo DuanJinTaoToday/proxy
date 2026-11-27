@@ -99,6 +99,7 @@
         "amountLabel": "Transfer amount (CNY)",
         "amountPlaceholder": "e.g. 10.00",
         "submit": "Transfer to wallet",
+        "balanceUnavailable": "Load your available commission before transferring.",
         "retry": "Retry original submission",
         "pendingLabel": "Pending transfer amount",
         "pendingHint": "A previous submission is awaiting confirmation. The amount is locked so you can safely retry the original submission.",

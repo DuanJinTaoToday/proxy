@@ -121,7 +121,7 @@ const alertNotice = computed<
               native-type="submit"
               type="primary"
               :loading="busy"
-              :disabled="busy"
+              :disabled="busy || props.availableMinor === undefined"
             >
               {{ t('users.commissions.transfer.submit') }}
             </ElButton>
@@ -129,6 +129,9 @@ const alertNotice = computed<
         </div>
         <p v-if="fieldErrorMessage" :id="fieldErrorId" class="commission-transfer__error" role="alert">
           {{ fieldErrorMessage }}
+        </p>
+        <p v-if="props.availableMinor === undefined" class="commission-transfer__hint">
+          {{ t('users.commissions.transfer.balanceUnavailable') }}
         </p>
       </div>
     </form>
@@ -151,7 +154,7 @@ const alertNotice = computed<
   grid-template-columns: minmax(0, 1fr);
   gap: var(--space-3);
   padding: var(--space-4);
-  border: 1px solid var(--el-border-color-lighter);
+  border: var(--border-width) solid var(--el-border-color-lighter);
   border-radius: var(--el-border-radius-base);
   background: var(--el-fill-color-lighter);
   min-width: 0;
