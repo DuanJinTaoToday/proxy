@@ -3,8 +3,8 @@
   --el-color-primary: var(--color-primary);
   --el-color-primary-light-3: var(--color-primary-hover);
   --el-color-primary-light-5: var(--color-primary-border);
-  --el-color-primary-light-7: var(--color-success-border);
-  --el-color-primary-light-8: var(--color-success-border);
+  --el-color-primary-light-7: var(--color-primary-soft-border);
+  --el-color-primary-light-8: var(--color-primary-soft-border);
   --el-color-primary-light-9: var(--color-primary-soft);
   --el-color-primary-dark-2: var(--color-primary-active);
 
