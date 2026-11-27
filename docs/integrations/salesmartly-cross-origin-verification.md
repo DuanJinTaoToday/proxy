@@ -1,6 +1,6 @@
 # SaleSmartly 跨源客服联验
 
-[Issue #102](https://github.com/DuanJinTaoToday/proxy/issues/102) 的 Free 验收仍待完成。2026-11-26 在真实 Pro 项目验证了跨源嵌入和访客发消息。工作台拦截了人工回复。生产接入由 [#112](https://github.com/DuanJinTaoToday/proxy/issues/112) 决定。
+[Issue #102](https://github.com/DuanJinTaoToday/proxy/issues/102) 使用真实 SaleSmartly Pro 工作台联验。2026-11-26，官网和客户控制台均能嵌入真实插件并发送访客消息。工作台的企业认证要求拦截了人工回复。首次并行打开两入口后的完整会话留存未通过。项目方目前无法安排授权客服复测，#102 保持开放。正式部署选型以[父 Spec #100](https://github.com/DuanJinTaoToday/proxy/issues/100)为准。
 
 ## 环境与结果
 
@@ -29,7 +29,7 @@ npm --prefix tests/verify run browser:install
 npm --prefix tests/verify test -- salesmartly-isolation.spec.mjs
 ```
 
-人工联验需要项目方提供显示 **Free 版**的真实项目及其网页安装脚本 URL，并安排能接入会话、回复目标地区访客的授权客服人员。授权客服直接在工作台操作，无需共享账号密码。此前 Pro 项目的企业认证提示只记录为该项目的回复阻断，Free 的回复能力待实测。将 Free 项目的安装脚本 URL 注入本地进程，证据中只保留脱敏结果。
+复测前，由项目方提供真实 **Pro 版**项目及其网页安装脚本 URL，并安排能回复目标地区访客的授权客服。客服直接在工作台接入并回复测试会话。将安装脚本 URL 注入本地进程，证据注明套餐并保留脱敏结果。Free 版待实测。
 
 ```powershell
 $env:SALESMARTLY_WIDGET_SCRIPT = Read-Host 'SaleSmartly 安装脚本 URL'
@@ -45,4 +45,4 @@ node tests/verify/fixtures/salesmartly.mjs
 
 ## 交接 #112
 
-用可对目标地区访客回复的 Free 项目复跑。记录两个入口的人工回复与刷新结果，再用拟部署的 HTTPS 来源跑同样的隔离验证。如果 Free 或并行留存仍不能满足要求，由 #112 评审独立客服页等替代体验。
+[#112](https://github.com/DuanJinTaoToday/proxy/issues/112) 可先准备正式联系方式并评审独立客服页等替代体验。使用可回复目标地区访客的 Pro 项目复跑两入口的人工回复、刷新与并行会话留存，并在拟部署的 HTTPS 来源验证嵌入约束。按实测结果决定正式聊天接入方式。
