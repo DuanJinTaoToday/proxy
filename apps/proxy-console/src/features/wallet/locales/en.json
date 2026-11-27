@@ -30,6 +30,7 @@
     "kind": "Type",
     "description": "Description",
     "amount": "Amount",
+    "balanceBefore": "Balance before",
     "balanceAfter": "Balance after",
     "orderLink": "Order #{id}",
     "noEntries": "No matching transactions",
@@ -40,6 +41,7 @@
     "next": "Next",
     "kinds": {
       "recharge": "Top-up",
+      "commission_transfer": "Commission transfer",
       "debit": "Charge",
       "hold": "Hold",
       "release": "Release",
@@ -48,6 +50,7 @@
     },
     "notes": {
       "recharge": "Top-up credited by operations",
+      "commission_transfer": "Commission transferred to the wallet",
       "debit": "Purchase or renewal charge",
       "hold": "Order payment on hold",
       "release": "Unsettled funds returned to the wallet",

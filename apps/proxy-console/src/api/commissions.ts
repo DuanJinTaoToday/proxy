@@ -1,4 +1,5 @@
 import { request } from './client'
+import { mapWalletEntry, type WalletEntryWire } from './wallet'
 
 export type ReferralSource = 'manual' | 'link'
 export type CommissionProductKind = 'traffic_package' | 'static_purchase' | 'static_renewal'
@@ -199,4 +200,21 @@ export async function updateOpsCommissionRates(
     signal,
   })
   return decodeCommissionRates(data)
+}
+
+export async function transferTenantCommission(
+  input: { requestKey: string, amountMinor: bigint },
+  signal?: AbortSignal,
+) {
+  const wire = await request<WalletEntryWire>('/v1/tenant/commission-transfers', {
+    method: 'POST',
+    body: { request_key: input.requestKey, amount_minor: input.amountMinor.toString() },
+    signal,
+  })
+  const entry = mapWalletEntry(wire)
+  if (typeof entry.id !== 'string' || !/^[1-9]\d*$/.test(entry.id)
+    || entry.kind !== 'commission_transfer' || entry.beforeMinor < 0n || entry.amountMinor !== input.amountMinor) {
+    throw new Error('Invalid commission transfer receipt')
+  }
+  return entry
 }
