@@ -24,6 +24,7 @@
     "account": "My Account",
     "opsTenants": "Tenants",
     "opsProducts": "Products and pricing",
+    "opsCommissionRates": "Commission rates",
     "opsOrders": "Order Handling",
     "opsUsage": "Usage findings",
     "opsCustomers": "Customers",
@@ -83,6 +84,7 @@
     "WALLET_REQUEST_CONFLICT": "This recharge conflicts with an earlier request.",
     "WALLET_BALANCE_LIMIT": "The amount exceeds the wallet balance limit.",
     "WALLET_UNAVAILABLE": "The wallet service is temporarily unavailable. Try again shortly.",
-    "INVALID_WALLET_REQUEST": "Check the request details and try again."
+    "INVALID_WALLET_REQUEST": "Check the request details and try again.",
+    "INVALID_COMMISSION_RATES": "Commission rates are invalid. Enter percentages between 0% and 100% with at most two decimal places."
   }
 }

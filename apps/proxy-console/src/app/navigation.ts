@@ -33,6 +33,7 @@ export const opsNav: NavSection[] = [
     items: [
       { path: '/ops/orders', labelKey: 'nav.opsOrders', icon: Tickets },
       { path: '/ops/products', labelKey: 'nav.opsProducts', icon: Box },
+      { path: '/ops/commission-rates', labelKey: 'nav.opsCommissionRates', icon: CreditCard },
       { path: '/ops/usage', labelKey: 'nav.opsUsage', icon: Warning },
     ],
   },

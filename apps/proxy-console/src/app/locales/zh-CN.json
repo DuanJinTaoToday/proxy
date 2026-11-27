@@ -24,6 +24,7 @@
     "account": "我的账户",
     "opsTenants": "租户",
     "opsProducts": "商品与定价",
+    "opsCommissionRates": "佣金费率",
     "opsUsage": "用量异常",
     "opsOrders": "订单处理",
     "opsCustomers": "客户",
@@ -83,6 +84,7 @@
     "WALLET_REQUEST_CONFLICT": "这次充值请求与已提交的请求冲突。",
     "WALLET_BALANCE_LIMIT": "金额超出钱包余额上限。",
     "WALLET_UNAVAILABLE": "钱包服务暂时不可用，请稍后重试。",
-    "INVALID_WALLET_REQUEST": "请求参数无效，请核对后重试。"
+    "INVALID_WALLET_REQUEST": "请求参数无效，请核对后重试。",
+    "INVALID_COMMISSION_RATES": "佣金费率无效，请填写 0% 至 100% 之间、最多两位小数的百分比。"
   }
 }

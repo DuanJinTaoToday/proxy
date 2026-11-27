@@ -41,7 +41,9 @@ test('默认入口、深链和未找到页', async ({ page }, info) => {
   await expect(page).toHaveURL(/\/ops\/login\?redirect=/)
   await signInOperator(page)
   await expect(page).toHaveURL(new URL('/ops/tenants', page.url()).href)
-  await expect(page.getByRole('navigation', { name: '运营导航' }).getByRole('menuitem')).toHaveText(['租户', '订单处理', '商品与定价', '用量异常'])
+  await expect(page.getByRole('navigation', { name: '运营导航' }).getByRole('menuitem')).toHaveText([
+    '租户', '订单处理', '商品与定价', '佣金费率', '用量异常',
+  ])
   await page.getByRole('menuitem', { name: '用量异常', exact: true }).click()
   await expect(page).toHaveURL(new URL('/ops/usage', page.url()).href)
   await expect(heading(page)).toHaveText('用量异常')
