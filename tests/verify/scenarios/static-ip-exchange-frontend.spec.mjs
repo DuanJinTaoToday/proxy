@@ -96,6 +96,8 @@ test('独享换号后复制和导出新连接参数，从原分配继续续费',
     const latest = await setup.config(allocation.allocation_id)
     expect(latest).toMatchObject({ allocation_id: allocation.allocation_id, port: 1081 })
     expect(latest.ip).not.toBe(allocation.ip)
+    await expect(dialog).toContainText(latest.ip, { timeout: 15000 })
+    await expect(rowFor(page, latest.ip)).toBeVisible()
     expect(await setup.wallet()).toEqual(before)
     expect(await setup.quota()).toEqual({ remaining: 9, reserved: 0, used: 1 })
 
@@ -156,13 +158,7 @@ test('换号丢回执时复用请求键，待核实与续费互斥，额度用�
     await cta(dialog, '确认换号').click()
     await expect(cta(page, '重试原请求').filter({ visible: true }).first()).toBeVisible()
     expect(lostPayload).toMatchObject({ allocation_id: first.allocation_id, idempotency_key: expect.any(String) })
-    await page.reload()
     const retry = cta(page, '重试原请求').filter({ visible: true }).first()
-    if (!(await retry.isVisible())) {
-      const inspect = rowFor(page, first.ip).getByRole('button', { name: /换号|结果/ }).filter({ visible: true }).first()
-      await inspect.click()
-    }
-    await expect(retry).toBeVisible()
     const secondRequest = submission(page)
     await retry.click()
     expect((await secondRequest).postDataJSON()).toEqual(lostPayload)
@@ -171,12 +167,54 @@ test('换号丢回执时复用请求键，待核实与续费互斥，额度用�
     await page.reload()
     await expect(rowFor(page, first.ip)).toContainText('待核实')
     await expect(cta(rowFor(page, first.ip), '续费')).toBeDisabled()
+    const originalLookup = page.waitForRequest(req => req.method() === 'GET' && urlPath(req) === exchanges + '/' + lostPayload.idempotency_key)
+    await rowFor(page, first.ip).getByRole('button', { name: /查询原结果|查看换号|换号结果/ }).first().click()
+    await originalLookup
+    await expect(page.getByRole('dialog').filter({ visible: true })).toContainText('待核实')
     const next = exchangeAction(rowFor(page, second.ip))
     if (await next.isVisible()) await expect(next).toBeDisabled()
     expect(await setup.quota()).toEqual({ remaining: 0, reserved: 1, used: 0 })
     expect(await setup.wallet()).toEqual(before)
     expect(await fixture(request, { id: mocked.id })).toMatchObject({ calls: 1, renewals: 0 })
     await screenshot(page, info, 'unknown-exchange-zero-quota-renewal-disabled')
+  } finally {
+    await setup.close()
+  }
+})
+
+test('换号请求未送达且刷新后查无记录，仍可沿用原请求键提交', async ({ page, request, playwright, baseURL }, info) => {
+  const email = 'exchange-ui-reload@example.test'
+  const setup = await prepare({ request, playwright, baseURL }, email)
+  try {
+    const [allocation] = await setup.buy({ node_id: '111', term: 'yp1', quantity: 1 })
+    const upstream = await fixture(request, { ip: allocation.ip, outcome: 'ready' })
+    await signInTenant(page, email)
+    await page.goto('/console/static/ips')
+    const dialog = await openExchange(page, allocation)
+    let original
+    await page.route('**/v1/tenant/static-ip-exchanges', route => {
+      original = route.request().postDataJSON()
+      return route.abort('failed')
+    }, { times: 1 })
+    await cta(dialog, '确认换号').click()
+    await expect(cta(dialog, '重试原请求')).toBeVisible()
+    expect(await setup.quota()).toEqual({ remaining: 10, reserved: 0, used: 0 })
+    await page.reload()
+    const lookup = cta(page, '查询原结果').filter({ visible: true }).first()
+    await lookup.click()
+    const resumed = page.getByRole('dialog').filter({ visible: true })
+    await expect(resumed).toBeVisible()
+    const missing = page.waitForResponse(resp => urlPath(resp) === exchanges + '/' + original.idempotency_key && resp.status() === 404)
+    await cta(resumed, '查询原结果').click()
+    await missing
+    await expect(resumed).toContainText(/未找到|暂未查到|未查到|没有找到|未在服务端查到/)
+    await screenshot(page, info, 'persisted-exchange-key-after-lookup-not-found')
+    const sent = submission(page)
+    await cta(resumed, '重试原请求').click()
+    expect((await sent).postDataJSON()).toEqual(original)
+    await expect.poll(() => setup.record(original.idempotency_key).then(r => r.status), { timeout: 20000 }).toBe('ready')
+    expect(await fixture(request, { id: upstream.id })).toMatchObject({ calls: 1 })
+    expect(await setup.quota()).toEqual({ remaining: 9, reserved: 0, used: 1 })
   } finally {
     await setup.close()
   }

@@ -2,14 +2,17 @@
 import { computed, onMounted, onUnmounted, ref, shallowRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
-  ElAlert, ElButton, ElEmpty, ElIcon, ElInput, ElMessage, ElOption, ElSelect, ElTable, ElTableColumn, ElTooltip,
+  ElAlert, ElButton, ElEmpty, ElIcon, ElInput, ElMessage, ElOption, ElSelect, ElTable, ElTableColumn, ElTag, ElTooltip,
   type TableInstance, vLoading,
 } from 'element-plus'
-import { CircleCheck, Clock, CopyDocument, Download, Loading, Search } from '@element-plus/icons-vue'
+import { CircleCheck, Clock, CopyDocument, Download, Loading, Refresh, Search } from '@element-plus/icons-vue'
 import { exportStaticIps, getStaticIpCredentials, listStaticIps, type RenewalSubmission, type StaticIp } from '@/api/staticIps'
+import { isStaticIpExchangeStatus, type StaticIpExchangeStatus, type StaticIpExchangeSubmission } from '@/api/staticIpExchanges'
 import { endpoint, useStaticIpPresentation } from './presentation'
 import { readRenewalSubmissions, type RenewalIntent } from './renewalIntent'
 import RenewalDialog from './RenewalDialog.vue'
+import ExchangeDialog from './ExchangeDialog.vue'
+import { useStaticIpExchanges } from './useStaticIpExchanges'
 
 const props = defineProps<{ accountKey: string }>()
 const { t, locale } = useI18n()
@@ -31,7 +34,11 @@ function isStaticIp(row: unknown): row is StaticIp {
     && 'expiry' in row && row.expiry instanceof Date
     && 'region' in row && typeof row.region === 'string'
     && 'ipType' in row && typeof row.ipType === 'string'
+    && 'nodeId' in row && typeof row.nodeId === 'string'
+    && 'shareMode' in row && typeof row.shareMode === 'string'
     && 'pendingOrderId' in row && (row.pendingOrderId === undefined || typeof row.pendingOrderId === 'string')
+    && 'exchangeStatus' in row && (row.exchangeStatus === undefined || isStaticIpExchangeStatus(row.exchangeStatus))
+    && 'exchangeIdempotencyKey' in row && (row.exchangeIdempotencyKey === undefined || typeof row.exchangeIdempotencyKey === 'string')
 }
 
 const ips = shallowRef<StaticIp[]>([])
@@ -47,6 +54,32 @@ const table = ref<TableInstance>()
 const now = ref(Date.now())
 const intent = shallowRef<RenewalIntent>()
 const savedSubmissions = shallowRef(readRenewalSubmissions(storageKey))
+const {
+  quota,
+  quotaLoading,
+  quotaError,
+  savedExchanges,
+  exchangeIntent,
+  lastExchangedId,
+  loadQuota,
+  recordExchangeSubmission,
+  reconcileSavedExchanges,
+  unresolvedExchangeFor,
+  isExchangeBlockingRenewal,
+  exchangeDisabledReason,
+  openExchange,
+  inspectExchange,
+  resumeExchange,
+} = useStaticIpExchanges(props.accountKey, controller.signal)
+
+const exchangeStatusTagType: Record<StaticIpExchangeStatus, 'info' | 'warning' | 'danger' | 'success'> = {
+  pending: 'info',
+  unknown: 'warning',
+  failed: 'danger',
+  activating: 'info',
+  ready: 'success',
+  support_required: 'warning',
+}
 
 const hasExpiry = (ip: StaticIp) => Number.isFinite(ip.expiry.getTime())
 const isAvailable = (ip: StaticIp) => ip.expiry.getTime() > now.value
@@ -59,6 +92,7 @@ function statusOf(ip: StaticIp): Status {
 
 const activeCount = computed(() => ips.value.filter(isAvailable).length)
 const expiring = computed(() => ips.value.filter(ip => statusOf(ip) === 'expiring'))
+const expiringRenewable = computed(() => expiring.value.filter(canRenew))
 const regions = computed(() => [...new Set(ips.value.map(ip => ip.region).filter(Boolean))].sort((a, b) => a.localeCompare(b, locale.value)))
 const visibleIps = computed(() => {
   const term = keyword.value.trim().toLocaleLowerCase(locale.value)
@@ -75,6 +109,7 @@ const visibleIps = computed(() => {
 
 const bulkProblem = computed(() => {
   if (selected.value.length > maxRenewalItems) return t('staticIps.bulkLimit')
+  if (selected.value.some(ip => isExchangeBlockingRenewal(ip))) return t('staticIps.bulkExchangeBlocked')
   if (selected.value.some(ip => !canRenew(ip))) return t('staticIps.bulkPending')
   return ''
 })
@@ -84,6 +119,17 @@ const exportProblem = computed(() => {
   return ''
 })
 const filtersActive = computed(() => Boolean(keyword.value || statusFilter.value || regionFilter.value))
+const hiddenExchangedNotice = computed(() => {
+  const id = lastExchangedId.value
+  if (!id || !filtersActive.value) return false
+  return ips.value.some(ip => ip.id === id) && !visibleIps.value.some(ip => ip.id === id)
+})
+const currentExchangeAllocation = computed(() => {
+  const active = exchangeIntent.value
+  if (!active) return undefined
+  const allocationId = active.kind === 'resume' ? active.submission.allocation_id : active.ip.id
+  return ips.value.find(ip => ip.id === allocationId)
+})
 
 async function loadIps() {
   loading.value = true
@@ -93,6 +139,7 @@ async function loadIps() {
     now.value = Date.now()
     table.value?.clearSelection()
     ips.value = items
+    reconcileSavedExchanges(items)
   } catch (error) {
     if (!controller.signal.aborted) listError.value = error
   } finally {
@@ -108,10 +155,41 @@ function clearFilters() {
   keyword.value = ''
   statusFilter.value = ''
   regionFilter.value = ''
+  lastExchangedId.value = undefined
+}
+
+function hasUnresolvedRenewal(ip: StaticIp) {
+  return savedSubmissions.value.some(submission => submission.allocation_ids.includes(ip.id))
+}
+
+function exchangeContext(ip: StaticIp) {
+  return {
+    isAvailable: isAvailable(ip),
+    hasUnresolvedRenewal: hasUnresolvedRenewal(ip),
+  }
+}
+
+function exchangeReasonText(ip: StaticIp) {
+  const key = exchangeDisabledReason(ip, exchangeContext(ip))
+  return key ? t(key) : ''
 }
 
 function canRenew(ip: StaticIp) {
-  return isAvailable(ip) && !ip.pendingOrderId
+  return isAvailable(ip) && !ip.pendingOrderId && !isExchangeBlockingRenewal(ip)
+}
+
+function exchangeRecoveryLabel(submission: StaticIpExchangeSubmission, index: number) {
+  if (savedExchanges.value.length === 1) return t('staticIps.exchange.queryOriginal')
+  const matchedIp = ips.value.find(ip => ip.id === submission.allocation_id)
+  return matchedIp
+    ? t('staticIps.exchange.queryOriginalIp', { ip: endpoint(matchedIp) })
+    : t('staticIps.exchange.queryOriginalIndex', { index: index + 1 })
+}
+
+function handleExchangeChanged(allocationId?: string) {
+  if (allocationId) lastExchangedId.value = allocationId
+  void loadIps()
+  void loadQuota()
 }
 
 function openRenewal(targets: StaticIp[]) {
@@ -195,7 +273,10 @@ async function downloadSelected() {
 }
 
 const updateClock = window.setInterval(() => { now.value = Date.now() }, 30_000)
-onMounted(loadIps)
+onMounted(() => {
+  void loadIps()
+  void loadQuota()
+})
 onUnmounted(() => {
   controller.abort()
   window.clearInterval(updateClock)
@@ -204,20 +285,39 @@ onUnmounted(() => {
 
 <template>
   <section class="ip-workspace">
-    <div v-if="savedSubmissions.length" class="page-actions">
+    <div v-if="savedSubmissions.length || savedExchanges.length" class="page-actions">
       <ElButton
         v-for="(submission, index) in savedSubmissions" :key="submission.request_key" type="warning"
         @click="resumeRenewal(submission)"
       >{{ retryLabel(submission, index) }}</ElButton>
+      <ElButton
+        v-for="(submission, index) in savedExchanges" :key="submission.idempotency_key" type="warning" plain
+        @click="resumeExchange(submission, ips.find(ip => ip.id === submission.allocation_id))"
+      >{{ exchangeRecoveryLabel(submission, index) }}</ElButton>
     </div>
 
     <ElAlert v-if="expiring.length" class="expiry-alert" type="warning" show-icon :closable="false">
       <template #title>
         <span class="expiry-message">
           <span>{{ t('staticIps.expiryAlert', { count: expiring.length }) }}</span>
-          <ElButton v-if="expiring.length <= maxRenewalItems" link type="warning" @click="openRenewal(expiring)">
+          <ElButton v-if="expiringRenewable.length && expiringRenewable.length <= maxRenewalItems" link type="warning" @click="openRenewal(expiringRenewable)">
             {{ t('staticIps.renewNow') }}
           </ElButton>
+        </span>
+      </template>
+    </ElAlert>
+
+    <ElAlert
+      v-if="hiddenExchangedNotice"
+      class="expiry-alert"
+      type="info"
+      show-icon
+      @close="lastExchangedId = undefined"
+    >
+      <template #title>
+        <span class="expiry-message">
+          <span>{{ t('staticIps.exchange.filteredOutNotice') }}</span>
+          <ElButton link type="primary" @click="clearFilters">{{ t('staticIps.clear') }}</ElButton>
         </span>
       </template>
     </ElAlert>
@@ -241,6 +341,30 @@ onUnmounted(() => {
         </div>
         <ElIcon class="metric-icon expiring"><Clock /></ElIcon>
       </button>
+      <div class="metric metric-static" :aria-label="t('staticIps.exchange.quotaTitle')">
+        <div class="metric-content">
+          <h2>{{ t('staticIps.exchange.quotaTitle') }}</h2>
+          <template v-if="quotaLoading">
+            <p class="metric-value tabular">—</p>
+            <p class="metric-hint">{{ t('staticIps.exchange.quotaLoading') }}</p>
+          </template>
+          <template v-else-if="quotaError || !quota">
+            <p class="metric-value tabular">—</p>
+            <p class="metric-hint" role="alert">
+              {{ quotaError ? errorMessage(quotaError) : t('staticIps.exchange.quotaLoadFailed') }}
+              <ElButton link type="primary" @click="loadQuota">{{ t('staticIps.retry') }}</ElButton>
+            </p>
+          </template>
+          <template v-else>
+            <p class="metric-value tabular">{{ quota.remaining }} <span>{{ t('staticIps.exchange.quotaUnit') }}</span></p>
+            <p class="metric-hint">
+              {{ t('staticIps.exchange.quotaHint', { used: quota.used, reserved: quota.reserved }) }}
+              <template v-if="quota.remaining <= 0"> · {{ t('staticIps.exchange.quotaExhaustedHint') }}</template>
+            </p>
+          </template>
+        </div>
+        <ElIcon class="metric-icon pending"><Refresh /></ElIcon>
+      </div>
     </div>
 
     <ElAlert v-if="listError" type="error" show-icon :closable="false" :title="t('staticIps.listFailed')" role="alert">
@@ -302,12 +426,20 @@ onUnmounted(() => {
             </template>
           </template>
         </ElTableColumn>
-        <ElTableColumn :label="t('staticIps.state')" min-width="130">
+        <ElTableColumn :label="t('staticIps.state')" min-width="148">
           <template #default="{ row }">
-            <span v-if="isStaticIp(row)" class="status-badge" :class="statusOf(row)">
-              <ElIcon v-if="statusOf(row) === 'pending'" class="pending-icon"><Loading /></ElIcon>
-              {{ t(`staticIps.status.${statusOf(row)}`) }}
-            </span>
+            <div v-if="isStaticIp(row)" class="status-cell">
+              <span class="status-badge" :class="statusOf(row)">
+                <ElIcon v-if="statusOf(row) === 'pending'" class="pending-icon"><Loading /></ElIcon>
+                {{ t(`staticIps.status.${statusOf(row)}`) }}
+              </span>
+              <ElTag v-if="unresolvedExchangeFor(row)" size="small" type="warning">
+                {{ t('staticIps.exchange.status.localUnverified') }}
+              </ElTag>
+              <ElTag v-else-if="row.exchangeStatus" size="small" :type="exchangeStatusTagType[row.exchangeStatus]">
+                {{ t(`staticIps.exchange.status.${row.exchangeStatus}`) }}
+              </ElTag>
+            </div>
           </template>
         </ElTableColumn>
         <ElTableColumn :label="t('staticIps.expiresAt')" min-width="180">
@@ -319,12 +451,42 @@ onUnmounted(() => {
             </template>
           </template>
         </ElTableColumn>
-        <ElTableColumn :label="t('staticIps.actions')" width="120" fixed="right">
+        <ElTableColumn :label="t('staticIps.actions')" min-width="210">
           <template #default="{ row }">
-            <template v-if="isStaticIp(row)">
+            <div v-if="isStaticIp(row)" class="row-actions">
               <ElButton v-if="row.pendingOrderId" size="small" @click="openPendingOrder(row.pendingOrderId)">{{ t('staticIps.check') }}</ElButton>
-              <ElButton v-else size="small" :disabled="!canRenew(row)" @click="openRenewal([row])">{{ t('staticIps.renew') }}</ElButton>
-            </template>
+              <ElTooltip v-else :content="t('staticIps.renewBlockedByExchange')" :disabled="!isExchangeBlockingRenewal(row)">
+                <span>
+                  <ElButton size="small" :disabled="!canRenew(row)" @click="openRenewal([row])">{{ t('staticIps.renew') }}</ElButton>
+                </span>
+              </ElTooltip>
+
+              <ElButton
+                v-if="unresolvedExchangeFor(row) || row.exchangeStatus === 'pending' || row.exchangeStatus === 'unknown'"
+                size="small"
+                type="warning"
+                plain
+                @click="inspectExchange(row)"
+              >{{ t('staticIps.exchange.queryOriginal') }}</ElButton>
+              <template v-else>
+                <ElTooltip :content="exchangeReasonText(row)" :disabled="!exchangeReasonText(row)">
+                  <span>
+                    <ElButton
+                      size="small"
+                      :disabled="Boolean(exchangeReasonText(row))"
+                      @click="openExchange(row, exchangeContext(row))"
+                    >{{ t('staticIps.exchange.action') }}</ElButton>
+                  </span>
+                </ElTooltip>
+                <ElButton
+                  v-if="row.exchangeIdempotencyKey"
+                  size="small"
+                  link
+                  type="primary"
+                  @click="inspectExchange(row)"
+                >{{ t('staticIps.exchange.queryOriginal') }}</ElButton>
+              </template>
+            </div>
           </template>
         </ElTableColumn>
         <template #empty>
@@ -345,6 +507,18 @@ onUnmounted(() => {
       v-if="intent" :intent="intent" @closed="intent = undefined"
       @submission="recordSubmission" @changed="loadIps"
     />
+    <ExchangeDialog
+      v-if="exchangeIntent"
+      :intent="exchangeIntent"
+      :current-allocation="currentExchangeAllocation"
+      :quota="quota"
+      :quota-loading="quotaLoading"
+      :quota-error="quotaError"
+      @closed="exchangeIntent = undefined"
+      @submission="recordExchangeSubmission"
+      @changed="handleExchangeChanged"
+      @retry-quota="loadQuota"
+    />
   </section>
 </template>
 
@@ -353,8 +527,8 @@ onUnmounted(() => {
 .page-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-2); }
 .page-actions button { margin: 0; }
 .expiry-alert { border-radius: var(--radius-card); }
-.expiry-message { display: flex; align-items: center; gap: var(--space-3); }
-.ip-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
+.expiry-message { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
+.ip-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); }
 .metric {
   display: flex;
   justify-content: space-between;
@@ -369,6 +543,12 @@ onUnmounted(() => {
   font: inherit;
   text-align: start;
 }
+.metric-static { cursor: default; }
+.metric-static:hover { border-color: var(--color-border); }
+.metric-content { min-width: 0; }
+.status-cell { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-1); }
+.row-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); }
+.row-actions button { margin: 0; }
 .metric:hover { border-color: var(--color-primary-border); }
 .metric[aria-pressed='true'] {
   border-color: var(--color-primary);
@@ -445,7 +625,8 @@ onUnmounted(() => {
   .pending-icon { animation: none; }
 }
 @media (max-width: 680px) {
-  .ip-metrics { gap: var(--space-2); }
+  .ip-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); }
+  .metric-static { grid-column: 1 / -1; }
   .metric { padding-inline: var(--space-3); gap: var(--space-2); }
   .metric-icon { width: var(--space-5); height: var(--space-5); font-size: var(--font-size-md); }
   .table-toolbar { padding-inline: var(--space-3); }
