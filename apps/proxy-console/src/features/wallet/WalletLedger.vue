@@ -214,6 +214,7 @@ function previousPage() {
   padding: var(--space-3) var(--space-4);
   border-block-end: var(--border-width) solid var(--color-border);
 }
+.wallet-ledger__filters { min-inline-size: 0; max-inline-size: 100%; }
 .wallet-ledger__feedback { margin: var(--space-4); }
 .wallet-ledger__business-day, .wallet-ledger__pager { color: var(--color-text-secondary); font-size: var(--font-size-xs); }
 .wallet-ledger__kind-filter {
@@ -259,4 +260,14 @@ function previousPage() {
 .wallet-ledger__kind--refund { --el-tag-bg-color: var(--color-info-bg); --el-tag-text-color: var(--color-info-text); }
 .wallet-ledger__pager { padding: var(--space-3) var(--space-4); }
 .wallet-ledger__controls .el-button { margin-inline: 0; }
+@media (max-width: 600px) {
+  .wallet-ledger__dates {
+    inline-size: 100%;
+    min-inline-size: 0;
+  }
+  .wallet-ledger__date-input {
+    flex: 1 1 0;
+    min-inline-size: 0;
+  }
+}
 </style>

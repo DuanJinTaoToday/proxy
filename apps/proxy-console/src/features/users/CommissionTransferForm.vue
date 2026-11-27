@@ -17,6 +17,7 @@ const emit = defineEmits<{
 const { t, locale } = useI18n()
 const amountInputId = useId()
 const fieldErrorId = useId()
+const balanceUnavailableId = useId()
 
 const { amount, busy, pendingAmount, notice, submit, retry } = useCommissionTransfer(props, () => emit('refresh'))
 
@@ -24,6 +25,13 @@ const fieldErrorMessage = computed(() => {
   if (notice.value?.kind === 'invalid') return t('users.commissions.transfer.invalid')
   if (notice.value?.kind === 'exceeds') return t('users.commissions.transfer.exceeds')
   return undefined
+})
+
+const amountDescribedBy = computed(() => {
+  const ids: string[] = []
+  if (fieldErrorMessage.value) ids.push(fieldErrorId)
+  if (props.availableMinor === undefined) ids.push(balanceUnavailableId)
+  return ids.length > 0 ? ids.join(' ') : undefined
 })
 
 const alertNotice = computed<
@@ -110,7 +118,7 @@ const alertNotice = computed<
             :placeholder="t('users.commissions.transfer.amountPlaceholder')"
             :disabled="busy"
             :aria-invalid="fieldErrorMessage ? 'true' : undefined"
-            :aria-describedby="fieldErrorMessage ? fieldErrorId : undefined"
+            :aria-describedby="amountDescribedBy"
             inputmode="decimal"
             autocomplete="off"
             spellcheck="false"
@@ -130,7 +138,7 @@ const alertNotice = computed<
         <p v-if="fieldErrorMessage" :id="fieldErrorId" class="commission-transfer__error" role="alert">
           {{ fieldErrorMessage }}
         </p>
-        <p v-if="props.availableMinor === undefined" class="commission-transfer__hint">
+        <p v-if="props.availableMinor === undefined" :id="balanceUnavailableId" class="commission-transfer__hint">
           {{ t('users.commissions.transfer.balanceUnavailable') }}
         </p>
       </div>

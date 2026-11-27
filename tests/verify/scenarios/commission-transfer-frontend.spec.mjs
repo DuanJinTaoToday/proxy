@@ -78,7 +78,7 @@ test('推广佣金转入钱包，双窗口并发、回执丢失重试及转入�
       await page.route('**' + commissionsPath, route => route.fulfill({ status: 503 }), { times: 1 })
       await page.reload()
       await expect(submit(page)).toBeDisabled()
-      await expect(panel(page)).toContainText('请先加载可用佣金，再转入钱包。')
+      await expect(amount(page)).toHaveAccessibleDescription('请先加载可用佣金，再转入钱包。')
       await panel(page).getByRole('button', { name: '重试', exact: true }).click()
       await expect(panel(page)).toContainText('¥40.00')
       await amount(page).fill('40.01')
@@ -86,7 +86,7 @@ test('推广佣金转入钱包，双窗口并发、回执丢失重试及转入�
       await expect(panel(page)).toContainText(/转入金额不能超过可用佣金/)
       await amount(page).fill('1.001')
       await submit(page).click()
-      await expect(panel(page)).toContainText(/最多两位小数/)
+      await expect(amount(page)).toHaveAccessibleDescription(/最多两位小数/)
       expect(writes).toHaveLength(0)
       await screenshot(page, info, 'commission-invalid-precision')
     })
@@ -191,7 +191,21 @@ test('推广佣金转入钱包，双窗口并发、回执丢失重试及转入�
       await page.setViewportSize({ width: 390, height: 844 })
       await page.getByRole('button', { name: /^语言[:：]/ }).click()
       await page.getByRole('menuitem', { name: 'English', exact: true }).click()
-      await expect(page.getByRole('radiogroup').getByText('Commission transfer', { exact: true })).toBeVisible()
+      const mobileLedger = page.getByRole('region', { name: 'Wallet activity', exact: true })
+      const kinds = mobileLedger.getByRole('radiogroup')
+      const mobileFilters = [
+        ...['All', 'Top-up', 'Commission transfer', 'Charge', 'Refund'].map(name => kinds.getByText(name, { exact: true })),
+        mobileLedger.getByPlaceholder('Start date', { exact: true }),
+        mobileLedger.getByPlaceholder('End date', { exact: true }),
+      ]
+      const toolbar = await mobileLedger.locator('.wallet-ledger__toolbar').boundingBox()
+      expect(toolbar).not.toBeNull()
+      for (const filter of mobileFilters) {
+        await expect(filter).toBeVisible()
+        const box = await filter.boundingBox()
+        expect(box.x).toBeGreaterThanOrEqual(toolbar.x)
+        expect(box.x + box.width).toBeLessThanOrEqual(toolbar.x + toolbar.width)
+      }
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390)
       await screenshot(page, info, 'commission-english-mobile-wallet')
       await page.getByRole('button', { name: /^Language:/ }).click()
