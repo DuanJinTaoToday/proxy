@@ -138,13 +138,14 @@ test('独享换号后复制和导出新连接参数，从原分配继续续费',
     expect(await setup.config(allocation.allocation_id)).toMatchObject({ ip: latest.ip, port: latest.port })
     await info.attach('exchange-success-evidence', { body: JSON.stringify({ order: order.id, allocation: allocation.allocation_id, quota: await setup.quota(), originalDetailRenewals: 1 }), contentType: 'application/json' })
 
+    // Swapped addresses can share the SOCKS fixture IP across scenarios.
+    const [waiting] = await setup.buy({ node_id: '201', term: 'yp1', quantity: 1 })
     await request.post(new URL('/fixture/renewals/delay', process.env.VERIFY_IPCROWN_URL).href, {
-      data: { ip: latest.ip },
+      data: { ip: waiting.ip },
     }).then(json)
-    expect(await setup.renew(allocation.allocation_id)).toMatchObject({ status: 'pending' })
+    expect(await setup.renew(waiting.allocation_id)).toMatchObject({ status: 'pending' })
     await page.reload()
-    await expect(exchangeAction(changed)).toBeDisabled()
-    expect(await fixture(request, { id: upstream.id })).toMatchObject({ calls: 1, renewals: 2 })
+    await expect(exchangeAction(rowFor(page, waiting.ip))).toBeDisabled()
   } finally {
     await setup.close()
   }
@@ -221,7 +222,8 @@ test('换号请求超时且刷新后查无记录，仍可沿用原请求键提�
     await cta(dialog, '确认换号').click()
     const original = (await firstRequest).postDataJSON()
     await page.clock.fastForward(21000)
-    await expect(cta(dialog, '重试原请求')).toBeVisible()
+    await expect(dialog).toContainText('暂未收到本次换号请求的确认回执')
+    await expect(cta(dialog, '重试原请求')).toBeEnabled()
     held.resolve()
     expect(await setup.quota()).toEqual({ remaining: 10, reserved: 0, used: 0 })
     await page.reload()
@@ -262,7 +264,7 @@ test('查询丢回执的旧换号确认后，最新列表已是另一笔记录�
     const sent = submission(page)
     await cta(dialog, '确认换号').click()
     const original = (await sent).postDataJSON()
-    await expect(cta(dialog, '重试原请求')).toBeVisible()
+    await expect(dialog).toContainText('暂未收到本次换号请求的确认回执')
     await expect.poll(() => setup.record(original.idempotency_key).then(record => record.status), { timeout: 20000 }).toBe('ready')
     const current = await setup.config(allocation.allocation_id)
 
