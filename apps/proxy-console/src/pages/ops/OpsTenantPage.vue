@@ -7,7 +7,7 @@ import { ArrowLeft } from '@element-plus/icons-vue'
 import { getOpsTenant, listOpsTenantOrders, type OpsTenant } from '@/api/opsTenants'
 import { hasOperatorPermission } from '@/features/auth'
 import { OrderDrawer, readOrderId } from '@/features/orders'
-import { OpsRecoverEmailDialog, OpsResetPasswordDialog } from '@/features/users'
+import { OpsPromotionCard, OpsRecoverEmailDialog, OpsResetPasswordDialog } from '@/features/users'
 import { OpsRechargeDialog } from '@/features/wallet'
 import { shanghaiDateTime } from '@/shared/lib/businessDates'
 import { formatYuan } from '@/shared/lib/money'
@@ -127,6 +127,8 @@ function trafficBalance(bytes: bigint) {
       </ElCard>
     </div>
 
+    <OpsPromotionCard :key="detail.tenant.id" :tenant-id="detail.tenant.id" class="tenant-promotion" />
+
     <ElTabs class="tenant-history-tabs ops-page-tabs" :model-value="tab" @update:model-value="selectTab">
       <ElTabPane name="orders" class="tenant-history-panel" :label="t('users.opsOrders')">
         <template #label>
@@ -182,4 +184,5 @@ function trafficBalance(bytes: bigint) {
 .tenant-metrics__amount { margin-block-start: var(--space-1); font-size: var(--ops-display-size); font-weight: var(--font-weight-heavy); line-height: calc(var(--space-6) + var(--space-1)); letter-spacing: var(--ops-display-tracking); overflow-wrap: anywhere; }
 .tenant-metrics__debt { color: var(--color-warning-text); }
 .tenant-metrics__hint { margin-block-start: var(--ops-detail-meta-gap); line-height: normal; color: var(--color-text-secondary); font-size: var(--font-size-xs); }
+.tenant-promotion { margin-block-end: var(--space-4); }
 </style>
