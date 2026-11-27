@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
   ElAlert, ElButton, ElCard, ElDialog, ElEmpty, ElInput, ElInputNumber, ElOption,
@@ -7,21 +7,51 @@ import {
 } from 'element-plus'
 import { Search } from '@element-plus/icons-vue'
 import { ApiError } from '@/api/client'
-import { maxStaticPurchaseLines, maxStaticPurchaseQuantity, type StaticPurchaseLine, type StaticPurchaseOffer } from '@/api/staticPricing'
+import {
+  maxStaticPurchaseLines,
+  maxStaticPurchaseQuantity,
+  type StaticCatalogFilter,
+  type StaticPurchaseLine,
+  type StaticPurchaseOffer,
+  type StaticPurchaseSelection,
+} from '@/api/staticPricing'
 import { formatYuan } from '@/shared/lib/money'
+import type { ParsedStaticPurchaseIntent, StaticPurchaseIntent, StaticPurchaseSnapshot } from '@/features/checkout'
 import { useErrorMessage } from '@/shared/lib/useErrorMessage'
 import LinkButton from '@/shared/ui/LinkButton.vue'
 import { offerKey, staticSelectionTotal, useStaticPurchase } from './useStaticPurchase'
 
+type IntentBanner =
+  | { kind: 'invalid' }
+  | { kind: 'blocked', reason: 'unavailable' | 'insufficientStock' | 'closed' }
+  | { kind: 'changed' }
+
 const panelPadding = { padding: 'calc(var(--space-4) + var(--space-1))' }
-const props = defineProps<{ accountKey: string }>()
+const props = defineProps<{
+  accountKey: string
+  intent?: ParsedStaticPurchaseIntent
+}>()
+const emit = defineEmits<{
+  'consume-intent': []
+}>()
 const { t, te, locale } = useI18n()
 const errorMessage = useErrorMessage()
 const cart = ref(new Map<string, StaticPurchaseLine>())
+const intentBanner = ref<IntentBanner>()
+const intentSnapshots = ref(new Map<string, StaticPurchaseSnapshot>())
+let handledIntentKey = ''
+let pendingIntent: StaticPurchaseIntent | undefined
+
+const initialFilter = props.intent?.kind === 'valid' ? props.intent.intent.filter : undefined
 const {
   filters, catalog, wallet, balance, checkout, busy, lastError, pendingOrderIds, loadCatalog, loadWallet,
   reviewPurchase, retryPurchase, refreshOrder, closeCheckout,
-} = useStaticPurchase(props.accountKey, () => cart.value.clear())
+} = useStaticPurchase(props.accountKey, () => {
+  cart.value.clear()
+  intentBanner.value = undefined
+  intentSnapshots.value = new Map()
+  emit('consume-intent')
+}, initialFilter)
 
 const purposes = [
   { id: 8, key: 'staticPricing.purposeTikTok' },
@@ -52,6 +82,9 @@ const terms = computed(() => [...new Map(offers.value.map(offer => [offer.term, 
   .sort((a, b) => a.days - b.days))
 const defaultTerm = 'yp1'
 const currentTerm = computed(() => {
+  if (term.value && cart.value.size > 0 && !terms.value.some(option => option.code === term.value)) {
+    return term.value
+  }
   return (terms.value.find(option => option.code === term.value)
     ?? terms.value.find(option => option.code === defaultTerm)
     ?? terms.value[0])?.code
@@ -106,12 +139,140 @@ const dismissible = computed(() => !busy.value && checkout.value.kind !== 'unres
 const requestConflict = computed(() => checkout.value.kind === 'unresolved' && checkout.value.error instanceof ApiError
   && checkout.value.error.reason === 'WALLET_REQUEST_CONFLICT')
 
+function sameCatalogFilter(first: StaticCatalogFilter, second: StaticCatalogFilter) {
+  if (first.shareMode !== second.shareMode) return false
+  return first.shareMode === 'exclusive' || first.purposeId === (second.shareMode === 'shared' ? second.purposeId : undefined)
+}
+
+function dismissIntent(clearSnapshots = false) {
+  pendingIntent = undefined
+  intentBanner.value = undefined
+  if (clearSnapshots) intentSnapshots.value = new Map()
+  emit('consume-intent')
+}
+
+async function applyPendingIntent() {
+  if (!pendingIntent) return
+  if (checkout.value.kind === 'unresolved') {
+    handledIntentKey = pendingIntent.key
+    pendingIntent = undefined
+    emit('consume-intent')
+    return
+  }
+  if (catalog.value.kind === 'loading' || catalog.value.kind === 'failed') return
+  if (!sameCatalogFilter(filters.value, pendingIntent.filter)) return
+
+  const intent = pendingIntent
+  handledIntentKey = intent.key
+  pendingIntent = undefined
+
+  if (catalog.value.kind === 'closed') {
+    intentBanner.value = { kind: 'blocked', reason: 'closed' }
+    return
+  }
+
+  const matchingOffers = new Map(
+    catalog.value.offers
+      .filter(offer => offer.term === intent.term)
+      .map(offer => [offer.nodeId, offer]),
+  )
+  const snapshots = new Map<string, StaticPurchaseSnapshot>()
+  const nextCart = new Map<string, StaticPurchaseLine>()
+  let hasMissing = false
+  let hasInsufficientStock = false
+  let hasSnapshotChange = false
+
+  for (const line of intent.lines) {
+    if (line.snapshotUnitMinor !== undefined || line.snapshotAvailable !== undefined) {
+      snapshots.set(line.nodeId, { unitMinor: line.snapshotUnitMinor, available: line.snapshotAvailable })
+    }
+    const matched = matchingOffers.get(line.nodeId)
+    if (!matched) {
+      hasMissing = true
+      nextCart.set(line.nodeId, {
+        offer: {
+          nodeId: line.nodeId,
+          region: '',
+          isp: '',
+          continent: '',
+          line: '',
+          term: intent.term,
+          termDays: 0,
+          unitMinor: line.snapshotUnitMinor ?? 0n,
+          available: 0,
+        },
+        quantity: line.quantity,
+      })
+      continue
+    }
+    if (matched.available < line.quantity) hasInsufficientStock = true
+    if (
+      (line.snapshotUnitMinor !== undefined && matched.unitMinor !== line.snapshotUnitMinor)
+      || (line.snapshotAvailable !== undefined && matched.available !== line.snapshotAvailable)
+    ) {
+      hasSnapshotChange = true
+    }
+    nextCart.set(line.nodeId, { offer: matched, quantity: line.quantity })
+  }
+
+  term.value = intent.term
+  cart.value = nextCart
+  intentSnapshots.value = snapshots
+
+  if (hasMissing || hasInsufficientStock) {
+    intentBanner.value = { kind: 'blocked', reason: hasMissing ? 'unavailable' : 'insufficientStock' }
+    return
+  }
+
+  if (hasSnapshotChange) intentBanner.value = { kind: 'changed' }
+  await reviewPurchase({ term: intent.term, lines: [...nextCart.values()] }, false, snapshots)
+  if (checkout.value.kind === 'confirm') {
+    emit('consume-intent')
+    if (checkout.value.changed) intentBanner.value = { kind: 'changed' }
+  }
+}
+
+watch(() => props.intent, intent => {
+  if (!intent || intent.kind === 'none') {
+    pendingIntent = undefined
+    return
+  }
+  if (intent.key === handledIntentKey) return
+  if (checkout.value.kind === 'unresolved') {
+    handledIntentKey = intent.key
+    pendingIntent = undefined
+    emit('consume-intent')
+    return
+  }
+  if (intent.kind === 'invalid') {
+    handledIntentKey = intent.key
+    pendingIntent = undefined
+    intentBanner.value = { kind: 'invalid' }
+    emit('consume-intent')
+    return
+  }
+  pendingIntent = intent.intent
+  intentBanner.value = undefined
+  if (!sameCatalogFilter(filters.value, intent.intent.filter)) {
+    resetSelection()
+    filters.value = intent.intent.filter
+  } else if (catalog.value.kind !== 'loading') {
+    void loadCatalog()
+  }
+}, { immediate: true })
+
+watch(catalog, () => {
+  void applyPendingIntent()
+})
+
 function setShareMode(value: string | number | boolean | undefined) {
   if (value !== 'exclusive' && value !== 'shared') return
+  dismissIntent(true)
   resetSelection()
   filters.value = { shareMode: value }
 }
 function setPurpose(value: number) {
+  dismissIntent(true)
   resetCatalogFilters()
   filters.value = { shareMode: 'shared', purposeId: value || undefined }
 }
@@ -119,6 +280,7 @@ function resetSelection() {
   resetCatalogFilters()
   term.value = ''
   cart.value.clear()
+  intentSnapshots.value = new Map()
 }
 function resetCatalogFilters() {
   region.value = ''
@@ -127,22 +289,54 @@ function resetCatalogFilters() {
   keyword.value = ''
 }
 function changeTerm(value: string | number | boolean | undefined) {
-  if (typeof value === 'string') term.value = value
+  if (typeof value === 'string') {
+    dismissIntent(true)
+    term.value = value
+  }
 }
 function selectNode(offer: StaticPurchaseOffer) {
   if (cart.value.size >= maxStaticPurchaseLines || offer.available <= 0) return
+  dismissIntent()
   term.value = offer.term
   cart.value.set(offer.nodeId, { offer, quantity: 1 })
 }
 function changeQuantity(offer: StaticPurchaseOffer, value: number | undefined) {
+  dismissIntent()
   if (value === 0) cart.value.delete(offer.nodeId)
   if (value !== undefined && Number.isInteger(value) && value > 0 && offer.available > 0) {
     cart.value.set(offer.nodeId, { offer, quantity: Math.min(value, offer.available) })
   }
 }
-function startReview() {
-  if (currentTerm.value && canReview.value) void reviewPurchase({ term: currentTerm.value, lines: cartLines.value })
+function removeLine(nodeId: string) {
+  dismissIntent()
+  cart.value.delete(nodeId)
+  if (!cart.value.size && term.value && !terms.value.some(option => option.code === term.value)) {
+    term.value = ''
+  }
 }
+function clearCart() {
+  dismissIntent(true)
+  cart.value.clear()
+  if (term.value && !terms.value.some(option => option.code === term.value)) {
+    term.value = ''
+  }
+}
+async function startReview() {
+  if (!currentTerm.value || !canReview.value) return
+  const snapshots = intentSnapshots.value.size ? intentSnapshots.value : undefined
+  await reviewPurchase({ term: currentTerm.value, lines: cartLines.value }, false, snapshots)
+  if (checkout.value.kind === 'confirm') emit('consume-intent')
+}
+async function retryBlockedQuote(selection: StaticPurchaseSelection) {
+  const snapshots = intentSnapshots.value.size ? intentSnapshots.value : undefined
+  await reviewPurchase(selection, false, snapshots)
+  if (checkout.value.kind === 'confirm') emit('consume-intent')
+}
+function snapshotFor(nodeId: string) {
+  return checkout.value.kind === 'confirm' ? checkout.value.snapshots?.get(nodeId) : undefined
+}
+const cartLineTitle = (offer: StaticPurchaseOffer, available: number | undefined) =>
+  offer.region || (available === undefined ? t('staticPricing.nodeFallback', { id: offer.nodeId }) : offerRegion(offer))
 function shortfall(total: bigint) {
   return balance.value !== undefined && balance.value < total ? total - balance.value : 0n
 }
@@ -163,12 +357,35 @@ function checkoutError(error: unknown) {
 <template>
   <ElCard v-if="catalog.kind === 'closed'" class="pricing-closed" shadow="never">
     <ElEmpty :description="t('staticPricing.closed')" :image-size="80" />
+    <div class="closed-actions">
+      <LinkButton :to="{ name: 'pricing', params: { locale } }">{{ t('staticPricing.backToPricing') }}</LinkButton>
+    </div>
   </ElCard>
   <div v-if="pendingOrderIds.length" class="pending-orders pricing-notice">
     <ElButton v-for="id in pendingOrderIds" :key="id" :disabled="busy" @click="refreshOrder(id)">
       {{ t('staticPricing.pendingOrder', { id }) }}
     </ElButton>
   </div>
+  <ElAlert
+    v-if="intentBanner && catalog.kind !== 'closed'"
+    class="pricing-notice"
+    type="warning"
+    :title="t(
+      intentBanner.kind === 'invalid'
+        ? 'staticPricing.intentInvalid'
+        : intentBanner.kind === 'changed'
+          ? 'staticPricing.intentChanged'
+          : intentBanner.reason === 'unavailable'
+            ? 'staticPricing.intentUnavailable'
+            : 'staticPricing.intentInsufficientStock',
+    )"
+    :closable="false"
+    show-icon
+  >
+    <div v-if="intentBanner.kind === 'blocked' && intentBanner.reason === 'unavailable'" class="intent-alert-action">
+      <LinkButton size="small" :to="{ name: 'pricing', params: { locale } }">{{ t('staticPricing.backToPricing') }}</LinkButton>
+    </div>
+  </ElAlert>
   <ElAlert v-if="lastError" class="pricing-notice" type="warning" :title="checkoutError(lastError)" :closable="false" show-icon />
   <div v-if="catalog.kind !== 'closed'" class="pricing">
     <ElCard shadow="never" class="pricing-catalog" :body-style="panelPadding">
@@ -265,7 +482,7 @@ function checkoutError(error: unknown) {
       <aside class="summary-content" :aria-label="t('staticPricing.summary')">
         <div class="selection summary-heading">
           <h2>{{ t('staticPricing.summaryProduct', { product: productLabel }) }}</h2>
-          <ElButton link :disabled="!cart.size" @click="cart.clear()">{{ t('staticPricing.clear') }}</ElButton>
+          <ElButton link :disabled="!cart.size" @click="clearCart">{{ t('staticPricing.clear') }}</ElButton>
         </div>
         <div class="summary-terms">
           <span>{{ t('staticPricing.term') }}</span>
@@ -277,7 +494,7 @@ function checkoutError(error: unknown) {
           <section v-for="line in cartLines" :key="line.offer.nodeId" class="cart-line">
             <div class="selection">
               <div>
-                <h3>{{ offerRegion(line.offer) }}</h3>
+                <h3>{{ cartLineTitle(line.offer, line.available) }}</h3>
                 <p v-if="line.offer.isp || line.offer.line" class="muted">{{ offerLine(line.offer) }}</p>
                 <p v-if="line.available !== undefined" class="muted tabular">
                   {{ t('staticPricing.pricePerIp', { price: money(line.offer.unitMinor) }) }}
@@ -285,12 +502,14 @@ function checkoutError(error: unknown) {
               </div>
               <ElInputNumber :model-value="line.quantity" :min="0" :max="Math.max(line.quantity, line.available ?? 0)"
                 size="small" :disabled="!line.available" :precision="0"
-                :aria-label="cart.size === 1 ? t('staticPricing.quantity') : t('staticPricing.regionQuantity', { region: offerRegion(line.offer) })"
+                :aria-label="cart.size === 1 ? t('staticPricing.quantity') : t('staticPricing.regionQuantity', { region: cartLineTitle(line.offer, line.available) })"
                 @change="changeQuantity(line.offer, $event)" />
-              <ElButton v-if="!line.available" link :aria-label="t('staticPricing.removeOffer', { region: offerRegion(line.offer) })"
-                @click="cart.delete(line.offer.nodeId)">{{ t('staticPricing.remove') }}</ElButton>
+              <ElButton v-if="!line.available" link :aria-label="t('staticPricing.removeOffer', { region: cartLineTitle(line.offer, line.available) })"
+                @click="removeLine(line.offer.nodeId)">{{ t('staticPricing.remove') }}</ElButton>
             </div>
-            <p v-if="catalog.kind === 'open' && line.available === undefined" class="muted">{{ t('staticPricing.unavailableLine') }}</p>
+            <p v-if="catalog.kind === 'open' && line.available === undefined" class="muted">
+              {{ t('staticPricing.unavailableLineWithStock', { stock: count(0) }) }}
+            </p>
             <p v-else-if="line.available !== undefined && line.quantity > line.available" class="muted">
               {{ t('staticPricing.adjustQuantity', { stock: count(line.available) }) }}
             </p>
@@ -338,7 +557,13 @@ function checkoutError(error: unknown) {
         <dl v-if="line.currentOffer" class="summary-list tabular">
           <div><dt>{{ t('staticPricing.term') }}</dt><dd>{{ termDays(line.currentOffer.termDays) }}</dd></div>
           <div><dt>{{ t('staticPricing.quantity') }}</dt><dd>{{ count(line.quantity) }}</dd></div>
+          <div v-if="snapshotFor(line.offer.nodeId)?.available !== undefined && snapshotFor(line.offer.nodeId)?.available !== line.currentOffer.available" class="muted">
+            <dt>{{ t('staticPricing.previousStock') }}</dt><dd>{{ count(snapshotFor(line.offer.nodeId)!.available!) }}</dd>
+          </div>
           <div><dt>{{ t('staticPricing.stock') }}</dt><dd>{{ count(line.currentOffer.available) }}</dd></div>
+          <div v-if="snapshotFor(line.offer.nodeId)?.unitMinor !== undefined && snapshotFor(line.offer.nodeId)?.unitMinor !== line.currentOffer.unitMinor" class="muted">
+            <dt>{{ t('staticPricing.previousUnitPrice') }}</dt><dd>{{ money(snapshotFor(line.offer.nodeId)!.unitMinor!) }}</dd>
+          </div>
           <div><dt>{{ t('staticPricing.unitPrice') }}</dt><dd>{{ money(line.currentOffer.unitMinor) }}</dd></div>
           <div v-if="reviewLines.length > 1">
             <dt>{{ t('staticPricing.subtotal') }}</dt><dd>{{ money(line.currentOffer.unitMinor * BigInt(line.quantity)) }}</dd>
@@ -380,7 +605,7 @@ function checkoutError(error: unknown) {
           {{ t('staticPricing.pay') }}
         </ElButton>
         <ElButton v-if="checkout.kind === 'blocked' && checkout.retry" type="primary" :loading="busy"
-          @click="reviewPurchase(checkout.retry)">
+          @click="retryBlockedQuote(checkout.retry)">
           {{ t('staticPricing.retryQuote') }}
         </ElButton>
         <template v-if="checkout.kind === 'unresolved'">
@@ -413,6 +638,8 @@ function checkoutError(error: unknown) {
 .pricing-catalog, .pricing-summary, .pricing-closed { --el-card-border-radius: var(--radius-card); min-width: 0; }
 .pricing-summary { position: sticky; top: var(--space-4); }
 .pricing-notice { margin-bottom: var(--space-4); }
+.closed-actions { display: flex; justify-content: center; padding-bottom: var(--space-4); }
+.intent-alert-action { margin-top: var(--space-2); }
 .muted { color: var(--color-text-secondary); }
 h2 { font-size: var(--font-size-lg); }
 h3 { font-size: var(--font-size-md); }

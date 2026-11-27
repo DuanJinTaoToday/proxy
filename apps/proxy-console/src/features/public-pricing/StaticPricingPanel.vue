@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useRouter, type LocationQueryRaw } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ElButton } from 'element-plus'
 import { Box, Delete, Minus, Plus } from '@element-plus/icons-vue'
-import type { StaticPurchaseOffer } from '@/api/staticPricing'
+import { maxStaticPurchaseLines, maxStaticPurchaseQuantity, type StaticPurchaseOffer } from '@/api/staticPricing'
 import { formatYuan } from '@/shared/lib/money'
+import { buildStaticPurchaseIntentQuery } from '@/features/checkout'
 import { flagForRegion } from '@/shared/lib/regionFlags'
 import FlagIcon from '@/shared/ui/FlagIcon.vue'
 import { usePricingError } from './pricingError'
@@ -87,21 +88,26 @@ function qtyOf(offer: StaticPurchaseOffer) {
 }
 
 function addOffer(offer: StaticPurchaseOffer) {
-  const next = new Map(cart.value)
   const key = keyOf(offer)
-  const existing = next.get(key)
+  const existing = cart.value.get(key)
+  if (!existing && cart.value.size >= maxStaticPurchaseLines) return
+  if (totalCount.value >= maxStaticPurchaseQuantity) return
+  if (existing && existing.qty >= offer.available) return
+  const next = new Map(cart.value)
   const nextQty = Math.min((existing?.qty ?? 0) + 1, offer.available)
   next.set(key, { offer, qty: nextQty })
   cart.value = next
 }
 
 function stepOffer(key: string, delta: number) {
-  const next = new Map(cart.value)
-  const item = next.get(key)
+  const item = cart.value.get(key)
   if (!item) return
+  if (delta > 0 && totalCount.value >= maxStaticPurchaseQuantity) return
+  const next = new Map(cart.value)
+  const remaining = maxStaticPurchaseQuantity - (totalCount.value - item.qty)
   const nextQty = item.qty + delta
   if (nextQty <= 0) next.delete(key)
-  else next.set(key, { ...item, qty: Math.min(nextQty, item.offer.available) })
+  else next.set(key, { ...item, qty: Math.min(nextQty, item.offer.available, remaining) })
   cart.value = next
 }
 
@@ -112,17 +118,39 @@ function clearCart() {
 const cartItems = computed(() => [...cart.value.entries()].map(([key, item]) => ({ key, ...item })))
 const totalCount = computed(() => cartItems.value.reduce((sum, item) => sum + item.qty, 0))
 const totalMinor = computed(() => cartItems.value.reduce((sum, item) => sum + item.offer.unitMinor * BigInt(item.qty), 0n))
+const atLineLimit = computed(() => cart.value.size >= maxStaticPurchaseLines)
+const atQuantityLimit = computed(() => totalCount.value >= maxStaticPurchaseQuantity)
+const formatCount = (value: number) => new Intl.NumberFormat(locale.value).format(value)
+const limitMessage = computed(() => {
+  if (atQuantityLimit.value) {
+    return t('publicPricing.static.quantityLimit', { count: formatCount(maxStaticPurchaseQuantity) })
+  }
+  if (atLineLimit.value) {
+    return t('publicPricing.static.lineLimit', { count: formatCount(maxStaticPurchaseLines) })
+  }
+  return ''
+})
+
+function isOfferDisabled(offer: StaticPurchaseOffer) {
+  const existingQty = qtyOf(offer)
+  if (existingQty === 0) return atLineLimit.value || atQuantityLimit.value
+  return existingQty >= offer.available || atQuantityLimit.value
+}
 
 function checkout() {
-  if (!cartItems.value.length) return
-  const query: LocationQueryRaw = {
+  if (!cartItems.value.length || !selectedTerm.value) return
+  if (cartItems.value.length > maxStaticPurchaseLines || totalCount.value > maxStaticPurchaseQuantity) return
+  const query = buildStaticPurchaseIntentQuery({
     shareMode: props.shareMode,
-    term: selectedTerm.value || undefined,
-    items: cartItems.value.map(item => `${item.offer.nodeId}:${item.qty}`).join(','),
-  }
-  if (props.shareMode === 'shared' && props.purpose) {
-    query.purpose = String(props.purpose)
-  }
+    purposeId: props.shareMode === 'shared' && props.purpose ? props.purpose : undefined,
+    term: selectedTerm.value,
+    lines: cartItems.value.map(item => ({
+      nodeId: item.offer.nodeId,
+      quantity: item.qty,
+      unitMinor: item.offer.unitMinor,
+      available: item.offer.available,
+    })),
+  })
   void router.push({ name: 'console-static-pricing', query })
 }
 </script>
@@ -186,6 +214,7 @@ function checkout() {
           type="button"
           class="offer-row"
           :class="{ 'is-selected': qtyOf(offer) > 0 }"
+          :disabled="isOfferDisabled(offer)"
           @click="addOffer(offer)"
         >
           <span class="offer-row__strip">{{ offer.isp || t('publicPricing.static.defaultTag') }}</span>
@@ -250,10 +279,12 @@ function checkout() {
           <span class="stepper">
             <button type="button" :aria-label="t('publicPricing.static.decrease')" @click="stepOffer(item.key, -1)"><Minus /></button>
             <strong class="tabular">{{ item.qty }}</strong>
-            <button type="button" :aria-label="t('publicPricing.static.increase')" :disabled="item.qty >= item.offer.available" @click="stepOffer(item.key, 1)"><Plus /></button>
+            <button type="button" :aria-label="t('publicPricing.static.increase')" :disabled="item.qty >= item.offer.available || atQuantityLimit" @click="stepOffer(item.key, 1)"><Plus /></button>
           </span>
         </li>
       </ul>
+
+      <p v-if="limitMessage" class="cart-limit" role="status">{{ limitMessage }}</p>
 
       <div class="cart-summary">
         <span>{{ t('publicPricing.static.totalCount') }}: <strong class="tabular">{{ totalCount }}</strong></span>
@@ -373,10 +404,14 @@ h3 {
   cursor: pointer;
   transition: border-color .2s, box-shadow .2s, transform .2s var(--home-ease);
 }
-.offer-row:hover {
+.offer-row:hover:not(:disabled) {
   border-color: var(--home-sky-300);
   box-shadow: var(--home-card-shadow);
   transform: translateY(-1px);
+}
+.offer-row:disabled {
+  opacity: .55;
+  cursor: not-allowed;
 }
 .offer-row.is-selected {
   border-color: var(--home-brand);
@@ -552,6 +587,16 @@ h3 {
 .stepper svg { width: var(--home-cart-stepper-glyph); height: var(--home-cart-stepper-glyph); }
 .stepper strong { min-width: var(--home-cart-stepper-min-w); text-align: center; font-size: var(--home-fs-micro); }
 
+.cart-limit {
+  margin-top: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width) solid var(--home-price-border);
+  border-radius: var(--home-radius-sm);
+  background: var(--home-price-soft);
+  color: var(--home-price);
+  font-size: var(--home-fs-micro);
+  line-height: 1.5;
+}
 .cart-summary {
   display: flex;
   align-items: baseline;

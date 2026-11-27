@@ -5,6 +5,7 @@ import { ElButton } from 'element-plus'
 import { Check, Connection } from '@element-plus/icons-vue'
 import { unitPrice } from '@/features/catalog'
 import { formatYuan } from '@/shared/lib/money'
+import { buildDynamicPurchaseIntentQuery } from '@/features/checkout'
 import { formatGB } from '@/shared/lib/trafficUnits'
 import { usePricingError } from './pricingError'
 import type { DynamicPricing, Loadable } from './usePublicPricing'
@@ -97,7 +98,7 @@ const packages = computed(() => {
             <span class="tier-card__meta">{{ t('publicPricing.dynamic.socks5Tag') }}</span>
           </div>
 
-          <RouterLink class="tier-card__cta" :to="{ name: 'console-dynamic-pricing', query: { package: tier.id } }">
+          <RouterLink class="tier-card__cta" :to="{ name: 'console-dynamic-pricing', query: buildDynamicPurchaseIntentQuery(tier) }">
             {{ t('publicPricing.buyPackage', { capacity: formatGB(tier.capacityBytes, locale) }) }}
           </RouterLink>
         </article>

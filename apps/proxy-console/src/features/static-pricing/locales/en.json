@@ -94,6 +94,15 @@
     "availableCount": "{count} available",
     "pricePerIp": "{price}/IP",
     "summaryProduct": "Order summary · {product}",
-    "ipCount": "IP count"
+    "ipCount": "IP count",
+    "nodeFallback": "Node #{id}",
+    "unavailableLineWithStock": "This region is unavailable for the selected term (available stock: {stock}).",
+    "previousUnitPrice": "Previous price per IP",
+    "previousStock": "Previous stock",
+    "backToPricing": "Back to pricing to choose another product",
+    "intentInvalid": "The purchase parameters are invalid or incomplete. Select regions and quantities again.",
+    "intentUnavailable": "Some selected offers are no longer available for this term. Your selection was kept; remove them or choose other products.",
+    "intentInsufficientStock": "Available stock is lower than your requested quantity. Your quantity was kept; adjust or remove items to continue.",
+    "intentChanged": "Prices or stock changed since you viewed public pricing. Review the latest quote before confirming payment."
   }
 }

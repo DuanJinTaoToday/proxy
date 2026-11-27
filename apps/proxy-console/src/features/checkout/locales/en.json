@@ -38,6 +38,14 @@
     "selected": "Selected package",
     "trafficChange": "{before} → {after}",
     "confirmedPackage": "Dynamic Residential Proxies · {capacity}",
-    "trafficDebt": "The first {amount} will cover your negative traffic balance."
+    "trafficDebt": "The first {amount} will cover your negative traffic balance.",
+    "backToPricing": "Back to pricing to choose another product",
+    "selectAvailablePrompt": "Choose a currently listed traffic package first.",
+    "intentInvalid": "The package parameter is invalid. Choose a currently listed package.",
+    "intentUnavailable": "The package you selected is no longer listed. Choose another available package.",
+    "intentClosed": "Dynamic residential traffic packages are currently off sale. Return to pricing to choose another product.",
+    "intentPriceChanged": "This package price changed from {previous} to {current}. Review the current price, then click Buy now to confirm.",
+    "intentVersionChanged": "This package offer was updated. The current price is {current}; review it and click Buy now to confirm.",
+    "intentRestored": "Your selected traffic package has been restored. Review the price and wallet balance, then click Buy now to confirm."
   }
 }
