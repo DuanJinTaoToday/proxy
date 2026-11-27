@@ -61,8 +61,19 @@ export async function signIn(email: string, password: string) {
   account.value = undefined
 }
 
-export async function register(email: string, password: string, verificationCode: string) {
-  await access.register({ email: normalizeEmail(email), password, verificationCode: verificationCode.trim() })
+export interface RegisterInviteOptions {
+  inviteCode?: string
+  linkInviteCode?: string
+}
+
+export async function register(email: string, password: string, verificationCode: string, invite?: RegisterInviteOptions) {
+  await access.register({
+    email: normalizeEmail(email),
+    password,
+    verificationCode: verificationCode.trim(),
+    inviteCode: invite?.inviteCode !== undefined ? invite.inviteCode.trim() : undefined,
+    linkInviteCode: invite?.linkInviteCode !== undefined ? invite.linkInviteCode.trim() : undefined,
+  })
 }
 
 // 验证码按输入原样（去首尾空白）投递；控制面自行归一化账号标识。找回密码总是发往账号已核实的地址，只需标识。

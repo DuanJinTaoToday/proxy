@@ -1,4 +1,6 @@
 export { default as AccessLocationCard } from './AccessLocationCard.vue'
+export { default as ReferralShareCard } from './ReferralShareCard.vue'
+export { default as OpsPromotionCard } from './OpsPromotionCard.vue'
 export { default as OpsResetPasswordDialog } from './OpsResetPasswordDialog.vue'
 export { default as OpsRecoverEmailDialog } from './OpsRecoverEmailDialog.vue'
 export { messages } from './messages'
