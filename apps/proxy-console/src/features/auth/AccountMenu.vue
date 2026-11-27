@@ -42,6 +42,7 @@ async function confirmSignOut() {
       <ElDropdownMenu>
         <ElDropdownItem @click="router.push({ name: 'console-account-profile' })">{{ t('auth.profile') }}</ElDropdownItem>
         <ElDropdownItem @click="router.push({ name: 'console-account-orders' })">{{ t('auth.orders') }}</ElDropdownItem>
+        <slot />
         <ElDropdownItem divided @click="confirmSignOut">{{ t('auth.logout') }}</ElDropdownItem>
       </ElDropdownMenu>
     </template>

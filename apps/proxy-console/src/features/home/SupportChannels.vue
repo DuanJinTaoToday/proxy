@@ -3,10 +3,11 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import { ChatDotRound, Phone, Promotion } from '@element-plus/icons-vue'
-import { isCopyChannel, supportChannels, supportConfig, type SupportChannel } from './support'
+import { supportChannels, supportConfig, type PhoneContact, type SupportChannel } from './support'
 import { useCopy } from './useCopy'
 
-const props = withDefaults(defineProps<{ variant?: 'dock' | 'list' }>(), { variant: 'dock' })
+// dock：官网右侧客服坞；list：官网页脚联系栏；panel：用户控制台客服弹窗（浅色）。
+const props = withDefaults(defineProps<{ variant?: 'dock' | 'list' | 'panel' }>(), { variant: 'dock' })
 const { t } = useI18n()
 const { copy } = useCopy()
 
@@ -14,12 +15,15 @@ const qqGlyphPath = 'M12 2.2c-3.7 0-6.2 2.9-6.2 7 0 .6.1 1.1.2 1.6-1.1 1.4-2 3.4
 
 const icons = { chat: ChatDotRound, telegram: Promotion, qq: undefined, phone: Phone }
 const entries = computed(() => supportChannels
-  .map(channel => ({ channel, value: supportConfig[channel], icon: icons[channel] }))
-  .filter(entry => props.variant === 'dock' || entry.value))
+  .map((channel) => {
+    const value = supportConfig[channel]
+    return { channel, icon: icons[channel], href: typeof value === 'string' ? value : undefined, phone: typeof value === 'object' ? value : undefined }
+  })
+  .filter(entry => props.variant === 'dock' || entry.href || entry.phone))
 
 const label = (channel: SupportChannel) => t(`marketing.support.${channel}`)
-function activate(channel: SupportChannel, value: string) {
-  if (isCopyChannel(channel)) void copy(channel, value, t('marketing.support.copied', { name: label(channel) }))
+function copyPhone(phone: PhoneContact) {
+  void copy('phone', phone.value, t('marketing.support.copied', { name: label('phone') }))
 }
 function notifySoon() {
   ElMessage({ message: t('marketing.support.soon'), type: 'info', offset: 80 })
@@ -29,22 +33,20 @@ function notifySoon() {
 <template>
   <nav class="support" :class="`support--${variant}`" :aria-label="t('marketing.support.title')">
     <template v-for="entry in entries" :key="entry.channel">
-      <a v-if="entry.value && !isCopyChannel(entry.channel)" class="support__item" :href="entry.value" target="_blank" rel="noopener noreferrer">
+      <a v-if="entry.href" class="support__item" :href="entry.href" target="_blank" rel="noopener noreferrer">
         <component :is="entry.icon" v-if="entry.icon" class="support__icon" aria-hidden="true" />
         <svg v-else class="support__icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
           <path :d="qqGlyphPath" />
         </svg>
         <span class="support__label">{{ label(entry.channel) }}</span>
-        <span v-if="variant === 'list'" class="support__value">{{ t('marketing.support.open') }}</span>
+        <span v-if="variant !== 'dock'" class="support__value">{{ t('marketing.support.open') }}</span>
+        <span class="support__sr">{{ t('marketing.support.newTab') }}</span>
       </a>
-      <button v-else-if="entry.value" type="button" class="support__item" :title="t('marketing.support.copyHint')" @click="activate(entry.channel, entry.value)">
-        <component :is="entry.icon" v-if="entry.icon" class="support__icon" aria-hidden="true" />
-        <svg v-else class="support__icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <path :d="qqGlyphPath" />
-        </svg>
+      <button v-else-if="entry.phone" type="button" class="support__item" :title="t('marketing.support.copyHint')" @click="copyPhone(entry.phone)">
+        <Phone class="support__icon" aria-hidden="true" />
         <span class="support__label">{{ label(entry.channel) }}</span>
-        <span v-if="variant === 'list'" class="support__value mono">{{ entry.value }}</span>
-        <span v-else class="support__tip mono">{{ entry.value }}</span>
+        <span v-if="variant !== 'dock'" class="support__value mono">{{ entry.phone.display }}</span>
+        <span v-else class="support__tip mono">{{ entry.phone.display }}</span>
       </button>
       <button v-else type="button" class="support__item support__item--off" data-state="soon" @click="notifySoon">
         <component :is="entry.icon" v-if="entry.icon" class="support__icon" aria-hidden="true" />
@@ -62,6 +64,7 @@ function notifySoon() {
 .support__item { position: relative; display: flex; align-items: center; border: 0; background: transparent; color: var(--home-on-dark); font-size: var(--home-fs-micro); cursor: pointer; transition: background .2s, color .2s; }
 .support__item--off { color: var(--home-on-dark-faint); }
 .support__icon { flex: none; width: var(--space-5); height: var(--space-5); }
+.support__sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
 .support--dock { position: fixed; z-index: 20; inset-inline-end: var(--space-3); inset-block-start: 50%; display: flex; flex-direction: column; gap: var(--space-1); padding: var(--space-2); border: var(--border-width) solid var(--home-line-dark-strong); border-radius: var(--home-radius-lg); background: var(--home-header-background); box-shadow: var(--home-dock-shadow); backdrop-filter: blur(var(--home-header-blur)); transform: translateY(-50%); }
 .support--dock .support__item { flex-direction: column; justify-content: center; gap: var(--home-dock-item-gap); width: var(--home-dock-item-size); min-height: var(--home-dock-item-size); border-radius: var(--home-radius-md); }
@@ -74,6 +77,14 @@ function notifySoon() {
 .support--list .support__item:hover { background: var(--home-line-dark); }
 .support--list .support__label { color: var(--home-on-dark-muted); min-width: 4.5em; }
 .support--list .support__value { color: var(--home-on-dark); }
+
+/* 控制台浅色面板：沿用页脚联系栏的行结构，颜色改用控制台语义 token。 */
+.support--panel { display: grid; gap: var(--space-2); }
+.support--panel .support__item { gap: var(--space-3); min-height: var(--control-height); padding: var(--space-2) var(--space-3); border: var(--border-width) solid var(--color-border); border-radius: var(--radius-control); color: var(--color-text); font-size: var(--font-size-md); text-align: start; text-decoration: none; }
+.support--panel .support__item:hover { border-color: var(--color-primary-border); background: var(--color-primary-soft); }
+.support--panel .support__icon { color: var(--color-primary); }
+.support--panel .support__label { min-width: 5em; color: var(--color-text-secondary); }
+.support--panel .support__value { margin-inline-start: auto; color: var(--color-text); font-weight: var(--font-weight-medium); }
 
 @media (max-width: 767px) {
   .support--dock { inset: auto 0 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; padding: var(--space-1) var(--space-2) calc(var(--space-1) + env(safe-area-inset-bottom)); border-width: var(--border-width) 0 0; border-radius: 0; transform: none; }

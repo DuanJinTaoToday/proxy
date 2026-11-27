@@ -99,7 +99,9 @@ function switchLocale(next: Locale) {
       </ElDropdown>
 
       <OperatorMenu v-if="ops" />
-      <AccountMenu v-else-if="hasSession()" :tenant="tenant" />
+      <AccountMenu v-else-if="hasSession()" :tenant="tenant">
+        <slot name="account-actions" />
+      </AccountMenu>
       <template v-else>
         <LinkButton :to="`/${locale}/login`" text :class="{ 'home-header-login': marketing }">{{ t('header.login') }}</LinkButton>
         <LinkButton :to="`/${locale}/register`" type="primary" :class="{ 'home-header-register': marketing }">{{ t('header.register') }}</LinkButton>

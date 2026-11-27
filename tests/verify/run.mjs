@@ -4,7 +4,9 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { isIPv4 } from 'node:net'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { supportBuildArgs, supportFixtureMode } from './fixtures/support.mjs'
 
+const supportArgs = supportBuildArgs()
 const root = fileURLToPath(new URL('../../', import.meta.url))
 const suite = path.join(root, 'tests/verify')
 const runId = randomUUID()
@@ -20,7 +22,7 @@ function compose(args, capture = false) {
     '-f', 'deploy/test/compose.verify.yaml', ...args,
   ], {
     cwd: root, encoding: 'utf8',
-    env: { ...process.env, PROXY_VERIFY_CONTROL_CONFIG: controlConfig },
+    env: { ...process.env, ...supportArgs, PROXY_VERIFY_CONTROL_CONFIG: controlConfig },
     stdio: capture ? ['ignore', 'pipe', 'inherit'] : 'inherit',
   })
 }
@@ -32,7 +34,7 @@ function hostPort(service, containerPort) {
   return port
 }
 
-const run = { project, startedAt: new Date().toISOString(), result: 'failed' }
+const run = { project, supportFixture: supportFixtureMode, startedAt: new Date().toISOString(), result: 'failed' }
 try {
   run.commit = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim()
   run.workingTree = execFileSync('git', ['status', '--porcelain'], { cwd: root, encoding: 'utf8' }).trimEnd()

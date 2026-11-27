@@ -1,14 +1,13 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Lock } from '@element-plus/icons-vue'
 import { hasSession } from '@/features/auth'
 import BrandMark from '@/shared/ui/BrandMark.vue'
-import { supportChannels, supportConfig } from './support'
+import { hasSupportContact } from './support'
 import SupportChannels from './SupportChannels.vue'
+import SupportNotice from './SupportNotice.vue'
 
 const { t, locale } = useI18n()
-const hasContact = computed(() => supportChannels.some(channel => supportConfig[channel]))
 const products = [
   { id: 'dynamic', query: { category: 'dynamic' } },
   { id: 'exclusive', query: { category: 'exclusive' } },
@@ -45,7 +44,10 @@ const products = [
         </div>
         <div>
           <h3>{{ t('marketing.footer.contact') }}</h3>
-          <SupportChannels v-if="hasContact" variant="list" />
+          <template v-if="hasSupportContact">
+            <SupportChannels variant="list" />
+            <SupportNotice class="footer__notice" />
+          </template>
           <p v-else class="footer__soon">{{ t('marketing.support.soonAll') }}</p>
         </div>
       </div>
@@ -80,6 +82,7 @@ ul { display: grid; gap: var(--space-3); margin: 0; padding: 0; list-style: none
 ul a { color: var(--home-on-dark-muted); transition: color .2s; }
 ul a:hover { color: var(--home-sky-300); }
 .footer__soon { font-size: var(--home-fs-small); color: var(--home-on-dark-muted); }
+.footer__notice { margin-top: var(--space-4); max-width: 24em; color: var(--home-on-dark-faint); }
 .footer__legal { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-3); margin-top: var(--home-block-gap); padding-top: var(--space-5); border-top: var(--border-width) solid var(--home-line-dark); font-size: var(--home-fs-micro); color: var(--home-on-dark-faint); }
 .compliance { display: inline-flex; align-items: center; gap: var(--space-2); }
 .compliance svg { width: var(--home-icon-sm); height: var(--home-icon-sm); color: var(--home-sky-400); }
