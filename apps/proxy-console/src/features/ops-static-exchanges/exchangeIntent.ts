@@ -68,8 +68,14 @@ export function generateRequestKey(): string {
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`
 }
 
-export function isDefinitiveClientRejection(error: unknown): boolean {
-  return error instanceof ApiError && error.status >= 400 && error.status < 500
+export type IntentSubmissionAttempt = 'initial' | 'replay'
+
+const uncertainClientStatuses = new Set([401, 408, 425, 429])
+
+export function shouldClearPendingIntent(error: unknown, attempt: IntentSubmissionAttempt): boolean {
+  if (attempt === 'replay') return false
+  if (!(error instanceof ApiError)) return false
+  return error.status >= 400 && error.status < 500 && !uncertainClientStatuses.has(error.status)
 }
 
 export function toIntentErrorSnapshot(error: unknown): IntentErrorSnapshot {

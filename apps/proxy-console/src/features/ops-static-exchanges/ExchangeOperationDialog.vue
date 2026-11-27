@@ -30,11 +30,12 @@ import { useErrorMessage } from '@/shared/lib/useErrorMessage'
 import {
   clearPendingIntent,
   generateRequestKey,
-  isDefinitiveClientRejection,
   loadPendingIntent,
   savePendingIntent,
+  shouldClearPendingIntent,
   toIntentErrorSnapshot,
   type ExchangeIntentAction,
+  type IntentSubmissionAttempt,
   type PendingAdjustQuotaIntent,
   type PendingExchangeIntent,
   type PendingResolveExchangeIntent,
@@ -226,7 +227,7 @@ watch(
   { immediate: true },
 )
 
-async function executeIntent(intent: PendingExchangeIntent) {
+async function executeIntent(intent: PendingExchangeIntent, attempt: IntentSubmissionAttempt) {
   if (!canWrite.value || submitting.value) return
   if (intent.operator !== operator.value || intent.tenantId !== props.tenantId) return
   submitting.value = true
@@ -254,7 +255,7 @@ async function executeIntent(intent: PendingExchangeIntent) {
     }
   } catch (error) {
     failure.value = error
-    if (isDefinitiveClientRejection(error)) {
+    if (shouldClearPendingIntent(error, attempt)) {
       clearPendingIntent(
         intent.operator,
         intent.action,
@@ -281,6 +282,18 @@ async function submitNewRequest() {
   if (!canWrite.value || submitting.value || pendingIntent.value || validationKey.value) return
   if (!operator.value || !props.tenantId) return
 
+  const existing = loadPendingIntent(
+    operator.value,
+    intentAction.value,
+    props.tenantId,
+    intentAction.value === 'adjust_quota' ? undefined : targetIdempotencyKey.value,
+  )
+  if (existing) {
+    pendingIntent.value = existing
+    emit('intentsChanged')
+    return
+  }
+
   const requestKey = generateRequestKey()
   const trimmedEvidence = evidence.value.trim()
 
@@ -303,7 +316,7 @@ async function submitNewRequest() {
     savePendingIntent(intent)
     pendingIntent.value = intent
     emit('intentsChanged')
-    await executeIntent(intent)
+    await executeIntent(intent, 'initial')
     return
   }
 
@@ -336,12 +349,12 @@ async function submitNewRequest() {
   savePendingIntent(intent)
   pendingIntent.value = intent
   emit('intentsChanged')
-  await executeIntent(intent)
+  await executeIntent(intent, 'initial')
 }
 
 async function retryOriginalRequest() {
   if (!pendingIntent.value) return
-  await executeIntent(pendingIntent.value)
+  await executeIntent(pendingIntent.value, 'replay')
 }
 </script>
 
@@ -375,7 +388,7 @@ async function retryOriginalRequest() {
           <dt>{{ t('opsExchange.columns.status') }}</dt>
           <dd>
             <ElTag v-if="statusBadge" :type="statusBadge.type" size="small" disable-transitions>
-              {{ statusBadge.labelKey ? t(statusBadge.labelKey) : statusBadge.raw }}
+              {{ t(statusBadge.labelKey) }}
             </ElTag>
           </dd>
         </div>
@@ -403,7 +416,7 @@ async function retryOriginalRequest() {
         <div v-if="exchange.resolution">
           <dt>{{ t('opsExchange.dialog.outcomeLabel') }}</dt>
           <dd>
-            {{ exchange.resolution === 'executed' ? t('opsExchange.resolution.executed') : exchange.resolution === 'not_executed' ? t('opsExchange.resolution.notExecuted') : exchange.resolution }}
+            {{ exchange.resolution === 'executed' ? t('opsExchange.resolution.executed') : exchange.resolution === 'not_executed' ? t('opsExchange.resolution.notExecuted') : t('opsExchange.status.other') }}
           </dd>
         </div>
       </template>

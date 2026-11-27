@@ -85,20 +85,27 @@
       "unknownQueued": "待核实（已入队）",
       "resolutionConflict": "迟到结果冲突",
       "corrected": "已更正",
-      "succeeded": "换号成功",
-      "failed": "换号失败",
       "pending": "处理中",
-      "unknown": "未知"
+      "activating": "激活中",
+      "ready": "已就绪",
+      "support_required": "需人工介入",
+      "failed": "换号失败",
+      "unknown": "待核实",
+      "other": "其他状态"
     },
     "resolution": {
       "executed": "已确认执行",
       "notExecuted": "已确认未执行"
     },
     "auditKind": {
-      "quota_adjust": "额度调整",
-      "manual_resolution": "人工结案",
-      "conflict_correction": "冲突更正",
-      "exchange_resolution": "换号结案"
+      "adjustment": "额度调整",
+      "automatic": "自动对账",
+      "manual": "人工结案",
+      "correction": "冲突更正",
+      "conflict": "迟到冲突",
+      "duplicate": "重复请求",
+      "observation": "观测记录",
+      "other": "其他记录"
     },
     "actions": {
       "resolve": "人工结案",
@@ -137,7 +144,7 @@
       "correctionWarningTitle": "迟到结果冲突更正",
       "correctionWarningBody": "仅用于处理已结案记录收到的迟到冲突结果，提交后由服务端校验并确保不影响较新配置。",
       "pendingIntentTitle": "上次提交未收到明确回执，已锁定原请求",
-      "pendingIntentBody": "为避免修改参数后误复用同一请求键，表单已锁定。请点击“重试原请求”按原路径与原参数重放；仅在服务端明确返回 4xx 拒绝后才会解除锁定。",
+      "pendingIntentBody": "为避免修改参数后误复用同一请求键，表单已锁定。请点击“重试原请求”按原路径与原参数重放；在获得同一请求键的权威成功回执前将保留原请求，重新登录后同账号仍可继续重试。",
       "lockedRequestKey": "原请求键",
       "lockedPath": "原请求路径",
       "adjustSuccessTitle": "调额已完成，以下为服务端真实审计结果",

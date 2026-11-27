@@ -8,12 +8,15 @@ const cta = (page, name) => page.getByRole('button', { name, exact: true })
 const visibleDialog = page => page.getByRole('dialog').filter({ visible: true })
 const rowFor = (page, key) => page.getByRole('row').filter({ hasText: key }).first()
 const urlPath = message => new URL(message.url()).pathname
+const exchangeTab = page => page.getByRole('tab', { name: '静态 IP 换号', exact: true }).first()
+const auditPanel = page => page.locator('.exchange-card').filter({
+  has: page.getByRole('heading', { name: '额度与结案审计', exact: true }),
+})
 
 async function openExchangeOps(page, username) {
   await signInOperator(page, '/ops/orders', username)
   await expect(page).toHaveURL(/\/ops\/orders/)
-  const label = '静态 IP 换号'
-  await page.getByRole('tab', { name: label, exact: true }).or(cta(page, label)).filter({ visible: true }).first().click()
+  await exchangeTab(page).click()
 }
 
 async function selectTenant(page, email) {
@@ -60,6 +63,8 @@ test('只读可查未入队状态，计费调额丢回执同键恢复并凭证�
       await expect(rowFor(reader, key)).toContainText('未入队')
       const adjust = cta(reader, '调整额度')
       if (await adjust.isVisible()) await expect(adjust).toBeDisabled()
+      await expect(auditPanel(reader)).toContainText('该租户暂无额度或结案审计记录')
+      await expect(cta(auditPanel(reader), '加载更多')).toHaveCount(0)
       await expect(cta(reader, '人工结案').filter({ visible: true })).toHaveCount(0)
       expect(await reader.evaluate(() => document.documentElement.scrollWidth)).toBe(390)
       await screenshot(reader, info, 'mobile-readonly-tenant-exchange-history')
@@ -89,19 +94,20 @@ test('只读可查未入队状态，计费调额丢回执同键恢复并凭证�
       await route.abort('failed')
     }, { times: 1 })
     await cta(adjust, '确认调额').click()
-    await expect(cta(page, '重试原请求').filter({ visible: true }).first()).toBeVisible()
+    await expect(cta(adjust, '重试原请求')).toBeVisible()
+    await expect.poll(f.quota).toEqual({ remaining: 0, reserved: 1, used: 0 })
     expect(original).toMatchObject({ delta: -9, request_key: expect.any(String) })
-    expect(await f.quota()).toEqual({ remaining: 0, reserved: 1, used: 0 })
-    await page.reload()
-    const retry = cta(page, '重试原请求').filter({ visible: true }).first()
-    if (!(await retry.isVisible())) {
-      const entry = page.getByRole('tab', { name: '静态 IP 换号', exact: true }).or(cta(page, '静态 IP 换号')).first()
-      if ((await entry.getAttribute('aria-selected')) !== 'true') await entry.click()
-      await selectTenant(page, email)
-    }
-    await expect(retry).toBeVisible()
+
+    const expired = page.waitForResponse(response => urlPath(response) === adjustPath && response.status() === 401)
+    await page.route('**' + adjustPath, route => route.fulfill({ status: 401, json: { reason: 'INVALID_SESSION' } }), { times: 1 })
+    await cta(adjust, '重试原请求').click()
+    expect((await expired).request().postDataJSON()).toEqual(original)
+    await expect(page).toHaveURL(/\/ops\/login/)
+    await signInOperator(page, '/ops/orders?tab=static-exchanges', 'operator-billing')
+    await expect(exchangeTab(page)).toHaveAttribute('aria-selected', 'true')
+    await selectTenant(page, email)
     const replay = page.waitForResponse(response => urlPath(response) === adjustPath && response.ok())
-    await retry.click()
+    await cta(page, '重试原请求').filter({ visible: true }).first().click()
     await cta(visibleDialog(page), '重试原请求').click()
     expect((await replay).request().postDataJSON()).toEqual(original)
     const changes = (await f.audit()).filter(a => a.kind === 'adjustment')
@@ -110,11 +116,37 @@ test('只读可查未入队状态，计费调额丢回执同键恢复并凭证�
       actor_id: expect.any(String), request_key: original.request_key,
       before: { total: 10, reserved: 1 }, after: { total: 1, reserved: 1, remaining: 0 },
     })
+    await expect(visibleDialog(page)).toContainText(changes[0].actor_id)
+    await expect(visibleDialog(page)).toContainText('变更前')
+    await expect(visibleDialog(page)).toContainText('变更后')
+    await cta(visibleDialog(page), '关闭').click()
+    const adjustmentRow = rowFor(page, original.request_key)
+    await expect(adjustmentRow).toContainText('额度调整')
+    await expect(adjustmentRow).toContainText(changes[0].actor_id)
+    await expect(adjustmentRow).toContainText('Crown fixture quota adjustment')
+    await expect(adjustmentRow).toContainText('变更前')
+    await expect(adjustmentRow).toContainText('变更后')
+    await expect(cta(auditPanel(page), '加载更多')).toHaveCount(0)
 
     clock(key, 'aged')
+    expect(await f.queue()).toEqual(expect.arrayContaining([expect.objectContaining({
+      in_queue: true, exchange: expect.objectContaining({ idempotency_key: key }),
+    })]))
+    const other = await browser.newContext({ baseURL, ignoreHTTPSErrors: true })
+    try {
+      const reader = await other.newPage()
+      await openExchangeOps(reader, 'operator-readonly')
+      await expect(rowFor(reader, key)).toContainText('已入队')
+      await expect(cta(rowFor(reader, key), '人工结案')).toHaveCount(0)
+      const denied = await f.reader.post(f.ops + '/static-ip-exchanges/' + key + '/resolution', {
+        data: { request_key: randomUUID(), outcome: 'not_executed', evidence: 'readonly cannot resolve' },
+      })
+      expect(denied.status()).toBe(403)
+    } finally {
+      await other.close()
+    }
     await page.reload()
-    const tab = page.getByRole('tab', { name: '静态 IP 换号', exact: true }).or(cta(page, '静态 IP 换号')).first()
-    if ((await tab.getAttribute('aria-selected')) !== 'true') await tab.click()
+    await expect(exchangeTab(page)).toHaveAttribute('aria-selected', 'true')
     await selectTenant(page, email)
     const close = await openOutcome(page, rowFor(page, key), '人工结案')
     await expect(close.getByText(/查无记录|旧 IP 未变/).filter({ visible: true }).first()).toBeVisible()
@@ -124,9 +156,14 @@ test('只读可查未入队状态，计费调额丢回执同键恢复并凭证�
     await cta(close, '确认结案').click()
     expect(await (await resolution).json()).toMatchObject({ resolution: 'not_executed' })
     expect(await f.quota()).toEqual({ remaining: 1, reserved: 0, used: 0 })
-    expect((await f.audit()).find(a => a.idempotency_key === key && a.kind === 'manual')).toMatchObject({
+    const audit = (await f.audit()).find(a => a.idempotency_key === key && a.kind === 'manual')
+    expect(audit).toMatchObject({
       outcome: 'not_executed', actor_id: expect.any(String), before: { reserved: 1 }, after: { reserved: 0 },
     })
+    const auditRow = rowFor(page, audit.request_key)
+    await expect(auditRow).toContainText('人工结案')
+    await expect(auditRow).toContainText(audit.actor_id)
+    await expect(auditRow).toContainText('Crown fixture ticket 126 confirmed no execution')
     await screenshot(page, info, 'billing-exchange-resolution-and-audit')
   } finally {
     await f.close()
@@ -153,6 +190,10 @@ test('计费运营按证据更正迟到冲突，旧记录不覆盖同一分配�
     await f.fixture('exchange-records', { id: supplier.id, ip: ip.ip, reported_ip: previousAddress })
     await synchronizeLookup(f, ip.ip, key)
     await expect.poll(() => f.queue().then(rows => rows.find(row => row.exchange.idempotency_key === key)?.resolution_conflict)).toBe(true)
+    const denied = await f.reader.post(f.ops + '/static-ip-exchanges/' + key + '/resolution', {
+      data: { request_key: randomUUID(), outcome: 'executed', correction: true, expected_ip: previousAddress, evidence: 'readonly cannot correct' },
+    })
+    expect(denied.status()).toBe(403)
 
     await openExchangeOps(page, 'operator-billing')
     await expect(rowFor(page, key)).toContainText('迟到')

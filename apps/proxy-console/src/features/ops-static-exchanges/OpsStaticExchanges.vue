@@ -11,7 +11,6 @@ import {
   ElLoading,
   ElTable,
   ElTableColumn,
-  ElTag,
 } from 'element-plus'
 import { Search } from '@element-plus/icons-vue'
 import type {
@@ -23,12 +22,8 @@ import { shanghaiDateTime } from '@/shared/lib/businessDates'
 import { useErrorMessage } from '@/shared/lib/useErrorMessage'
 import type { PendingExchangeIntent } from './exchangeIntent'
 import ExchangeOperationDialog, { type ExchangeDialogMode } from './ExchangeOperationDialog.vue'
-import {
-  canCorrectExchange,
-  canResolveExchange,
-  exchangeStatusBadge,
-  useOpsStaticExchanges,
-} from './useOpsStaticExchanges'
+import ExchangeRecordTable from './ExchangeRecordTable.vue'
+import { useOpsStaticExchanges } from './useOpsStaticExchanges'
 
 const vLoading = ElLoading.directive
 const { t, te, locale } = useI18n()
@@ -96,12 +91,13 @@ function formatDate(date?: Date) {
 function resolutionLabel(resolution: string) {
   if (resolution === 'executed') return t('opsExchange.resolution.executed')
   if (resolution === 'not_executed') return t('opsExchange.resolution.notExecuted')
-  return resolution
+  return t('opsExchange.status.other')
 }
 
 function auditKindLabel(kind: string) {
+  if (!kind) return t('opsExchange.common.none')
   const key = `opsExchange.auditKind.${kind}`
-  return te(key) ? t(key) : (kind || t('opsExchange.common.none'))
+  return te(key) ? t(key) : t('opsExchange.auditKind.other')
 }
 
 function formatQuotaInline(snapshot?: OperatorStaticIpExchangeQuota) {
@@ -200,6 +196,7 @@ function handleMutationCompleted() {
         <form class="search-row" @submit.prevent="searchTenant">
           <ElInput
             v-model="searchQuery"
+            class="search-input"
             clearable
             maxlength="254"
             :prefix-icon="Search"
@@ -282,95 +279,17 @@ function handleMutationCompleted() {
         <ElButton size="small" @click="loadQueue()">{{ t('opsExchange.common.retry') }}</ElButton>
       </ElAlert>
 
-      <ElTable
-        v-loading="queueLoading"
-        :data="queueItems"
-        :row-key="(row: OperatorStaticIpExchange) => `${row.tenantId}:${row.idempotencyKey}`"
-        class="exchange-table"
-        :header-cell-style="tableHeaderStyle"
-        :cell-style="tableCellStyle"
-      >
-        <!-- @vue-generic {OperatorStaticIpExchange} -->
-        <ElTableColumn :label="t('opsExchange.columns.status')" min-width="150">
-          <template #default="{ row }">
-            <div class="status-cell">
-              <ElTag :type="exchangeStatusBadge(row).type" size="small" disable-transitions>
-                {{ exchangeStatusBadge(row).labelKey ? t(exchangeStatusBadge(row).labelKey) : exchangeStatusBadge(row).raw }}
-              </ElTag>
-              <span v-if="row.resolution" class="cell-meta">{{ resolutionLabel(row.resolution) }}</span>
-            </div>
-          </template>
-        </ElTableColumn>
-
-        <!-- @vue-generic {OperatorStaticIpExchange} -->
-        <ElTableColumn :label="t('opsExchange.columns.tenant')" min-width="140">
-          <template #default="{ row }">
-            <ElButton link type="primary" class="tenant-jump" @click="selectTenantById(row.tenantId)">
-              <span class="mono">{{ row.tenantId }}</span>
-            </ElButton>
-          </template>
-        </ElTableColumn>
-
-        <!-- @vue-generic {OperatorStaticIpExchange} -->
-        <ElTableColumn :label="t('opsExchange.columns.requestAndAllocation')" min-width="210">
-          <template #default="{ row }">
-            <span class="cell-primary mono">{{ row.idempotencyKey }}</span>
-            <span class="cell-meta mono">
-              {{ t('opsExchange.labels.allocationId') }}: {{ row.allocationId || t('opsExchange.common.none') }}
-              <template v-if="row.nodeId"> · {{ t('opsExchange.labels.nodeId') }}: {{ row.nodeId }}</template>
-            </span>
-          </template>
-        </ElTableColumn>
-
-        <!-- @vue-generic {OperatorStaticIpExchange} -->
-        <ElTableColumn :label="t('opsExchange.columns.ips')" min-width="160">
-          <template #default="{ row }">
-            <span class="cell-primary mono">{{ row.oldIp || t('opsExchange.common.none') }}</span>
-            <span class="cell-meta mono">→ {{ row.newIp || t('opsExchange.common.none') }}</span>
-          </template>
-        </ElTableColumn>
-
-        <!-- @vue-generic {OperatorStaticIpExchange} -->
-        <ElTableColumn :label="t('opsExchange.columns.time')" min-width="160">
-          <template #default="{ row }">
-            <span v-if="row.unknownAt" class="cell-primary">{{ t('opsExchange.labels.unknownAt') }}: {{ formatDate(row.unknownAt) }}</span>
-            <span class="cell-meta">{{ t('opsExchange.labels.createdAt') }}: {{ formatDate(row.createdAt) }}</span>
-          </template>
-        </ElTableColumn>
-
-        <!-- @vue-generic {OperatorStaticIpExchange} -->
-        <ElTableColumn :label="t('opsExchange.columns.actions')" min-width="140" align="right">
-          <template #default="{ row }">
-            <div class="row-actions">
-              <ElButton
-                v-if="canResolveExchange(row)"
-                link
-                type="primary"
-                :disabled="!canWrite"
-                @click="openResolutionDialog(row, 'resolve')"
-              >
-                {{ t('opsExchange.actions.resolve') }}
-              </ElButton>
-              <ElButton
-                v-else-if="canCorrectExchange(row)"
-                link
-                type="warning"
-                :disabled="!canWrite"
-                @click="openResolutionDialog(row, 'correct')"
-              >
-                {{ t('opsExchange.actions.correct') }}
-              </ElButton>
-              <ElButton link @click="selectTenantById(row.tenantId)">
-                {{ t('opsExchange.queue.openTenant') }}
-              </ElButton>
-            </div>
-          </template>
-        </ElTableColumn>
-
-        <template #empty>
-          <span v-if="!queueLoading && !queueError" class="table-empty">{{ t('opsExchange.queue.empty') }}</span>
-        </template>
-      </ElTable>
+      <ExchangeRecordTable
+        :records="queueItems"
+        :loading="queueLoading"
+        :has-error="Boolean(queueError)"
+        :empty-text="t('opsExchange.queue.empty')"
+        :can-write="canWrite"
+        show-tenant
+        @open-tenant="selectTenantById"
+        @resolve="row => openResolutionDialog(row, 'resolve')"
+        @correct="row => openResolutionDialog(row, 'correct')"
+      />
 
       <div class="table-footer">
         <span>{{ t('opsExchange.common.totalShown', { count: queueItems.length }) }}</span>
@@ -490,90 +409,17 @@ function handleMutationCompleted() {
           <ElButton size="small" @click="loadHistory()">{{ t('opsExchange.common.retry') }}</ElButton>
         </ElAlert>
 
-        <ElTable
-          v-loading="historyLoading"
-          :data="historyItems"
-          row-key="idempotencyKey"
-          class="exchange-table"
-          :header-cell-style="tableHeaderStyle"
-          :cell-style="tableCellStyle"
-        >
-          <!-- @vue-generic {OperatorStaticIpExchange} -->
-          <ElTableColumn :label="t('opsExchange.columns.status')" min-width="150">
-            <template #default="{ row }">
-              <div class="status-cell">
-                <ElTag :type="exchangeStatusBadge(row).type" size="small" disable-transitions>
-                  {{ exchangeStatusBadge(row).labelKey ? t(exchangeStatusBadge(row).labelKey) : exchangeStatusBadge(row).raw }}
-                </ElTag>
-                <span v-if="row.resolution" class="cell-meta">{{ resolutionLabel(row.resolution) }}</span>
-              </div>
-            </template>
-          </ElTableColumn>
-
-          <!-- @vue-generic {OperatorStaticIpExchange} -->
-          <ElTableColumn :label="t('opsExchange.columns.requestAndAllocation')" min-width="210">
-            <template #default="{ row }">
-              <span class="cell-primary mono">{{ row.idempotencyKey }}</span>
-              <span class="cell-meta mono">
-                {{ t('opsExchange.labels.allocationId') }}: {{ row.allocationId || t('opsExchange.common.none') }}
-                <template v-if="row.nodeId"> · {{ t('opsExchange.labels.nodeId') }}: {{ row.nodeId }}</template>
-              </span>
-            </template>
-          </ElTableColumn>
-
-          <!-- @vue-generic {OperatorStaticIpExchange} -->
-          <ElTableColumn :label="t('opsExchange.columns.ips')" min-width="160">
-            <template #default="{ row }">
-              <span class="cell-primary mono">{{ row.oldIp || t('opsExchange.common.none') }}</span>
-              <span class="cell-meta mono">→ {{ row.newIp || t('opsExchange.common.none') }}</span>
-            </template>
-          </ElTableColumn>
-
-          <!-- @vue-generic {OperatorStaticIpExchange} -->
-          <ElTableColumn :label="t('opsExchange.columns.supplier')" min-width="160">
-            <template #default="{ row }">
-              <span class="cell-primary mono">{{ row.supplierOrderId || t('opsExchange.common.none') }}</span>
-              <span v-if="row.supplierItemId" class="cell-meta mono">{{ t('opsExchange.labels.supplierItem') }}: {{ row.supplierItemId }}</span>
-            </template>
-          </ElTableColumn>
-
-          <!-- @vue-generic {OperatorStaticIpExchange} -->
-          <ElTableColumn :label="t('opsExchange.columns.time')" min-width="160">
-            <template #default="{ row }">
-              <span class="cell-primary">{{ formatDate(row.createdAt) }}</span>
-              <span v-if="row.updatedAt" class="cell-meta">{{ t('opsExchange.labels.updatedAt') }}: {{ formatDate(row.updatedAt) }}</span>
-            </template>
-          </ElTableColumn>
-
-          <!-- @vue-generic {OperatorStaticIpExchange} -->
-          <ElTableColumn :label="t('opsExchange.columns.actions')" min-width="110" align="right">
-            <template #default="{ row }">
-              <ElButton
-                v-if="canResolveExchange(row)"
-                link
-                type="primary"
-                :disabled="!canWrite"
-                @click="openResolutionDialog(row, 'resolve')"
-              >
-                {{ t('opsExchange.actions.resolve') }}
-              </ElButton>
-              <ElButton
-                v-else-if="canCorrectExchange(row)"
-                link
-                type="warning"
-                :disabled="!canWrite"
-                @click="openResolutionDialog(row, 'correct')"
-              >
-                {{ t('opsExchange.actions.correct') }}
-              </ElButton>
-              <span v-else class="cell-meta">{{ t('opsExchange.common.none') }}</span>
-            </template>
-          </ElTableColumn>
-
-          <template #empty>
-            <span v-if="!historyLoading && !historyError" class="table-empty">{{ t('opsExchange.history.empty') }}</span>
-          </template>
-        </ElTable>
+        <ExchangeRecordTable
+          :records="historyItems"
+          :loading="historyLoading"
+          :has-error="Boolean(historyError)"
+          :empty-text="t('opsExchange.history.empty')"
+          :can-write="canWrite"
+          show-supplier
+          @open-tenant="selectTenantById"
+          @resolve="row => openResolutionDialog(row, 'resolve')"
+          @correct="row => openResolutionDialog(row, 'correct')"
+        />
 
         <div class="table-footer">
           <span>{{ t('opsExchange.common.totalShown', { count: historyItems.length }) }}</span>
@@ -764,7 +610,7 @@ function handleMutationCompleted() {
   gap: var(--space-2);
   max-width: var(--content-narrow-width);
 }
-.search-row :deep(.el-input) {
+.search-input {
   flex: 1 1 220px;
   min-width: 0;
 }
@@ -833,12 +679,6 @@ function handleMutationCompleted() {
   --el-table-header-bg-color: var(--color-surface-muted);
   --el-table-row-hover-bg-color: var(--color-surface-muted);
 }
-.status-cell {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-1);
-}
 .cell-primary {
   display: block;
   font-size: var(--font-size-xs);
@@ -855,20 +695,6 @@ function handleMutationCompleted() {
   font-size: var(--font-size-xs);
   overflow-wrap: anywhere;
   white-space: pre-wrap;
-}
-.tenant-jump {
-  padding: 0;
-  font-size: var(--font-size-xs);
-  max-width: 100%;
-  overflow-wrap: anywhere;
-  white-space: normal;
-  text-align: start;
-}
-.row-actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: var(--space-2);
 }
 .table-empty {
   color: var(--color-text-secondary);

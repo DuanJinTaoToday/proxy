@@ -221,6 +221,17 @@ export async function getOpsStaticIpExchangeQuota(
   return mapQuota(wire)
 }
 
+function parsePositiveInt64Cursor(value?: string | number): string | undefined {
+  if (value === undefined || value === null) return undefined
+  const text = String(value).trim()
+  if (!/^\d+$/.test(text)) return undefined
+  try {
+    return BigInt(text) > 0n ? text : undefined
+  } catch {
+    return undefined
+  }
+}
+
 export async function listOpsStaticIpExchangeAudit(
   tenantId: string,
   options: { beforeId?: string } = {},
@@ -230,9 +241,10 @@ export async function listOpsStaticIpExchangeAudit(
     query: { before_id: options.beforeId },
     signal,
   })
+  const entries = (wire?.entries ?? []).map(mapAuditEntry)
   return {
-    entries: (wire?.entries ?? []).map(mapAuditEntry),
-    nextBeforeId: wire?.next_before_id || undefined,
+    entries,
+    nextBeforeId: entries.length > 0 ? parsePositiveInt64Cursor(wire?.next_before_id) : undefined,
   }
 }
 

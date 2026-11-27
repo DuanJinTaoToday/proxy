@@ -25,7 +25,6 @@ export type TenantSearchStatus = 'idle' | 'loading' | 'not_found' | 'error'
 export interface ExchangeStatusBadge {
   labelKey: string
   type: 'success' | 'warning' | 'danger' | 'info'
-  raw?: string
 }
 
 export function canResolveExchange(item: OperatorStaticIpExchange): boolean {
@@ -48,8 +47,14 @@ export function exchangeStatusBadge(item: OperatorStaticIpExchange): ExchangeSta
       ? { labelKey: 'opsExchange.status.unknownQueued', type: 'warning' }
       : { labelKey: 'opsExchange.status.unknownNotQueued', type: 'info' }
   }
-  if (item.status === 'succeeded') {
-    return { labelKey: 'opsExchange.status.succeeded', type: 'success' }
+  if (item.status === 'ready') {
+    return { labelKey: 'opsExchange.status.ready', type: 'success' }
+  }
+  if (item.status === 'activating') {
+    return { labelKey: 'opsExchange.status.activating', type: 'info' }
+  }
+  if (item.status === 'support_required') {
+    return { labelKey: 'opsExchange.status.support_required', type: 'warning' }
   }
   if (item.status === 'failed') {
     return { labelKey: 'opsExchange.status.failed', type: 'danger' }
@@ -60,7 +65,7 @@ export function exchangeStatusBadge(item: OperatorStaticIpExchange): ExchangeSta
   if (item.status === 'unknown') {
     return { labelKey: 'opsExchange.status.unknown', type: 'warning' }
   }
-  return { labelKey: '', type: 'info', raw: item.status || '—' }
+  return { labelKey: 'opsExchange.status.other', type: 'info' }
 }
 
 export function useOpsStaticExchanges() {
@@ -325,13 +330,13 @@ export function useOpsStaticExchanges() {
   function selectTenantById(tenantId: string) {
     const normalized = tenantId.trim()
     if (!normalized) return
-    searchStatus.value = 'idle'
-    searchError.value = undefined
+    clearSearchFeedback()
     const existing = selectedTenant.value?.id === normalized ? selectedTenant.value : undefined
     applySelectedTenant(existing ?? { id: normalized }, !existing?.name)
   }
 
   function clearSelectedTenant() {
+    clearSearchFeedback()
     selectedTenant.value = undefined
     resetTenantData()
     refreshPendingIntents()

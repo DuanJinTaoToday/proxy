@@ -85,20 +85,27 @@
       "unknownQueued": "Pending Verification (Queued)",
       "resolutionConflict": "Late Result Conflict",
       "corrected": "Corrected",
-      "succeeded": "Succeeded",
+      "pending": "Pending",
+      "activating": "Activating",
+      "ready": "Ready",
+      "support_required": "Support Required",
       "failed": "Failed",
-      "pending": "In Progress",
-      "unknown": "Unknown"
+      "unknown": "Pending Verification",
+      "other": "Other Status"
     },
     "resolution": {
       "executed": "Confirmed Executed",
       "notExecuted": "Confirmed Not Executed"
     },
     "auditKind": {
-      "quota_adjust": "Quota Adjustment",
-      "manual_resolution": "Manual Resolution",
-      "conflict_correction": "Conflict Correction",
-      "exchange_resolution": "Exchange Resolution"
+      "adjustment": "Quota Adjustment",
+      "automatic": "Automatic Reconciliation",
+      "manual": "Manual Resolution",
+      "correction": "Conflict Correction",
+      "conflict": "Late Conflict",
+      "duplicate": "Duplicate Request",
+      "observation": "Observation",
+      "other": "Other Record"
     },
     "actions": {
       "resolve": "Manual Resolution",
@@ -137,7 +144,7 @@
       "correctionWarningTitle": "Late Conflict Correction",
       "correctionWarningBody": "Use only to correct a previously resolved record with a late conflict. The server validates and protects newer configurations.",
       "pendingIntentTitle": "Previous request had no definitive response; original payload is locked",
-      "pendingIntentBody": "Fields are locked to prevent reusing the same request key with changed parameters. Click \"Retry Original Request\" to replay the exact request; the lock clears only after a 2xx success or an explicit 4xx rejection.",
+      "pendingIntentBody": "Fields are locked to prevent reusing the same request key with changed parameters. Click \"Retry Original Request\" to replay the exact request; the original request stays preserved until an authoritative success for the same key, including after signing back in as the same operator.",
       "lockedRequestKey": "Original Request Key",
       "lockedPath": "Original Request Path",
       "adjustSuccessTitle": "Quota adjusted; server audit record below",
