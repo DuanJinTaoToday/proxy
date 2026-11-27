@@ -1,0 +1,159 @@
+{
+  "opsExchange": {
+    "tabs": {
+      "pendingOrders": "Pending Orders",
+      "staticExchanges": "Static IP Exchanges"
+    },
+    "common": {
+      "retry": "Retry",
+      "refresh": "Refresh",
+      "loadMore": "Load More",
+      "cancel": "Cancel",
+      "close": "Close",
+      "none": "—",
+      "totalShown": "Showing {count} items",
+      "readOnlyHint": "Your account has read-only access and cannot adjust quota or resolve exchanges."
+    },
+    "search": {
+      "title": "Tenant Lookup & Reconciliation",
+      "description": "Search by tenant email or primary account to inspect exchange quota, history, and audit logs, or jump directly from the anomaly queue below.",
+      "label": "Tenant Search",
+      "placeholder": "Enter email or primary account",
+      "submit": "Search Tenant",
+      "notFound": "No matching tenant found.",
+      "selected": "Selected Tenant",
+      "tenantId": "Tenant ID",
+      "tenantAccount": "Primary Account",
+      "clearTenant": "Clear"
+    },
+    "queue": {
+      "title": "Exchange Anomaly Queue",
+      "description": "Lists static IP exchanges pending manual verification or flagged with late resolution conflicts. Click a tenant to inspect or resolve.",
+      "filterSelected": "Selected tenant only",
+      "empty": "No exchange anomalies require attention.",
+      "openTenant": "Inspect Tenant"
+    },
+    "quota": {
+      "title": "Exchange Quota",
+      "adjustButton": "Adjust Quota",
+      "total": "Total",
+      "remaining": "Remaining",
+      "reserved": "Reserved",
+      "used": "Used",
+      "selectTenantHint": "Search for a tenant or select one from the anomaly queue to view quota, exchange history, and audit entries."
+    },
+    "history": {
+      "title": "Tenant Exchange History",
+      "empty": "No static IP exchange records for this tenant."
+    },
+    "audit": {
+      "title": "Quota & Resolution Audit",
+      "empty": "No quota or resolution audit entries for this tenant."
+    },
+    "columns": {
+      "status": "Status",
+      "tenant": "Tenant",
+      "requestAndAllocation": "Request & Allocation",
+      "ips": "Old IP / New IP",
+      "supplier": "Supplier Record",
+      "time": "Timestamps",
+      "actions": "Actions",
+      "auditKind": "Type",
+      "actor": "Actor",
+      "evidence": "Verification Evidence",
+      "quotaChange": "Quota Before / After",
+      "outcomeAndIp": "Outcome & Observed IP",
+      "requestKey": "Idempotency / Request Key"
+    },
+    "labels": {
+      "allocationId": "Allocation ID",
+      "nodeId": "Node ID",
+      "idempotencyKey": "Exchange Key",
+      "requestKey": "Request Key",
+      "supplierOrder": "Order",
+      "supplierItem": "Item",
+      "supplierRecord": "Supplier Ref",
+      "observedIp": "Observed IP",
+      "unknownAt": "Flagged",
+      "createdAt": "Created",
+      "updatedAt": "Updated",
+      "before": "Before",
+      "after": "After"
+    },
+    "status": {
+      "unknownNotQueued": "Pending Verification (Not Queued)",
+      "unknownQueued": "Pending Verification (Queued)",
+      "resolutionConflict": "Late Result Conflict",
+      "corrected": "Corrected",
+      "succeeded": "Succeeded",
+      "failed": "Failed",
+      "pending": "In Progress",
+      "unknown": "Unknown"
+    },
+    "resolution": {
+      "executed": "Confirmed Executed",
+      "notExecuted": "Confirmed Not Executed"
+    },
+    "auditKind": {
+      "quota_adjust": "Quota Adjustment",
+      "manual_resolution": "Manual Resolution",
+      "conflict_correction": "Conflict Correction",
+      "exchange_resolution": "Exchange Resolution"
+    },
+    "actions": {
+      "resolve": "Manual Resolution",
+      "correct": "Correct Resolution",
+      "retryOriginal": "Retry Original Request"
+    },
+    "pendingBanner": {
+      "title": "Unconfirmed write request pending for this tenant",
+      "description": "To prevent duplicate mutations or reusing a request key with altered parameters, replay the original request or refresh server state first.",
+      "adjustItem": "Quota adjustment (delta: {delta}, request key: {requestKey})",
+      "resolveItem": "Manual resolution (exchange key: {idempotencyKey}, request key: {requestKey})",
+      "correctItem": "Conflict correction (exchange key: {idempotencyKey}, request key: {requestKey})"
+    },
+    "dialog": {
+      "adjustTitle": "Adjust Quota",
+      "resolveTitle": "Manual Resolution",
+      "correctTitle": "Correct Resolution",
+      "deltaLabel": "Quota Delta",
+      "deltaPlaceholder": "Enter a non-zero integer (+ to add, - to deduct)",
+      "deltaHint": "Positive values add to total and remaining quota; negative values can only deduct from remaining quota (max deduction {maxDecrease}) without borrowing reserved or used quota.",
+      "deltaIncrease": "Will add +{value}",
+      "deltaDecrease": "Will deduct {value}",
+      "projected": "Estimated after change: Total {total} / Remaining {remaining} (subject to server audit)",
+      "evidenceLabel": "Verification Evidence",
+      "adjustEvidencePlaceholder": "Enter ticket ID, approval reference, or reconciliation notes",
+      "resolveEvidencePlaceholder": "Enter verified supplier ticket ID, receipt number, or manual verification record",
+      "outcomeLabel": "Resolution Outcome",
+      "outcomeExecuted": "Confirmed Executed (IP replaced)",
+      "outcomeNotExecuted": "Confirmed Not Executed (IP not replaced)",
+      "expectedIpLabel": "Verified New IP",
+      "expectedIpPlaceholder": "Enter the new IP confirmed on supplier receipt",
+      "confirmAdjust": "Confirm Adjustment",
+      "confirmResolve": "Confirm Resolution",
+      "verificationWarningTitle": "Verify supplier outcome before resolving",
+      "verificationWarningBody": "Missing records, lookup failures, or an unchanged old IP are NOT valid proof of non-execution. Complete actual supplier verification and provide valid evidence rather than assuming outcomes from the UI.",
+      "correctionWarningTitle": "Late Conflict Correction",
+      "correctionWarningBody": "Use only to correct a previously resolved record with a late conflict. The server validates and protects newer configurations.",
+      "pendingIntentTitle": "Previous request had no definitive response; original payload is locked",
+      "pendingIntentBody": "Fields are locked to prevent reusing the same request key with changed parameters. Click \"Retry Original Request\" to replay the exact request; the lock clears only after a 2xx success or an explicit 4xx rejection.",
+      "lockedRequestKey": "Original Request Key",
+      "lockedPath": "Original Request Path",
+      "adjustSuccessTitle": "Quota adjusted; server audit record below",
+      "resolveSuccess": "Resolution submitted and data refreshed.",
+      "correctSuccess": "Conflict correction submitted and data refreshed.",
+      "quotaSnapshot": "Total {total} / Remaining {remaining} / Reserved {reserved} / Used {used}"
+    },
+    "validation": {
+      "permission": "Missing billing management permission to submit write requests.",
+      "deltaRequired": "Enter a non-zero integer delta.",
+      "deltaRange": "Delta is outside the signed 32-bit integer range.",
+      "deltaExceedsRemaining": "Deduction cannot exceed remaining quota (reserved and used quota cannot be borrowed).",
+      "evidenceRequired": "Verification evidence is required.",
+      "outcomeRequired": "Select a verified resolution outcome.",
+      "expectedIpRequired": "Verified new IP is required when confirming execution.",
+      "notEligible": "This record is not eligible for this action."
+    }
+  }
+}

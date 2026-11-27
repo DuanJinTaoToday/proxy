@@ -20,7 +20,7 @@ async function selectTenant(page, email) {
   const search = field(page, '租户搜索')
   await search.fill(email)
   await search.press('Enter')
-  await expect(page.getByText(email, { exact: true }).filter({ visible: true }).first()).toBeVisible()
+  await expect(page.locator('.selected-tenant__meta')).toContainText(email)
 }
 
 async function openOutcome(page, who, action) {
@@ -97,10 +97,12 @@ test('只读可查未入队状态，计费调额丢回执同键恢复并凭证�
     if (!(await retry.isVisible())) {
       const entry = page.getByRole('tab', { name: '静态 IP 换号', exact: true }).or(cta(page, '静态 IP 换号')).first()
       if ((await entry.getAttribute('aria-selected')) !== 'true') await entry.click()
+      await selectTenant(page, email)
     }
     await expect(retry).toBeVisible()
     const replay = page.waitForResponse(response => urlPath(response) === adjustPath && response.ok())
     await retry.click()
+    await cta(visibleDialog(page), '重试原请求').click()
     expect((await replay).request().postDataJSON()).toEqual(original)
     const changes = (await f.audit()).filter(a => a.kind === 'adjustment')
     expect(changes).toHaveLength(1)
@@ -116,7 +118,7 @@ test('只读可查未入队状态，计费调额丢回执同键恢复并凭证�
     await selectTenant(page, email)
     const close = await openOutcome(page, rowFor(page, key), '人工结案')
     await expect(close.getByText(/查无记录|旧 IP 未变/).filter({ visible: true }).first()).toBeVisible()
-    await chooseOutcome(close, '确认未执行')
+    await chooseOutcome(close, /确认未执行/)
     await field(close, '核查依据').fill('Crown fixture ticket 126 confirmed no execution')
     const resolution = page.waitForResponse(response => urlPath(response) === f.ops + '/static-ip-exchanges/' + key + '/resolution' && response.ok())
     await cta(close, '确认结案').click()
@@ -155,9 +157,9 @@ test('计费运营按证据更正迟到冲突，旧记录不覆盖同一分配�
     await openExchangeOps(page, 'operator-billing')
     await expect(rowFor(page, key)).toContainText('迟到')
     const correct = await openOutcome(page, rowFor(page, key), '更正结案')
-    await chooseOutcome(correct, '确认已执行')
+    await chooseOutcome(correct, /确认已执行/)
     await field(correct, '核查依据').fill('Crown fixture revised receipt verified by billing')
-    await field(correct, '(新 IP|确认的新 IP|预期新 IP)').fill(previousAddress)
+    await field(correct, '(核验新 IP|新 IP)').fill(previousAddress)
     const result = page.waitForResponse(response => urlPath(response) === f.ops + '/static-ip-exchanges/' + key + '/resolution' && response.ok())
     await cta(correct, '确认结案').click()
     const response = await result
