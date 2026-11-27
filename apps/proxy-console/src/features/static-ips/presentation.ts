@@ -1,7 +1,17 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ApiError } from '@/api/client'
+import type { StaticIpExchangeStatus } from '@/api/staticIpExchanges'
 import { useErrorMessage } from '@/shared/lib/useErrorMessage'
+
+export const exchangeStatusTagType: Record<StaticIpExchangeStatus, 'info' | 'warning' | 'danger' | 'success'> = {
+  pending: 'info',
+  unknown: 'warning',
+  failed: 'danger',
+  activating: 'info',
+  ready: 'success',
+  support_required: 'warning',
+}
 
 export function endpoint({ ip, port }: { ip: string, port: number }) {
   return `${ip.includes(':') ? `[${ip}]` : ip}:${port}`

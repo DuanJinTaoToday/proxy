@@ -1,4 +1,5 @@
 import { request, requestText } from './client'
+import { isStaticIpExchangeStatus } from './staticIpExchanges'
 
 interface StaticIpWire {
   allocation_id: string
@@ -7,7 +8,11 @@ interface StaticIpWire {
   expires_at: string
   region?: string
   ip_type?: string
+  node_id?: string
+  share_mode?: string
   pending_renewal_order_id?: string
+  exchange_status?: string
+  exchange_idempotency_key?: string
 }
 
 interface RenewalTermWire { term: string, term_days: number }
@@ -44,7 +49,11 @@ export async function listStaticIps(signal: AbortSignal) {
     expiry: new Date(wire.expires_at),
     region: wire.region ?? '',
     ipType: wire.ip_type ?? '',
+    nodeId: wire.node_id ?? '',
+    shareMode: wire.share_mode ?? '',
     pendingOrderId: wire.pending_renewal_order_id,
+    exchangeStatus: isStaticIpExchangeStatus(wire.exchange_status) ? wire.exchange_status : undefined,
+    exchangeIdempotencyKey: wire.exchange_idempotency_key || undefined,
   }))
 }
 
