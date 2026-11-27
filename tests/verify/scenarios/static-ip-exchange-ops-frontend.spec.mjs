@@ -137,7 +137,7 @@ test('只读可查未入队状态，计费调额丢回执同键恢复并凭证�
       const reader = await other.newPage()
       await openExchangeOps(reader, 'operator-readonly')
       await expect(rowFor(reader, key)).toContainText('已入队')
-      await expect(cta(rowFor(reader, key), '人工结案')).toHaveCount(0)
+      await expect(cta(rowFor(reader, key), '人工结案')).toBeDisabled()
       const denied = await f.reader.post(f.ops + '/static-ip-exchanges/' + key + '/resolution', {
         data: { request_key: randomUUID(), outcome: 'not_executed', evidence: 'readonly cannot resolve' },
       })
